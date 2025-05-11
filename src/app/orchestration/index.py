@@ -1,0 +1,3 @@
+
+async def index():
+    return {}

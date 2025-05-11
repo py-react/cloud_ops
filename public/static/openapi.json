@@ -1,0 +1,5382 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/packges": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_packges_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Get_Packages_Response"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_packges_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunImage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/swarm/init": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_swarm_init_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwarmInitParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/swarm/join": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_swarm_join_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwarmJoinParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/swarm/update": {
+      "put": {
+        "summary": "",
+        "operationId": "_api_swarm_update_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwarmUpdateSpec"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/swarm/unlock_key": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_swarm_unlock_key_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/swarm/nodes/{node_id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_swarm_nodes__node_id__get",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_swarm_nodes__node_id__put",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/nodes___node_id___NodeSpec"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/swarm/services": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_swarm_services_get",
+        "parameters": [
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "title": "Filters"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/swarm/services/{service_id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_swarm_services__service_id__get",
+        "parameters": [
+          {
+            "name": "service_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/swarm/services/create": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_swarm_services_create_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceCreationSpec"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storages": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_storages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_storages_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolumeActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/infra": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_infra_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          },
+          {
+            "name": "sub_category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sub Category"
+            }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "search_term",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Search Term"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_infra_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfraCreateUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfraPostResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_infra_put",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfraCreateUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfraPutResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_infra_delete",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          },
+          {
+            "name": "sub_category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sub Category"
+            }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "file_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "File Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfraDeleteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/cluster": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_cluster_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/cluster/metrics": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_cluster_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/cluster/namespace": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_cluster_namespace_get",
+        "parameters": [
+          {
+            "name": "label_selector",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Label Selector"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_kubernertes_cluster_namespace_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNamespacePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_kubernertes_cluster_namespace_delete",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/methods": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_methods_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/methods/apply": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_kubernertes_methods_apply_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/kubernertes__methods__apply__index__ApplyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/methods/delete": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_kubernertes_methods_delete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/kubernertes__methods__delete__index__ApplyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/methods/patch": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_kubernertes_methods_patch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/kubernertes__methods__patch__index__ApplyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/context": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_context_get",
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "all",
+                "current"
+              ],
+              "type": "string",
+              "title": "Action"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Set a new Kubernetes context.",
+        "operationId": "_api_kubernertes_context_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContextPostData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/resources": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_resources_get",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ResourceScope"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "all",
+              "title": "Scope"
+            }
+          },
+          {
+            "name": "resources",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resources"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceResponse"
+                  },
+                  "title": "Response  Api Kubernertes Resources Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/resources/{type}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_resources__type__get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "field_selector",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Field Selector"
+            }
+          },
+          {
+            "name": "label_selector",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Label Selector"
+            }
+          },
+          {
+            "name": "api_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Api Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_kubernertes_resources__type__post",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Resource"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_kubernertes_resources__type__put",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          },
+          {
+            "name": "apiVersion",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Apiversion"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "modifytype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Modifytype"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Data"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_kubernertes_resources__type__delete",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          },
+          {
+            "name": "apiVersion",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Apiversion"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/user": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_user_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/limit-range": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_limit_range_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/resource-quota": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_resource_quota_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/deployments": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_deployments_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/flow/v1": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_flow_v1_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/flow/v2": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_flow_v2_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NamespaceInfo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/networks": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_networks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/queue": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_queue_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_queue_put",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_queue_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunQueue"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_queue_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopQueue"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/containers": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_containers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetContainerResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_containers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunContainer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/containers/stats/{container_id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_containers_stats__container_id__get",
+        "parameters": [
+          {
+            "name": "container_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Container Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/systems": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_systems_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemInfo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/queueJob": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_queueJob_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_queueJob_put",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_queueJob_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQueueJob"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_queueJob_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "",
+        "operationId": "__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/kubernetes": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_kubernetes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/kubernetes/rbac": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_kubernetes_rbac_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/kubernetes/contexts": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_kubernetes_contexts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/kubernetes/namespaces": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_kubernetes_namespaces_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/kubernetes/resource-quota": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_kubernetes_resource_quota_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/infra": {
+      "get": {
+        "summary": "",
+        "operationId": "_infra_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/infra/manager": {
+      "get": {
+        "summary": "",
+        "operationId": "_infra_manager_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docker": {
+      "get": {
+        "summary": "",
+        "operationId": "_docker_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docker/storages": {
+      "get": {
+        "summary": "",
+        "operationId": "_docker_storages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docker/network": {
+      "get": {
+        "summary": "",
+        "operationId": "_docker_network_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docker/container": {
+      "get": {
+        "summary": "",
+        "operationId": "_docker_container_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docker/packages": {
+      "get": {
+        "summary": "",
+        "operationId": "_docker_packages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docker/hub": {
+      "get": {
+        "summary": "",
+        "operationId": "_docker_hub_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/swarms": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_swarms_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/certificate": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_certificate_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/ingress": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_ingress_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/secrets": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_secrets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/resources": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_resources_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/resources/{resourceType}": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_resources__resourceType__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/namespace": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_namespace_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/pods": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_pods_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/deployment": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_deployment_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/configmap": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_configmap_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/services": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_services_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/issuer": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_issuer_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/flow": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_flow_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/queues": {
+      "get": {
+        "summary": "",
+        "operationId": "_queues_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddVolumeData": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "driver": {
+            "type": "string",
+            "title": "Driver"
+          },
+          "driverOpts": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Driveropts"
+          },
+          "labels": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Labels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "driver",
+          "driverOpts",
+          "labels"
+        ],
+        "title": "AddVolumeData"
+      },
+      "ContainerInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created": {
+            "type": "string",
+            "title": "Created"
+          },
+          "image": {
+            "type": "string",
+            "title": "Image"
+          },
+          "ports": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ports"
+          },
+          "command": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Command"
+          },
+          "state": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "State"
+          },
+          "exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Code"
+          },
+          "network": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Network"
+          },
+          "volumes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Volumes"
+          },
+          "labels": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Labels"
+          },
+          "env_vars": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Env Vars"
+          },
+          "host_config": {
+            "$ref": "#/components/schemas/HostConfig"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "status",
+          "created",
+          "image",
+          "ports",
+          "command",
+          "state",
+          "exit_code",
+          "network",
+          "volumes",
+          "labels",
+          "env_vars",
+          "host_config"
+        ],
+        "title": "ContainerInfo"
+      },
+      "ContextPostData": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ContextPostType"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ContextPostPayload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "payload"
+        ],
+        "title": "ContextPostData"
+      },
+      "ContextPostPayload": {
+        "properties": {
+          "switch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Switch"
+          },
+          "create": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreateContextData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ContextPostPayload"
+      },
+      "ContextPostType": {
+        "type": "string",
+        "enum": [
+          "switch",
+          "create"
+        ],
+        "title": "ContextPostType"
+      },
+      "CreateConfig": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "CreateConfig"
+      },
+      "CreateContextClusterData": {
+        "properties": {
+          "server": {
+            "type": "string",
+            "title": "Server"
+          },
+          "certificate_authority_data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certificate Authority Data"
+          },
+          "insecure_skip_tls_verify": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insecure Skip Tls Verify",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "server"
+        ],
+        "title": "CreateContextClusterData"
+      },
+      "CreateContextData": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "cluster": {
+            "$ref": "#/components/schemas/CreateContextClusterData"
+          },
+          "user": {
+            "$ref": "#/components/schemas/CreateContextUserData"
+          },
+          "namesapce": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Namesapce",
+            "default": "default"
+          },
+          "set_current": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Set Current",
+            "default": false
+          },
+          "config_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config File",
+            "default": "~/.kuber/config"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "cluster",
+          "user"
+        ],
+        "title": "CreateContextData"
+      },
+      "CreateContextUserData": {
+        "properties": {
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          },
+          "client_certificate_data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Certificate Data"
+          },
+          "client_key_data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Key Data"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "CreateContextUserData"
+      },
+      "CreateNamespacePayload": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "CreateNamespacePayload"
+      },
+      "CreateQueueJob": {
+        "properties": {
+          "queueName": {
+            "type": "string",
+            "title": "Queuename"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/CreateQueueJobMeta"
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "queueName",
+          "meta",
+          "data"
+        ],
+        "title": "CreateQueueJob"
+      },
+      "CreateQueueJobMeta": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "delay": {
+            "type": "integer",
+            "title": "Delay",
+            "default": 0
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts",
+            "default": 0
+          },
+          "repeat": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Repeat"
+          }
+        },
+        "type": "object",
+        "title": "CreateQueueJobMeta"
+      },
+      "CronJobInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "cronjob_name": {
+            "type": "string",
+            "title": "Cronjob Name"
+          },
+          "pods": {
+            "items": {
+              "$ref": "#/components/schemas/PodInfo"
+            },
+            "type": "array",
+            "title": "Pods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "cronjob_name",
+          "pods"
+        ],
+        "title": "CronJobInfo"
+      },
+      "DaemonSetInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "daemonset_name": {
+            "type": "string",
+            "title": "Daemonset Name"
+          },
+          "available_replicas": {
+            "type": "integer",
+            "title": "Available Replicas"
+          },
+          "expected_replicas": {
+            "type": "integer",
+            "title": "Expected Replicas"
+          },
+          "pods": {
+            "items": {
+              "$ref": "#/components/schemas/PodInfo"
+            },
+            "type": "array",
+            "title": "Pods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "daemonset_name",
+          "available_replicas",
+          "expected_replicas",
+          "pods"
+        ],
+        "title": "DaemonSetInfo"
+      },
+      "DeploymentInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "deployment_name": {
+            "type": "string",
+            "title": "Deployment Name"
+          },
+          "available_replicas": {
+            "type": "integer",
+            "title": "Available Replicas"
+          },
+          "expected_replicas": {
+            "type": "integer",
+            "title": "Expected Replicas"
+          },
+          "pods": {
+            "items": {
+              "$ref": "#/components/schemas/PodInfo"
+            },
+            "type": "array",
+            "title": "Pods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "deployment_name",
+          "available_replicas",
+          "expected_replicas",
+          "pods"
+        ],
+        "title": "DeploymentInfo"
+      },
+      "DockerConfig": {
+        "properties": {
+          "image": {
+            "type": "string",
+            "title": "Image"
+          },
+          "detach": {
+            "type": "boolean",
+            "title": "Detach",
+            "default": true
+          },
+          "remove": {
+            "type": "boolean",
+            "title": "Remove",
+            "default": false
+          },
+          "privileged": {
+            "type": "boolean",
+            "title": "Privileged",
+            "default": true
+          },
+          "init": {
+            "type": "boolean",
+            "title": "Init",
+            "default": false
+          },
+          "tty": {
+            "type": "boolean",
+            "title": "Tty",
+            "default": false
+          },
+          "stdinOpen": {
+            "type": "boolean",
+            "title": "Stdinopen",
+            "default": false
+          },
+          "readOnly": {
+            "type": "boolean",
+            "title": "Readonly",
+            "default": false
+          },
+          "ports": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Ports",
+            "default": {}
+          },
+          "volumes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Volumes",
+            "default": []
+          },
+          "healthcheck": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HealthCheck"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "command": {
+            "type": "string",
+            "title": "Command",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "auto_remove": {
+            "type": "boolean",
+            "title": "Auto Remove",
+            "default": false
+          },
+          "cpuShares": {
+            "type": "string",
+            "title": "Cpushares",
+            "default": ""
+          },
+          "memory": {
+            "type": "string",
+            "title": "Memory",
+            "default": ""
+          },
+          "memoryReservation": {
+            "type": "string",
+            "title": "Memoryreservation",
+            "default": ""
+          },
+          "memorySwap": {
+            "type": "string",
+            "title": "Memoryswap",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "image",
+          "name"
+        ],
+        "title": "DockerConfig"
+      },
+      "DockerRequest": {
+        "properties": {
+          "command": {
+            "type": "string",
+            "title": "Command",
+            "default": ""
+          },
+          "directory": {
+            "type": "string",
+            "title": "Directory",
+            "default": "/"
+          }
+        },
+        "type": "object",
+        "title": "DockerRequest"
+      },
+      "GetContainerResponse": {
+        "properties": {
+          "containers": {
+            "items": {
+              "$ref": "#/components/schemas/ContainerInfo"
+            },
+            "type": "array",
+            "title": "Containers"
+          },
+          "length": {
+            "type": "integer",
+            "title": "Length"
+          }
+        },
+        "type": "object",
+        "required": [
+          "containers",
+          "length"
+        ],
+        "title": "GetContainerResponse"
+      },
+      "Get_Packages_Response": {
+        "properties": {
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/Package_Info"
+            },
+            "type": "array",
+            "title": "Packages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "packages"
+        ],
+        "title": "Get_Packages_Response"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthCheck": {
+        "properties": {
+          "test": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Test",
+            "default": []
+          },
+          "interval": {
+            "type": "integer",
+            "title": "Interval",
+            "default": 30000000000
+          },
+          "timeout": {
+            "type": "integer",
+            "title": "Timeout",
+            "default": 3000000000
+          },
+          "retries": {
+            "type": "integer",
+            "title": "Retries",
+            "default": 3
+          },
+          "startPeriod": {
+            "type": "integer",
+            "title": "Startperiod",
+            "default": 1000000000
+          }
+        },
+        "type": "object",
+        "title": "HealthCheck"
+      },
+      "HostConfig": {
+        "properties": {
+          "CpuShares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cpushares"
+          },
+          "Memory": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory"
+          },
+          "MemoryReservation": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memoryreservation"
+          },
+          "MemorySwap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memoryswap"
+          },
+          "PortBindings": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portbindings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "CpuShares",
+          "Memory",
+          "MemoryReservation",
+          "MemorySwap",
+          "PortBindings"
+        ],
+        "title": "HostConfig"
+      },
+      "InfraCreateUpdateRequest": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "sub_category": {
+            "type": "string",
+            "title": "Sub Category"
+          },
+          "project": {
+            "type": "string",
+            "title": "Project"
+          },
+          "file_name": {
+            "type": "string",
+            "title": "File Name"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "sub_category",
+          "project",
+          "file_name",
+          "content"
+        ],
+        "title": "InfraCreateUpdateRequest"
+      },
+      "InfraDeleteResponse": {
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "title": "Deleted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deleted"
+        ],
+        "title": "InfraDeleteResponse"
+      },
+      "InfraPostResponse": {
+        "properties": {
+          "created": {
+            "type": "boolean",
+            "title": "Created"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created"
+        ],
+        "title": "InfraPostResponse"
+      },
+      "InfraPutResponse": {
+        "properties": {
+          "edited": {
+            "type": "boolean",
+            "title": "Edited"
+          }
+        },
+        "type": "object",
+        "required": [
+          "edited"
+        ],
+        "title": "InfraPutResponse"
+      },
+      "IngressInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "ingress_name": {
+            "type": "string",
+            "title": "Ingress Name"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/IngressPath"
+            },
+            "type": "array",
+            "title": "Paths"
+          },
+          "services": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ServiceInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Services"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "ingress_name",
+          "host",
+          "paths"
+        ],
+        "title": "IngressInfo"
+      },
+      "IngressPath": {
+        "properties": {
+          "service_name": {
+            "type": "string",
+            "title": "Service Name"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "path_type": {
+            "type": "string",
+            "title": "Path Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service_name",
+          "path",
+          "path_type"
+        ],
+        "title": "IngressPath"
+      },
+      "JobInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "job_name": {
+            "type": "string",
+            "title": "Job Name"
+          },
+          "pods": {
+            "items": {
+              "$ref": "#/components/schemas/PodInfo"
+            },
+            "type": "array",
+            "title": "Pods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "job_name",
+          "pods"
+        ],
+        "title": "JobInfo"
+      },
+      "NamespaceInfo": {
+        "properties": {
+          "ingresses": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IngressInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingresses"
+          },
+          "services": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ServiceInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Services"
+          },
+          "deployments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DeploymentInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployments"
+          },
+          "statefulsets": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StatefulSetInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statefulsets"
+          },
+          "daemonsets": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DaemonSetInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daemonsets"
+          },
+          "cronJobs": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/CronJobInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cronjobs"
+          },
+          "jobs": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/JobInfo"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jobs"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/NodeInfo"
+            },
+            "type": "array",
+            "title": "Nodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes"
+        ],
+        "title": "NamespaceInfo"
+      },
+      "NodeInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "age": {
+            "type": "string",
+            "title": "Age"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "internalIP": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Internalip"
+          },
+          "externalIP": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Externalip"
+          },
+          "os": {
+            "type": "string",
+            "title": "Os"
+          },
+          "architecture": {
+            "type": "string",
+            "title": "Architecture"
+          },
+          "resources": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Resources"
+          },
+          "conditions": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Conditions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "name",
+          "status",
+          "role",
+          "age",
+          "version",
+          "internalIP",
+          "externalIP",
+          "os",
+          "architecture",
+          "resources",
+          "conditions"
+        ],
+        "title": "NodeInfo"
+      },
+      "Package_Info": {
+        "properties": {
+          "name": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Name"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "created": {
+            "type": "string",
+            "title": "Created"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "virtual_size": {
+            "type": "integer",
+            "title": "Virtual Size"
+          },
+          "repo_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Repo Tags"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "tags",
+          "created",
+          "size",
+          "virtual_size",
+          "repo_tags"
+        ],
+        "title": "Package_Info"
+      },
+      "PodInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "restarts": {
+            "type": "integer",
+            "title": "Restarts"
+          },
+          "age": {
+            "type": "string",
+            "title": "Age"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "node": {
+            "type": "string",
+            "title": "Node"
+          },
+          "resources": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Resources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "name",
+          "status",
+          "restarts",
+          "age",
+          "ip",
+          "node",
+          "resources"
+        ],
+        "title": "PodInfo"
+      },
+      "PullConfig": {
+        "properties": {
+          "image": {
+            "type": "string",
+            "title": "Image"
+          },
+          "registry": {
+            "type": "string",
+            "title": "Registry",
+            "default": "docker.io"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image"
+        ],
+        "title": "PullConfig"
+      },
+      "ResourceResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "namespaced": {
+            "type": "boolean",
+            "title": "Namespaced"
+          },
+          "api_version": {
+            "type": "string",
+            "title": "Api Version"
+          },
+          "short_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Short Names"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "namespaced",
+          "api_version",
+          "short_names"
+        ],
+        "title": "ResourceResponse"
+      },
+      "ResourceScope": {
+        "type": "string",
+        "enum": [
+          "namespaced",
+          "cluster",
+          "all"
+        ],
+        "title": "ResourceScope"
+      },
+      "RunContainer": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "run",
+              "update",
+              "rerun",
+              "pause",
+              "remove",
+              "stop",
+              "logs",
+              "files",
+              "command"
+            ],
+            "title": "Action"
+          },
+          "containerId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Containerid"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image"
+          },
+          "dir": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DockerRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instanceConfig": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DockerConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updateInstanceConfig": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UpdateDockerConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "RunContainer"
+      },
+      "RunImage": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "packageId": {
+            "type": "string",
+            "title": "Packageid",
+            "default": ""
+          },
+          "pull_config": {
+            "$ref": "#/components/schemas/PullConfig"
+          },
+          "create_config": {
+            "$ref": "#/components/schemas/CreateConfig"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "RunImage"
+      },
+      "RunQueue": {
+        "properties": {
+          "queueName": {
+            "type": "string",
+            "title": "Queuename"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix"
+          },
+          "processFileName": {
+            "type": "string",
+            "title": "Processfilename"
+          },
+          "queueProps": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Queueprops"
+          }
+        },
+        "type": "object",
+        "required": [
+          "queueName",
+          "prefix",
+          "processFileName"
+        ],
+        "title": "RunQueue"
+      },
+      "ServiceCreationSpec": {
+        "properties": {
+          "image": {
+            "type": "string",
+            "title": "Image"
+          },
+          "command": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Command"
+          },
+          "args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Args"
+          },
+          "constraints": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Constraints"
+          },
+          "preferences": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {},
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferences"
+          },
+          "maxreplicas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxreplicas"
+          },
+          "container_labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Container Labels"
+          },
+          "env": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Env"
+          },
+          "hostname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hostname"
+          },
+          "init": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Init",
+            "default": false
+          },
+          "isolation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isolation"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          },
+          "log_driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Log Driver",
+            "default": "json-file"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode",
+            "default": "replicated"
+          },
+          "networks": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Networks"
+          },
+          "resources": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resources"
+          },
+          "restart_policy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restart Policy",
+            "default": "any"
+          },
+          "update_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Update Config"
+          },
+          "rollback_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rollback Config"
+          },
+          "secrets": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Secrets"
+          },
+          "stop_grace_period": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Grace Period"
+          },
+          "workdir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workdir"
+          },
+          "tty": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tty",
+            "default": false
+          },
+          "open_stdin": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Stdin",
+            "default": false
+          },
+          "read_only": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read Only",
+            "default": false
+          },
+          "stop_signal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Signal"
+          },
+          "healthcheck": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Healthcheck"
+          },
+          "hosts": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hosts"
+          },
+          "dns_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dns Config"
+          },
+          "configs": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configs"
+          },
+          "privileges": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Privileges"
+          },
+          "cap_add": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cap Add"
+          },
+          "cap_drop": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cap Drop"
+          },
+          "sysctls": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sysctls"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image"
+        ],
+        "title": "ServiceCreationSpec"
+      },
+      "ServiceInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "service_name": {
+            "type": "string",
+            "title": "Service Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "clusterIP": {
+            "type": "string",
+            "title": "Clusterip"
+          },
+          "externalIP": {
+            "type": "string",
+            "title": "Externalip"
+          },
+          "age": {
+            "type": "string",
+            "title": "Age"
+          },
+          "ports": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Ports"
+          },
+          "deployments": {
+            "items": {
+              "$ref": "#/components/schemas/DeploymentInfo"
+            },
+            "type": "array",
+            "title": "Deployments",
+            "default": []
+          },
+          "daemonsets": {
+            "items": {
+              "$ref": "#/components/schemas/DaemonSetInfo"
+            },
+            "type": "array",
+            "title": "Daemonsets",
+            "default": []
+          },
+          "statefulsets": {
+            "items": {
+              "$ref": "#/components/schemas/StatefulSetInfo"
+            },
+            "type": "array",
+            "title": "Statefulsets",
+            "default": []
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/JobInfo"
+            },
+            "type": "array",
+            "title": "Jobs",
+            "default": []
+          },
+          "cronjobs": {
+            "items": {
+              "$ref": "#/components/schemas/CronJobInfo"
+            },
+            "type": "array",
+            "title": "Cronjobs",
+            "default": []
+          },
+          "node_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Node Names",
+            "default": []
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selector"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "service_name",
+          "type",
+          "clusterIP",
+          "externalIP",
+          "age",
+          "ports"
+        ],
+        "title": "ServiceInfo"
+      },
+      "StatefulSetInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "statefulset_name": {
+            "type": "string",
+            "title": "Statefulset Name"
+          },
+          "available_replicas": {
+            "type": "integer",
+            "title": "Available Replicas"
+          },
+          "expected_replicas": {
+            "type": "integer",
+            "title": "Expected Replicas"
+          },
+          "pods": {
+            "items": {
+              "$ref": "#/components/schemas/PodInfo"
+            },
+            "type": "array",
+            "title": "Pods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "statefulset_name",
+          "available_replicas",
+          "expected_replicas",
+          "pods"
+        ],
+        "title": "StatefulSetInfo"
+      },
+      "StopQueue": {
+        "properties": {
+          "containerName": {
+            "type": "string",
+            "title": "Containername"
+          }
+        },
+        "type": "object",
+        "required": [
+          "containerName"
+        ],
+        "title": "StopQueue"
+      },
+      "SwarmInitParams": {
+        "properties": {
+          "advertise_addr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advertise Addr",
+            "default": "eth0"
+          },
+          "listen_addr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listen Addr",
+            "default": "0.0.0.0:2377"
+          },
+          "force_new_cluster": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Force New Cluster",
+            "default": false
+          },
+          "default_addr_pool": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Addr Pool",
+            "default": [
+              "10.0.0.0/8"
+            ]
+          },
+          "subnet_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subnet Size",
+            "default": 24
+          },
+          "data_path_addr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Path Addr",
+            "default": "192.168.1.1"
+          },
+          "data_path_port": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Path Port"
+          },
+          "task_history_retention_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task History Retention Limit",
+            "default": 100
+          },
+          "snapshot_interval": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Interval",
+            "default": 5000
+          },
+          "keep_old_snapshots": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keep Old Snapshots",
+            "default": 3
+          },
+          "log_entries_for_slow_followers": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Log Entries For Slow Followers",
+            "default": 1200
+          },
+          "heartbeat_tick": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeat Tick",
+            "default": 1
+          },
+          "election_tick": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Election Tick",
+            "default": 3
+          },
+          "dispatcher_heartbeat_period": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dispatcher Heartbeat Period",
+            "default": 5
+          },
+          "node_cert_expiry": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Cert Expiry",
+            "default": 0
+          },
+          "external_ca": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Ca"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "default": "default-swarm"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels",
+            "default": {}
+          },
+          "signing_ca_cert": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signing Ca Cert"
+          },
+          "signing_ca_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signing Ca Key"
+          },
+          "ca_force_rotate": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ca Force Rotate",
+            "default": 0
+          },
+          "autolock_managers": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Autolock Managers",
+            "default": false
+          },
+          "log_driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Log Driver",
+            "default": "json-file"
+          }
+        },
+        "type": "object",
+        "title": "SwarmInitParams"
+      },
+      "SwarmJoinParams": {
+        "properties": {
+          "remote_addrs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Remote Addrs"
+          },
+          "join_token": {
+            "type": "string",
+            "title": "Join Token"
+          },
+          "listen_addr": {
+            "type": "string",
+            "title": "Listen Addr",
+            "default": "0.0.0.0:2377"
+          },
+          "advertise_addr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advertise Addr"
+          },
+          "data_path_addr": {
+            "type": "string",
+            "title": "Data Path Addr",
+            "default": "eth0"
+          }
+        },
+        "type": "object",
+        "required": [
+          "remote_addrs",
+          "join_token"
+        ],
+        "title": "SwarmJoinParams"
+      },
+      "SwarmUpdateSpec": {
+        "properties": {
+          "rotate_worker_token": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotate Worker Token",
+            "default": false
+          },
+          "rotate_manager_token": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotate Manager Token",
+            "default": false
+          },
+          "rotate_manager_unlock_key": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotate Manager Unlock Key",
+            "default": false
+          },
+          "force_new_cluster": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Force New Cluster",
+            "default": false
+          },
+          "advertise_addr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advertise Addr"
+          },
+          "listen_addr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listen Addr",
+            "default": "0.0.0.0:2377"
+          },
+          "default_addr_pool": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Addr Pool"
+          },
+          "subnet_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subnet Size"
+          },
+          "task_history_retention_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task History Retention Limit",
+            "default": 0
+          },
+          "snapshot_interval": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Interval",
+            "default": 5000
+          },
+          "keep_old_snapshots": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keep Old Snapshots"
+          },
+          "heartbeat_tick": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeat Tick",
+            "default": 1
+          },
+          "election_tick": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Election Tick",
+            "default": 3
+          },
+          "autolock_managers": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Autolock Managers",
+            "default": false
+          },
+          "log_driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Log Driver"
+          }
+        },
+        "type": "object",
+        "title": "SwarmUpdateSpec"
+      },
+      "SystemInfo": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "SystemInfo"
+      },
+      "UpdateDockerConfig": {
+        "properties": {
+          "cpuShares": {
+            "type": "string",
+            "title": "Cpushares",
+            "default": ""
+          },
+          "memory": {
+            "type": "string",
+            "title": "Memory",
+            "default": ""
+          },
+          "memoryReservation": {
+            "type": "string",
+            "title": "Memoryreservation",
+            "default": ""
+          },
+          "memorySwap": {
+            "type": "string",
+            "title": "Memoryswap",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "UpdateDockerConfig"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VolumeActionEnum": {
+        "type": "string",
+        "enum": [
+          "prune",
+          "remove",
+          "add"
+        ],
+        "title": "VolumeActionEnum"
+      },
+      "VolumeActionRequest": {
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/VolumeActionEnum"
+          },
+          "volume_id": {
+            "type": "string",
+            "title": "Volume Id"
+          },
+          "add_data": {
+            "$ref": "#/components/schemas/AddVolumeData"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "VolumeActionRequest"
+      },
+      "kubernertes__methods__apply__index__ApplyBody": {
+        "properties": {
+          "manifest": {
+            "type": "string",
+            "title": "Manifest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "manifest"
+        ],
+        "title": "ApplyBody"
+      },
+      "kubernertes__methods__delete__index__ApplyBody": {
+        "properties": {
+          "manifest": {
+            "type": "string",
+            "title": "Manifest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "manifest"
+        ],
+        "title": "ApplyBody"
+      },
+      "kubernertes__methods__patch__index__ApplyBody": {
+        "properties": {
+          "manifest": {
+            "type": "string",
+            "title": "Manifest"
+          },
+          "op_name": {
+            "type": "string",
+            "title": "Op Name"
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "manifest",
+          "op_name",
+          "data"
+        ],
+        "title": "ApplyBody"
+      },
+      "nodes___node_id___NodeSpec": {
+        "properties": {
+          "Availability": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Availability",
+            "default": "active"
+          },
+          "Role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role",
+            "default": "worker"
+          },
+          "Labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          },
+          "Constraints": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Constraints"
+          },
+          "Hostname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hostname"
+          }
+        },
+        "type": "object",
+        "title": "NodeSpec"
+      }
+    }
+  }
+}
