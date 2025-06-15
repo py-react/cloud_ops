@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StorageInfo } from "@/types/storage";
 import { StoragesList } from "@/components/storages/StoragesList";
-import { CreateStorageForm } from "@/components/storages/CreateStorageForm";
+import { CreateStorageForm } from "@/components/storages/forms/CreateStorageForm";
 import { HardDrive, Search } from "lucide-react";
 import RouteDescription from "@/components/route-description";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DefaultService } from '@/gingerJs_api_client';
 import { VolumeActionRequest } from '@/gingerJs_api_client/models/VolumeActionRequest';
@@ -137,35 +137,22 @@ export default function StoragePage() {
         </Card>
       </div>
       
-      <Sheet open={showCreate} onOpenChange={setShowCreate}>
-        <SheetContent className="!w-[30%] sm:!max-w-[30%]">
-          <SheetHeader>
-            <SheetTitle>Create Volume</SheetTitle>
-          </SheetHeader>
-          <div className="h-[calc(100vh-8rem)]">
-            <ScrollArea className="h-full pr-4">
-              <div className="p-4">
-                <CreateStorageForm
-                  onSubmit={handleCreateStorage}
-                  onCancel={() => {
-                    setShowCreate(false)
-                  }}
-                />
-              </div>
-            </ScrollArea>
-          </div>
-          <SheetFooter className='p-4'>
-            <Button type="button" variant="outline" onClick={() => {
-              setShowCreate(false)
-            }}>
-              Cancel
-            </Button>
-            <Button type="submit" form="create-storage-form">
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-none w-screen h-screen p-0">
+        <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
+            <DialogTitle className="flex items-center gap-2 w-full px-6">
+              <HardDrive className="h-5 w-5" />
               Create Volume
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 h-[calc(100vh-8rem)] px-6">
+            <CreateStorageForm
+              onSubmit={handleCreateStorage}
+              onCancel={() => setShowCreate(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -22,8 +22,8 @@ import {
 import { parseContainerName } from "src/libs/container-utils";
 import type { Container } from "src/types/container";
 import { Box, Clock } from "lucide-react";
-import { ContainerStatus } from "./ContainerStatus";
-import { ContainerPorts } from "./ContainerPorts";
+import { ContainerStatus } from "./common/ContainerStatus";
+import { ContainerPorts } from "./common/ContainerPorts";
 import { formatDistanceToNow } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -32,11 +32,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {FileExplorer} from "@/components/containers/FileExplorer"
+import {FileExplorer} from "@/components/containers/common/file-explorer/FileExplorer"
 import { Tabs } from "@/components/ui/tabs";
 import { ReactTerminal, TerminalContextProvider } from "react-terminal";
 import { toast } from "sonner"
-import { ContainerStats } from "./ContainerStats";
+import { ContainerStats } from "./common/ContainerStats";
 import { formatBytes } from "@/libs/utils";
 import { ApiError, DefaultService, RunContainer } from "@/gingerJs_api_client";
 

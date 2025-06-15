@@ -1,6 +1,6 @@
 import React from 'react';
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
-import { ContainerFilters } from './ContainerFilters';
+import { ContainerFilters } from './common/ContainerFilters';
 import { useContainerFilters } from './hooks/useContainerFilters';
 import { formatDistanceToNow } from 'date-fns';
 import { ContainerIcon, EyeIcon, EditIcon, Terminal, Ban, TrashIcon, PlayIcon, PauseIcon, LoaderIcon } from 'lucide-react';

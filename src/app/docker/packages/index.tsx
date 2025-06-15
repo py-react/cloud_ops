@@ -3,16 +3,15 @@ import useAutoRefresh from "@/components/containers/hooks/useAutoRefresh";
 import { ArrowDownToLineIcon, ContainerIcon, Loader, LoaderIcon } from "lucide-react";
 import { PackagesList } from "@/components/packages/PackagesList";
 import { toast } from "sonner";
-import { PackageCreatorModal } from "@/components/packages/runner/CreatePackageModal";
 import { PackageInfo } from "@/types/package";
 import { PackageTableData } from '@/components/packages/PackagesList';
 import { DefaultService } from '@/gingerJs_api_client';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import RouteDescription from '@/components/route-description';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
-import { PackageRunnerForm } from '@/components/packages/runner/PackgerRunnerForm';
+import { PackageRunnerForm } from '@/components/packages/forms/PackagePullerForm';
+import { PackageCreatorForm } from '@/components/packages/forms/PackageCreatorForm';
 
 const fetchPackages = async () => {
   const response = await DefaultService.apiPackgesGet();
@@ -30,16 +29,16 @@ const fetchPackages = async () => {
   }));
 };
 
-const PackagesPage= () => {
+const PackagesPage = () => {
   const [showPackagePullModal, setShowPackagePullModal] = useState(false);
   const [showPackageCreateModal, setShowPackageCreateModal] = useState(false);
   const [showConfettiModal, setShowConfettiModal] = useState(false);
   const [successPackage, setSuccessPackage] = useState<PackageInfo | null>(null);
   const [pullSubmitting, setPullSubmitting] = useState(false);
+  const [createSubmitting, setCreateSubmitting] = useState(false);
 
   const [packages, setPackages] = useState<PackageInfo[]>([]);
   const [error, setError] = useState(undefined);
-
 
   useEffect(() => {
       fetchPackages().then((res)=>{
@@ -132,16 +131,21 @@ const PackagesPage= () => {
           </CardContent>
         </Card>
       </div>
-      <Sheet open={showPackagePullModal} onOpenChange={setShowPackagePullModal}>
-        <SheetContent className="!w-[30%] sm:!max-w-[30%]">
-          <SheetHeader>
-            <SheetTitle>Pull package</SheetTitle>
-          </SheetHeader>
-          <div className="p-4 h-[86vh]">
+
+      {/* Pull Package Dialog */}
+      <Dialog open={showPackagePullModal} onOpenChange={setShowPackagePullModal}>
+        <DialogContent className="max-w-none w-screen h-screen p-0">
+          <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
+            <DialogTitle className="flex items-center gap-2 w-full px-6">
+              <ArrowDownToLineIcon className="h-5 w-5" />
+              Pull Package
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 h-[calc(100vh-8rem)] px-6">
             <PackageRunnerForm
               onSubmitHandler={async (pullPackageInfo) => {
                 setPullSubmitting(true);
-                const reasponse = await fetch("/api/packges", {
+                const response = await fetch("/api/packges", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -152,7 +156,7 @@ const PackagesPage= () => {
                     },
                   }),
                 });
-                const responseData = await reasponse.json();
+                const responseData = await response.json();
                 setPullSubmitting(false);
                 if (responseData.error) {
                   toast.error(responseData.message);
@@ -160,52 +164,58 @@ const PackagesPage= () => {
                 }
                 setShowPackagePullModal(false);
                 toast.success(responseData.message);
+                const newPackages = await fetchPackages();
+                setPackages(newPackages);
               }}
               submitting={pullSubmitting}
               setSubmitting={setPullSubmitting}
             />
           </div>
-          <SheetFooter className='p-4'>
-            <Button type="button" variant="outline" onClick={() => setShowPackagePullModal(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" form="pull-package-form" disabled={pullSubmitting} onClick={() => {}}>
-            {pullSubmitting ? (
-                <LoaderIcon className="w-4 h-4 mr-2" />
-              ) : (
-                <ArrowDownToLineIcon className="w-4 h-4 mr-2" />
-              )}
-              Pull
-              Pull Package
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-      <PackageCreatorModal
-        onSubmit={async (data) => {
-          const reasponse = await fetch("/api/packges", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "create",
-              create_config: data,
-            }),
-          });
+        </DialogContent>
+      </Dialog>
 
-          const responseData = await reasponse.json();
-          if (responseData.error) {
-            toast.error(responseData.message);
-            return;
-          }
-          setShowPackageCreateModal(false);
-          toast.success(responseData.message);
-        }}
-        open={showPackageCreateModal}
-        onClose={() => setShowPackageCreateModal(false)}
-      />
+      {/* Create Package Dialog */}
+      <Dialog open={showPackageCreateModal} onOpenChange={setShowPackageCreateModal}>
+        <DialogContent className="max-w-none w-screen h-screen p-0">
+          <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
+            <DialogTitle className="flex items-center gap-2 w-full px-6">
+              <ContainerIcon className="h-5 w-5" />
+              Create Package
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 h-[calc(100vh-8rem)] px-6">
+            <PackageCreatorForm
+              onSubmitHandler={async (data) => {
+                setCreateSubmitting(true);
+                const response = await fetch("/api/packges", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    action: "create",
+                    create_config: data,
+                  }),
+                });
+                const responseData = await response.json();
+                setCreateSubmitting(false);
+                if (responseData.error) {
+                  toast.error(responseData.message);
+                  return;
+                }
+                setShowPackageCreateModal(false);
+                toast.success(responseData.message);
+                const newPackages = await fetchPackages();
+                setPackages(newPackages);
+              }}
+              submitting={createSubmitting}
+              setSubmitting={setCreateSubmitting}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Confetti Dialog */}
       <Dialog open={showConfettiModal} onOpenChange={setShowConfettiModal}>
         <DialogContent className="flex flex-col items-center justify-center">
-          {/* Simple SVG confetti */}
           <div className="absolute inset-0 pointer-events-none z-10">
             <svg width="100%" height="100%" viewBox="0 0 400 200">
               <circle cx="50" cy="40" r="6" fill="#fbbf24" />

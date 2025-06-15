@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { NetworkListResponse } from "@/gingerJs_api_client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { NetworkDetails } from "./NetworkDetails";
+import { toast } from "sonner";
 
 interface NetworkTableData {
   name: string;
@@ -76,7 +77,7 @@ export function NetworkList({ networks, onDelete, onEdit }: INetworkList) {
         columns={columns}
         data={data}
         onDelete={handleDeleteClick}
-        onViewConfig={onEdit}
+        onEdit={onEdit}
         onViewDetails={handleViewDetails}
         tableClassName="max-h-[490px]"
       />

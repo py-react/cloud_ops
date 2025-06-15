@@ -2,7 +2,7 @@ import React from 'react';
 import { FileExplorerHeader } from './FileExplorerHeader';
 import { FileExplorerList } from './FileExplorerList';
 import { FileExplorerToolbar } from './FileExplorerToolbar';
-import { useFileExplorer } from './hooks/useFileExplorer';
+import { useFileExplorer } from '../../hooks/useFileExplorer';
 import type { FileSystemEntry } from '@/types/file-explorer';
 
 interface FileExplorerProps {

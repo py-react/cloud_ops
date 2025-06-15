@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Network } from '@/components/network/types';
 import { NetworkList } from '@/components/network/NetworkList';
-import { CreateNetworkForm } from '@/components/network/CreateNetworkForm';
+import { CreateNetworkForm } from '@/components/network/forms/CreateNetworkForm';
 import { Network as NetworkIcon, Search } from 'lucide-react';
 import { DefaultService, NetworkListResponse } from '@/gingerJs_api_client';
 import RouteDescription from '@/components/route-description';
@@ -17,7 +17,8 @@ import {
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { EditNetworkForm } from '@/components/network/EditNetworkForm';
+import { EditNetworkForm } from '@/components/network/forms/EditNetworkForm';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const fetchNetworks = async () => {
   const response = await DefaultService.apiNetworksGet();
@@ -188,64 +189,45 @@ export default function NetworkPage() {
         </Card>
       </div>
       
-      <Sheet open={showCreate} onOpenChange={setShowCreate}>
-        <SheetContent className="!w-[30%] sm:!max-w-[30%]">
-          <SheetHeader>
-            <SheetTitle>Create Network</SheetTitle>
-          </SheetHeader>
-          <ScrollArea className="h-[calc(100vh-8rem)] pr-4">
-            <div className="p-4">
-              <CreateNetworkForm
-                onSubmit={handleCreateNetwork}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-none w-screen h-screen p-0">
+          <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
+            <DialogTitle className="flex items-center gap-2 w-full px-6">
+              <NetworkIcon className="h-5 w-5" />
+              Create Network
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 h-[calc(100vh-8rem)] px-6">
+            <CreateNetworkForm
+              onSubmit={handleCreateNetwork}
+              onCancel={() => {
+                setShowCreate(false)
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+        <Dialog open={showEdit} onOpenChange={setShowEdit}>
+          <DialogContent className="max-w-none w-screen h-screen p-0">
+            <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
+              <DialogTitle className="flex items-center gap-2 w-full px-6">
+                <NetworkIcon className="h-5 w-5" />
+                Patch Network
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 h-[calc(100vh-8rem)] px-6">
+              <EditNetworkForm
+                network={currentNetworkToEdit?.network}
+                onSubmit={handlePatchNetwork}
                 onCancel={() => {
-                  setShowCreate(false)
+                  setShowEdit(false);
+                  setCurrentNetworkToEdit(undefined);
                 }}
               />
             </div>
-          </ScrollArea>
-          <SheetFooter className='p-4'>
-            <Button type="button" variant="outline" onClick={() => {
-              setShowCreate(false)
-            }}>
-              Cancel
-            </Button>
-            <Button type="submit" form="create-network-form">
-              Create Network
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-        <Sheet open={showEdit} onOpenChange={setShowEdit}>
-          <SheetContent className="!w-[30%] sm:!max-w-[30%]">
-            <SheetHeader>
-              <SheetTitle>Patch Network</SheetTitle>
-            </SheetHeader>
-            <ScrollArea className="h-[calc(100vh-8rem)] pr-4">
-              <div className="p-4">
-                <EditNetworkForm
-                  network={currentNetworkToEdit?.network}
-                  onSubmit={handlePatchNetwork}
-                  onCancel={() => {
-                    setShowEdit(false);
-                    setCurrentNetworkToEdit(undefined);
-                  }}
-                />
-              </div>
-            </ScrollArea>
-            <SheetFooter className='p-4'>
-              <Button type="button" variant="outline" onClick={() => {
-                setShowCreate(false)
-                setCurrentNetworkToEdit(undefined)
-              }}>
-                Cancel
-              </Button>
-              <Button type="submit" form="edit-network-form">
-                Patch Network
-              </Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }
