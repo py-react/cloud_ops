@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ResourceTable } from "../kubernetes/resources/resourceTable";
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import { Network } from "./types";
 import { format } from 'date-fns';
 import { Badge } from "@/components/ui/badge";

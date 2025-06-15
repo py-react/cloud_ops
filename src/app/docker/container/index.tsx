@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import { ContainerDetails } from "@/components/containers/ContainerDetails";
-import { useContainerDetails } from "@/components/containers/hooks/useContainerDetails";
+import { ContainerDetails } from "@/components/docker/containers/ContainerDetails";
+import { useContainerDetails } from "@/components/docker/containers/hooks/useContainerDetails";
 import { Plus, Loader2, ContainerIcon, ChevronRight, Terminal, ServerIcon } from "lucide-react";
-import { ContainerRunnerForm } from "@/components/containers/forms/ContainerRunnerForm";
-import { ContainerRunConfig } from "@/components/containers/forms/types";
+import { ContainerRunnerForm } from "@/components/docker/containers/forms/ContainerRunnerForm";
+import { ContainerRunConfig } from "@/components/docker/containers/forms/types";
 import { toast } from "sonner";
-import { ContainerRunnerUpdateModal } from "@/components/containers/forms/ContainerRunnerUpdateModal";
+import { ContainerRunnerUpdateModal } from "@/components/docker/containers/forms/ContainerRunnerUpdateModal";
 import { useContainers } from 'src/hooks/useContainers';
 import RouteDescription from '@/components/route-description';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ContainersTable } from '@/components/containers/ContainersTable';
+import { ContainersTable } from '@/components/docker/containers/ContainersTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 function ContainersPage() {

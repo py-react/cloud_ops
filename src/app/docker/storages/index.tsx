@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StorageInfo } from "@/types/storage";
-import { StoragesList } from "@/components/storages/StoragesList";
-import { CreateStorageForm } from "@/components/storages/forms/CreateStorageForm";
+import { StoragesList } from "@/components/docker/storages/StoragesList";
+import { CreateStorageForm } from "@/components/docker/storages/forms/CreateStorageForm";
 import { HardDrive, Search } from "lucide-react";
 import RouteDescription from "@/components/route-description";
 import { Button } from "@/components/ui/button";

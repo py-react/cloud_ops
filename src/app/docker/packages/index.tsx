@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from "react";
-import useAutoRefresh from "@/components/containers/hooks/useAutoRefresh";
-import { ArrowDownToLineIcon, ContainerIcon, Loader, LoaderIcon } from "lucide-react";
-import { PackagesList } from "@/components/packages/PackagesList";
+import { ArrowDownToLineIcon, ContainerIcon } from "lucide-react";
+import { PackagesList } from "@/components/docker/packages/PackagesList";
 import { toast } from "sonner";
 import { PackageInfo } from "@/types/package";
-import { PackageTableData } from '@/components/packages/PackagesList';
+import { PackageTableData } from '@/components/docker/packages/PackagesList';
 import { DefaultService } from '@/gingerJs_api_client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import RouteDescription from '@/components/route-description';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
-import { PackageRunnerForm } from '@/components/packages/forms/PackagePullerForm';
-import { PackageCreatorForm } from '@/components/packages/forms/PackageCreatorForm';
+import { PackageRunnerForm } from '@/components/docker/packages/forms/PackagePullerForm';
+import { PackageCreatorForm } from '@/components/docker/packages/forms/PackageCreatorForm';
 
 const fetchPackages = async () => {
   const response = await DefaultService.apiPackgesGet();

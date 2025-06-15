@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Network } from '@/components/network/types';
-import { NetworkList } from '@/components/network/NetworkList';
-import { CreateNetworkForm } from '@/components/network/forms/CreateNetworkForm';
+import { NetworkList } from '@/components/docker/network/NetworkList';
+import { CreateNetworkForm } from '@/components/docker/network/forms/CreateNetworkForm';
 import { Network as NetworkIcon, Search } from 'lucide-react';
 import { DefaultService, NetworkListResponse } from '@/gingerJs_api_client';
 import RouteDescription from '@/components/route-description';
@@ -15,9 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from 'sonner';
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { EditNetworkForm } from '@/components/network/forms/EditNetworkForm';
+import { EditNetworkForm } from '@/components/docker/network/forms/EditNetworkForm';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const fetchNetworks = async () => {

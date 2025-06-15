@@ -1,7 +1,7 @@
 import React from "react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Editor } from "@monaco-editor/react";
-import { OptionalBadge } from "@/components/network/forms/badges";
+import { OptionalBadge } from "@/components/docker/network/forms/badges";
 
 export function AdvancedConfig({ control, errors }: { control: any; errors: any }) {
   return (

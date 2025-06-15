@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {FileExplorer} from "@/components/containers/common/file-explorer/FileExplorer"
+import {FileExplorer} from "@/components/docker/containers/common/file-explorer/FileExplorer"
 import { Tabs } from "@/components/ui/tabs";
 import { ReactTerminal, TerminalContextProvider } from "react-terminal";
 import { toast } from "sonner"

@@ -1,7 +1,7 @@
 import React from "react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { OptionalBadge, RequiredBadge } from "@/components/network/forms/badges";
+import { OptionalBadge, RequiredBadge } from "@/components/docker/network/forms/badges";
 
 export function BasicConfig({ control, errors }: { control: any; errors: any }) {
   return (

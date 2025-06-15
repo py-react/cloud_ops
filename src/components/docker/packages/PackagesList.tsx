@@ -1,5 +1,5 @@
 import React from 'react';
-import { ResourceTable } from '../kubernetes/resources/resourceTable';
+import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
 import type { PackageInfo } from 'src/types/package';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';

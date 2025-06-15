@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StorageInfo } from '@/types/storage';
-import { ResourceTable } from "../kubernetes/resources/resourceTable";
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import { format } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';

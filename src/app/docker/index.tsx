@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import useAutoRefresh from "@/components/containers/hooks/useAutoRefresh";
+import useAutoRefresh from "@/components/docker/containers/hooks/useAutoRefresh"; 
 import { Loader } from "lucide-react";
-import SystemInfo from "@/components/systemOverview/Overview";
+import SystemInfo from "@/components/docker/systemOverview/Overview";
 
 const fetchInfo = async () => {
   // Simulating an API call
