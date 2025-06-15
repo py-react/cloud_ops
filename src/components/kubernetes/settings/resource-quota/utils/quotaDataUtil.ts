@@ -6,7 +6,7 @@ import { QuotaFormValues, ResourceQuota } from "@/components/kubernetes/settings
 export const extractQuotaFormValues = (quota: ResourceQuota): Partial<QuotaFormValues> => {
     if (!quota || !Object.keys(quota).length || !quota?.spec?.hard) {
       return {
-        quotaName: "resource-quota",
+        quotaName: "",
         computeQuota: false,
         storageQuota: false,
         objectQuota: false,
@@ -18,7 +18,7 @@ export const extractQuotaFormValues = (quota: ResourceQuota): Partial<QuotaFormV
     }
   
     const defaultValues: Partial<QuotaFormValues> = {
-      quotaName: quota?.name || "resource-quota", // Use the first quota's name as default
+      quotaName: quota?.name || "", // Use the first quota's name as default
       quotaNamespace: quota?.namespace || "default", // Use the first quota's name as default
       computeQuota: false,
       storageQuota: false,

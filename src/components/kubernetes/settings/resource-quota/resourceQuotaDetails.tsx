@@ -10,10 +10,14 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs } from "@/components/ui/tabs";
+import { Info, Settings } from "lucide-react";
 import {
   Form,
 } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs-v2";
+import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs-v2";
 import { toast } from "sonner";
 import { formToYaml, yamlToForm } from "./utils/quotaYamlUtil";
 import { quotaSchema, QuotaFormValues, NamespaceSettingsModalProps } from './types/quota';
@@ -28,6 +32,51 @@ import ScopesTab from './quota-tabs/scope';
 import PriorityClassTab from './quota-tabs/priorityClass';
 import AdvancedTab from './quota-tabs/advance';
 
+const steps = [
+  {
+    id: 'compute',
+    label: 'Compute Resources',
+    description: 'Configure CPU and memory resource limits.',
+    longDescription: 'Set resource quotas for CPU and memory usage in your namespace. You can specify both requests (guaranteed resources) and limits (maximum resources) for CPU and memory. These settings help ensure fair resource distribution and prevent resource exhaustion.',
+    component: ComputeResourcesTab
+  },
+  {
+    id: 'storage',
+    label: 'Storage Resources',
+    description: 'Configure storage resource limits.',
+    longDescription: 'Define storage quotas for your namespace, including persistent volume claims and storage class limits. These settings help manage storage capacity and prevent storage-related issues.',
+    component: StorageResourcesTab
+  },
+  {
+    id: 'objects',
+    label: 'Object Counts',
+    description: 'Set limits on the number of Kubernetes objects.',
+    longDescription: 'Control the number of various Kubernetes objects that can be created in your namespace, such as pods, services, and secrets. This helps prevent resource exhaustion and maintains cluster health.',
+    component: ObjectCountsTab
+  },
+  {
+    id: 'scopes',
+    label: 'Quota Scopes',
+    description: 'Configure quota scopes and selectors.',
+    longDescription: 'Define which resources are counted towards quota limits using scopes and selectors. This allows for fine-grained control over which resources are subject to quota restrictions.',
+    component: ScopesTab
+  },
+  {
+    id: 'priority',
+    label: 'Priority Classes',
+    description: 'Configure priority class quotas.',
+    longDescription: 'Set quotas for different priority classes in your namespace. This helps manage resource allocation based on workload priorities and ensures critical workloads get the resources they need.',
+    component: PriorityClassTab
+  },
+  {
+    id: 'advanced',
+    label: 'Advanced Settings',
+    description: 'Configure advanced quota settings and YAML.',
+    longDescription: 'Access advanced configuration options and raw YAML editing. This section is for experienced users who need fine-grained control over quota settings.',
+    component: AdvancedTab
+  }
+];
+
 const ResourceQuotaDetails: React.FC<NamespaceSettingsModalProps> = ({
   quotaName,
   quota,
@@ -35,8 +84,7 @@ const ResourceQuotaDetails: React.FC<NamespaceSettingsModalProps> = ({
   onUpdate,
   onDelete
 }) => {
-  const [activeTab, setActiveTab] = useState("compute");
-
+  const [activeTab, setActiveTab] = useState(steps[0].id);
   const [yamlTemplate, setYamlTemplate] = useState("");
   const [isYamlEditorFocused, setIsYamlEditorFocused] = useState(false);
 
@@ -167,83 +215,99 @@ const ResourceQuotaDetails: React.FC<NamespaceSettingsModalProps> = ({
     onDelete(rawYaml)
   };
 
+  const currentStepIndex = steps.findIndex(s => s.id === activeTab);
+  const currentStepData = steps[currentStepIndex];
+  const CurrentStepComponent = currentStepData.component;
+
+  // Helper to pass only the correct props to each section
+  const sectionProps = {
+    control: form.control,
+    errors: form.formState.errors,
+    namespace: quotaName,
+    quotaName: quotaName,
+    onYamlChange: handleYamlChange,
+    yamlTemplate: yamlTemplate,
+    setIsYamlEditorFocused: setIsYamlEditorFocused,
+    handleDelete: handleDelete
+  };
+
   return (
-    <>
-      <Dialog open={true} onOpenChange={() =>onClose()}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Configure Namespace: {quotaName}</DialogTitle>
-            <DialogDescription>
-              Manage resource quotas, scopes, and other settings for this
-              namespace
-            </DialogDescription>
-          </DialogHeader>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Tabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="w-full"
-              >
-                <TabsList className="grid grid-cols-6 mb-4">
-                  <TabsTrigger value="compute">Compute</TabsTrigger>
-                  <TabsTrigger value="storage">Storage</TabsTrigger>
-                  <TabsTrigger value="objects">Objects</TabsTrigger>
-                  <TabsTrigger value="scopes">Scopes</TabsTrigger>
-                  <TabsTrigger value="priority">Priority</TabsTrigger>
-                  <TabsTrigger value="advanced">Advanced</TabsTrigger>
-                </TabsList>
-                <div className="h-[500px] overflow-y-auto">
-                    {/* Compute Resources Tab */}
-                    <TabsContent value="compute">
-                    <ComputeResourcesTab />
-                    </TabsContent>
-
-                    {/* Storage Resources Tab */}
-                    <TabsContent value="storage">
-                    <StorageResourcesTab />
-                    </TabsContent>
-
-                    {/* Object Count Quotas Tab */}
-                    <TabsContent value="objects">
-                    <ObjectCountsTab />
-                    </TabsContent>
-
-                    {/* Quota Scopes Tab */}
-                    <TabsContent value="scopes">
-                    <ScopesTab />
-                    </TabsContent>
-
-                    {/* Priority Class Tab */}
-                    <TabsContent value="priority">
-                    <PriorityClassTab namespace={quotaName} />
-                    </TabsContent>
-
-                    {/* Advanced Tab with Monaco Editor */}
-                    <TabsContent value="advanced">
-                    <AdvancedTab
-                        onYamlChange={handleYamlChange}
-                        yamlTemplate={yamlTemplate}
-                        setIsYamlEditorFocused={setIsYamlEditorFocused}
-                        quotaName={quotaName}
-                        handleDelete={handleDelete}
-                    />
-                    </TabsContent>
+    <Dialog open={true} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-none w-screen h-screen p-0">
+        {/* Dialog Header */}
+        <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
+          <DialogTitle className="flex items-center gap-2 w-full px-6">
+            <Settings className="h-5 w-5 " />
+            Configure Resource Quota
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 h-full px-6">
+          <div className="flex flex-col h-[calc(100vh-8rem)] px-6">
+            {/* Top Bar with Tabs */}
+            <div className="flex flex-row pb-2 items-center justify-between mb-6">
+              <div className="flex items-center w-full">
+                <Tabs
+                  tabs={steps.map(({ id, label }) => ({ id, label }))}
+                  activeTab={activeTab}
+                  onChange={setActiveTab}
+                />
+              </div>
+            </div>
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0 border border-gray-200 rounded-md">
+              {/* Step Information Card */}
+              <div className="col-span-1">
+                <Card className="pt-6 shadow-none">
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Info className="h-5 w-5 text-blue-500" />
+                      <CardTitle>{currentStepData.label}</CardTitle>
+                    </div>
+                    <CardDescription>
+                      {currentStepData.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600">
+                      {currentStepData.longDescription}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+              {/* Main Form Area (scrollable) */}
+              <ScrollArea className="col-span-2 min-h-0 px-4">
+                <div className="p-6">
+                  <Form {...form}>
+                    <form
+                      id="resource-quota-form"
+                      className="space-y-6"
+                      onSubmit={form.handleSubmit(onSubmit)}
+                    >
+                      <div className="space-y-6">
+                        {/* Step Content */}
+                        <div className="mt-6">
+                          <CurrentStepComponent {...sectionProps} />
+                        </div>
+                      </div>
+                    </form>
+                  </Form>
                 </div>
-              </Tabs>
-
-              <DialogFooter>
+              </ScrollArea>
+            </div>
+            {/* Navigation Footer */}
+            <div className="bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 pt-6 flex justify-between items-center">
+              <div className="flex items-center gap-4 w-full justify-end">
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Changes</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </>
+                <Button type="submit" form="resource-quota-form">
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
