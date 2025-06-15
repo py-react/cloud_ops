@@ -1,26 +1,27 @@
 import React, { useContext } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
-import { 
-  Server, 
-  Users, 
-  Folder, 
-  Database, 
+import {
+  Server,
+  Users,
+  Folder,
+  Database,
 } from 'lucide-react';
 import { KubeContextSwitcher } from '@/components/kubernetes/KubeContextSwitcher';
 import { KubeContext } from "@/components/kubernetes/context/KubeContext";
 import { KubeContextList } from '@/components/kubernetes/settings/kubeContextList';
+import RouteDescription from '@/components/route-description';
 
 export const Contexts = () => {
-    const {
-      currentKubeContext
-    } = useContext(KubeContext);
-  
+  const {
+    currentKubeContext
+  } = useContext(KubeContext);
+
   return (
     <div title="Kubernetes Contexts">
       <div className="flex items-center justify-between mb-6">
@@ -30,11 +31,16 @@ export const Contexts = () => {
         </div>
 
         <div className="flex gap-3">
-            <KubeContextSwitcher />
+          <KubeContextSwitcher />
         </div>
       </div>
 
       <div className="space-y-6">
+        <RouteDescription
+          title="Context"
+          shortDescription='Manage your Kubernetes contexts—view, edit, and switch between different cluster configurations from a single interface.'
+          description='lets you define and switch between multiple Kubernetes cluster configurations. Each context includes a cluster, a user, and a namespace, making it easy to manage connections to different environments like dev, staging, or production.'
+        />
         <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="text-lg">Current Context</CardTitle>

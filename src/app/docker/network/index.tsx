@@ -1,87 +1,251 @@
-import React,{ useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Network } from '@/components/network/types';
-import { NetworkCard } from '@/components/network/NetworkCard';
-import { NetworkModal } from '@/components/network/NetworkModal';
-import { Activity, Network as NetworkIcon } from 'lucide-react';
-import { DefaultService } from '@/gingerJs_api_client';
+import { NetworkList } from '@/components/network/NetworkList';
+import { CreateNetworkForm } from '@/components/network/CreateNetworkForm';
+import { Network as NetworkIcon, Search } from 'lucide-react';
+import { DefaultService, NetworkListResponse } from '@/gingerJs_api_client';
+import RouteDescription from '@/components/route-description';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from 'sonner';
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { EditNetworkForm } from '@/components/network/EditNetworkForm';
 
+const fetchNetworks = async () => {
+  const response = await DefaultService.apiNetworksGet();
+  return response.items;
+};
 
-// Mock delete function since we don't have actual Docker API integration
-const deleteNetwork = async (id: string) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('Network deleted:', id);
-        resolve(true);
-      }, 1000);
-    });
-  };
+const deleteNetwork = async (id: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    DefaultService.apiNetworksDelete({ requestBody: { network_id: id } })
+      .then(() => {
+        resolve();
+      })
+      .catch((err: Error) => {
+        reject(err);
+      });
+  });
+};
 
-  const fetchNetworks = async () => {
+const createNetwork = async (data: any): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    DefaultService.apiNetworksPost({ requestBody: {
+      name: data.name,
+      driver: data.driver,
+      scope: data.scope,
+      options: data.options,
+      ipam: data.ipam,
+      check_duplicate: data.check_duplicate,
+      internal: data.internal,
+      labels: data.labels,
+      enable_ipv6: data.enable_ipv6,
+      attachable: data.attachable,
+      ingress: data.ingress
+    }})
+      .then(() => {
+        resolve();
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
 
-    return new Promise(async (resolve) => {
-      const response = await DefaultService.apiNetworksGet()
-      resolve(response.items);
-    });
-  };
+const patchNetwork = async (data: any): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    DefaultService.apiNetworksPut({ requestBody: {
+      network_id:data.network_id,
+      name: data.name,
+      driver: data.driver,
+      scope: data.scope,
+      options: data.options,
+      ipam: data.ipam,
+      internal: data.internal,
+      labels: data.labels,
+      enable_ipv6: data.enable_ipv6,
+      attachable: data.attachable,
+      ingress: data.ingress
+    }})
+      .then(() => {
+        resolve();
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
 
-  export default function App() {
-    const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [networks,setNetworks] = useState<Network[]>([]);
+export default function NetworkPage() {
+  const [networks, setNetworks] = useState<NetworkListResponse["items"]>([]);
+  const [currentNetworkToEdit,setCurrentNetworkToEdit] = useState(undefined)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [showEdit,setShowEdit] = useState(false)
 
-    const getnetworks = async()=>{
-        const items = await fetchNetworks()
-        setNetworks(items);
-    }
-    useEffect(()=>{
-        getnetworks()
-    },[])
-
-  
-    return (
-      <div className="network">
-        <div className="container mx-auto p-8">
-          <h1 className="text-3xl font-bold ">Networks</h1>
-          {networks.length > 0 && (
-            <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <Activity className="h-4 w-4" />
-                <span>{networks.length} networks found</span>
-            </div>
-          )}
-          <div className="mb-6 flex items-center gap-2 w-full">
-            <div className="flex justify-start">
-              <button
-                type="button"
-                onClick={() => {}}
-                className="inline-flex items-center px-4 py-2 border border-transparent 
-                            text-sm font-medium rounded-md text-white bg-gray-600 
-                            hover:bg-gray-700 focus:outline-none focus:ring-2 
-                            focus:ring-offset-2 focus:ring-gray-500"
-              >
-                Create Network
-              </button>
-            </div>
-          </div>
-          <div className="space-y-3 ">
-            {networks.map((network) => (
-              <NetworkCard
-                key={network.Id}
-                network={network}
-                onClick={() => {
-                  setSelectedNetwork(network);
-                  setIsModalOpen(true);
-                }}
-                onDelete={deleteNetwork}
-              />
-            ))}
-          </div>
-        </div>
-
-        <NetworkModal
-          network={selectedNetwork}
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-        />
-      </div>
-    );
+  const getnetworks = async() => {
+    const items = await fetchNetworks()
+    setNetworks(items);
   }
+
+  useEffect(() => {
+    getnetworks()
+  }, [])
+
+  const filteredNetworks = networks.filter(
+    (network) =>
+      network.Name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteNetwork(id);
+      await getnetworks();
+      return true;
+    } catch (error) {
+      console.error('Failed to delete network:', error);
+      return false;
+    }
+  };
+
+  const handlePatchNetwork = async (data: any) => {
+    try {
+      await patchNetwork({
+        network_id: currentNetworkToEdit?.network?.Id,
+        ...data,
+      });
+      toast.success('Network created successfully');
+      await getnetworks();
+      setShowEdit(false);
+    } catch (error) {
+      console.error('Failed to create network:', error);
+      toast.error('Failed to create network');
+    }
+  };
+
+  const handleCreateNetwork = async (data: any) => {
+    try {
+      await createNetwork(data);
+      toast.success('Network created successfully');
+      await getnetworks();
+      setShowCreate(false);
+    } catch (error) {
+      console.error('Failed to create network:', error);
+      toast.error('Failed to create network');
+    }
+  };
+
+  return (
+    <div className='w-full'>
+      <div className="space-y-6">
+        <RouteDescription
+          title={
+            <div className="flex items-center gap-2">
+              <NetworkIcon className='h-4 w-4'/>
+              <h2>Networks</h2>
+            </div>
+          }
+          shortDescription='Manage your Docker networks—view details, create new networks, or delete existing ones from a centralized interface.'
+          description='Docker networks enable communication between containers. They provide isolation, security, and control over how containers interact with each other and the outside world. Networks are essential for building distributed applications and microservices architectures in Docker.'
+        />
+        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Your Networks</CardTitle>
+              <CardDescription>
+                {networks.length} networks found
+              </CardDescription>
+            </div>
+            <Button onClick={() => setShowCreate(true)}>
+              <NetworkIcon className="mr-2 h-4 w-4" />
+              Create Network
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0 shadow-none">
+            <div className="relative px-6">
+              <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search networks..."
+                className="w-full pl-9 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <NetworkList networks={filteredNetworks} onDelete={handleDelete} onEdit={(data)=>{
+              setCurrentNetworkToEdit(data)
+              setShowEdit(true)
+            }} />
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Sheet open={showCreate} onOpenChange={setShowCreate}>
+        <SheetContent className="!w-[30%] sm:!max-w-[30%]">
+          <SheetHeader>
+            <SheetTitle>Create Network</SheetTitle>
+          </SheetHeader>
+          <ScrollArea className="h-[calc(100vh-8rem)] pr-4">
+            <div className="p-4">
+              <CreateNetworkForm
+                onSubmit={handleCreateNetwork}
+                onCancel={() => {
+                  setShowCreate(false)
+                }}
+              />
+            </div>
+          </ScrollArea>
+          <SheetFooter className='p-4'>
+            <Button type="button" variant="outline" onClick={() => {
+              setShowCreate(false)
+            }}>
+              Cancel
+            </Button>
+            <Button type="submit" form="create-network-form">
+              Create Network
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+        <Sheet open={showEdit} onOpenChange={setShowEdit}>
+          <SheetContent className="!w-[30%] sm:!max-w-[30%]">
+            <SheetHeader>
+              <SheetTitle>Patch Network</SheetTitle>
+            </SheetHeader>
+            <ScrollArea className="h-[calc(100vh-8rem)] pr-4">
+              <div className="p-4">
+                <EditNetworkForm
+                  network={currentNetworkToEdit?.network}
+                  onSubmit={handlePatchNetwork}
+                  onCancel={() => {
+                    setShowEdit(false);
+                    setCurrentNetworkToEdit(undefined);
+                  }}
+                />
+              </div>
+            </ScrollArea>
+            <SheetFooter className='p-4'>
+              <Button type="button" variant="outline" onClick={() => {
+                setShowCreate(false)
+                setCurrentNetworkToEdit(undefined)
+              }}>
+                Cancel
+              </Button>
+              <Button type="submit" form="edit-network-form">
+                Patch Network
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+    </div>
+  );
+}

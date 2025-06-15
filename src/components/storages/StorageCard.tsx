@@ -1,115 +1,76 @@
-import React, { useState } from "react";
+import React from 'react';
+import { StorageInfo } from '@/types/storage';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { MoreVertical, Trash2, Edit } from "lucide-react";
 import {
-  Clock,
-  TrashIcon,
-  LoaderIcon,
-  TagsIcon,
-  HardDriveIcon,
-} from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import type { StorageInfo } from "src/types/storage";
-import { toast } from "sonner";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
 interface StorageCardProps {
   storage: StorageInfo;
-  setStorages: React.Dispatch<React.SetStateAction<any[]>>;
+  onDelete: (id: string) => Promise<boolean>;
+  onEdit: (data: any) => void;
 }
 
-export function StorageCard({ storage, setStorages }: StorageCardProps) {
-  const [takingAction, setTakingAction] = useState(false);
-  const [actionType, setActionType] = useState<string | null>(null);
-
-  const openShowDetailsAfterAction = async () => {
-    const storagesResponse = await fetch("/api/storages", { method: "GET" });
-    const storages = (await storagesResponse.json()).storages;
-    setStorages(storages);
-    setTakingAction(false);
-  };
-
+export const StorageCard: React.FC<StorageCardProps> = ({ storage, onDelete, onEdit }) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-      <div className="p-6 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex">
-            {storage.inUse && (
-              <Badge variant={"outline"} className="max-w-max bg-green-50 pointer-events-none">
-                In Use
-              </Badge>
-            )}
+    <Card className="overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">
+          {storage.name}
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          {storage.inUse && (
+            <Badge variant="outline" className="bg-green-50">
+              In Use
+            </Badge>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => onEdit({ storage })}
+                className="cursor-pointer"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDelete(storage.name)}
+                className="cursor-pointer text-red-600"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-xs text-muted-foreground">
+          <div className="flex justify-between mb-1">
+            <span>Driver:</span>
+            <span>{storage.driver}</span>
           </div>
-          <div
-            className={`ml-[80%] flex gap-2 items-center p-2 max-w-max hover:bg-red-50 text-red-600  rounded-full ${
-              takingAction ? "pointer-events-none" : "cursor-pointer"
-            }`}
-            onClick={async () => {
-              setTakingAction(true);
-              setActionType("remove");
-              const responseObj = await fetch("/api/storages", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  action: "remove",
-                  volume_id: storage.name,
-                }),
-              });
-              const responseData = await responseObj.json();
-              if (responseData.error) {
-                setTakingAction(false);
-                toast.error(responseData.message);
-              } else {
-                toast.success(responseData.message);
-                openShowDetailsAfterAction();
-              }
-            }}
-          >
-            {takingAction && actionType === "remove" ? (
-              <LoaderIcon className="w-3.5 h-3.5" />
-            ) : (
-              <TrashIcon className="w-3.5 h-3.5" />
-            )}
+          <div className="flex justify-between mb-1">
+            <span>Mountpoint:</span>
+            <span className="truncate max-w-[200px]">{storage.mountPoint}</span>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <HardDriveIcon className="w-4 h-4" />
-              <span>Name</span>
-            </div>
-            <div className="space-y-1 text-sm text-gray-500 break-words overflow-x-auto">
-              {storage.name}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Clock className="w-4 h-4" />
-              <span>Created At</span>
-            </div>
-            <div className="space-y-1 text-sm text-gray-500">
-              {formatDistanceToNow(new Date(storage.created), {
-                addSuffix: true,
-              })}
-            </div>
+          <div className="flex justify-between">
+            <span>Scope:</span>
+            <span>{storage.scope}</span>
           </div>
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <TagsIcon className="w-4 h-4" />
-            <span>Tags</span>
-          </div>
-          <div className="space-y-1 text-sm text-gray-500 flex flex-col gap-2">
-            {Object.keys(storage.labels || {})?.length ? (
-              Object.keys(storage.labels).map((label) => (
-                <Badge key={label} variant="secondary" className="max-w-max">
-                  {label.split(".").pop()} : {storage.labels[label]}
-                </Badge>
-              ))
-            ) : (
-              <em>None</em>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
-}
+};

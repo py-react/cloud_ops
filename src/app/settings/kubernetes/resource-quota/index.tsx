@@ -10,30 +10,37 @@ import {
 import { Input } from "@/components/ui/input";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { ExternalLink } from 'lucide-react';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 import ResourceQuotaDetailsModel from "@/components/kubernetes/settings/resourceQuotaDetailsModel";
 import ResourceQuotaDetails from "@/components/kubernetes/settings/resource-quota/resourceQuotaDetails";
-import { ResourceQuota as ResourceQuotaType  } from "@/components/kubernetes/settings/resource-quota/types/quota";
-
+import { ResourceQuota as ResourceQuotaType } from "@/components/kubernetes/settings/resource-quota/types/quota";
+import RouteDescription from "@/components/route-description";
 
 const columns = [
-    { header: "Name" },
-    { header: "Namespace" },
-    { header: "Request Cpu" },
-    { header: "Limit Cpu" },
-    { header: "Request Memory" },
-    { header: "Limit Memory" },
-    { header: "Created At" },
-]
+  { header: "Name" },
+  { header: "Namespace" },
+  { header: "Request Cpu" },
+  { header: "Limit Cpu" },
+  { header: "Request Memory" },
+  { header: "Limit Memory" },
+  { header: "Created At" },
+];
 
 export const ResourceQuota = () => {
   const [resourcesQuota, setResourcesQuota] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentToShow,setCurrentToShow] = useState({} as ResourceQuotaType )
-  const [showDetails,setShowDetails] = useState(false)
-  const [editDetails,setEditDetails] = useState(false)
+  const [currentToShow, setCurrentToShow] = useState({} as ResourceQuotaType);
+  const [showDetails, setShowDetails] = useState(false);
+  const [editDetails, setEditDetails] = useState(false);
 
   const fetchResourceQuota = () => {
     DefaultService.apiKubernertesResourceQuotaGet()
@@ -58,32 +65,21 @@ export const ResourceQuota = () => {
 
   return (
     <div title="Kubernetes Resource quota">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Settings className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Kubernetes Resource quota</h1>
-        </div>
-      </div>
       <div className="space-y-6">
-        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-lg">Resource Quota Management</CardTitle>
-            <CardDescription>
-              Manage resource limits for namespaces in your Kubernetes cluster
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="shadow-none">
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">
-                Resource quotas provide constraints that limit aggregate
+        <RouteDescription
+          title={
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <h2>Kubernetes resource quota management</h2>
+            </div>
+          }
+          shortDescription="Manage resource limits for namespaces in your Kubernetes cluster"
+          description="Resource quotas provide constraints that limit aggregate
                 resource consumption per namespace. They can limit the quantity
                 of objects that can be created in a namespace by type, as well
                 as the total amount of compute resources that may be consumed by
-                resources in that namespace.
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                resources in that namespace"
+        />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -93,27 +89,29 @@ export const ResourceQuota = () => {
               </CardDescription>
             </div>
 
-            <div className="w-full flex items-center max-w-sm gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search contexts..."
-                  className="w-full pl-9 bg-background"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Button className="gap-1 flex-1" onClick={()=>{
-                setCurrentToShow({});
-                setEditDetails(true)
-              }}>
+            <div className=" flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  setCurrentToShow({});
+                  setEditDetails(true);
+                }}
+              >
                 <PlusIcon size={18} />
                 Create Quota
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
+            <div className="relative px-6">
+              <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search contexts..."
+                className="w-full pl-9 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <Card className="shadow-none">
               <div className="rounded-[calc(0.5rem-2px)] border">
                 <Table>
@@ -168,30 +166,30 @@ export const ResourceQuota = () => {
                             </TableCell>
                           ))}
                           <TableCell>
-                          <div className="flex items-center justify-start gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setShowDetails(true);
-                                setCurrentToShow(row);
-                              }}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              <span className="sr-only">Details</span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditDetails(true);
-                                setCurrentToShow(row);
-                              }}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                          </div>
+                            <div className="flex items-center justify-start gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setShowDetails(true);
+                                  setCurrentToShow(row);
+                                }}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                                <span className="sr-only">Details</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditDetails(true);
+                                  setCurrentToShow(row);
+                                }}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -230,38 +228,42 @@ export const ResourceQuota = () => {
             setCurrentToShow({});
             setEditDetails(false);
           }}
-          onDelete={(data)=>{
+          onDelete={(data) => {
             DefaultService.apiKubernertesMethodsDeletePost({
-                requestBody: {
-                  manifest: data || "",
-                },
-              }).then((res) => {
+              requestBody: {
+                manifest: data || "",
+              },
+            })
+              .then((res) => {
                 if (res.success) {
                   toast.success(res.data.message);
                 } else {
                   toast.error(res.error);
                 }
-              }).catch(err=>{
+              })
+              .catch((err) => {
                 toast.error(err);
-            });
+              });
           }}
           onUpdate={(data) => {
             DefaultService.apiKubernertesMethodsApplyPost({
-                requestBody:{
-                    manifest:data.rawYaml
-                }
-            }).then(res=>{
-                if(res.success){
-                    setCurrentToShow({});
-                    toast.success(res.data.message)
-                    fetchResourceQuota()
-                    setEditDetails(false);
-                }else{
-                    toast.error(res.error);
-                }
-            }).catch(err=>{
-                toast.error(err);
+              requestBody: {
+                manifest: data.rawYaml,
+              },
             })
+              .then((res) => {
+                if (res.success) {
+                  setCurrentToShow({});
+                  toast.success(res.data.message);
+                  fetchResourceQuota();
+                  setEditDetails(false);
+                } else {
+                  toast.error(res.error);
+                }
+              })
+              .catch((err) => {
+                toast.error(err);
+              });
           }}
         />
       )}

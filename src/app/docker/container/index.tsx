@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { ContainerRunnerUpdateModal } from "@/components/containers/runner/ContainerRunnerUpdateModal";
 import { useContainers } from 'src/hooks/useContainers';
 
-function ContainerListPage() {
+function ContainersPage() {
   const [showRunnerModal, setShowRunnerModal] = useState(false);
 
   const {
@@ -138,4 +138,4 @@ function ContainerListPage() {
   );
 }
 
-export default ContainerListPage;
+export default ContainersPage;

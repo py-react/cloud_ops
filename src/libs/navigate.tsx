@@ -88,14 +88,21 @@ const useNavigate = () => {
         currentHead.appendChild(newDocument.querySelector('title').cloneNode(true))
         newMetaElements.forEach(meta => currentHead.appendChild(meta.cloneNode(true)));
         
+        // Store the current path as previous path in the state
+        const currentPath = window.location.pathname + window.location.search + window.location.hash;
+        const state = {
+          ...window.flask_react_app_props,
+          previousPath: currentPath
+        };
+        
         if (replace) {
-          window.history.replaceState(window.flask_react_app_props, title, responseUrl);
+          window.history.replaceState(state, title, responseUrl);
         } else {
-          window.history.pushState(window.flask_react_app_props, title, responseUrl);
+          window.history.pushState(state, title, responseUrl);
         }
           // Dispatch a popstate event to notify the app of the navigation
           triggerLoadingEvent(false)
-          window.dispatchEvent(new PopStateEvent('popstate',{ state: window.flask_react_app_props }));
+          window.dispatchEvent(new PopStateEvent('popstate',{ state }));
           window.scroll({
             top: 0, 
             left: 0, 

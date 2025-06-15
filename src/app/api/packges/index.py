@@ -128,7 +128,7 @@ class Package_Info(BaseModel):
 class Get_Packages_Response(BaseModel):
     packages:List[Package_Info]
 
-async def GET(request:Request)->Get_Packages_Response:
+async def GET(request:Request):
     images = client.images.list(all=True)  # Get all containers (running or stopped)
     
     image_info = []

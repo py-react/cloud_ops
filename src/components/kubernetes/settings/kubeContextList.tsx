@@ -51,22 +51,21 @@ export const KubeContextList = () => {
           <CardTitle className="text-lg">Available Contexts</CardTitle>
           <CardDescription>All configured Kubernetes contexts</CardDescription>
         </div>
-
-        <div className="w-full flex items-center max-w-sm gap-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search contexts..."
-              className="w-full pl-9 bg-background"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        <div className="flex items-center gap-2">
           <CreateContext />
         </div>
       </CardHeader>
       <CardContent className="p-0 shadow-none">
+        <div className="relative px-6">
+          <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search contexts..."
+            className="w-full pl-9 bg-background"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
         <ResourceTable columns={columns} data={filteredContexts || []} />
       </CardContent>
     </Card>

@@ -128,7 +128,7 @@ export const KubeContextProvider = ({ children }: KubeContextProviderProps) => {
       const transformedData = transformKubeConfigToMockContexts(config);
       setTransformedConfig(transformedData);
       const currentContext = transformedData.filter((i) => i.current);
-      if (currentContext) {
+      if (currentContext.length) {
         setCurrentKubeContext({
           context: {
             cluster: currentContext[0].clusterName,

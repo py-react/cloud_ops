@@ -1,144 +1,236 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { Plus, X } from 'lucide-react'
 import type { CreateStorageParams } from '@/types/storage'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Editor } from "@monaco-editor/react"
 
-interface CreateVolumeFormProps {
-  onClose: () => void
-  onSubmitHandler: (data:CreateStorageParams) => Promise<void>;
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  driver: z.string().default("local"),
+  driver_opts: z.record(z.string()).default({}),
+  labels: z.record(z.string()).default({}),
+})
 
+type CreateStorageFormValues = z.infer<typeof formSchema>;
+
+interface CreateStorageFormProps {
+  onSubmit: (data: CreateStorageFormValues) => Promise<void>;
+  onCancel: () => void;
 }
 
-export function CreateStorageForm({ onClose,onSubmitHandler }: CreateVolumeFormProps) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<CreateStorageParams>({
+export function CreateStorageForm({ onSubmit, onCancel }: CreateStorageFormProps) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const form = useForm<CreateStorageFormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      driver: 'local',
-      driverOpts: {},
+      name: "",
+      driver: "local",
+      driver_opts: {},
       labels: {},
-    }
-  })
+    },
+  });
 
-  const [driverOpts, setDriverOpts] = React.useState<[string, string][]>([['', '']])
-  const [labels, setLabels] = React.useState<[string, string][]>([['', '']])
-
-  const onSubmit = async (data: CreateStorageParams) => {
+  const handleSubmit = async (data: CreateStorageFormValues) => {
     try {
-      // Convert driverOpts and labels arrays to objects
-      data.driverOpts = Object.fromEntries(driverOpts.filter(([key, value]) => key && value))
-      data.labels = Object.fromEntries(labels.filter(([key, value]) => key && value).map(([key,value])=>([`com.docker.compose.${key}`,value])))
-      await onSubmitHandler(data)
-      console.log('Creating volume:', data)
-      // TODO: Implement volume creation
+      await onSubmit(data);
     } catch (error) {
-      console.error('Failed to create volume:', error)
+      console.error('Failed to create volume:', error);
     }
-  }
+  };
 
-  const addDriverOpt = () => setDriverOpts([...driverOpts, ['', '']])
-  const removeDriverOpt = (index: number) => setDriverOpts(driverOpts.filter((_, i) => i !== index))
-  const updateDriverOpt = (index: number, key: string, value: string) => {
-    const newDriverOpts = [...driverOpts]
-    newDriverOpts[index] = [key, value]
-    setDriverOpts(newDriverOpts)
-  }
+  // Helper to indicate required fields
+  const RequiredBadge = () => (
+    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-red-50 px-1 py-0.5 text-xs font-medium text-red-700">
+      Required
+    </span>
+  );
 
-  const addLabel = () => setLabels([...labels, ['', '']])
-  const removeLabel = (index: number) => setLabels(labels.filter((_, i) => i !== index))
-  const updateLabel = (index: number, key: string, value: string) => {
-    const newLabels = [...labels]
-    newLabels[index] = [key, value]
-    setLabels(newLabels)
-  }
+  // Helper to indicate optional fields
+  const OptionalBadge = () => (
+    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-gray-50 px-1 py-0.5 text-xs font-medium text-gray-600">
+      Optional
+    </span>
+  );
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="name">Volume Name</Label>
-        <Input
-          id="name"
-          {...register('name')}
-          placeholder="my-volume"
-        />
-        <p className="text-sm text-muted-foreground">
-          Leave empty to generate a random name
-        </p>
-      </div>
+    <Form {...form}>
+      <form id="create-storage-form" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <div className="space-y-4">
+          {/* Required Fields */}
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Volume Name <RequiredBadge />
+                </FormLabel>
+                <FormDescription>
+                  A unique name to identify this Docker volume
+                </FormDescription>
+                <FormControl>
+                  <Input placeholder="my-volume" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <div className="space-y-2">
-        <Label htmlFor="driver">Driver</Label>
-        <Select onValueChange={(value) => setValue('driver', value)} defaultValue="local">
-          <SelectTrigger>
-            <SelectValue placeholder="Select a driver" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="local">local</SelectItem>
-            <SelectItem value="nfs">nfs</SelectItem>
-            <SelectItem value="cifs">cifs</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+          {/* Advanced Options Toggle */}
+          <FormItem className="flex flex-row items-center gap-2 space-y-0 border-t pt-4">
+            <FormControl>
+              <Switch
+                checked={showAdvanced}
+                onCheckedChange={setShowAdvanced}
+              />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel className="m-0">
+                Advanced Options
+              </FormLabel>
+              <FormDescription>
+                Configure additional volume settings
+              </FormDescription>
+            </div>
+          </FormItem>
 
-      <div className="space-y-2">
-        <Label>Driver Options</Label>
-        {driverOpts.map(([key, value], index) => (
-          <div key={index} className="flex space-x-2">
-            <Input
-              placeholder="Key"
-              value={key}
-              onChange={(e) => updateDriverOpt(index, e.target.value, value)}
-            />
-            <Input
-              placeholder="Value"
-              value={value}
-              onChange={(e) => updateDriverOpt(index, key, e.target.value)}
-            />
-            <Button type="button" variant="ghost" size="icon" onClick={() => removeDriverOpt(index)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-        <Button type="button" variant="outline" size="sm" onClick={addDriverOpt}>
-          <Plus className="mr-2 h-4 w-4" /> Add Driver Option
-        </Button>
-      </div>
+          {/* Advanced Options */}
+          {showAdvanced && (
+            <div className="space-y-4 border-t pt-4">
+              <FormField
+                control={form.control}
+                name="driver"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Driver <OptionalBadge />
+                    </FormLabel>
+                    <FormDescription>
+                      Volume driver to use (default: local)
+                    </FormDescription>
+                    <FormControl>
+                      <Input placeholder="local" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-      <div className="space-y-2">
-        <Label>Labels</Label>
-        {labels.map(([key, value], index) => (
-          <div key={index} className="flex space-x-2">
-            <Input
-              placeholder="Key"
-              value={key}
-              onChange={(e) => updateLabel(index, e.target.value, value)}
-            />
-            <Input
-              placeholder="Value"
-              value={value}
-              onChange={(e) => updateLabel(index, key, e.target.value)}
-            />
-            <Button type="button" variant="ghost" size="icon" onClick={() => removeLabel(index)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-        <Button type="button" variant="outline" size="sm" onClick={addLabel}>
-          <Plus className="mr-2 h-4 w-4" /> Add Label
-        </Button>
-      </div>
+              <FormField
+                control={form.control}
+                name="driver_opts"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Driver Options <OptionalBadge />
+                    </FormLabel>
+                    <FormDescription>
+                      Driver-specific options in JSON format
+                    </FormDescription>
+                    <FormControl>
+                      <div className="border rounded-md overflow-hidden">
+                        <Editor
+                          height="150px"
+                          defaultLanguage="json"
+                          theme="vs-light"
+                          value={JSON.stringify(field.value, null, 2)}
+                          onChange={(value) => {
+                            try {
+                              field.onChange(JSON.parse(value || '{}'));
+                            } catch (e) {
+                              // Invalid JSON, keep the current value
+                            }
+                          }}
+                          options={{
+                            minimap: { enabled: false },
+                            scrollBeyondLastLine: false,
+                            fontSize: 14,
+                            lineNumbers: 'off',
+                            folding: false,
+                            lineDecorationsWidth: 0,
+                            lineNumbersMinChars: 0,
+                            glyphMargin: false,
+                            contextmenu: false,
+                            scrollbar: {
+                              vertical: 'hidden',
+                              horizontal: 'hidden'
+                            }
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-      <div className="flex justify-end space-x-4">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button type="submit">
-          Create Volume
-        </Button>
-      </div>
-    </form>
+              <FormField
+                control={form.control}
+                name="labels"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Labels <OptionalBadge />
+                    </FormLabel>
+                    <FormDescription>
+                      Volume labels in JSON format
+                    </FormDescription>
+                    <FormControl>
+                      <div className="border rounded-md overflow-hidden">
+                        <Editor
+                          height="150px"
+                          defaultLanguage="json"
+                          theme="vs-light"
+                          value={JSON.stringify(field.value, null, 2)}
+                          onChange={(value) => {
+                            try {
+                              field.onChange(JSON.parse(value || '{}'));
+                            } catch (e) {
+                              // Invalid JSON, keep the current value
+                            }
+                          }}
+                          options={{
+                            minimap: { enabled: false },
+                            scrollBeyondLastLine: false,
+                            fontSize: 14,
+                            lineNumbers: 'off',
+                            folding: false,
+                            lineDecorationsWidth: 0,
+                            lineNumbersMinChars: 0,
+                            glyphMargin: false,
+                            contextmenu: false,
+                            scrollbar: {
+                              vertical: 'hidden',
+                              horizontal: 'hidden'
+                            }
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+        </div>
+      </form>
+    </Form>
   )
 }
 

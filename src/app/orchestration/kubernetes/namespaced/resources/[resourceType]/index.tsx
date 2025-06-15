@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useParams } from 'react-router-dom';
-import { DeploymentList } from '@/components/kubernetes/DeploymentList';
+import { DeploymentList } from '@/components/kubernetes/quick-view-resources/DeploymentList';
 import { PodTable } from '@/components/kubernetes/PodTable';
 import { ConfigMapTable } from '@/components/kubernetes/ConfigMapTable';
 import KubernetesIngressList from "@/components/kubernetes/Ingress";
@@ -11,7 +10,6 @@ import KubernetesCertificateList from "@/components/kubernetes/certificates";
 import KubernetesIssuerList from "@/components/kubernetes/issuer";
 import KubernetesSecretList from "@/components/kubernetes/secrets";
 import { ServiceList } from '@/components/kubernetes/SerivceList';
-import ResourceTable from '@/components/kubernetes/ResourceTable';
 import { DefaultService } from '@/gingerJs_api_client';
 import useNavigate from '@/libs/navigate';
 import { NamespaceContext } from '@/components/kubernetes/context/NamespaceContext';
@@ -31,9 +29,22 @@ import { RoleBindingTable } from '@/components/kubernetes/resources/RoleBindingT
 import { CustomResourceDefinitionTable } from '@/components/kubernetes/resources/CustomResourceDefinitionTable';
 import SmartDataViewer from '@/components/queues/queueJob/SmartDataViewer';
 import Events from '@/components/kubernetes/resources/events';
+import {ResourceTable} from '@/components/kubernetes/resources/resourceTable';
+import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector';
+import RouteDescription from '@/components/route-description';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export default function ResourceTypePage() {
   const { resourceType } = useParams();
+  const [searchTerm, setSearchTerm] = useState("");
   const {isLoading:isNamespacesLoading,selectedNamespace} = useContext(NamespaceContext)
   const [resources, setResources] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,99 +75,58 @@ export default function ResourceTypePage() {
     fetchResources();
   }, [resourceType,isNamespacesLoading,selectedNamespace]);
 
-  const renderResourceView = () => {
-    if (isLoading) {
-      return (
-        <Card className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </Card>
-      );
-    }
+  const _columns = Object.keys((!isLoading && resources.length) ? resources[0].metadata : {}).reduce((acc, item) => {
+    if(["managedfields","labels","annotations","uid","resourceversion"].includes(item.toLowerCase())) return acc
+    acc.push({accessor:`metadata.${item}`,header:item.toUpperCase()})
+    return acc
+  },[] as {header: string; accessor: string}[])
 
-    switch (resourceType?.toLowerCase()) {
-      case 'daemonsets':
-      case 'replicasets':
-      case 'deployments':
-        return <DeploymentList deployments={resources} />;
-      case 'jobs':
-        return <JobList jobs={resources} onRetry={() => {}} onDelete={() => {} } />;
-      case 'nodes':
-        return <KubernetesNodesList items={resources} />;
-      case 'pods':
-        return <PodTable pods={resources} onEdit={() => {}} onDelete={() => {}} />;
-      case 'configmaps':
-        return <ConfigMapTable configMaps={resources} onEdit={() => {}} onDelete={() => {}} />;
-      case 'secrets':
-        return <KubernetesSecretList items={resources} />;
-      case 'services':
-        return <ServiceList services={resources} />;
-      case 'ingresses':
-        return <KubernetesIngressList ingressList={resources} />;
-      case 'certificates':
-        return <KubernetesCertificateList items={resources} />;
-      case 'issuers':
-        return <KubernetesIssuerList items={resources} />;
-      case 'statefulsets':
-        return <StatefulSetTable resources={resources} />;
-      case 'cronjobs':
-        return <CronJobTable resources={resources} />;
-      case 'networkpolicies':
-        return <NetworkPolicyTable resources={resources} />;
-      case 'persistentvolumes':
-        return <PersistentVolumeTable resources={resources} />;
-      case 'persistentvolumeclaims':
-        return <PersistentVolumeClaimTable resources={resources} />;
-      case 'roles':
-      case 'clusterroles':
-        return <RoleTable resources={resources} />;
-      case 'storageclasses':
-        return <StorageClassTable resources={resources} />;
-      case 'endpoints':
-        return <EndpointsTable resources={resources} />;
-      case 'serviceaccounts':
-        return <ServiceAccountTable resources={resources} />;
-      case 'rolebindings':
-      case 'clusterrolebindings':
-        return <RoleBindingTable resources={resources} />;
-      case 'customresourcedefinitions':
-      case 'crds':
-        return <CustomResourceDefinitionTable resources={resources} />;
-      case 'events':
-        return (
-            <Events events={resources} isLoading={isLoading} error={error} />
-        );
-      default:
-        // Default table view for other resources
-        const columns = [
-          { key: 'metadata.name', header: 'Name' },
-          // { key: 'metadata.namespace', header: 'Namespace' },
-          { key: 'metadata.creationTimestamp', header: 'Created' },
-        ];
-        return (
-          <ResourceTable
-            resources={resources}
-            columns={columns}
-          />
-        );
-    }
-  };
+  const filteredResources =
+  resources?.filter(
+      (resource) =>
+        resource.metadata.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+
+  if(error){
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-destructive">{error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 space-y-4">
-      <CustomLink onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-        e.preventDefault()
-        navigate('/orchestration/kubernetes/namespaced/resources')
-      }} href="/orchestration/kubernetes/namespaced/resources">
-        <Button
-          variant="ghost"
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Resources
-        </Button>
-      </CustomLink>
-      
-      {renderResourceView()}
+    <div>
+      <div className="space-y-6">
+        <RouteDescription
+          title={`Resource Type: ${resourceType}`}
+          shortDescription={`${resources.length} found`}
+          description={`View and manage all ${resourceType} in your cluster. Click on any resource to view detailed information including metadata, labels, and configuration.`}
+        />
+        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Your {resourceType}</CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              <NamespaceSelector />
+            </div>
+          </CardHeader>
+          <CardContent className="p-0 shadow-none">
+            <div className="relative px-6">
+              <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder={`Search ${resourceType}...`}
+                className="w-full pl-9 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <ResourceTable columns={_columns} data={filteredResources} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 } 

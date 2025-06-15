@@ -11,6 +11,12 @@ import type { kubernertes__methods__apply__index__ApplyBody } from '../models/ku
 import type { kubernertes__methods__delete__index__ApplyBody } from '../models/kubernertes__methods__delete__index__ApplyBody';
 import type { kubernertes__methods__patch__index__ApplyBody } from '../models/kubernertes__methods__patch__index__ApplyBody';
 import type { NamespaceInfo } from '../models/NamespaceInfo';
+import type { NetworkCreateParams } from '../models/NetworkCreateParams';
+import type { NetworkCreateResponse } from '../models/NetworkCreateResponse';
+import type { NetworkDeleteParams } from '../models/NetworkDeleteParams';
+import type { NetworkDeleteResponse } from '../models/NetworkDeleteResponse';
+import type { NetworkListResponse } from '../models/NetworkListResponse';
+import type { NetworkUpdateParams } from '../models/NetworkUpdateParams';
 import type { nodes___node_id___NodeSpec } from '../models/nodes___node_id___NodeSpec';
 import type { ResourceResponse } from '../models/ResourceResponse';
 import type { ResourceScope } from '../models/ResourceScope';
@@ -152,6 +158,15 @@ export type TDataApiKubernertesFlowV1Get = {
 export type TDataApiKubernertesFlowV2Get = {
                 namespace: string
             }
+export type TDataApiNetworksPut = {
+                requestBody: NetworkUpdateParams
+            }
+export type TDataApiNetworksPost = {
+                requestBody: NetworkCreateParams
+            }
+export type TDataApiNetworksDelete = {
+                requestBody: NetworkDeleteParams
+            }
 export type TDataApiQueuePost = {
                 requestBody: RunQueue
             }
@@ -169,9 +184,6 @@ export type TDataApiSystemsPost = {
             }
 export type TDataApiQueueJobPost = {
                 requestBody: CreateQueueJob
-            }
-export type TDataProxyApiDockerPathGet = {
-                path: string
             }
 
 export class DefaultService {
@@ -937,13 +949,105 @@ namespace,
 	}
 
 	/**
-	 * @returns unknown Successful Response
+	 * List all Docker networks.
+ * 
+ * Returns:
+ * NetworkListResponse: List of network information
+	 * @returns NetworkListResponse Successful Response
 	 * @throws ApiError
 	 */
-	public static apiNetworksGet(): CancelablePromise<unknown> {
+	public static apiNetworksGet(): CancelablePromise<NetworkListResponse> {
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/networks',
+		});
+	}
+
+	/**
+	 * Update an existing Docker network.
+ * 
+ * Args:
+ * request: Request object
+ * params: Network update parameters
+ * 
+ * Returns:
+ * NetworkCreateResponse: Updated network information
+ * 
+ * Raises:
+ * HTTPException: If network update fails
+	 * @returns NetworkCreateResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static apiNetworksPut(data: TDataApiNetworksPut): CancelablePromise<NetworkCreateResponse> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/networks',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Create a new Docker network.
+ * 
+ * Args:
+ * params: Network creation parameters
+ * 
+ * Returns:
+ * NetworkCreateResponse: Created network information
+ * 
+ * Raises:
+ * HTTPException: If network creation fails
+	 * @returns NetworkCreateResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static apiNetworksPost(data: TDataApiNetworksPost): CancelablePromise<NetworkCreateResponse> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/networks',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Delete a Docker network.
+ * 
+ * Args:
+ * params: Network deletion parameters
+ * 
+ * Returns:
+ * NetworkDeleteResponse: Deletion confirmation
+ * 
+ * Raises:
+ * HTTPException: If network deletion fails
+	 * @returns NetworkDeleteResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static apiNetworksDelete(data: TDataApiNetworksDelete): CancelablePromise<NetworkDeleteResponse> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/networks',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
 		});
 	}
 
@@ -1341,6 +1445,17 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static orchestrationKubernetesNamespacedConfigmapsGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/namespaced/configmaps',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static orchestrationKubernetesNamespacedCertificateGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -1407,6 +1522,17 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static orchestrationKubernetesNamespacedIngressesGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/namespaced/ingresses',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static orchestrationKubernetesNamespacedPodsGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -1422,6 +1548,17 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/orchestration/kubernetes/namespaced/deployment',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static orchestrationKubernetesNamespacedIssuersGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/namespaced/issuers',
 		});
 	}
 
@@ -1462,6 +1599,17 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static orchestrationKubernetesNamespacedDeploymentsGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/namespaced/deployments',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static orchestrationKubernetesNamespacedFlowGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -1477,28 +1625,6 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/queues',
-		});
-	}
-
-	/**
-	 * Proxy
-	 * Proxy the GET request to Docker Hub registry without modifying the headers or body.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static proxyApiDockerPathGet(data: TDataProxyApiDockerPathGet): CancelablePromise<unknown> {
-		const {
-path,
-} = data;
-		return __request(OpenAPI, {
-			method: 'GET',
-			url: '/api/docker/{path}',
-			path: {
-				path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 

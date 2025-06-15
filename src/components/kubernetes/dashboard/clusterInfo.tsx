@@ -20,7 +20,7 @@ export const ClusterInfo = ({
     <div
       className={"p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200"}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 px-6 pt-6">
         <h2 className={`text-lg font-semibold ${"text-gray-800"}`}>
           Cluster Overview
         </h2>
@@ -40,7 +40,7 @@ export const ClusterInfo = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 pb-6">
         <div className={`p-3 rounded-[0.5rem] ${"bg-gray-50"}`}>
           <div className="text-sm text-gray-500 dark:text-gray-400">Nodes</div>
           <InfoText isLoading={isLoading} error={error} text={nodesCount} />

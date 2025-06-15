@@ -16,7 +16,7 @@ function Events({
 
   return (
     <div className="p-4 rounded-[0.5rem]  shadow-sm mb-6 bg-white border border-gray-200">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 px-6 pt-6">
         <h2 className="text-lg font-semibold text-gray-800">Recent Events</h2>
         <button
           onClick={() => setShowAllEvents((prev) => !prev)}
@@ -25,7 +25,7 @@ function Events({
           {!!showAllEvents ? "Show less" : "View all"}
         </button>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-4 px-6 pb-6">
         {error && <p className="text-red-500">{error}</p>}
         {isLoading && (
           <>

@@ -18,12 +18,12 @@ import {
   WaypointsIcon,
   NetworkIcon,
   RocketIcon,
-  Share2Icon,
   ListIcon,
   Layers,
   Settings,
   Users,
-  FolderPlus
+  Globe,
+  Folder
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -143,19 +143,19 @@ const items = {
               url: "/namespaced/resources",
               icon: ListIcon,
             },
-            {
-              title: "Flow",
-              url: "/namespaced/flow",
-              icon: Share2Icon,
-            },
+            // {
+            //   title: "Flow",
+            //   url: "/namespaced/flow",
+            //   icon: Share2Icon,
+            // },
             {
               title: "Deployment",
-              url: "/namespaced/deployment",
+              url: "/namespaced/deployments",
               icon: RocketIcon,
             },
             {
               title: "Config Map",
-              url: "/namespaced/configmap",
+              url: "/namespaced/configmaps",
               icon: ShieldIcon,
             },
             {
@@ -175,17 +175,17 @@ const items = {
             },
             {
               title: "Ingress",
-              url: "/namespaced/ingress",
-              icon: ShuffleIcon,
+              url: "/namespaced/ingresses",
+              icon: Globe,
             },
             {
               title: "certificate",
-              url: "/namespaced/certificate",
+              url: "/namespaced/certificates",
               icon: Certificate,
             },
             {
               title: "issuer",
-              url: "/namespaced/issuer",
+              url: "/namespaced/issuers",
               icon: HandCoinsIcon,
             },
           ],
@@ -209,7 +209,7 @@ const items = {
             {
               title: "Namespaces",
               url: "/namespaces",
-              icon: FolderPlus,
+              icon: Folder,
             },
             {
               title: "Resource Quota",

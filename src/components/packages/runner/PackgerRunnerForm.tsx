@@ -2,84 +2,103 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { ArrowDownToLineIcon, LoaderIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormDescription,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
-export const PackageRunnerForm = ({
+const pullPackageSchema = z.object({
+  image: z.string().min(1, 'Image is required'),
+  registry: z.string().min(1, 'Registry is required'),
+});
+
+type PullPackageFormValues = z.infer<typeof pullPackageSchema>;
+
+export function PackageRunnerForm({
   onSubmitHandler,
   submitting,
   setSubmitting,
 }: {
-  onSubmitHandler: (data: {image:string,registry:string}) => Promise<void>;
+  onSubmitHandler: (data: { image: string; registry: string }) => Promise<void>;
   submitting: boolean;
   setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
+}) {
+  const form = useForm<PullPackageFormValues>({
+    resolver: zodResolver(pullPackageSchema),
     defaultValues: {
-      image:"",
-      registry:"docker.io"
+      image: '',
+      registry: 'docker.io',
     },
   });
 
-  const onSubmit = async(data) => {
+  const handleSubmit = async (data: PullPackageFormValues) => {
     try {
-        if(submitting)return
-        setSubmitting(true);
-        await onSubmitHandler(data);
-        setSubmitting(false);
-        // TODO: Implement actual container run API call
-      } catch (error) {
-        toast.error(`Failed to run container: ${error}`);
-      }
+      if (submitting) return;
+      setSubmitting(true);
+      await onSubmitHandler(data);
+      setSubmitting(false);
+    } catch (error) {
+      setSubmitting(false);
+      toast.error(`Failed to pull package: ${error}`);
+    }
   };
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-          <label className="block text-sm font-medium text-gray-700">Package</label>
-          <input
-            {...register('image', { required: 'Image is required' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., nginx:latest"
-          />
-          {errors.image && (
-            <p className="mt-1 text-sm text-red-600">{errors.image.message}</p>
-          )}
-        </div>
-      <div>
-          <label className="block text-sm font-medium text-gray-700">Registry</label>
-          <input
-            {...register('registry', { required: 'Image is required' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., nginx:latest"
-          />
-          {errors.image && (
-            <p className="mt-1 text-sm text-red-600">{errors.registry?.message}</p>
-          )}
-        </div>
-      <div className="flex justify-end pt-4 border-t">
-        <button
-          disabled={submitting}
-          type="submit"
-          className={`px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 
-                   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex justify-between items-center ${
-                     submitting ? "pointer-events-none" : "pointer-events-auto"
-                   }`}
-        >
-          {submitting ? (
-            <LoaderIcon className="w-4 h-4 mr-2" />
-          ) : (
-            <ArrowDownToLineIcon className="w-4 h-4 mr-2" />
-          )}
-          Pull
-        </button>
-      </div>
-    </form>
+  // Helper to indicate required fields
+  const RequiredBadge = () => (
+    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-red-50 px-1 py-0.5 text-xs font-medium text-red-700">
+      Required
+    </span>
   );
-};
+
+  return (
+    <Form {...form}>
+      <form id="pull-package-form" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="image"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Image <RequiredBadge />
+              </FormLabel>
+              <FormDescription>
+                The name of the image to pull (e.g., nginx:latest)
+              </FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., nginx:latest" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="registry"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Registry <RequiredBadge />
+              </FormLabel>
+              <FormDescription>
+                The registry to pull from (default: docker.io)
+              </FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., docker.io" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </form>
+    </Form>
+  );
+}
 

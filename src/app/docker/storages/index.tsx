@@ -1,97 +1,171 @@
 import React, { useEffect, useState } from "react";
-import useAutoRefresh from "@/components/containers/hooks/useAutoRefresh";
-import { Loader, Plus } from "lucide-react";
-import { StoragesList } from "@/components/storages/StoragesList";
-import { toast } from "sonner";
-import { CreateStorageModal } from "@/components/storages/CreateStorageModal";
 import { StorageInfo } from "@/types/storage";
-
+import { StoragesList } from "@/components/storages/StoragesList";
+import { CreateStorageForm } from "@/components/storages/CreateStorageForm";
+import { HardDrive, Search } from "lucide-react";
+import RouteDescription from "@/components/route-description";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { DefaultService } from '@/gingerJs_api_client';
+import { VolumeActionRequest } from '@/gingerJs_api_client/models/VolumeActionRequest';
 
 const fetchStorages = async () => {
-  // Simulating an API call
-  return new Promise(async (resolve) => {
-    const storagesResponse = await fetch("/api/storages", { method: "GET" });
-    const storages = (await storagesResponse.json()).storages;
-    resolve(storages);
-  });
+  const response = await DefaultService.apiStoragesGet();
+  return (response as { storages: StorageInfo[] }).storages;
 };
 
-const ContainerListPage = ({ storageInfo }:{storageInfo:StorageInfo[]}) => {
-  const [showStorageModal, setShowStorageModal] = useState(false);
-  const [storages, setStorages] = useState<StorageInfo[]>(storageInfo||[]);
+const deleteStorage = async (id: string): Promise<void> => {
+  const request: VolumeActionRequest = {
+    action: "remove",
+    volume_id: id
+  };
+  await DefaultService.apiStoragesPost({ requestBody: request });
+};
 
-  // const {
-  //   data,
-  //   isFetching,
-  //   error,
-  // } = useAutoRefresh(fetchStorages, 1500);
+const createStorage = async (data: any): Promise<void> => {
+  // Transform the data to match the API's expected format
+  const transformedData = {
+    name: data.name,
+    driver: data.driver,
+    driverOpts: data.driver_opts || {}, // Convert driver_opts to driverOpts
+    labels: data.labels || {}
+  };
 
-  // useEffect(() => {
-  //   if (data) {
-  //     setStorages(data);
-  //   }
-  // }, [data]);
+  const request: VolumeActionRequest = {
+    action: "add",
+    add_data: transformedData
+  };
+  await DefaultService.apiStoragesPost({ requestBody: request });
+};
+
+export default function StoragePage() {
+  const [storages, setStorages] = useState<StorageInfo[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+
+  const getStorages = async () => {
+    const items = await fetchStorages();
+    setStorages(items);
+  };
 
   useEffect(() => {
-    if (storageInfo) {
-      setStorages(storageInfo);
+    getStorages();
+  }, []);
+
+  const filteredStorages = storages.filter(
+    (storage) =>
+      storage.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteStorage(id);
+      await getStorages();
+      toast.success('Storage deleted successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to delete storage:', error);
+      toast.error('Failed to delete storage');
+      return false;
     }
-  }, [storageInfo]);
+  };
+
+  const handleCreateStorage = async (data: any) => {
+    try {
+      await createStorage(data);
+      toast.success('Storage created successfully');
+      await getStorages();
+      setShowCreate(false);
+    } catch (error) {
+      console.error('Failed to create storage:', error);
+      toast.error('Failed to create storage');
+    }
+  };
 
   return (
-    <div key="storage">
-      <div className="mb-2 flex items-center w-full gap-2 h-4 text-sm">
-        {false && (
-          <>
-            <Loader className="w-3.5 h-3.5" />
-            <span>Refreshing</span>
-          </>
-        )}
-      </div>
-      <div className="container mx-auto p-8">
-        <h1 className="text-3xl font-bold mb-6">Storages</h1>
-        <div className="mb-2 flex justify-start">
-          <button
-            type="button"
-            onClick={() => setShowStorageModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent 
-                          text-sm font-medium rounded-md text-white bg-gray-600 
-                          hover:bg-gray-700 focus:outline-none focus:ring-2 
-                          focus:ring-offset-2 focus:ring-gray-500"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Storage
-          </button>
-        </div>
-        <StoragesList storages={storages} setStorages={setStorages} />
-      </div>
-      <CreateStorageModal
-        open={showStorageModal}
-        onClose={() => setShowStorageModal(false)}
-        onSubmit={async (storageCreationData) => {
-          const reasponse = await fetch("/api/storages", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "add",
-              add_data: storageCreationData,
-            }),
-          });
-
-          const responseData = await reasponse.json();
-          if (responseData.error) {
-            toast.error(responseData.message);
-            return;
+    <div className='w-full'>
+      <div className="space-y-6">
+        <RouteDescription
+          title={
+            <div className="flex items-center gap-2">
+              <HardDrive className='h-4 w-4'/>
+              <h2>Storages</h2>
+            </div>
           }
-          setShowStorageModal(false);
-          toast.success(responseData.message);
-          setStorages((prev) => {
-            return [responseData.volume, ...prev];
-          });
-        }}
-      />
+          shortDescription='Manage your Docker volumes—view details, create new volumes, or delete existing ones from a centralized interface.'
+          description='Docker volumes provide persistent storage for containers. They are the preferred mechanism for persisting data generated by and used by Docker containers. Volumes are completely managed by Docker and are independent of the container lifecycle.'
+        />
+        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Your Volumes</CardTitle>
+              <CardDescription>
+                {storages.length} volumes found
+              </CardDescription>
+            </div>
+            <Button onClick={() => setShowCreate(true)}>
+              <HardDrive className="mr-2 h-4 w-4" />
+              Create Volume
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0 shadow-none">
+            <div className="relative px-6">
+              <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search volumes..."
+                className="w-full pl-9 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <StoragesList 
+              storages={filteredStorages} 
+              onDelete={handleDelete}
+            />
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Sheet open={showCreate} onOpenChange={setShowCreate}>
+        <SheetContent className="!w-[30%] sm:!max-w-[30%]">
+          <SheetHeader>
+            <SheetTitle>Create Volume</SheetTitle>
+          </SheetHeader>
+          <div className="h-[calc(100vh-8rem)]">
+            <ScrollArea className="h-full pr-4">
+              <div className="p-4">
+                <CreateStorageForm
+                  onSubmit={handleCreateStorage}
+                  onCancel={() => {
+                    setShowCreate(false)
+                  }}
+                />
+              </div>
+            </ScrollArea>
+          </div>
+          <SheetFooter className='p-4'>
+            <Button type="button" variant="outline" onClick={() => {
+              setShowCreate(false)
+            }}>
+              Cancel
+            </Button>
+            <Button type="submit" form="create-storage-form">
+              Create Volume
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
-};
-
-export default ContainerListPage;
+}

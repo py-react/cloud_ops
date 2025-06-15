@@ -8,12 +8,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DefaultService } from "@/gingerJs_api_client";
-import { FolderPlus, Search } from "lucide-react";
+import { Folder, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import { CreateNamespace } from "@/components/kubernetes/settings/createNamespace";
 import NamespaceDetailsModel from "@/components/kubernetes/settings/namespaceDetailsModel";
+import RouteDescription from "@/components/route-description";
+import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 
 const columns = [
   { accessor: "metadata.name", header: "Name" },
@@ -101,30 +103,37 @@ export const Namespaces = () => {
 
   return (
     <div title="Kubernetes namespace">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <FolderPlus className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Kubernetes Namespace</h1>
-        </div>
-      </div>
       <div className="space-y-6">
-        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+        <RouteDescription
+          title={
+            <div className="flex items-center gap-2">
+              <Folder className="h-4 w-4" />
+              <h2>Kubernetes Namespace management</h2>
+            </div>
+          }
+          shortDescription="Manage your Kubernetes namespaces—add new ones, view details, or remove existing namespaces with ease."
+          description="Namespaces in Kubernetes are virtual clusters within a physical cluster, used to isolate and organize resources like pods, services, and deployments. They help manage environments (e.g., dev, test, prod) and control access at a granular level."
+        />
+        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200">
           <CardHeader>
-            <CardTitle className="text-lg">Current Namespace</CardTitle>
+            <CardTitle className="text-lg">
+              <div className="flex items-center justify-between">
+                <h2>Current namespace</h2>
+                <NamespaceSelector />
+              </div>
+            </CardTitle>
             <CardDescription>
               The active namespace for the current context
             </CardDescription>
           </CardHeader>
           <CardContent className="shadow-none">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <div className="text-sm text-muted-foreground">
-                  Namespace Name
-                </div>
-                <div className="font-medium flex items-center gap-2">
-                  <FolderPlus className="h-4 w-4" />
-                  {selectedNamespace || ""}
-                </div>
+            <div className="space-y-1">
+              <div className="text-sm text-muted-foreground">
+                Namespace Name
+              </div>
+              <div className="font-medium flex items-center gap-2">
+                <Folder className="h-4 w-4" />
+                {selectedNamespace || ""}
               </div>
             </div>
           </CardContent>
@@ -137,31 +146,30 @@ export const Namespaces = () => {
                 All configured Kubernetes namespaces for the current context
               </CardDescription>
             </div>
-
-            <div className="w-full flex items-center max-w-sm gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search contexts..."
-                  className="w-full pl-9 bg-background"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+            <div className=" flex items-center gap-2">
               <CreateNamespace />
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
+            <div className="relative p-6">
+              <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search contexts..."
+                className="w-full pl-9 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <ResourceTable
               onViewDetails={(data) => {
                 setViewNamespaceData(data);
-                fetchResourceQuotas(data.metadata.name)
-                fetchLimitRange(data.metadata.name)
+                fetchResourceQuotas(data.metadata.name);
+                fetchLimitRange(data.metadata.name);
                 setShowDetails(true);
               }}
-              onDelete={(data)=>{
-                deleteNamespace(data.metadata.name)
+              onDelete={(data) => {
+                deleteNamespace(data.metadata.name);
               }}
               columns={columns}
               data={filteredNamespaces}
@@ -170,12 +178,18 @@ export const Namespaces = () => {
         </Card>
       </div>
       {showDetails && (
-        <NamespaceDetailsModel open={showDetails} onClose={(open)=>{
-            setShowDetails(open)
+        <NamespaceDetailsModel
+          open={showDetails}
+          onClose={(open) => {
+            setShowDetails(open);
             setViewNamespaceData({});
-            setLimitRanges([])
-            setResourcesQuota([])
-        }} viewNamespaceData={viewNamespaceData} filteredLimitRange={filteredLimitRange} filteredQuotas={filteredQuotas} />
+            setLimitRanges([]);
+            setResourcesQuota([]);
+          }}
+          viewNamespaceData={viewNamespaceData}
+          filteredLimitRange={filteredLimitRange}
+          filteredQuotas={filteredQuotas}
+        />
       )}
     </div>
   );

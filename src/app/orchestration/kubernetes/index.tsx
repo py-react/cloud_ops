@@ -1,74 +1,79 @@
 import React, { useCallback, useEffect, useState } from "react";
 import useKubernertesResources from "@/hooks/use-resource";
 import {
-  Layers,
-  Box,
-  FileText,
-  Lock,
-  Share2,
   Globe,
-  Shield,
-  KeyRound,
-  Loader2,
+  Share2Icon,
+  RocketIcon,
+  BoxIcon,
+  FileKeyIcon,
+  NetworkIcon,
+  ShieldIcon,
+  BadgeIcon as Certificate,
+  HandCoinsIcon,
 } from "lucide-react";
 import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
 import { DefaultService } from "@/gingerJs_api_client";
 import Events from "@/components/kubernetes/resources/events";
 import ClusterInfo from "@/components/kubernetes/dashboard/clusterInfo";
 import ClusterMetrics from "@/components/kubernetes/dashboard/clusterMatrics";
+import RouteDescription from "@/components/route-description";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import useNavigate from "@/libs/navigate";
+import { Button } from "@/components/ui/button";
 
 const shortcutToResources = {
   deployment: {
-    id: "deployment",
+    id: "deployments",
     title: "Deployments",
-    icon: <Layers size={20} color="white" />,
+    icon: <RocketIcon size={20} color="white" />,
     color: "bg-blue-500",
   },
   pod: {
-    id: "pod",
+    id: "pods",
     title: "Pods",
-    icon: <Box size={20} color="white" />,
+    icon: <BoxIcon size={20} color="white" />,
     color: "bg-green-500",
   },
   configmap: {
-    id: "configmap",
+    id: "configmaps",
     title: "ConfigMaps",
-    icon: <FileText size={20} color="white" />,
+    icon: <ShieldIcon size={20} color="white" />,
     color: "bg-indigo-500",
   },
   secret: {
-    id: "secret",
+    id: "secrets",
     title: "Secrets",
-    icon: <Lock size={20} color="white" />,
+    icon: <FileKeyIcon size={20} color="white" />,
     color: "bg-purple-500",
   },
   service: {
-    id: "service",
+    id: "services",
     title: "Services",
-    icon: <Share2 size={20} color="white" />,
+    icon: <NetworkIcon size={20} color="white" />,
     color: "bg-orange-500",
   },
   ingress: {
-    id: "ingress",
+    id: "ingresses",
     title: "Ingress",
     icon: <Globe size={20} color="white" />,
     color: "bg-yellow-500",
   },
   certificate: {
-    id: "certificate",
+    id: "certificates",
     title: "Certificates",
-    icon: <Shield size={20} color="white" />,
+    icon: <Certificate size={20} color="white" />,
     color: "bg-teal-500",
   },
   issuer: {
-    id: "issuer",
+    id: "issuers",
     title: "Issuers",
-    icon: <KeyRound size={20} color="white" />,
+    icon: <HandCoinsIcon size={20} color="white" />,
     color: "bg-red-500",
   },
 };
 
 function Kubernetes() {
+  const navigate = useNavigate()
   const [resources, setResources] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -137,82 +142,118 @@ function Kubernetes() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6 text-gray-900">
-        Kubernetes Dashboard
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        {(isLoading || error) && (
-          <>
-            {Object.values(shortcutToResources).map((item) => {
-              return (
-                <ResourceCard
-                  key={item.id}
-                  title={item.title}
-                  count={0}
-                  color={item.color}
-                  icon={item.icon}
-                  onClick={() => {}}
-                  isLoading={isLoading}
-                  error={!!error}
-                />
-              );
-            })}
-          </>
-        )}
-        {!isLoading && !error && (
-          <>
-            {resources?.map((resource: Record<string, any>) => (
-              <ResourceCard
-                key={resource.kind}
-                title={
-                  shortcutToResources[
-                    resource.kind.toLowerCase() as keyof typeof shortcutToResources
-                  ].title
-                }
-                count={resource.count}
-                icon={
-                  shortcutToResources[
-                    resource.kind.toLowerCase() as keyof typeof shortcutToResources
-                  ].icon
-                }
-                color={
-                  shortcutToResources[
-                    resource.kind.toLowerCase() as keyof typeof shortcutToResources
-                  ].color
-                }
-                onClick={() => {}}
-              />
-            ))}
-          </>
-        )}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="col-span-2 grid gap-6">
-          <ClusterInfo
-            isLoading={isLoadingClusterInfo}
-            error={clusterInfoError}
-            nodesCount={clusterInfo?.nodes_count || 0}
-            podsCount={clusterInfo?.pods_count || 0}
-            runningPods={clusterInfo?.running_pods || 0}
-            namespacesCount={clusterInfo?.namespaces_count || 0}
-          />
-          <Events
-            events={recentEvents}
-            isLoading={isRecentEventsLoading}
-            error={recentEventsError || ""}
-          />
-          ;
-        </div>
-        <div className="col-span-1">
-          <ClusterMetrics
-            isLoading={isLoadingClusterMetrics}
-            error={clusterMetricsError}
-            usage={{
-              cpu: clusterMettrics?.usage?.cpu?.percentage,
-              memory: clusterMettrics?.usage?.memory?.percentage,
-              disk: clusterMettrics?.usage?.disk?.percentage,
-            }}
-          />
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Kubernetes</h1>
+      <div className="space-y-6">
+        <RouteDescription
+          title={
+            <div className="flex items-center justify-between">
+              <h2>Dashboard</h2>
+              <Button
+                variant={"outline"}
+                className="flex gap-2 items-center"
+                onClick={() => {
+                  navigate(`/orchestration/kubernetes/namespaced/flow`);
+                }}
+              >
+                <Share2Icon className="mr-2 h-4 w-4" />
+                View Cluster Flow Diagram
+              </Button>
+            </div>
+          }
+          shortDescription="Welcome to your Kubernetes Dashboard. Monitor and manage your cluster resources from this central hub."
+          description="Get an overview of your cluster health, resource utilization, and running workloads. Use the navigation on the left to access specific resource types like Pods, Services, Deployments, and more."
+        />
+        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200">
+          <CardHeader>
+            <CardTitle>Quick Links</CardTitle>
+            <CardDescription>
+              Quickly navigate to your most used resource
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="shadow-none">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {(isLoading || error) && (
+                <>
+                  {Object.values(shortcutToResources).map((item) => {
+                    return (
+                      <ResourceCard
+                        key={item.id}
+                        title={item.title}
+                        count={0}
+                        color={item.color}
+                        icon={item.icon}
+                        onClick={() => {}}
+                        isLoading={isLoading}
+                        error={!!error}
+                      />
+                    );
+                  })}
+                </>
+              )}
+              {!isLoading && !error && (
+                <>
+                  {resources?.map((resource: Record<string, any>) => (
+                    <ResourceCard
+                      key={resource.kind}
+                      title={
+                        shortcutToResources[
+                          resource.kind.toLowerCase() as keyof typeof shortcutToResources
+                        ].title
+                      }
+                      count={resource.count}
+                      icon={
+                        shortcutToResources[
+                          resource.kind.toLowerCase() as keyof typeof shortcutToResources
+                        ].icon
+                      }
+                      color={
+                        shortcutToResources[
+                          resource.kind.toLowerCase() as keyof typeof shortcutToResources
+                        ].color
+                      }
+                      onClick={() => {
+                        const resourceType =
+                          shortcutToResources[
+                            resource.kind.toLowerCase() as keyof typeof shortcutToResources
+                          ].id;
+                        navigate(
+                          `/orchestration/kubernetes/namespaced/${resourceType}`
+                        );
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="col-span-2 grid gap-6">
+            <ClusterInfo
+              isLoading={isLoadingClusterInfo}
+              error={clusterInfoError}
+              nodesCount={clusterInfo?.nodes_count || 0}
+              podsCount={clusterInfo?.pods_count || 0}
+              runningPods={clusterInfo?.running_pods || 0}
+              namespacesCount={clusterInfo?.namespaces_count || 0}
+            />
+            <Events
+              events={recentEvents}
+              isLoading={isRecentEventsLoading}
+              error={recentEventsError || ""}
+            />
+          </div>
+          <div className="col-span-1">
+            <ClusterMetrics
+              isLoading={isLoadingClusterMetrics}
+              error={clusterMetricsError}
+              usage={{
+                cpu: clusterMettrics?.usage?.cpu?.percentage,
+                memory: clusterMettrics?.usage?.memory?.percentage,
+                disk: clusterMettrics?.usage?.disk?.percentage,
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

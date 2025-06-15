@@ -3,7 +3,7 @@ import { KubeContext } from "./context/KubeContext";
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { 
-  Folder, 
+  Layers, 
   Check, 
   ChevronsUpDown,
 } from 'lucide-react';
@@ -68,7 +68,7 @@ export function KubeContextSwitcher() {
           className="w-[260px] justify-between rounded-[0.5rem]"
         >
           <div className="flex items-center gap-2 truncate">
-            <Folder className="h-4 w-4 shrink-0" />
+            <Layers className="h-4 w-4 shrink-0" />
             <span className="truncate">
               {currentKubeContext?.name ? currentKubeContext.name : "Select context"}
             </span>
@@ -93,7 +93,7 @@ export function KubeContextSwitcher() {
                   onSelect={() => switchContext(context)}
                   className="flex items-center gap-2"
                 >
-                  <Folder className="h-4 w-4" />
+                  <Layers className="h-4 w-4" />
                   <span className="flex-1 truncate">{context.name}</span>
                   {currentKubeContext?.name === context.name  && (
                     <Check className="h-4 w-4 ml-auto text-primary" />

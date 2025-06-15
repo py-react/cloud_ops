@@ -18,6 +18,7 @@ import Roles from "@/components/kubernetes/settings/rbac/cluserUsers";
 import RoleBindings from "@/components/kubernetes/settings/rbac/bindings";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
+import RouteDescription from "@/components/route-description";
 
 export const RBAC = () => {
   const [activeTab, setActiveTab] = useState("users");
@@ -35,31 +36,20 @@ export const RBAC = () => {
 
   return (
     <div title="Kubernetes Resource quota">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Users className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Users & RBAC</h1>
-        </div>
-      </div>
       <div className="space-y-6">
-        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-lg">Access Control</CardTitle>
-            <CardDescription>
-              Manage users, roles and access control for your Kubernetes cluster
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="shadow-none">
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">
-                Role-based access control (RBAC) is a method of regulating
+        <RouteDescription
+          title={
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <h2>Users & RBAC</h2>
+            </div>
+          }
+          shortDescription="Manage users, roles and access control for your Kubernetes cluster"
+          description="Role-based access control (RBAC) is a method of regulating
                 access to resources based on the roles of individual users. RBAC
                 authorization uses the rbac.authorization.k8s.io API group to
-                drive authorization decisions.
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                drive authorization decisions."
+        />
         <div>
           <Tabs
             defaultValue="users"

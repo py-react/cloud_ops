@@ -45,11 +45,11 @@ export const ClusterMetrics = ({
     <div
       className={`p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200`}
     >
-      <h2 className={`text-lg font-semibold mb-4 text-gray-800`}>
+      <h2 className={`text-lg font-semibold mb-4 text-gray-800 px-6 pt-6`}>
         Cluster Metrics
       </h2>
 
-      <div className="space-y-4">
+      <div className="space-y-4 px-6 pb-6">
         {metrics.map((metric) => (
           <div key={metric.name} className="space-y-2">
             <div className="flex items-center justify-between">

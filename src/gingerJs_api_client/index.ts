@@ -37,6 +37,13 @@ export type { kubernertes__methods__apply__index__ApplyBody } from './models/kub
 export type { kubernertes__methods__delete__index__ApplyBody } from './models/kubernertes__methods__delete__index__ApplyBody';
 export type { kubernertes__methods__patch__index__ApplyBody } from './models/kubernertes__methods__patch__index__ApplyBody';
 export type { NamespaceInfo } from './models/NamespaceInfo';
+export type { NetworkCreateParams } from './models/NetworkCreateParams';
+export type { NetworkCreateResponse } from './models/NetworkCreateResponse';
+export type { NetworkDeleteParams } from './models/NetworkDeleteParams';
+export type { NetworkDeleteResponse } from './models/NetworkDeleteResponse';
+export type { NetworkInfo } from './models/NetworkInfo';
+export type { NetworkListResponse } from './models/NetworkListResponse';
+export type { NetworkUpdateParams } from './models/NetworkUpdateParams';
 export type { NodeInfo } from './models/NodeInfo';
 export type { nodes___node_id___NodeSpec } from './models/nodes___node_id___NodeSpec';
 export type { Package_Info } from './models/Package_Info';
@@ -93,6 +100,13 @@ export { $kubernertes__methods__apply__index__ApplyBody } from './schemas/$kuber
 export { $kubernertes__methods__delete__index__ApplyBody } from './schemas/$kubernertes__methods__delete__index__ApplyBody';
 export { $kubernertes__methods__patch__index__ApplyBody } from './schemas/$kubernertes__methods__patch__index__ApplyBody';
 export { $NamespaceInfo } from './schemas/$NamespaceInfo';
+export { $NetworkCreateParams } from './schemas/$NetworkCreateParams';
+export { $NetworkCreateResponse } from './schemas/$NetworkCreateResponse';
+export { $NetworkDeleteParams } from './schemas/$NetworkDeleteParams';
+export { $NetworkDeleteResponse } from './schemas/$NetworkDeleteResponse';
+export { $NetworkInfo } from './schemas/$NetworkInfo';
+export { $NetworkListResponse } from './schemas/$NetworkListResponse';
+export { $NetworkUpdateParams } from './schemas/$NetworkUpdateParams';
 export { $NodeInfo } from './schemas/$NodeInfo';
 export { $nodes___node_id___NodeSpec } from './schemas/$nodes___node_id___NodeSpec';
 export { $Package_Info } from './schemas/$Package_Info';
