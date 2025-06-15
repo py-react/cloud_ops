@@ -1,102 +1,135 @@
 import React from 'react';
-import { UseFormRegister, UseFormWatch } from 'react-hook-form';
+import { Control, UseFormWatch } from 'react-hook-form';
 import type { ContainerRunConfig } from '../types';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 interface AdvancedConfigProps {
-  register: UseFormRegister<ContainerRunConfig>;
+  control: Control<ContainerRunConfig>;
   watch: UseFormWatch<ContainerRunConfig>;
   errors: any;
 }
 
-export function AdvancedConfig({ register, watch, errors }: AdvancedConfigProps) {
+export function AdvancedConfig({ control, watch, errors }: AdvancedConfigProps) {
   return (
-    <div className="space-y-4">
-      <h3 className="text-md font-medium text-gray-900">Advanced Configuration</h3>
-      
+    <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">User</label>
-          <input
-            {...register('user')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., nginx"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Working Directory</label>
-          <input
-            {...register('workingDir')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., /app"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Domain Name</label>
-          <input
-            {...register('domainname')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., example.com"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Hostname</label>
-          <input
-            {...register('hostname')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., container1"
-          />
-        </div>
+        <FormField
+          control={control}
+          name="user"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>User</FormLabel>
+              <FormDescription>e.g., nginx</FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., nginx" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name="workingDir"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Working Directory</FormLabel>
+              <FormDescription>e.g., /app</FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., /app" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name="domainname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Domain Name</FormLabel>
+              <FormDescription>e.g., example.com</FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name="hostname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hostname</FormLabel>
+              <FormDescription>e.g., container1</FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., container1" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
-
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">Runtime Options</label>
+        <FormLabel>Runtime Options</FormLabel>
         <div className="grid grid-cols-2 gap-4">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              {...register('init')}
-              className="rounded border-gray-300 text-blue-600 
-                       focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Init Process</span>
-          </label>
-
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              {...register('tty')}
-              className="rounded border-gray-300 text-blue-600 
-                       focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Allocate TTY</span>
-          </label>
-
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              {...register('stdinOpen')}
-              className="rounded border-gray-300 text-blue-600 
-                       focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Keep STDIN Open</span>
-          </label>
-
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              {...register('readOnly')}
-              className="rounded border-gray-300 text-blue-600 
-                       focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Read Only Root FS</span>
-          </label>
+          <FormField
+            control={control}
+            name="init"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <span className="ml-2 text-sm text-gray-700">Init Process</span>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="tty"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <span className="ml-2 text-sm text-gray-700">Allocate TTY</span>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="stdinOpen"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <span className="ml-2 text-sm text-gray-700">Keep STDIN Open</span>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="readOnly"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <span className="ml-2 text-sm text-gray-700">Read Only Root FS</span>
+              </FormItem>
+            )}
+          />
         </div>
       </div>
     </div>

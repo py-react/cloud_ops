@@ -101,8 +101,8 @@ const PackagesPage= () => {
               <h2>Packages</h2>
             </div>
           }
-          shortDescription="Manage your Docker packages—view, pull, create, or delete images from a centralized interface."
-          description="Docker packages (images) are the building blocks for containers. Manage your images here: pull from registries, create new ones, or remove unused images to keep your environment clean and efficient."
+          shortDescription="Browse and manage Docker packages—inspect metadata, delete unused packages, or pull new ones."
+          description="Docker packages (images) are read-only templates used to create containers. They package an application along with its environment, libraries, and dependencies into a single artifact that can be versioned and shared. Packages serve as the blueprint for container instances and are typically stored in container registries."
         />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">

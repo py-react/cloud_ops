@@ -1,83 +1,171 @@
 import React from 'react';
-import { UseFormRegister, UseFormWatch } from 'react-hook-form';
+import { UseFormRegister, UseFormWatch, Control } from 'react-hook-form';
 import type { ContainerRunConfig } from '../types';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 interface BasicConfigProps {
-  register: UseFormRegister<ContainerRunConfig>;
+  control: Control<ContainerRunConfig>;
   errors: any;
   watch: UseFormWatch<ContainerRunConfig>;
 }
 
-export function BasicConfig({ register, errors, watch }: BasicConfigProps) {
+export function BasicConfig({ control, errors, watch }: BasicConfigProps) {
+  // Helper to indicate required fields
+  const RequiredBadge = () => (
+    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-red-50 px-1 py-0.5 text-xs font-medium text-red-700">
+      Required
+    </span>
+  );
+
+  // Helper to indicate optional fields
+  const OptionalBadge = () => (
+    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-gray-50 px-1 py-0.5 text-xs font-medium text-gray-600">
+      Optional
+    </span>
+  );
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-md font-medium text-gray-900">Basic Configuration</h3>
-      
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Image</label>
-          <input
-            {...register('image', { required: 'Image is required' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., nginx:latest"
-          />
-          {errors.image && (
-            <p className="mt-1 text-sm text-red-600">{errors.image.message}</p>
+    <div className="space-y-6">
+      {/* Main Fields in Grid, 2 per row, preserve spacing */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Row 1 */}
+        <FormField
+          control={control}
+          name="image"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Image <RequiredBadge />
+              </FormLabel>
+              <FormDescription>
+                The Docker image to use for this container
+              </FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., nginx:latest" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
+        />
+        <FormField
+          control={control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Container Name <RequiredBadge />
+              </FormLabel>
+              <FormDescription>
+                A name for this container
+              </FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., my-container" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* Row 2 */}
+        <FormField
+          control={control}
+          name="command"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Command <OptionalBadge />
+              </FormLabel>
+              <FormDescription>
+                The command to run in the container
+              </FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., /bin/bash" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div />
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Command</label>
-          <input
-            {...register('command')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., nginx -g 'daemon off;'"
-          />
-        </div>
+      {/* Runtime Options in a row */}
+      <div className="flex flex-col md:flex-row gap-6">
+        <FormField
+          control={control}
+          name="detach"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center gap-2 space-y-0">
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="m-0">
+                  Detach
+                </FormLabel>
+                <FormDescription>
+                  Run container in background
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Container Name</label>
-          <input
-            {...register('name')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., my-nginx"
-          />
-        </div>
+        <FormField
+          control={control}
+          name="removeOnExit"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center gap-2 space-y-0">
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="m-0">
+                  Remove on Exit
+                </FormLabel>
+                <FormDescription>
+                  Automatically remove the container when it exits
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
 
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              {...register('detach')}
-              className="rounded border-gray-300 text-blue-600 
-                       focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Detach</span>
-          </label>
-
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              {...register('autoRemove')}
-              className="rounded border-gray-300 text-blue-600 
-                       focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Auto Remove</span>
-          </label>
-
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              {...register('privileged')}
-              className="rounded border-gray-300 text-blue-600 
-                       focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Privileged</span>
-          </label>
-        </div>
+        <FormField
+          control={control}
+          name="privileged"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center gap-2 space-y-0">
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="m-0">
+                  Privileged
+                </FormLabel>
+                <FormDescription>
+                  Give extended privileges to this container
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );

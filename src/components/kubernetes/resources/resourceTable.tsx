@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { CheckCircle2, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from "@/libs/utils"
@@ -13,6 +13,9 @@ interface ResourceTableProps<T> {
   onViewConfig?: (resource: T) => void;
   onDelete?: (resource: T) => void;
   onPlay?: (resource: T) => void;
+  onEdit?: (resource: T) => void;
+  onStop?: (resource: T) => void;
+  onPause?: (resource: T) => void;
   className?: string;
   tableClassName?: string;
 }
@@ -23,8 +26,11 @@ export function ResourceTable<T>({
   onViewDetails,
   onViewLogs,
   onViewConfig,
+  onEdit,
   onDelete,
   onPlay,
+  onStop,
+  onPause,
   className,
   tableClassName,
 }: ResourceTableProps<T>) {
@@ -48,6 +54,16 @@ export function ResourceTable<T>({
     if (onPlay) onPlay(resource);
   };
 
+  const handleStop = (resource: T) => {
+    if (onStop) onStop(resource);
+  };
+
+  const handlePause = (resource: T) => {
+    if (onPause) onPause(resource);
+  };
+
+  const showActions = onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay || onStop || onPause || onEdit
+
   return (
     <Card className={cn("shadow-none", className)}>
       <div className="rounded-[calc(0.5rem-2px)] border">
@@ -57,7 +73,7 @@ export function ResourceTable<T>({
                 {columns.map((column) => (
                   <TableHead key={column.accessor} className="bg-background">{column.header}</TableHead>
                 ))}
-                {onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay ? (
+                {showActions ? (
                   <TableHead className="bg-background">Actions</TableHead>
                 ) : null}
               </TableRow>
@@ -71,7 +87,7 @@ export function ResourceTable<T>({
                         {renderCellContent(column.accessor, column.accessor.split('.').reduce((obj: any, key: string) => obj && obj[key], row as Record<string,any>))}
                       </TableCell>
                     ))}
-                    {onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay ? (
+                    {showActions ? (
                       <TableCell>
                         <div className="flex items-center justify-start gap-2">
                           {!!onPlay ? (
@@ -80,8 +96,28 @@ export function ResourceTable<T>({
                               size="sm"
                               onClick={() => handlePlay(row)}
                             >
-                              <Play className="h-4 w-4" />
+                              <Play className="h-4 w-4 text-green-500" />
                               <span className="sr-only">Play</span>
+                            </Button>
+                          ) : null}
+                          {!!onStop ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleStop(row)}
+                            >
+                              <StopCircleIcon className="h-4 w-4 text-red-500" />
+                              <span className="sr-only">Stop</span>
+                            </Button>
+                          ) : null}
+                          {!!onPause ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePause(row)}
+                            >
+                              <PauseIcon className="h-4 w-4 text-yellow-600" />
+                              <span className="sr-only">Pause</span>
                             </Button>
                           ) : null}
                           {!!onViewDetails ? (
@@ -112,6 +148,16 @@ export function ResourceTable<T>({
                             >
                               <FileText className="h-4 w-4" />
                               <span className="sr-only">Config</span>
+                            </Button>
+                          ) : null}
+                          {!!onEdit ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onEdit(row)}
+                            >
+                              <EditIcon className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
                             </Button>
                           ) : null}
                           {!!onDelete ? (

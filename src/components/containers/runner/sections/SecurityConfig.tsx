@@ -1,16 +1,26 @@
 import React from 'react';
-import { UseFormRegister, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import { Control, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import { Plus, X } from 'lucide-react';
 import type { ContainerRunConfig } from '../types';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface SecurityConfigProps {
-  register: UseFormRegister<ContainerRunConfig>;
+  control: Control<ContainerRunConfig>;
   watch: UseFormWatch<ContainerRunConfig>;
   setValue: UseFormSetValue<ContainerRunConfig>;
   errors: any;
 }
 
-export function SecurityConfig({ register, watch, setValue, errors }: SecurityConfigProps) {
+export function SecurityConfig({ control, watch, setValue, errors }: SecurityConfigProps) {
   const capAdd = watch('capAdd') || [];
   const capDrop = watch('capDrop') || [];
 
@@ -23,94 +33,93 @@ export function SecurityConfig({ register, watch, setValue, errors }: SecurityCo
   const removeCapability = (type: 'add' | 'drop', index: number) => {
     const field = type === 'add' ? 'capAdd' : 'capDrop';
     const current = watch(field) || [];
-    setValue(field as any, current.filter((_, i) => i !== index));
+    setValue(field as any, current.filter((_: any, i: number) => i !== index));
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-md font-medium text-gray-900">Security Configuration</h3>
-
-      <div className="space-y-4">
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-6">
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-gray-700">Add Capabilities</label>
-            <button
-              type="button"
-              onClick={() => addCapability('add')}
-              className="inline-flex items-center px-2 py-1 text-sm font-medium text-blue-600 
-                       hover:text-blue-700"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add Capability
-            </button>
+            <FormLabel>Add Capabilities</FormLabel>
+            <Button type="button" variant="outline" size="sm" onClick={() => addCapability('add')}>
+              <Plus className="w-4 h-4 mr-1" /> Add Capability
+            </Button>
           </div>
-          
           <div className="space-y-2">
-            {capAdd.map((_, index) => (
+            {capAdd.map((_: any, index: number) => (
               <div key={index} className="flex items-center space-x-2">
-                <input
-                  {...register(`capAdd.${index}` as any)}
-                  className="flex-1 rounded-md border-gray-300 shadow-sm 
-                           focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="e.g., SYS_ADMIN"
+                <FormField
+                  control={control}
+                  name={`capAdd.${index}`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input placeholder="e.g., SYS_ADMIN" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => removeCapability('add', index)}
-                  className="text-red-600 hover:text-red-700"
                 >
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             ))}
           </div>
         </div>
-
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-gray-700">Drop Capabilities</label>
-            <button
-              type="button"
-              onClick={() => addCapability('drop')}
-              className="inline-flex items-center px-2 py-1 text-sm font-medium text-blue-600 
-                       hover:text-blue-700"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add Capability
-            </button>
+            <FormLabel>Drop Capabilities</FormLabel>
+            <Button type="button" variant="outline" size="sm" onClick={() => addCapability('drop')}>
+              <Plus className="w-4 h-4 mr-1" /> Drop Capability
+            </Button>
           </div>
-          
           <div className="space-y-2">
-            {capDrop.map((_, index) => (
+            {capDrop.map((_: any, index: number) => (
               <div key={index} className="flex items-center space-x-2">
-                <input
-                  {...register(`capDrop.${index}` as any)}
-                  className="flex-1 rounded-md border-gray-300 shadow-sm 
-                           focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="e.g., NET_RAW"
+                <FormField
+                  control={control}
+                  name={`capDrop.${index}`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input placeholder="e.g., NET_RAW" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => removeCapability('drop', index)}
-                  className="text-red-600 hover:text-red-700"
                 >
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             ))}
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">User Namespace Mode</label>
-          <input
-            {...register('userns')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., host"
-          />
         </div>
       </div>
+      <FormField
+        control={control}
+        name="userns"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>User Namespace Mode</FormLabel>
+            <FormDescription>e.g., host</FormDescription>
+            <FormControl>
+              <Input placeholder="e.g., host" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 }

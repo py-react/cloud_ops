@@ -15,7 +15,7 @@ export function ContainerFilters({
   onStatusFilterChange,
 }: ContainerFiltersProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
+    <div className="flex flex-col sm:flex-row gap-4 px-6">
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400" />

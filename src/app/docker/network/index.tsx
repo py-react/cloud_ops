@@ -153,8 +153,8 @@ export default function NetworkPage() {
               <h2>Networks</h2>
             </div>
           }
-          shortDescription='Manage your Docker networks—view details, create new networks, or delete existing ones from a centralized interface.'
-          description='Docker networks enable communication between containers. They provide isolation, security, and control over how containers interact with each other and the outside world. Networks are essential for building distributed applications and microservices architectures in Docker.'
+          shortDescription='Manage Docker networks—create, inspect, or remove networks used for container communication.'
+          description='Docker networks enable isolated and structured communication between containers, both on the same host and across multiple hosts. They abstract away low-level networking, allowing containers to discover and connect to each other using network names. Docker supports several built-in network drivers like bridge, host, and overlay, each serving different use cases.'
         />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">

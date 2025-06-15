@@ -21,7 +21,7 @@ export interface ContainerRunConfig {
   // Resource Configuration
   cpuPeriod?: number;
   cpuQuota?: number;
-  cpuShares?: number;
+  cpuShares?: string;
   cpusetCpus?: string;
   cpusetMems?: string;
   memory?: string;

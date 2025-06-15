@@ -9,7 +9,7 @@ interface TabsProps {
 
 export function Tabs({ tabs, activeTab, onChange }: TabsProps) {
   return (
-    <div className="border-b border-gray-200">
+    <div className="">
       <nav className="-mb-px flex space-x-8" aria-label="Tabs">
         {tabs.map((tab) => (
           <button

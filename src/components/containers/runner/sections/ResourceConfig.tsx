@@ -1,61 +1,112 @@
 import React from 'react';
-import { UseFormRegister } from 'react-hook-form';
+import { UseFormWatch, Control } from 'react-hook-form';
 import type { ContainerRunConfig } from '../types';
-
-// This type represents just the resource configuration fields we're updating
-type ResourceUpdateConfig = Pick<ContainerRunConfig, 'memory' | 'cpuShares' | 'memoryReservation' | 'memorySwap'>;
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
 interface ResourceConfigProps {
-  register: UseFormRegister<ResourceUpdateConfig>;
+  control: Control<ContainerRunConfig>;
   errors: any;
+  watch: UseFormWatch<ContainerRunConfig>;
 }
 
-export function ResourceConfig({ register, errors }: ResourceConfigProps) {
+export function ResourceConfig({ control, errors, watch }: ResourceConfigProps) {
+  // Helper to indicate optional fields
+  const OptionalBadge = () => (
+    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-gray-50 px-1 py-0.5 text-xs font-medium text-gray-600">
+      Optional
+    </span>
+  );
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-md font-medium text-gray-900">Resource Configuration</h3>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">CPU Shares</label>
-          <input
-            type="number"
-            {...register('cpuShares')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., 1024"
-          />
-        </div>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FormField
+          control={control}
+          name="memory"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Memory Limit <OptionalBadge />
+              </FormLabel>
+              <FormDescription>
+                Maximum amount of memory the container can use (e.g., 512m, 2g)
+              </FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., 512m" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Memory Limit</label>
-          <input
-            {...register('memory')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., 512m"
-          />
-        </div>
+        <FormField
+          control={control}
+          name="cpuShares"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                CPU Shares <OptionalBadge />
+              </FormLabel>
+              <FormDescription>
+                CPU shares (relative weight) for the container
+              </FormDescription>
+              <FormControl>
+                <Input 
+                  placeholder="e.g., 1024" 
+                  {...field}
+                  onChange={e => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Memory Reservation</label>
-          <input
-            {...register('memoryReservation')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., 256m"
-          />
-        </div>
+        <FormField
+          control={control}
+          name="memoryReservation"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Memory Reservation <OptionalBadge />
+              </FormLabel>
+              <FormDescription>
+                Memory soft limit for the container (e.g., 256m, 1g)
+              </FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., 256m" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Memory Swap</label>
-          <input
-            {...register('memorySwap')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
-            placeholder="e.g., 1g"
-          />
-        </div>
+        <FormField
+          control={control}
+          name="memorySwap"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Memory Swap <OptionalBadge />
+              </FormLabel>
+              <FormDescription>
+                Total memory limit (memory + swap) for the container (e.g., 1g, 2g)
+              </FormDescription>
+              <FormControl>
+                <Input placeholder="e.g., 1g" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );
