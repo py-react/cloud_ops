@@ -1,7 +1,6 @@
 import type { ContextPostData } from '../models/ContextPostData';
 import type { CreateNamespacePayload } from '../models/CreateNamespacePayload';
 import type { CreateQueueJob } from '../models/CreateQueueJob';
-import type { Get_Packages_Response } from '../models/Get_Packages_Response';
 import type { GetContainerResponse } from '../models/GetContainerResponse';
 import type { InfraCreateUpdateRequest } from '../models/InfraCreateUpdateRequest';
 import type { InfraDeleteResponse } from '../models/InfraDeleteResponse';
@@ -140,6 +139,10 @@ name: string
 namespace?: string | null
 type: string
             }
+export type TDataApiKubernertesResourcesTypeCreatePost = {
+                requestBody: Record<string, unknown>
+type: string
+            }
 export type TDataApiKubernertesUserGet = {
                 namespace?: string | null
             }
@@ -189,10 +192,10 @@ export type TDataApiQueueJobPost = {
 export class DefaultService {
 
 	/**
-	 * @returns Get_Packages_Response Successful Response
+	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiPackgesGet(): CancelablePromise<Get_Packages_Response> {
+	public static apiPackgesGet(): CancelablePromise<unknown> {
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/packges',
@@ -832,6 +835,29 @@ type,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
+	public static apiKubernertesResourcesTypeCreatePost(data: TDataApiKubernertesResourcesTypeCreatePost): CancelablePromise<unknown> {
+		const {
+requestBody,
+type,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/kubernertes/resources/{type}/create',
+			path: {
+				type
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
 	public static apiKubernertesUserGet(data: TDataApiKubernertesUserGet = {}): CancelablePromise<unknown> {
 		const {
 namespace,
@@ -964,7 +990,8 @@ namespace,
 	}
 
 	/**
-	 * Update an existing Docker network.
+	 * Update an existing Docker network by creating a new one with updated attributes
+ * and removing the old one.
  * 
  * Args:
  * request: Request object
@@ -1559,17 +1586,6 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/orchestration/kubernetes/namespaced/issuers',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static orchestrationKubernetesNamespacedConfigmapGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/configmap',
 		});
 	}
 

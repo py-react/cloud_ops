@@ -11,3 +11,4 @@ CWD=os.path.dirname(os.path.abspath(__file__))
 STATIC_SITE=False
 TYPESCRIPT=True
 TAILWIND=True
+KUBECONFIG="~/.kube/config"

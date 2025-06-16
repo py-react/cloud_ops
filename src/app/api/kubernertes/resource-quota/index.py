@@ -3,7 +3,6 @@ from kubernetes import client, config
 from kubernetes.client import ApiException
 
 async def GET(namespace:Optional[str]=None):
-    print("started")
     config.load_kube_config()  # for out‑of‑cluster
     # 2. Create CoreV1Api client
     v1 = client.CoreV1Api()

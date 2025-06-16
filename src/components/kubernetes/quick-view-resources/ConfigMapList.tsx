@@ -85,7 +85,7 @@ export function ConfigMapList({ configMaps, onDelete }: IConfigMapTable) {
       // onViewConfig={(res) => {
       //   console.log("View Config for ConfigMap:", res.fullData);
       // }}
-      onDelete={onDelete}
+      onDelete={(row)=>onDelete(row.fullData)}
       tableClassName="max-h-[490px]"
     />
   );

@@ -7,3 +7,4 @@ gingerjs.egg-info
 .env
 infra_data
 _gingerjs
+*.pyc
