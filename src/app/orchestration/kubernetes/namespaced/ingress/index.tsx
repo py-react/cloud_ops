@@ -1,7 +1,7 @@
 import React,{ useContext } from 'react'
 import { Button } from "@/components/ui/button"
 
-import { NamespaceContext } from '@/components/kubernetes/context/NamespaceContext'
+import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext'
 import KubernetesIngressList from '@/components/kubernetes/Ingress'
 import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector'
 import useKubernertesResources from '@/hooks/use-resource'

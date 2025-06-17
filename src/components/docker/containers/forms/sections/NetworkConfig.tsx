@@ -84,15 +84,17 @@ export function NetworkConfig({ control, errors, watch, setValue }: NetworkConfi
         <div className="md:col-span-2">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <FormLabel>Port Mappings</FormLabel>
+              <div className="flex flex-col gap-2">
+                <FormLabel>Port Mappings</FormLabel>
+                <FormDescription>
+                  Map container ports to host ports
+                </FormDescription>
+              </div>
               <Button type="button" variant="outline" size="sm" onClick={addPort}>
                 <Plus className="w-4 h-4 mr-1" />
                 Add Port
               </Button>
             </div>
-            <FormDescription>
-              Map container ports to host ports
-            </FormDescription>
             <div className="space-y-4">
               {Object.entries(ports).map(([key, port]) => (
                 <div key={key} className="flex items-center space-x-2">

@@ -13,8 +13,8 @@ import {
   Database,
 } from 'lucide-react';
 import { KubeContextSwitcher } from '@/components/kubernetes/KubeContextSwitcher';
-import { KubeContext } from "@/components/kubernetes/context/KubeContext";
-import { KubeContextList } from '@/components/kubernetes/settings/kubeContextList';
+import { KubeContext } from "@/components/kubernetes/contextProvider/KubeContext";
+import { KubeContextList } from '@/components/kubernetes/settings/contexts/kubeContextList';
 import RouteDescription from '@/components/route-description';
 
 export const Contexts = () => {

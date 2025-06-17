@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { NamespaceContext } from "@/components/kubernetes/context/NamespaceContext";
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 // import { ResourceFlow } from "@/components/kubernetes/DeploymentOverview";
 import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 import { DefaultService } from "@/gingerJs_api_client";

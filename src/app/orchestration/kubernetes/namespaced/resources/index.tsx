@@ -13,7 +13,7 @@ import { ListIcon, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import RouteDescription from "@/components/route-description";
 import { Button } from "@/components/ui/button";
-import { NamespaceContext } from "@/components/kubernetes/context/NamespaceContext";
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 
 export interface ResourceInfo {
   name: string;

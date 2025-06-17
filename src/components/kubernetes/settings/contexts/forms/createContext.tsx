@@ -2,51 +2,32 @@ import React, { useContext, useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
 
 import {
-  Server,
-  Users,
-  Folder,
   Plus,
-  StepForward,
-  FileCheck,
-  Eye,
   Settings,
 } from "lucide-react";
 
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import {
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs-v2";
 import { toast } from "sonner";
-import { KubeContext } from "@/components/kubernetes/context/KubeContext";
+import { KubeContext } from "@/components/kubernetes/contextProvider/KubeContext";
 import { DefaultService } from "@/gingerJs_api_client";
+import { BasicInfoTab } from "@/components/kubernetes/settings/contexts/forms/sections/BasicInfo";
+import { ClusterTab } from "@/components/kubernetes/settings/contexts/forms/sections/ClusterInfo";
+import { AuthTab } from "@/components/kubernetes/settings/contexts/forms/sections/AuthInfo";
+import { OptionsTab } from "@/components/kubernetes/settings/contexts/forms/sections/Options";
+import { Form } from "@/components/ui/form";
 
 // Form validation schema
 const createContextSchema = z.object({
@@ -65,277 +46,6 @@ const createContextSchema = z.object({
 });
 
 type CreateContextFormValues = z.infer<typeof createContextSchema>;
-
-// Tab Components
-const BasicInfoTab = ({ control, errors }: { control: any; errors: any }) => (
-  <div className="grid grid-cols-2 gap-6">
-    <FormField
-      control={control}
-      name="name"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>
-            Context Name <RequiredBadge />
-          </FormLabel>
-          <FormDescription>
-            A unique name to identify this Kubernetes context
-          </FormDescription>
-          <FormControl>
-            <Input placeholder="production-cluster" {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-
-    <FormField
-      control={control}
-      name="namespace"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>
-            Namespace <OptionalBadge />
-          </FormLabel>
-          <FormDescription>
-            Default namespace to use with this context
-          </FormDescription>
-          <FormControl>
-            <Input placeholder="default" {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  </div>
-);
-
-const ClusterTab = ({ control, errors }: { control: any; errors: any }) => (
-  <div className="space-y-4">
-    <FormField
-      control={control}
-      name="server"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>
-            Server URL <RequiredBadge />
-          </FormLabel>
-          <FormDescription>
-            The URL of the Kubernetes API server (e.g., https://kubernetes.example.com)
-          </FormDescription>
-          <FormControl>
-            <Input placeholder="https://kubernetes.example.com" {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-
-    <FormField
-      control={control}
-      name="certificate_authority_data"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>
-            Certificate Authority Data <OptionalBadge />
-          </FormLabel>
-          <FormDescription>
-            Base64 encoded certificate data for server verification
-          </FormDescription>
-          <FormControl>
-            <Input placeholder="Base64 encoded certificate data" {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-
-    <FormField
-      control={control}
-      name="insecure_skip_tls_verify"
-      render={({ field }) => (
-        <FormItem className="flex flex-row items-center gap-2 space-y-0">
-          <FormControl>
-            <input
-              type="checkbox"
-              className="w-4 h-4"
-              checked={field.value}
-              onChange={field.onChange}
-            />
-          </FormControl>
-          <div className="space-y-1 leading-none">
-            <FormLabel className="m-0">Skip TLS verification</FormLabel>
-            <FormDescription>
-              Warning: Only use in development environments
-            </FormDescription>
-          </div>
-        </FormItem>
-      )}
-    />
-  </div>
-);
-
-const AuthTab = ({ control, errors }: { control: any; errors: any }) => (
-  <>
-    <div className="grid grid-cols-2 gap-6">
-      <FormField
-        control={control}
-        name="token"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              Bearer Token <OptionalBadge />
-            </FormLabel>
-            <FormDescription>
-              Authentication token for the Kubernetes API
-            </FormDescription>
-            <FormControl>
-              <Input type="password" placeholder="Token" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name="username"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              Username <OptionalBadge />
-            </FormLabel>
-            <FormDescription>
-              Basic auth username (if token is not used)
-            </FormDescription>
-            <FormControl>
-              <Input placeholder="admin" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </div>
-
-    <div className="grid grid-cols-2 gap-6 mt-4">
-      <FormField
-        control={control}
-        name="password"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              Password <OptionalBadge />
-            </FormLabel>
-            <FormDescription>
-              Basic auth password (if token is not used)
-            </FormDescription>
-            <FormControl>
-              <Input type="password" placeholder="Password" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
-        name="client_certificate_data"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              Client Certificate Data <OptionalBadge />
-            </FormLabel>
-            <FormDescription>
-              Base64 encoded client certificate for authentication
-            </FormDescription>
-            <FormControl>
-              <Input placeholder="Base64 encoded certificate" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </div>
-
-    <FormField
-      control={control}
-      name="client_key_data"
-      render={({ field }) => (
-        <FormItem className="mt-4">
-          <FormLabel>
-            Client Key Data <OptionalBadge />
-          </FormLabel>
-          <FormDescription>
-            Base64 encoded client key for certificate authentication
-          </FormDescription>
-          <FormControl>
-            <Input placeholder="Base64 encoded key data" {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  </>
-);
-
-const OptionsTab = ({ control, errors }: { control: any; errors: any }) => (
-  <div className="grid grid-cols-2 gap-6">
-    <FormField
-      control={control}
-      name="set_current"
-      render={({ field }) => (
-        <FormItem className="flex flex-row items-start gap-2 space-y-0">
-          <FormControl>
-            <input
-              type="checkbox"
-              className="w-4 h-4 mt-1"
-              checked={field.value}
-              onChange={field.onChange}
-            />
-          </FormControl>
-          <div className="space-y-1 leading-none">
-            <FormLabel className="m-0">Set as current context</FormLabel>
-            <FormDescription>
-              Make this the active context for all operations
-            </FormDescription>
-          </div>
-        </FormItem>
-      )}
-    />
-
-    <FormField
-      control={control}
-      name="config_file"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>
-            Config File Path <OptionalBadge />
-          </FormLabel>
-          <FormDescription>
-            Location to save the Kubernetes config file
-          </FormDescription>
-          <FormControl>
-            <Input placeholder="~/.kube/config" {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  </div>
-);
-
-// Helper to indicate required fields
-const RequiredBadge = () => (
-  <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-red-50 px-1 py-0.5 text-xs font-medium text-red-700">
-    Required
-  </span>
-);
-
-// Helper to indicate optional fields
-const OptionalBadge = () => (
-  <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-gray-50 px-1 py-0.5 text-xs font-medium text-gray-600">
-    Optional
-  </span>
-);
 
 const steps = [
   {

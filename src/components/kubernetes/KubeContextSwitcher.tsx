@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { KubeContext } from "./context/KubeContext";
+import { KubeContext } from "./contextProvider/KubeContext";
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { 

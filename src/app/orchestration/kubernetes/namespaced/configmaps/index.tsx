@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector';
-import { NamespaceContext } from '@/components/kubernetes/context/NamespaceContext';
+import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext';
 import { ConfigMap } from '@/components/kubernetes/quick-view-resources/ConfigMapList';
 import { DefaultService } from "@/gingerJs_api_client";
 

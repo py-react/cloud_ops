@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { NamespaceContext } from "@/components/kubernetes/context/NamespaceContext";
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 import {
   Card,
   CardContent,
@@ -45,15 +45,18 @@ export const Namespaces = () => {
   };
 
   const deleteNamespace = async (namespace) => {
-    const response =
-      await DefaultService.apiKubernertesClusterNamespaceDelete({name:namespace}).then(res=>{
-            if(res.status === "success"){
-                fetchNamespaces()
-                toast.success(`Namespace successfully delete: ${namespace}`)
-            }else{
-                toast.success(`Error while deleting ${namespace}: ${res.message}`)
-            }
-      }).catch((err) => {
+    await DefaultService.apiKubernertesClusterNamespaceDelete({
+      name: namespace,
+    })
+      .then((res) => {
+        if (res.status === "success") {
+          toast.success(`Namespace successfully delete: ${namespace}`);
+          fetchNamespaces();
+        } else {
+          toast.success(`Error while deleting ${namespace}: ${res.message}`);
+        }
+      })
+      .catch((err) => {
         toast.error(err as string);
       });
   };
@@ -78,7 +81,7 @@ export const Namespaces = () => {
     ) || [];
 
   const filteredQuotas =
-    resourcesQuota?.filter(
+    isLoading ? [] : resourcesQuota?.filter(
       (quotas) =>
         quotas.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         quotas.namespace?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -95,13 +98,7 @@ export const Namespaces = () => {
           .includes(limitRangeSearchTerm.toLowerCase())
     ) || [];
 
-  useEffect(() => {
-    if (!isLoading && !!error) {
-      fetchNamespaces();
-    }
-  }, [isLoading, error]);
-
-  return (
+    return (
     <div title="Kubernetes namespace">
       <div className="space-y-6">
         <RouteDescription
@@ -151,7 +148,7 @@ export const Namespaces = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
-            <div className="relative p-6">
+            <div className="relative px-6">
               <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"

@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from "react";
-import { NamespaceContext } from "./context/NamespaceContext";
+import { NamespaceContext } from "./contextProvider/NamespaceContext";
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { 

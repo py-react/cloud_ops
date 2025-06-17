@@ -1,7 +1,7 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import { KubeContextProvider } from '@/components/kubernetes/context/KubeContext'
-import { NamespaceContextProvider } from '@/components/kubernetes/context/NamespaceContext'
+import { KubeContextProvider } from '@/components/kubernetes/contextProvider/KubeContext'
+import { NamespaceContextProvider } from '@/components/kubernetes/contextProvider/NamespaceContext'
 import BackButton from '@/components/BackButton'
 
 export const Layout = () => {

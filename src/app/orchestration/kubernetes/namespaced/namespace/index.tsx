@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import ResourceTable from '@/components/kubernetes/ResourceTable'
 import CreateNamespaceModal from '@/components/kubernetes/CreateNamesapceModal'
 // import { CoreV1Service } from '@/kube/services/CoreV1Service'
-import { NamespaceContext } from '@/components/kubernetes/context/NamespaceContext'
+import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext'
 import { toast } from "sonner"
 import { DefaultService } from '@/gingerJs_api_client'
 

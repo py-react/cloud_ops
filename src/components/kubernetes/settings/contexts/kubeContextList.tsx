@@ -9,10 +9,10 @@ import {
     CardHeader, 
     CardTitle 
 } from '@/components/ui/card';
-import { KubeContext } from "@/components/kubernetes/context/KubeContext";
+import { KubeContext } from "@/components/kubernetes/contextProvider/KubeContext";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import { Input } from '@/components/ui/input';
-import CreateContext from '@/components/kubernetes/settings/createContext';
+import CreateContext from '@/components/kubernetes/settings/contexts/forms/createContext';
 
 
 const columns = [
@@ -35,9 +35,9 @@ export const KubeContextList = () => {
   // Filter contexts based on search term
   const filteredContexts = contexts.filter(
     (context) =>
-      context.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      context.clusterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      context.namespace?.toLowerCase().includes(searchTerm.toLowerCase())
+      (context as any).name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (context as any).clusterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (context as any).namespace?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   useEffect(() => {

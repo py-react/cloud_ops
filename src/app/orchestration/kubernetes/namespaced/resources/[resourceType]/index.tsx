@@ -12,7 +12,7 @@ import KubernetesSecretList from "@/components/kubernetes/secrets";
 import { ServiceList } from '@/components/kubernetes/SerivceList';
 import { DefaultService } from '@/gingerJs_api_client';
 import useNavigate from '@/libs/navigate';
-import { NamespaceContext } from '@/components/kubernetes/context/NamespaceContext';
+import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext';
 import { JobList } from '@/components/JobList';
 import KubernetesNodesList from '@/components/kubernetes/NodesInfo';
 import CustomLink from '@/libs/Link';

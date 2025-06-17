@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Pod, PodTable } from '@/components/kubernetes/PodTable'
-import { NamespaceContext } from '@/components/kubernetes/context/NamespaceContext'
+import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext'
 import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector'
 import useKubernertesResources from '@/hooks/use-resource'
 import RouteDescription from '@/components/route-description'

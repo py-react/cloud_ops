@@ -2,19 +2,29 @@ import { DefaultService } from "@/gingerJs_api_client";
 import React, { createContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-
 interface INamespaceContext {
-  namespaces: {name:string}[];
-  isLoading:boolean;
-  fetchNamespaces:()=>void;
-  setSelectedNamespace:React.Dispatch<React.SetStateAction<string>>;
-  selectedNamespace:string;
-  error:""
+  namespaces: { name: string }[];
+  isLoading: boolean;
+  fetchNamespaces: () => void;
+  setSelectedNamespace: React.Dispatch<React.SetStateAction<string>>;
+  selectedNamespace: string;
+  error: string;
 }
 
-export const NamespaceContext = createContext<INamespaceContext>({});
+export const NamespaceContext = createContext<INamespaceContext>({
+  namespaces: [],
+  isLoading: false,
+  fetchNamespaces: () => {},
+  setSelectedNamespace: () => {},
+  selectedNamespace: "",
+  error: "",
+});
 
-export const NamespaceContextProvider = ({ children }) => {
+export const NamespaceContextProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [namespaces, setNamespaces] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,13 +34,13 @@ export const NamespaceContextProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const response = await DefaultService.apiKubernertesClusterNamespaceGet();
-      if(response.status!=="error"){
-        setNamespaces(response.data as []);
-      }else{
-       throw response.message 
+      if ((response as any).status !== "error") {
+        setNamespaces((response as any).data as []);
+      } else {
+        throw (response as any).message;
       }
     } catch (err) {
-      setError("Failed to fetch services")
+      setError("Failed to fetch services");
       toast.error("Failed to fetch services");
     } finally {
       setIsLoading(false);
@@ -38,9 +48,16 @@ export const NamespaceContextProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if(namespaces.length) return
-    fetchNamespaces();
-  }, [namespaces]);
+    if (namespaces.length) return;
+    if (!error) {
+      fetchNamespaces();
+      return;
+    }
+    const timeout = setTimeout(() => {
+      fetchNamespaces();
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [namespaces, error]);
 
   return (
     <NamespaceContext.Provider
@@ -50,7 +67,7 @@ export const NamespaceContextProvider = ({ children }) => {
         fetchNamespaces,
         setSelectedNamespace,
         selectedNamespace,
-        error
+        error,
       }}
     >
       {children}

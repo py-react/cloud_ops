@@ -237,6 +237,8 @@ export const ResourceQuota = () => {
               .then((res) => {
                 if (res.success) {
                   toast.success(res.data.message);
+                  fetchResourceQuota();
+                  setEditDetails(false);
                 } else {
                   toast.error(res.error);
                 }
