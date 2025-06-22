@@ -27,4 +27,29 @@ const TooltipContent = React.forwardRef<
 ))
 TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
+
+interface TooltipWrapperProps {
+  children: React.ReactNode;
+  content: React.ReactNode;
+  className?: string;
+}
+
+const TooltipWrapper = ({ children, content, className }: TooltipWrapperProps) => {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {children}
+        </TooltipTrigger>
+        <TooltipContent className={className}>
+          {content}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+export { TooltipWrapper };
+
+
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }

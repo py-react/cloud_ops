@@ -1,5 +1,5 @@
 import React from 'react';
-import { ConfigMapFormData, SectionProps } from '../types';
+import { DeploymentFormData, SectionProps } from '../types';
 import {
   FormControl,
   FormField,
@@ -9,7 +9,6 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function BasicConfig({ control, errors, watch }: SectionProps) {
@@ -28,8 +27,8 @@ export function BasicConfig({ control, errors, watch }: SectionProps) {
   );
 
   return (
-    <Card>
-      <CardContent className="pt-6">
+    <Card className="p-0 border-none shadow-none">
+      <CardContent className="p-0">
         <div className="space-y-6">
           {/* Main Fields in Grid, 2 per row, preserve spacing */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -43,10 +42,10 @@ export function BasicConfig({ control, errors, watch }: SectionProps) {
                     Name <RequiredBadge />
                   </FormLabel>
                   <FormDescription>
-                    The name of the ConfigMap
+                    The name of the Deployment
                   </FormDescription>
                   <FormControl>
-                    <Input placeholder="e.g., my-config" {...field} />
+                    <Input placeholder="e.g., my-deployment" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -61,7 +60,7 @@ export function BasicConfig({ control, errors, watch }: SectionProps) {
                     Namespace <OptionalBadge />
                   </FormLabel>
                   <FormDescription>
-                    The namespace where the ConfigMap will be created
+                    The namespace where the Deployment will be created
                   </FormDescription>
                   <FormControl>
                     <Input placeholder="e.g., default" {...field} />
@@ -72,27 +71,29 @@ export function BasicConfig({ control, errors, watch }: SectionProps) {
             />
           </div>
 
-          {/* Runtime Options in a row */}
-          <div className="flex flex-col md:flex-row gap-6">
+          {/* Replicas Field */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={control}
-              name="immutable"
+              name="spec.replicas"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                <FormItem>
+                  <FormLabel>
+                    Replicas <OptionalBadge />
+                  </FormLabel>
+                  <FormDescription>
+                    Number of desired pods
+                  </FormDescription>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
+                    <Input 
+                      type="number" 
+                      min={0}
+                      placeholder="e.g., 3" 
+                      {...field}
+                      onChange={e => field.onChange(parseInt(e.target.value))}
                     />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="m-0">
-                      Immutable
-                    </FormLabel>
-                    <FormDescription>
-                      Make the ConfigMap immutable
-                    </FormDescription>
-                  </div>
+                  <FormMessage />
                 </FormItem>
               )}
             />

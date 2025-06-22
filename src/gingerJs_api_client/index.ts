@@ -48,6 +48,8 @@ export type { nodes___node_id___NodeSpec } from './models/nodes___node_id___Node
 export type { PodInfo } from './models/PodInfo';
 export type { PullConfig } from './models/PullConfig';
 export type { ResourceResponse } from './models/ResourceResponse';
+export type { resources___type___ConfigMapCreatePayload } from './models/resources___type___ConfigMapCreatePayload';
+export type { resources___type___MetadataDict } from './models/resources___type___MetadataDict';
 export type { ResourceScope } from './models/ResourceScope';
 export type { RunContainer } from './models/RunContainer';
 export type { RunImage } from './models/RunImage';
@@ -109,6 +111,8 @@ export { $nodes___node_id___NodeSpec } from './schemas/$nodes___node_id___NodeSp
 export { $PodInfo } from './schemas/$PodInfo';
 export { $PullConfig } from './schemas/$PullConfig';
 export { $ResourceResponse } from './schemas/$ResourceResponse';
+export { $resources___type___ConfigMapCreatePayload } from './schemas/$resources___type___ConfigMapCreatePayload';
+export { $resources___type___MetadataDict } from './schemas/$resources___type___MetadataDict';
 export { $ResourceScope } from './schemas/$ResourceScope';
 export { $RunContainer } from './schemas/$RunContainer';
 export { $RunImage } from './schemas/$RunImage';

@@ -13,6 +13,16 @@ module.exports = {
       },
     },
     extend: {
+      boxShadow: {
+        'primary-glow': 'var(--primary-glow)',
+        'primary-glow-inset': 'var(--primary-glow-inset)',
+        'secondary-glow': 'var(--secondary-glow)',
+        'secondary-glow-inset': 'var(--secondary-glow-inset)',
+      },    
+      backgroundImage: {
+        "primary": "var(--primary-gradient)",
+        "secondary": "var(--secondary-gradient)",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

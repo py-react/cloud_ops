@@ -18,6 +18,7 @@ import type { NetworkListResponse } from '../models/NetworkListResponse';
 import type { NetworkUpdateParams } from '../models/NetworkUpdateParams';
 import type { nodes___node_id___NodeSpec } from '../models/nodes___node_id___NodeSpec';
 import type { ResourceResponse } from '../models/ResourceResponse';
+import type { resources___type___ConfigMapCreatePayload } from '../models/resources___type___ConfigMapCreatePayload';
 import type { ResourceScope } from '../models/ResourceScope';
 import type { RunContainer } from '../models/RunContainer';
 import type { RunImage } from '../models/RunImage';
@@ -139,8 +140,12 @@ name: string
 namespace?: string | null
 type: string
             }
-export type TDataApiKubernertesResourcesTypeCreatePost = {
-                requestBody: Record<string, unknown>
+export type TDataApiKubernertesResourcesTypeCreateConfigmapsPost = {
+                requestBody: resources___type___ConfigMapCreatePayload
+type: string
+            }
+export type TDataApiKubernertesResourcesTypeCreateDeploymentsPost = {
+                requestBody: resources___type___ConfigMapCreatePayload
 type: string
             }
 export type TDataApiKubernertesUserGet = {
@@ -835,14 +840,37 @@ type,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesResourcesTypeCreatePost(data: TDataApiKubernertesResourcesTypeCreatePost): CancelablePromise<unknown> {
+	public static apiKubernertesResourcesTypeCreateConfigmapsPost(data: TDataApiKubernertesResourcesTypeCreateConfigmapsPost): CancelablePromise<unknown> {
 		const {
 requestBody,
 type,
 } = data;
 		return __request(OpenAPI, {
 			method: 'POST',
-			url: '/api/kubernertes/resources/{type}/create',
+			url: '/api/kubernertes/resources/{type}/create/configmaps',
+			path: {
+				type
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiKubernertesResourcesTypeCreateDeploymentsPost(data: TDataApiKubernertesResourcesTypeCreateDeploymentsPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+type,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/kubernertes/resources/{type}/create/deployments',
 			path: {
 				type
 			},

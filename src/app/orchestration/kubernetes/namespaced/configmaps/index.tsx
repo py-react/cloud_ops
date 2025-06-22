@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
 import { useKubernertesResources } from "@/hooks/use-resource";
 import { ConfigMapList } from '@/components/kubernetes/quick-view-resources/ConfigMapList';
-import { ConfigMapForm } from "@/components/kubernetes/quick-view-resources/forms/ConfigMapForm";
-import { ConfigMapFormData } from "@/components/kubernetes/quick-view-resources/forms/types";
+import { ConfigMapForm } from "@/components/kubernetes/quick-view-resources/forms/configmaps/ConfigMapForm";
+import { ConfigMapFormData } from "@/components/kubernetes/quick-view-resources/forms/configmaps/types";
 import { toast } from "sonner";
 import { Loader2, ContainerIcon } from "lucide-react";
 import RouteDescription from '@/components/route-description';
@@ -43,7 +43,7 @@ export default function ConfigMapsPage() {
           annotations: arrayToObject(data.metadata.annotations),
         }
       };
-      const response = await DefaultService.apiKubernertesResourcesTypeCreatePost({
+      const response = await DefaultService.apiKubernertesResourcesTypeCreateConfigmapsPost({
         requestBody: payload,
         type: "configmaps"
       });

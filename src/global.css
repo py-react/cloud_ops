@@ -9,12 +9,10 @@
   .text-balance {
     text-wrap: balance;
   }
-}
-
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-
+  
     .custom-backdrop {
       position: fixed;
       top: 0;
@@ -28,7 +26,7 @@
       animation: backdropFadeIn 0.5s ease-in-out;
       z-index: 99999999999;
     }
-
+  
     .custom-progress-bar {
       position: fixed;
       top: 0;
@@ -38,28 +36,37 @@
       transition: width 0.5s ease-in-out;
     }
   }
+}
+
 
 @layer base {
   :root {
+    
     --background: 0 0% 100%;
     --foreground: 222.2 47.4% 11.2%;
-
+    
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
+    
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
-
+    
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-
+    
     --card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
-
-    --primary: 222.2 47.4% 11.2%;
+    
+    --primary: 221 83% 54%;
+    --primary-glow: 0 0 20px 0 hsla(221, 83%, 54%, 0.5), 0 0 40px 0 hsla(243, 58%, 57%, 0.4);
+    --primary-glow-inset: inset 0 1px 4px hsla(221, 83%, 54%, 0.35), inset 0 -1px 4px hsla(243, 58%, 57%, 0.3);
+    --primary-gradient: linear-gradient(to right, hsl(221 83% 54%), hsl(243 58% 57%));
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 245 61% 51%;
+    --secondary-gradient: linear-gradient(to right, hsl(185 75% 55%), hsl(200 85% 60%));
+    --secondary-glow: 0 0 20px 0 hsla(185, 75%, 55%, 0.5), 0 0 40px 0 hsla(200, 85%, 60%, 0.4);
+    --secondary-glow-inset: inset 0 1px 4px hsla(185, 75%, 55%, 0.35), inset 0 -1px 4px hsla(200, 85%, 60%, 0.3);
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --accent: 210 40% 96.1%;
@@ -112,10 +119,10 @@
     --card: 224 71% 4%;
     --card-foreground: 213 31% 91%;
 
-    --primary: 210 40% 98%;
+    --primary: 221 83% 54%;
     --primary-foreground: 222.2 47.4% 1.2%;
 
-    --secondary: 222.2 47.4% 11.2%;
+    --secondary: 245 61% 51%;
     --secondary-foreground: 210 40% 98%;
 
     --destructive: 0 63% 31%;
