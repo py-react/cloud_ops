@@ -91,37 +91,60 @@ export function ContainersTable({
           <span className="font-medium">{container.name}</span>
         </div>
       ),
-      containerStatus: (
-        <span className="flex items-center gap-1">
-          {container.status === 'running' && <span className="inline-flex items-center px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-semibold"><PlayIcon className="w-3 h-3 mr-1" />Running</span>}
-          {container.status === 'exited' && <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-semibold"><Ban className="w-3 h-3 mr-1" />Exited</span>}
-          {container.status === 'paused' && <span className="inline-flex items-center px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold"><PauseIcon className="w-3 h-3 mr-1" />Paused</span>}
-        </span>
-      ),
+      containerStatus: container.status,
       id: container.id.substring(0, 12),
       image: (
-        <span className="flex items-center gap-1"><ContainerIcon className="w-4 h-4" />{container.image}</span>
+        <span className="flex items-center gap-1">
+          <ContainerIcon className="w-4 h-4" />
+          {container.image}
+        </span>
       ),
-      created: formatDistanceToNow(new Date(container.created), { addSuffix: true }),
-      started: (container.state?.StartedAt && typeof container.state.StartedAt === 'string' && container.state.StartedAt !== '0001-01-01T00:00:00Z')
-        ? formatDistanceToNow(new Date(container.state.StartedAt), { addSuffix: true })
-        : '-',
-      lastStopped: (container.state?.FinishedAt && typeof container.state.FinishedAt === 'string' && container.state.FinishedAt !== '0001-01-01T00:00:00Z')
-        ? formatDistanceToNow(new Date(container.state.FinishedAt), { addSuffix: true })
-        : '-',
+      created: formatDistanceToNow(new Date(container.created), {
+        addSuffix: true,
+      }),
+      started:
+        container.state?.StartedAt &&
+        typeof container.state.StartedAt === "string" &&
+        container.state.StartedAt !== "0001-01-01T00:00:00Z"
+          ? formatDistanceToNow(new Date(container.state.StartedAt), {
+              addSuffix: true,
+            })
+          : "-",
+      lastStopped:
+        container.state?.FinishedAt &&
+        typeof container.state.FinishedAt === "string" &&
+        container.state.FinishedAt !== "0001-01-01T00:00:00Z"
+          ? formatDistanceToNow(new Date(container.state.FinishedAt), {
+              addSuffix: true,
+            })
+          : "-",
       ports: portMapping,
       env: container.env_vars ? (
         <div className="max-w-[200px] truncate">
           {container.env_vars.slice(0, 3).map((env, i) => (
-            <div key={i} className="truncate">{env}</div>
+            <div key={i} className="truncate">
+              {env}
+            </div>
           ))}
-          {container.env_vars.length > 3 && <span className="text-xs text-gray-400">+{container.env_vars.length - 3} more</span>}
+          {container.env_vars.length > 3 && (
+            <span className="text-xs text-gray-400">
+              +{container.env_vars.length - 3} more
+            </span>
+          )}
         </div>
-      ) : '-',
+      ) : (
+        "-"
+      ),
       container,
-      onPlay: canRerun ? () => onRerun(container) : () => toast.error("Container is already running"),
-      onPause: canPause ? () => onPause(container) : () => toast.error("Container is not running"),
-      onStop: canStop ? () => onStop(container) : () => toast.error("Container is already stopped"),
+      onPlay: canRerun
+        ? () => onRerun(container)
+        : () => toast.error("Container is already running"),
+      onPause: canPause
+        ? () => onPause(container)
+        : () => toast.error("Container is not running"),
+      onStop: canStop
+        ? () => onStop(container)
+        : () => toast.error("Container is already stopped"),
       onDelete: () => onDelete(container),
       onViewDetails: () => onView(container),
       onEdit: () => onEdit(container),

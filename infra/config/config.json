@@ -1,0 +1,57 @@
+{
+  "allowed_repositories": {
+    "github-webhook": "github-webhook",
+    "test": "test"
+  },
+  "allowed_branches": {
+    "github-webhook": [
+      "main",
+      "test"
+    ],
+    "test": [
+      "main",
+      "feat",
+      "test"
+    ]
+  },
+  "deployments":{
+    "github-webhook":{
+      "namespace":"default",
+      "deployment_name":"nginx-webhook",
+      "last_deployment":{
+        "stage":{
+          "tag":"github-webhook:e1db9be9",
+          "pr_url":"https://github.com/Sandeep-yadav-hub/github-webhook/pull/6",
+          "jira":""
+        },
+        "dev":{
+          "tag":"github-webhook:e1db9be9",
+          "pr_url":"https://github.com/Sandeep-yadav-hub/github-webhook/pull/6",
+          "jira":""
+        },
+        "prod":{
+          "tag":"github-webhook:e1db9be9",
+          "pr_url":"https://github.com/Sandeep-yadav-hub/github-webhook/pull/6",
+          "jira":""
+        }
+      },
+      "current_deployment":{
+        "stage":{
+          "tag":"github-webhook:e1db9be9",
+          "pr_url":"https://github.com/Sandeep-yadav-hub/github-webhook/pull/6",
+          "jira":""
+        },
+        "dev":{
+          "tag":"github-webhook:e1db9be9",
+          "pr_url":"https://github.com/Sandeep-yadav-hub/github-webhook/pull/6",
+          "jira":""
+        },
+        "prod":{
+          "tag":"github-webhook:e1db9be9",
+          "pr_url":"https://github.com/Sandeep-yadav-hub/github-webhook/pull/6",
+          "jira":""
+        }
+      }
+    }
+  }
+}

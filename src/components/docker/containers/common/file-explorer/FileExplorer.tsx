@@ -46,7 +46,7 @@ export function FileExplorer({ containerId,attachTerminalToPath,currentPath }: F
   };
 
   return (
-    <div className="flex flex-col h-[380px] bg-white rounded-lg border shadow-sm">
+    <div className="flex flex-col h-full bg-white rounded-lg border shadow-sm">
       <FileExplorerHeader
         currentPath={state.currentPath}
         onNavigateUp={navigateUp}

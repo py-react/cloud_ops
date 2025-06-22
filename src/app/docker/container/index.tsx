@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { ContainersTable } from '@/components/docker/containers/ContainersTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DefaultService } from "@/gingerJs_api_client";
 
 function ContainersPage() {
   const [showRunnerModal, setShowRunnerModal] = useState(false);
@@ -21,6 +22,7 @@ function ContainersPage() {
     hideDetails,
     editSelected,
     editing: editingContainer,
+    editSelected: setEditing,
   } = useContainerDetails();
   const { containers, setContainers, loading, error, refetch } = useContainers();
   const [runnerSubmitting, setRunnerSubmitting] = useState(false);
@@ -161,27 +163,19 @@ function ContainersPage() {
           data={selectedContainer}
           onClose={() => editSelected(false)}
           onSubmit={async (data: ContainerRunConfig) => {
-            const reasponse = await fetch("/api/containers", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
+            await DefaultService.apiContainersPost({
+              requestBody: {
                 action: "update",
                 containerId: selectedContainer.id,
                 updateInstanceConfig: data,
-              }),
-            });
-            const responseData = await reasponse.json();
-            if (responseData.error) {
-              toast.error(responseData.message);
-              return;
-            }
-            setShowRunnerModal(false);
-            toast.success(responseData.message);
-            setContainers((prev) => {
-              showDetails(responseData.container);
-              editSelected(false);
-              return [responseData.container, ...prev];
-            });
+              }
+            }).then((response) => {
+              setEditing(false);
+              refetch();
+              toast.success(response.message);
+            }).catch((error) => {
+              toast.error(error.message);
+            })
           }}
         />
       )}

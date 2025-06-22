@@ -119,16 +119,25 @@ async def POST(type: str, request: Request, data: DeploymentCreatePayload):
                 )
             
             # Get template labels and ensure they match selector labels
-            template_labels = template.get("metadata", {}).get("labels", {})
-            selector_labels = spec.get("selector", {}).get("matchLabels", {})
+            template_metadata = template.get("metadata", {})
+            spec_selector = spec.get("selector", {})
+            template_labels = template_metadata.get("labels", {})
+            selector_labels = spec_selector.get("matchLabels", {})
             
-            # If template labels are empty but selector labels exist, use selector labels
+            # If template labels are empty but selector labels exist, use selector labels for template
             if not template_labels and selector_labels:
                 template_labels = selector_labels
-            # If selector labels are empty but template labels exist, use template labels
-            elif not selector_labels and template_labels:
+            # If selector labels are empty but template labels exist, use template labels for selector
+            elif template_labels and not selector_labels:
                 selector_labels = template_labels
+            # If both are empty, create a default label based on deployment name
+            elif not template_labels and not selector_labels:
+                default_label = {"app": name}
+                template_labels = default_label
+                selector_labels = default_label
             
+            logger.debug(f"Template labels: {template_labels}")
+            logger.debug(f"Selector labels: {selector_labels}")
             # Create container objects
             container_objects = []
             for container in containers:
@@ -170,7 +179,7 @@ async def POST(type: str, request: Request, data: DeploymentCreatePayload):
                     annotations=annotations
                 ),
                 spec=client.V1DeploymentSpec(
-                    replicas=spec.get("replicas", 1),
+                    replicas=spec.get("replicas", None),
                     selector=client.V1LabelSelector(
                         match_labels=selector_labels
                     ),

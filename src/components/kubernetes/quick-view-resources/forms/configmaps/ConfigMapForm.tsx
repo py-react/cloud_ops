@@ -143,7 +143,10 @@ export function ConfigMapForm({ onSubmit, onCancel, defaultValues }: ConfigMapFo
           </Button>
           <Button
             type="submit"
-            onClick={form.handleSubmit(handleSubmit)}
+            onClick={() => {
+              console.log(form.getValues());
+              form.handleSubmit(handleSubmit)();
+            }}
             disabled={!form.getValues("metadata.name") || form.formState.isSubmitting}
           >
             {form.formState.isSubmitting ? "Creating..." : "Create ConfigMap"}

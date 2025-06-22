@@ -42,10 +42,10 @@ export function PodsList({ pods,onEdit,onDelete }: IPodsList) {
   const columns = [
     { header: "Name", accessor: "name" },
     { header: "Namespace", accessor: "namespace" },
-    { header: "Status", accessor: "phase" },
     { header: "Created", accessor: "creationTimestamp" },
     { header: "On Node", accessor: "nodeName" },
     { header: "Containers", accessor: "containers" },
+    { header: "Status", accessor: "podStatus" },
   ];
 
   const data = pods.map((pod) => {
@@ -53,7 +53,7 @@ export function PodsList({ pods,onEdit,onDelete }: IPodsList) {
     return ({
       name: pod.metadata.name,
       namespace: pod.metadata.namespace,
-      phase: pod.status.phase,
+      podStatus: pod.status.phase,
       creationTimestamp: new Date(pod.metadata.creationTimestamp).toLocaleString(),
       nodeName: pod.spec.nodeName || 'N/A',
       containers: pod.status.containerStatuses?.length || 0,

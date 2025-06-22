@@ -115,7 +115,7 @@ export function DeploymentForm({ onSubmit, onCancel, defaultValues }: Deployment
         replicas: 1,
         template: {
           spec: {
-            containers: [{ name: '', image: '' }]
+            containers: []
           }
         }
       },
@@ -182,7 +182,7 @@ export function DeploymentForm({ onSubmit, onCancel, defaultValues }: Deployment
         <ScrollArea className="col-span-2 min-h-0 px-4">
           <div className="p-6">
             <Form {...form}>
-              <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+              <form id="deployment-form" onSubmit={(e) => e.preventDefault()} className="space-y-6">
                 <div className="space-y-6">
                   {/* Step Content */}
                   <div className="mt-6">

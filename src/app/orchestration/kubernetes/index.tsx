@@ -10,6 +10,7 @@ import {
   ShieldIcon,
   BadgeIcon as Certificate,
   HandCoinsIcon,
+  Plus,
 } from "lucide-react";
 import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
 import { DefaultService } from "@/gingerJs_api_client";
@@ -20,6 +21,7 @@ import RouteDescription from "@/components/route-description";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import useNavigate from "@/libs/navigate";
 import { Button } from "@/components/ui/button";
+import ApplyResourceDialog from '@/components/kubernetes/applyResource/ApplyResourceDialog';
 
 const shortcutToResources = {
   deployment: {
@@ -74,6 +76,7 @@ const shortcutToResources = {
 
 function Kubernetes() {
   const navigate = useNavigate()
+  const [showApplyResouceFormm,setShowApplyResourceForm] = useState(false)
   const [resources, setResources] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -142,22 +145,35 @@ function Kubernetes() {
 
   return (
     <div>
+      <ApplyResourceDialog open={showApplyResouceFormm} onClose={() => setShowApplyResourceForm(false)} />
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Kubernetes</h1>
       <div className="space-y-6">
         <RouteDescription
           title={
             <div className="flex items-center justify-between">
               <h2>Dashboard</h2>
-              <Button
-                variant={"outline"}
-                className="flex gap-2 items-center"
-                onClick={() => {
-                  navigate(`/orchestration/kubernetes/namespaced/flow`);
-                }}
-              >
-                <Share2Icon className="mr-2 h-4 w-4" />
-                View Cluster Flow Diagram
-              </Button>
+              <div className="flex items-center gap-2">
+                
+                <Button
+                  variant={"outline"}
+                  className=""
+                  onClick={() => {
+                    navigate(`/orchestration/kubernetes/namespaced/flow`);
+                  }}
+                >
+                  <Share2Icon className="mr-2 h-4 w-4" />
+                  View Cluster Flow
+                </Button>
+                <Button
+                  className=""
+                  onClick={()=>{
+                    setShowApplyResourceForm(true)
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Apply Resource file
+                </Button>
+              </div>
             </div>
           }
           shortDescription="Welcome to your Kubernetes Dashboard. Monitor and manage your cluster resources from this central hub."

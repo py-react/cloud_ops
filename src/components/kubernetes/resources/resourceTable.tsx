@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { CheckCircle2, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon, X, Skull, RotateCcw, CircleCheck, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from "@/libs/utils"
@@ -193,9 +193,12 @@ export function ResourceTable<T>({
 }
 
 function renderCellContent(type: string, value: any) {
+  if(typeof value === "object" && ("props" in value)) {
+    return value
+  }
   if (type === 'status') {
     const statusMap = {
-      running: { icon: CheckCircle2, color: 'text-green-500', label: 'Running' },
+      running: { icon: CheckCircle, color: 'text-green-500', label: 'Running' },
       pending: { icon: Clock, color: 'text-yellow-500', label: 'Pending' },
       failed: { icon: AlertTriangle, color: 'text-red-500', label: 'Failed' },
     };
@@ -203,6 +206,50 @@ function renderCellContent(type: string, value: any) {
     const status = statusMap[(value as string).toLowerCase() as keyof typeof statusMap] || statusMap.pending;
     const Icon = status.icon;
 
+    return (
+      <div className="flex items-center gap-2 rounded-[0.5rem]">
+        <Icon className={`h-4 w-4 ${status.color}`} />
+        <span>{status.label}</span>
+      </div>
+    );
+  }
+
+  if (type === 'podStatus') {
+    const statusMap = {
+      running:            { icon: CheckCircle,   color: 'text-green-500',  label: 'Running' },
+      pending:            { icon: Clock,          color: 'text-yellow-500', label: 'Pending' },
+      succeeded:          { icon: CircleCheck,    color: 'text-blue-500',   label: 'Succeeded' },
+      failed:             { icon: X,        color: 'text-red-500',    label: 'Failed' },
+      crashloopbackoff:   { icon: AlertTriangle,  color: 'text-orange-500', label: 'CrashLoopBackOff' },
+      unknown:            { icon: HelpCircle,     color: 'text-gray-500',   label: 'Unknown' },
+    };
+  
+    const key = (value as string).toLowerCase();
+    const status = statusMap[key as keyof typeof statusMap] || statusMap.unknown;
+    const Icon = status.icon;
+  
+    return (
+      <div className="flex items-center gap-2 rounded-[0.5rem]">
+        <Icon className={`h-4 w-4 ${status.color}`} />
+        <span>{status.label}</span>
+      </div>
+    );
+  }
+
+  if (type === 'containerStatus') {
+    const statusMap = {
+      created:       { icon: CheckCircle, color: 'text-blue-400', label: 'Created' },
+      restarting:    { icon: RotateCcw,   color: 'text-yellow-500', label: 'Restarting' },
+      running:       { icon: CheckCircle, color: 'text-green-500', label: 'Running' },
+      removing:      { icon: Trash2,      color: 'text-gray-500', label: 'Removing' },
+      paused:        { icon: PauseIcon, color: 'text-yellow-400', label: 'Paused' },
+      exited:        { icon: X,     color: 'text-red-500', label: 'Exited' },
+      dead:          { icon: Skull,       color: 'text-red-700', label: 'Dead' },
+    };
+  
+    const status = statusMap[(value as string)?.toLowerCase() as keyof typeof statusMap] || statusMap.exited;
+    const Icon = status.icon;
+  
     return (
       <div className="flex items-center gap-2 rounded-[0.5rem]">
         <Icon className={`h-4 w-4 ${status.color}`} />

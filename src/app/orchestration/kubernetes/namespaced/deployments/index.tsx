@@ -39,13 +39,28 @@ export default function DeploymentsPage() {
   });
 
   const handleCreateDeployment = async (data: DeploymentFormData) => {
+    function arrayToObject(arr: { key: string, value: string }[]) {
+      return arr.reduce((acc, { key, value }) => {
+        if (key) acc[key] = value;
+        return acc;
+      }, {} as Record<string, string>);
+    }
+    const labels = arrayToObject(data.metadata.labels || []);
+    const annotations = arrayToObject(data.metadata.annotations || []);
+    const payload = {
+      ...data,
+      metadata: {
+        ...data.metadata,
+        labels,
+        annotations,
+      },
+    };
     try {
       const response =
         await DefaultService.apiKubernertesResourcesTypeCreateDeploymentsPost({
-          requestBody: data,
+          requestBody: payload,
           type: "deployments",
         });
-      console.log(response);
       setShowCreateDialog(false);
       refetch();
       toast.success(`Deployment ${data.metadata.name} created successfully`);

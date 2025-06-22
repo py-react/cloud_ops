@@ -63,10 +63,10 @@
     --primary-gradient: linear-gradient(to right, hsl(221 83% 54%), hsl(243 58% 57%));
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 245 61% 51%;
-    --secondary-gradient: linear-gradient(to right, hsl(185 75% 55%), hsl(200 85% 60%));
-    --secondary-glow: 0 0 20px 0 hsla(185, 75%, 55%, 0.5), 0 0 40px 0 hsla(200, 85%, 60%, 0.4);
-    --secondary-glow-inset: inset 0 1px 4px hsla(185, 75%, 55%, 0.35), inset 0 -1px 4px hsla(200, 85%, 60%, 0.3);
+    --secondary: 220 14% 96%;
+    --secondary-gradient: linear-gradient(to right, hsl(220 14% 96%), hsl(220 14% 90%));
+    --secondary-glow: 0 0 20px 0 hsla(220, 14%, 96%, 0.5), 0 0 40px 0 hsla(220, 14%, 90%, 0.4);
+    --secondary-glow-inset: inset 0 1px 4px hsla(220, 14%, 96%, 0.35), inset 0 -1px 4px hsla(220, 14%, 90%, 0.3);
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --accent: 210 40% 96.1%;

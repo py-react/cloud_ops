@@ -2,6 +2,7 @@ import type { ContextPostData } from '../models/ContextPostData';
 import type { CreateNamespacePayload } from '../models/CreateNamespacePayload';
 import type { CreateQueueJob } from '../models/CreateQueueJob';
 import type { GetContainerResponse } from '../models/GetContainerResponse';
+import type { HealthCheckResponse } from '../models/HealthCheckResponse';
 import type { InfraCreateUpdateRequest } from '../models/InfraCreateUpdateRequest';
 import type { InfraDeleteResponse } from '../models/InfraDeleteResponse';
 import type { InfraPostResponse } from '../models/InfraPostResponse';
@@ -19,6 +20,7 @@ import type { NetworkUpdateParams } from '../models/NetworkUpdateParams';
 import type { nodes___node_id___NodeSpec } from '../models/nodes___node_id___NodeSpec';
 import type { ResourceResponse } from '../models/ResourceResponse';
 import type { resources___type___ConfigMapCreatePayload } from '../models/resources___type___ConfigMapCreatePayload';
+import type { resources___type___DeploymentCreatePayload } from '../models/resources___type___DeploymentCreatePayload';
 import type { ResourceScope } from '../models/ResourceScope';
 import type { RunContainer } from '../models/RunContainer';
 import type { RunImage } from '../models/RunImage';
@@ -29,6 +31,7 @@ import type { SwarmInitParams } from '../models/SwarmInitParams';
 import type { SwarmJoinParams } from '../models/SwarmJoinParams';
 import type { SwarmUpdateSpec } from '../models/SwarmUpdateSpec';
 import type { SystemInfo } from '../models/SystemInfo';
+import type { UpdateBranchesRequest } from '../models/UpdateBranchesRequest';
 import type { VolumeActionRequest } from '../models/VolumeActionRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -145,7 +148,7 @@ export type TDataApiKubernertesResourcesTypeCreateConfigmapsPost = {
 type: string
             }
 export type TDataApiKubernertesResourcesTypeCreateDeploymentsPost = {
-                requestBody: resources___type___ConfigMapCreatePayload
+                requestBody: resources___type___DeploymentCreatePayload
 type: string
             }
 export type TDataApiKubernertesUserGet = {
@@ -165,6 +168,16 @@ export type TDataApiKubernertesFlowV1Get = {
             }
 export type TDataApiKubernertesFlowV2Get = {
                 namespace: string
+            }
+export type TDataApiIntegrationGithubWebhookPost = {
+                xGithubEvent?: string
+xHubSignature256?: string
+            }
+export type TDataApiIntegrationGithubWebhookPut = {
+                requestBody: UpdateBranchesRequest
+            }
+export type TDataApiIntegrationGithubWebhookDelete = {
+                name: string
             }
 export type TDataApiNetworksPut = {
                 requestBody: NetworkUpdateParams
@@ -1003,6 +1016,79 @@ namespace,
 	}
 
 	/**
+	 * Health check endpoint
+	 * @returns HealthCheckResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubWebhookGet(): CancelablePromise<HealthCheckResponse> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/github/webhook',
+		});
+	}
+
+	/**
+	 * GitHub webhook endpoint
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubWebhookPost(data: TDataApiIntegrationGithubWebhookPost = {}): CancelablePromise<unknown> {
+		const {
+xGithubEvent,
+xHubSignature256,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/github/webhook',
+			headers: {
+				'x-github-event': xGithubEvent, 'x-hub-signature-256': xHubSignature256
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubWebhookPut(data: TDataApiIntegrationGithubWebhookPut): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/github/webhook',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubWebhookDelete(data: TDataApiIntegrationGithubWebhookDelete): CancelablePromise<unknown> {
+		const {
+name,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/github/webhook',
+			query: {
+				name
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
 	 * List all Docker networks.
  * 
  * Returns:
@@ -1313,6 +1399,28 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static settingsDockerGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/docker',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsSourceControlSettingsGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/source_control_settings',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static settingsKubernetesGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -1592,17 +1700,6 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/orchestration/kubernetes/namespaced/pods',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static orchestrationKubernetesNamespacedDeploymentGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/deployment',
 		});
 	}
 

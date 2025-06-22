@@ -23,7 +23,11 @@ import {
   Settings,
   Users,
   Globe,
-  Folder
+  Folder,
+  Plug,
+  Cog,
+  FileCog,
+  Unplug
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -224,10 +228,36 @@ const items = {
           ],
         },
         {
+          title: "CI/CD",
+          url: "/ci_cd",
+          icon: Cog,
+          items: [
+            {
+              title: "Source Control",
+              url: "/source_control_settings",
+              icon: Unplug,
+              items: [],
+            },
+            {
+              title: "Release Config",
+              url: "/release_config",
+              icon: FileCog,
+              items: [],
+            },
+          ],
+        },
+        {
           title: "Docker",
           url: "/docker",
           icon: Docker,
-          items: [],
+          items: [
+            {
+              title: "Registry",
+              url: "/registry",
+              icon: Computer,
+              items: [],
+            },
+          ],
         },
       ]
     },

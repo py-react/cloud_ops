@@ -1,40 +1,48 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { ContainerRunConfig } from './types';
-import { ContainerRunnerUpdate } from './ContainerRunnerUpdate';
-import { Container } from '@/types/container';
+import React, { useState } from "react";
+import { ContainerIcon, X } from "lucide-react";
+import { ContainerRunConfig } from "./types";
+import { ContainerRunnerUpdate } from "./ContainerRunnerUpdate";
+import { Container } from "@/types/container";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ContainerRunnerUpdateModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: ContainerRunConfig) => Promise<void>;
-  data:Container;
+  data: Container;
 }
 
-export function ContainerRunnerUpdateModal({ open, onClose, onSubmit ,data }: ContainerRunnerUpdateModalProps) {
-  const [submitting,setSubmitting] = useState(false)
-
-  if (!open) return null;
+export function ContainerRunnerUpdateModal({
+  open,
+  onClose,
+  onSubmit,
+  data,
+}: ContainerRunnerUpdateModalProps) {
+  const [submitting, setSubmitting] = useState(false);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-start justify-center p-4 z-50 overflow-y-auto">
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl my-8">
-        <div className="flex justify-between items-center px-6 py-4 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Update resources</h2>
-          <button
-            onClick={(e)=>{
-              if(!submitting)onClose()
-            }}
-            className="text-gray-400 hover:text-gray-500 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-none w-screen h-screen p-0">
+        <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
+          <DialogTitle className="flex items-center gap-2 w-full px-6">
+            <ContainerIcon className="h-5 w-5" />
+            Container Configuration
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 h-[calc(100vh-8rem)] px-6">
+          <ContainerRunnerUpdate
+            data={data}
+            onSubmitHandler={onSubmit}
+            submitting={submitting}
+            setSubmitting={setSubmitting}
+          />
         </div>
-
-        <div className="p-6">
-          <ContainerRunnerUpdate data={data} onSubmitHandler={onSubmit} submitting={submitting} setSubmitting={setSubmitting} />
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
