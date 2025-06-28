@@ -1,4 +1,4 @@
-import { Settings, Search, Edit2, PlusIcon } from "lucide-react";
+import { Settings, Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
   Card,
@@ -10,42 +10,35 @@ import {
 import { Input } from "@/components/ui/input";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
-import ResourceQuotaDetailsModel from "@/components/kubernetes/settings/resourceQuotaDetailsModel";
-import ResourceQuotaDetails from "@/components/kubernetes/settings/resource-quota/resourceQuotaDetails";
-import { ResourceQuota as ResourceQuotaType } from "@/components/kubernetes/settings/resource-quota/types/quota";
+import ResourceQuotaDetailsModel from "@/components/kubernetes/settings/resource-quota/details/resourceQuotaDetails";
+import { IResourceQuota } from "@/components/kubernetes/settings/resource-quota/types/quota";
 import RouteDescription from "@/components/route-description";
+import yaml from 'js-yaml';
+import ResourceForm from "@/components/resource-form/resource-form";
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 
 const columns = [
-  { header: "Name" },
-  { header: "Namespace" },
-  { header: "Request Cpu" },
-  { header: "Limit Cpu" },
-  { header: "Request Memory" },
-  { header: "Limit Memory" },
-  { header: "Created At" },
+  { header: "Name", accessor: "name" },
+  { header: "Namespace", accessor: "namespace" },
+  { header: "Request CPU", accessor: "requestCpu" },
+  { header: "Limit CPU", accessor: "limitCpu" },
+  { header: "Request Memory", accessor: "requestMemory" },
+  { header: "Limit Memory", accessor: "limitMemory" },
+  { header: "Created At", accessor: "createdAt" },
 ];
 
 export const ResourceQuota = () => {
-  const [resourcesQuota, setResourcesQuota] = useState([]);
+  const [resourcesQuota, setResourcesQuota] = useState<IResourceQuota[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentToShow, setCurrentToShow] = useState({} as ResourceQuotaType);
+  const [currentToShow, setCurrentToShow] = useState<IResourceQuota | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [editDetails, setEditDetails] = useState(false);
 
   const fetchResourceQuota = () => {
     DefaultService.apiKubernertesResourceQuotaGet()
-      .then((res) => {
-        setResourcesQuota(res);
+      .then((res: any) => {
+        setResourcesQuota(res || []);
       })
       .catch((err) => {
         toast.error(err);
@@ -58,6 +51,18 @@ export const ResourceQuota = () => {
         quotas.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         quotas.namespace?.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
+
+  // Transform data for ResourceTable
+  const tableData = filteredQuotas.map((quota) => ({
+    ...quota,
+    requestCpu: `${quota.status?.used?.["requests.cpu"] || "0"}/${quota.status?.hard?.["requests.cpu"] || "0"}`,
+    limitCpu: `${quota.status?.used?.["limits.cpu"] || "0"}/${quota.status?.hard?.["limits.cpu"] || "0"}`,
+    requestMemory: `${quota.status?.used?.["requests.memory"] || "0"}/${quota.status?.hard?.["requests.memory"] || "0"}`,
+    limitMemory: `${quota.status?.used?.["limits.memory"] || "0"}/${quota.status?.hard?.["limits.memory"] || "0"}`,
+    createdAt: quota.creation_timestamp
+      ? new Date(quota.creation_timestamp).toLocaleString()
+      : "Unknown",
+  }));
 
   useEffect(() => {
     fetchResourceQuota();
@@ -92,11 +97,11 @@ export const ResourceQuota = () => {
             <div className=" flex items-center gap-2">
               <Button
                 onClick={() => {
-                  setCurrentToShow({});
+                  setCurrentToShow(null);
                   setEditDetails(true);
                 }}
               >
-                <PlusIcon size={18} />
+                <Settings size={18} />
                 Create Quota
               </Button>
             </div>
@@ -112,133 +117,42 @@ export const ResourceQuota = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Card className="shadow-none">
-              <div className="rounded-[calc(0.5rem-2px)] border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {columns.map((column) => (
-                        <TableHead key={column.header}>
-                          {column.header}
-                        </TableHead>
-                      ))}
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {!!filteredQuotas.length ? (
-                      filteredQuotas.map((row, index) => (
-                        <TableRow>
-                          {columns.map((column) => (
-                            <TableCell key={column.header}>
-                              {column.header === "Name" && row.name}
-                              {column.header === "Namespace" && row.namespace}
-                              {column.header === "Limit Cpu" && (
-                                <>
-                                  {row.status?.used?.["limits.cpu"]}/
-                                  {row.status?.hard?.["limits.cpu"]}
-                                </>
-                              )}
-                              {column.header === "Request Cpu" && (
-                                <>
-                                  {row.status?.used?.["requests.cpu"]}/
-                                  {row.status?.hard?.["requests.cpu"]}
-                                </>
-                              )}
-                              {column.header === "Limit Memory" && (
-                                <>
-                                  {row.status?.used?.["limits.memory"]}/
-                                  {row.status?.hard?.["limits.memory"]}
-                                </>
-                              )}
-                              {column.header === "Request Memory" && (
-                                <>
-                                  {row.status?.used?.["requests.memory"]}/
-                                  {row.status?.hard?.["requests.memory"]}
-                                </>
-                              )}
-                              {column.header === "Created At" &&
-                                (row.creation_timestamp
-                                  ? new Date(
-                                      row.creation_timestamp
-                                    ).toLocaleString()
-                                  : "Unknown")}
-                            </TableCell>
-                          ))}
-                          <TableCell>
-                            <div className="flex items-center justify-start gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setShowDetails(true);
-                                  setCurrentToShow(row);
-                                }}
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                                <span className="sr-only">Details</span>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setEditDetails(true);
-                                  setCurrentToShow(row);
-                                }}
-                              >
-                                <Edit2 className="h-4 w-4" />
-                                <span className="sr-only">Edit</span>
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={columns.length + 1}
-                          className="h-24 text-center"
-                        >
-                          No resources found
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </Card>
+            <ResourceTable
+              columns={columns}
+              data={tableData}
+              onViewDetails={(resource) => {
+                setCurrentToShow(resource);
+                setShowDetails(true);
+              }}
+              onEdit={(resource) => {
+                setCurrentToShow(resource);
+                setEditDetails(true);
+              }}
+              className="mt-4"
+            />
           </CardContent>
         </Card>
       </div>
-      {showDetails && (
+      {showDetails && currentToShow && (
         <ResourceQuotaDetailsModel
           quota={currentToShow}
           open={showDetails}
           onClose={(open) => {
-            setCurrentToShow({});
+            setCurrentToShow(null);
             setShowDetails(open);
-          }}
-        />
-      )}
-      {editDetails && (
-        <ResourceQuotaDetails
-          quotaName={currentToShow.name}
-          quota={currentToShow}
-          onClose={() => {
-            setCurrentToShow({});
-            setEditDetails(false);
           }}
           onDelete={(data) => {
             DefaultService.apiKubernertesMethodsDeletePost({
               requestBody: {
-                manifest: data || "",
+                manifest: yaml.dump(data.last_applied) || "",
               },
             })
-              .then((res) => {
+              .then((res: any) => {
                 if (res.success) {
                   toast.success(res.data.message);
                   fetchResourceQuota();
                   setEditDetails(false);
+                  setShowDetails(false)
                 } else {
                   toast.error(res.error);
                 }
@@ -247,15 +161,28 @@ export const ResourceQuota = () => {
                 toast.error(err);
               });
           }}
+        />
+      )}
+      {editDetails && (
+        <ResourceForm
+          heading="Resource-quota resource"
+          description="A Kubernetes ResourceQuota is a resource used to limit the aggregate resource consumption (such as CPU, memory, and storage) within a namespace. It helps enforce fair usage and prevent any single team or application from consuming more than its share of cluster resources. By setting quotas on compute, object counts, or storage, ResourceQuotas provide control and governance in multi-tenant environments, ensuring efficient and balanced resource allocation across workloads."
+          editDetails={editDetails}
+          rawYaml={currentToShow ? yaml.dump(currentToShow.last_applied) : ""}
+          resourceType="resourcequota"
+          onClose={() => {
+            setCurrentToShow(null);
+            setEditDetails(false);
+          }}
           onUpdate={(data) => {
             DefaultService.apiKubernertesMethodsApplyPost({
               requestBody: {
                 manifest: data.rawYaml,
               },
             })
-              .then((res) => {
+              .then((res: any) => {
                 if (res.success) {
-                  setCurrentToShow({});
+                  setCurrentToShow(null);
                   toast.success(res.data.message);
                   fetchResourceQuota();
                   setEditDetails(false);

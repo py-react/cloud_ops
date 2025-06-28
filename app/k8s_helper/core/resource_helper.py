@@ -2,7 +2,9 @@ import yaml
 from typing import Optional, Dict, List, Any
 from kubernetes import client, config
 from kubernetes.dynamic import DynamicClient
-from kubernetes.dynamic.exceptions import ConflictError
+from kubernetes.dynamic.exceptions import ConflictError,NotFoundError
+import json
+import jsonpatch
 
 from .namespace_ops import NamespaceOperations
 from .cluster_ops import ClusterOperations
@@ -87,6 +89,14 @@ class KubernetesResourceHelper:
     def apply_resource(self, resource: dict):
         """
         Create or patch a resource (apply semantics).
+        Implements proper kubectl apply behavior:
+        1. Read current resource from cluster
+        2. Compare with last-applied-configuration
+        3. Compute patch diff
+        4. Patch the live resource accordingly
+        5. Update last-applied-configuration
+        
+        Handles field removal when fields are not present in the new resource spec.
         """
         api_version = resource['apiVersion']
         kind = resource['kind']
@@ -94,10 +104,90 @@ class KubernetesResourceHelper:
         namespace = resource['metadata'].get('namespace', 'default')
 
         resource_client = self.dyn_client.resources.get(api_version=api_version, kind=kind)
+        
+        # Add last-applied-configuration annotation to the desired state
+        if 'metadata' not in resource:
+            resource['metadata'] = {}
+        if 'annotations' not in resource['metadata']:
+            resource['metadata']['annotations'] = {}
+        
+        # Store the complete desired state as JSON string
+        resource['metadata']['annotations']['kubectl.kubernetes.io/last-applied-configuration'] = json.dumps(resource)
+        
         try:
-            return resource_client.create(body=resource, namespace=namespace)
-        except ConflictError:
-            return resource_client.patch(name=name, namespace=namespace, body=resource)
+            # Try to get the current resource from the cluster
+            current_resource = resource_client.get(name=name, namespace=namespace)
+            current_dict = current_resource.to_dict()
+            
+            # Extract last-applied-configuration from current resource
+            last_applied = None
+            if (current_dict.get('metadata', {}).get('annotations', {})
+                .get('kubectl.kubernetes.io/last-applied-configuration')):
+                try:
+                    last_applied = json.loads(
+                        current_dict['metadata']['annotations']['kubectl.kubernetes.io/last-applied-configuration']
+                    )
+                except json.JSONDecodeError:
+                    pass
+            
+            if last_applied:
+                # Create a patch that includes explicit null values for removed fields
+                # This is how kubectl apply handles field removal
+                patch_resource = self._create_apply_patch(last_applied, resource)
+                
+                # Use strategic merge patch with the patch resource
+                return resource_client.patch(
+                    name=name, 
+                    namespace=namespace, 
+                    body=patch_resource,
+                    content_type='application/merge-patch+json'
+                )
+            else:
+                # No last-applied-configuration, do a strategic merge patch
+                return resource_client.patch(
+                    name=name, 
+                    namespace=namespace, 
+                    body=resource,
+                    content_type='application/merge-patch+json'
+                )
+                
+        except Exception as e:
+            # Resource doesn't exist, create it
+            if isinstance(e,NotFoundError):
+                return resource_client.create(body=resource, namespace=namespace)
+            else:
+                raise e
+
+    def _create_apply_patch(self, last_applied: dict, desired: dict) -> dict:
+        """
+        Create a patch resource that includes explicit null values for removed fields.
+        This mimics kubectl apply's behavior for field removal.
+        """
+        patch = {}
+        
+        # Handle all fields from last_applied
+        for key, value in last_applied.items():
+            if key not in desired:
+                # Field was in last_applied but not in desired - set to null to remove it
+                patch[key] = None
+            elif isinstance(value, dict) and isinstance(desired.get(key), dict):
+                # Recursively handle nested objects
+                nested_patch = self._create_apply_patch(value, desired[key])
+                if nested_patch:  # Only add if there are changes
+                    patch[key] = nested_patch
+            elif isinstance(value, list) and isinstance(desired.get(key), list):
+                # For lists, replace with the new list
+                patch[key] = desired[key]
+            else:
+                # Field exists in both, use the desired value
+                patch[key] = desired[key]
+        
+        # Add new fields from desired that weren't in last_applied
+        for key, value in desired.items():
+            if key not in last_applied:
+                patch[key] = value
+        
+        return patch
 
     def delete_resource(self, resource: dict):
         """

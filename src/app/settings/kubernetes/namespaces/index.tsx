@@ -12,8 +12,8 @@ import { Folder, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
-import { CreateNamespace } from "@/components/kubernetes/settings/createNamespace";
-import NamespaceDetailsModel from "@/components/kubernetes/settings/namespaceDetailsModel";
+import { CreateNamespace } from "@/components/kubernetes/settings/namespace/form/createNamespace";
+import NamespaceDetailsModel from "@/components/kubernetes/settings/namespace/details/namespaceDetailsModel";
 import RouteDescription from "@/components/route-description";
 import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 

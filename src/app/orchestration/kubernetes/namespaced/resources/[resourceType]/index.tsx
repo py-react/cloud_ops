@@ -1,41 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import { useParams } from 'react-router-dom';
-import { DeploymentList } from '@/components/kubernetes/quick-view-resources/DeploymentList';
-import { PodTable } from '@/components/kubernetes/PodTable';
-import { ConfigMapTable } from '@/components/kubernetes/ConfigMapTable';
-import KubernetesIngressList from "@/components/kubernetes/Ingress";
-import KubernetesCertificateList from "@/components/kubernetes/certificates";
-import KubernetesIssuerList from "@/components/kubernetes/issuer";
-import KubernetesSecretList from "@/components/kubernetes/secrets";
-import { ServiceList } from '@/components/kubernetes/SerivceList';
+
 import { DefaultService } from '@/gingerJs_api_client';
-import useNavigate from '@/libs/navigate';
 import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext';
-import { JobList } from '@/components/JobList';
-import KubernetesNodesList from '@/components/kubernetes/NodesInfo';
-import CustomLink from '@/libs/Link';
-import { StatefulSetTable } from '@/components/kubernetes/resources/StatefulSetTable';
-import { CronJobTable } from '@/components/kubernetes/resources/CronJobTable';
-import { NetworkPolicyTable } from '@/components/kubernetes/resources/NetworkPolicyTable';
-import { PersistentVolumeTable } from '@/components/kubernetes/resources/PersistentVolumeTable';
-import { PersistentVolumeClaimTable } from '@/components/kubernetes/resources/PersistentVolumeClaimTable';
-import { RoleTable } from '@/components/kubernetes/resources/RoleTable';
-import { StorageClassTable } from '@/components/kubernetes/resources/StorageClassTable';
-import { EndpointsTable } from '@/components/kubernetes/resources/EndpointsTable';
-import { ServiceAccountTable } from '@/components/kubernetes/resources/ServiceAccountTable';
-import { RoleBindingTable } from '@/components/kubernetes/resources/RoleBindingTable';
-import { CustomResourceDefinitionTable } from '@/components/kubernetes/resources/CustomResourceDefinitionTable';
-import SmartDataViewer from '@/components/queues/queueJob/SmartDataViewer';
-import Events from '@/components/kubernetes/resources/events';
+
 import {ResourceTable} from '@/components/kubernetes/resources/resourceTable';
 import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector';
 import RouteDescription from '@/components/route-description';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -49,7 +23,6 @@ export default function ResourceTypePage() {
   const [resources, setResources] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchResources = async () => {

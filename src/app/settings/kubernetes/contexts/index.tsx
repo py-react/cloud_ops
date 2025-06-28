@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { KubeContextSwitcher } from '@/components/kubernetes/KubeContextSwitcher';
 import { KubeContext } from "@/components/kubernetes/contextProvider/KubeContext";
-import { KubeContextList } from '@/components/kubernetes/settings/contexts/kubeContextList';
+import { KubeContextTable } from '@/components/kubernetes/settings/contexts/list/kubeContextTable';
 import RouteDescription from '@/components/route-description';
 function KubernetesSettings() {
   const {
@@ -88,7 +88,7 @@ function KubernetesSettings() {
             )}
           </CardContent>
         </Card>
-        <KubeContextList />
+        <KubeContextTable />
       </div>
     </div>
   );

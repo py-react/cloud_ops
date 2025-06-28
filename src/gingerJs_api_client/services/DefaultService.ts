@@ -1,6 +1,8 @@
 import type { ContextPostData } from '../models/ContextPostData';
 import type { CreateNamespacePayload } from '../models/CreateNamespacePayload';
 import type { CreateQueueJob } from '../models/CreateQueueJob';
+import type { DeploymentConfigType } from '../models/DeploymentConfigType';
+import type { DeploymentRunType } from '../models/DeploymentRunType';
 import type { GetContainerResponse } from '../models/GetContainerResponse';
 import type { HealthCheckResponse } from '../models/HealthCheckResponse';
 import type { InfraCreateUpdateRequest } from '../models/InfraCreateUpdateRequest';
@@ -178,6 +180,38 @@ export type TDataApiIntegrationGithubWebhookPut = {
             }
 export type TDataApiIntegrationGithubWebhookDelete = {
                 name: string
+            }
+export type TDataApiIntegrationKubernetesReleaseGet = {
+                name?: string | null
+namespace?: string | null
+            }
+export type TDataApiIntegrationKubernetesReleasePost = {
+                requestBody: DeploymentConfigType
+            }
+export type TDataApiIntegrationKubernetesReleasePut = {
+                requestBody: DeploymentConfigType
+            }
+export type TDataApiIntegrationKubernetesReleaseDelete = {
+                name: string
+namespace: string
+            }
+export type TDataApiIntegrationKubernetesReleaseRunGet = {
+                configId: number
+id?: number | null
+            }
+export type TDataApiIntegrationKubernetesReleaseRunPost = {
+                requestBody: DeploymentRunType
+            }
+export type TDataApiIntegrationKubernetesReleaseRunPut = {
+                id: number
+requestBody: DeploymentRunType
+            }
+export type TDataApiIntegrationKubernetesReleaseRunDelete = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesReleaseRunPatch = {
+                id: number
+status: string
             }
 export type TDataApiNetworksPut = {
                 requestBody: NetworkUpdateParams
@@ -1089,6 +1123,195 @@ name,
 	}
 
 	/**
+	 * Get deployment details.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesReleaseGet(data: TDataApiIntegrationKubernetesReleaseGet = {}): CancelablePromise<unknown> {
+		const {
+name,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/release',
+			query: {
+				namespace, name
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Create a new deployment with the specified configuration.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesReleasePost(data: TDataApiIntegrationKubernetesReleasePost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/release',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Update an existing deployment with new configuration.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesReleasePut(data: TDataApiIntegrationKubernetesReleasePut): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/release',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Delete a deployment and its associated service.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesReleaseDelete(data: TDataApiIntegrationKubernetesReleaseDelete): CancelablePromise<unknown> {
+		const {
+name,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/release',
+			query: {
+				namespace, name
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesReleaseRunGet(data: TDataApiIntegrationKubernetesReleaseRunGet): CancelablePromise<unknown> {
+		const {
+configId,
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/release/run',
+			query: {
+				config_id: configId, id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesReleaseRunPost(data: TDataApiIntegrationKubernetesReleaseRunPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/release/run',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesReleaseRunPut(data: TDataApiIntegrationKubernetesReleaseRunPut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/release/run',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesReleaseRunDelete(data: TDataApiIntegrationKubernetesReleaseRunDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/release/run',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Update only the status of a deployment run.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesReleaseRunPatch(data: TDataApiIntegrationKubernetesReleaseRunPatch): CancelablePromise<unknown> {
+		const {
+id,
+status,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PATCH',
+			url: '/api/integration/kubernetes/release/run',
+			query: {
+				id, status
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
 	 * List all Docker networks.
  * 
  * Returns:
@@ -1410,10 +1633,65 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static settingsSourceControlSettingsGet(): CancelablePromise<string> {
+	public static settingsCiCdGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/settings/source_control_settings',
+			url: '/settings/ci_cd',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdReleaseStrategiesGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/release_strategies',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdSourceControlSettingsGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/source_control_settings',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdDeploymentStrategyGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/deployment_strategy',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdReleaseConfigGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/release_config',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdSourceControlGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/source_control',
 		});
 	}
 

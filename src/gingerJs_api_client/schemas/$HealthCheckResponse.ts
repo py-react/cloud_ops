@@ -29,6 +29,18 @@ export const $HealthCheckResponse = {
 },
 	isRequired: true,
 },
+		deployments: {
+	type: 'any-of',
+	description: `Mapping of repository names to deployment info`,
+	contains: [{
+	type: 'dictionary',
+	contains: {
+		type: 'integration__github__webhook__index__DeploymentInfo',
+	},
+}, {
+	type: 'null',
+}],
+},
 		timestamp: {
 	type: 'string',
 	description: `Current timestamp`,

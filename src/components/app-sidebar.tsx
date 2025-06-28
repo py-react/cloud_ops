@@ -27,7 +27,8 @@ import {
   Plug,
   Cog,
   FileCog,
-  Unplug
+  Unplug,
+  Orbit
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -234,7 +235,7 @@ const items = {
           items: [
             {
               title: "Source Control",
-              url: "/source_control_settings",
+              url: "/source_control",
               icon: Unplug,
               items: [],
             },
@@ -242,6 +243,12 @@ const items = {
               title: "Release Config",
               url: "/release_config",
               icon: FileCog,
+              items: [],
+            },
+            {
+              title: "Release Strategies",
+              url: "/release_strategies",
+              icon: Orbit,
               items: [],
             },
           ],

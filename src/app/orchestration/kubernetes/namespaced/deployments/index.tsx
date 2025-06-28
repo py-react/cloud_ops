@@ -1,20 +1,13 @@
 import React, { useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
-import { DeploymentList } from "@/components/kubernetes/DeploymentList";
 import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 import useKubernertesResources from "@/hooks/use-resource";
-import { DeploymentForm } from "@/components/kubernetes/quick-view-resources/forms/deployments/DeploymentForm";
-import { DeploymentFormData } from "@/components/kubernetes/quick-view-resources/forms/deployments/types";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import ResourceForm from "@/components/resource-form/resource-form"
+
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
-import { Loader2, RocketIcon } from "lucide-react";
+import { RocketIcon } from "lucide-react";
 import RouteDescription from "@/components/route-description";
 import {
   Card,
@@ -23,14 +16,26 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { DeploymentItem } from "@/components/kubernetes/DeploymentList";
+import { DeploymentItem } from "@/components/kubernetes/quick-view-resources/DeploymentList";
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
+import yaml from "js-yaml"
+
+const columns = [
+  { header: "Name", accessor: "name" },
+  { header: "Namespace", accessor: "namespace" },
+  { header: "Replicas", accessor: "replicas" },
+  { header: "Ready", accessor: "readyReplicas" },
+  { header: "Strategy", accessor: "strategy" },
+  { header: "Labels", accessor: "labels" },
+  { header: "Status", accessor: "status" },
+];
 
 export default function DeploymentsPage() {
   const { selectedNamespace } = useContext(NamespaceContext);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [currentToEdit,setCurrentToEdit] = useState(null)
   const {
     resource: deployments,
-    isLoading,
     error,
     refetch,
   } = useKubernertesResources({
@@ -38,67 +43,23 @@ export default function DeploymentsPage() {
     type: "deployments",
   });
 
-  const handleCreateDeployment = async (data: DeploymentFormData) => {
-    function arrayToObject(arr: { key: string, value: string }[]) {
-      return arr.reduce((acc, { key, value }) => {
-        if (key) acc[key] = value;
-        return acc;
-      }, {} as Record<string, string>);
-    }
-    const labels = arrayToObject(data.metadata.labels || []);
-    const annotations = arrayToObject(data.metadata.annotations || []);
-    const payload = {
-      ...data,
-      metadata: {
-        ...data.metadata,
-        labels,
-        annotations,
-      },
-    };
-    try {
-      const response =
-        await DefaultService.apiKubernertesResourcesTypeCreateDeploymentsPost({
-          requestBody: payload,
-          type: "deployments",
-        });
-      setShowCreateDialog(false);
-      refetch();
-      toast.success(`Deployment ${data.metadata.name} created successfully`);
-    } catch (error) {
-      console.error("Error creating Deployment:", error);
-      toast.error(`Failed to create deployment ${data.metadata.name}`);
-      throw error;
-    }
-  };
 
   // Transform API data to match DeploymentItem type
-  const transformedDeployments: DeploymentItem[] =
+  const transformedDeployments =
     deployments?.map((dep: any) => ({
-      metadata: {
-        uid: dep.metadata?.uid || "",
-        name: dep.metadata?.name || "",
-        namespace: dep.metadata?.namespace || selectedNamespace || "",
-        labels: dep.metadata?.labels || {},
-        annotations: dep.metadata?.annotations || {},
-      },
-      spec: {
-        replicas: dep.spec?.replicas || 0,
-        strategy: {
-          type: dep.spec?.strategy?.type,
-        },
-        selector: {
-          matchLabels: dep.spec?.selector?.matchLabels || {},
-        },
-        template: {
-          spec: {
-            containers: dep.spec?.template?.spec?.containers || [],
-          },
-        },
-      },
-      status: {
-        readyReplicas: dep.status?.readyReplicas || 0,
-        conditions: dep.status?.conditions || [],
-      },
+      name:dep.metadata?.name || "",
+      namespace: dep.metadata?.namespace || "",
+      replicas:dep.spec?.replicas || 0,
+      readyReplicas:dep.status?.readyReplicas || 0,
+      strategy:dep.spec?.strategy?.type,
+      labels:Object.entries(dep.metadata?.labels||{}).map(
+        ([key, value]) => `${key}: ${value}`
+      ),
+      status:inferStatus(dep.status?.conditions),
+      last_applied: dep.metadata?.annotations["kubectl.kubernetes.io/last-applied-configuration"],
+      fullData: dep,
+      showEdit:true,
+      showDelete:true,
     })) || [];
 
   if (error) {
@@ -139,33 +100,93 @@ export default function DeploymentsPage() {
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
-              </div>
-            ) : (
-              <DeploymentList deployments={transformedDeployments} />
-            )}
+            <ResourceTable
+              columns={columns}
+              data={transformedDeployments}
+              // onViewDetails={(res) => {
+              //   // You can access full deployment object using res.fullData
+              //   console.log("View Details for Deployment:", res);
+              // }}
+              // onViewLogs={(res) => {
+              //   console.log("View Logs for Deployment:", res);
+              // }}
+              onEdit={(res) => {
+                setShowCreateDialog(true);
+                setCurrentToEdit(res);
+              }}
+              onDelete={(data) => {
+                DefaultService.apiKubernertesMethodsDeletePost({
+                  requestBody: {
+                    manifest: yaml.dump(JSON.parse(data.last_applied)),
+                  },
+                })
+                  .then((res) => {
+                    if (res.success) {
+                      toast.success(res.data.message);
+                      refetch();
+                    } else {
+                      toast.error(res.error);
+                    }
+                  })
+                  .catch((err) => {
+                    toast.error(err);
+                  });
+              }}
+              // onViewConfig={(res) => {
+              //   console.log("View Config for Deployment:", res.fullData);
+              // }}
+            />
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-none w-screen h-screen p-0">
-          <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
-            <DialogTitle className="flex items-center gap-2 w-full px-6">
-              <RocketIcon className="h-5 w-5" />
-              Deployment Configuration
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 h-[calc(100vh-8rem)] px-6">
-            <DeploymentForm
-              onSubmit={handleCreateDeployment}
-              onCancel={() => setShowCreateDialog(false)}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      {showCreateDialog && (
+        <ResourceForm
+          heading="Deployment resource"
+          description="A Kubernetes Deployment is a resource used to manage and automate the rollout and lifecycle of application instances, typically in the form of Pods. It ensures that a specified number of pod replicas are running at all times and allows for declarative updates, rollbacks, and scaling. Deployments are ideal for stateless applications and provide robust features like rolling updates and version control, making them a foundational tool for maintaining reliable and consistent workloads in a Kubernetes cluster."
+          editDetails={showCreateDialog}
+          rawYaml={
+            currentToEdit
+              ? yaml.dump(JSON.parse(currentToEdit?.last_applied))
+              : ""
+          }
+          resourceType="deployments"
+          onClose={() => {
+            setShowCreateDialog(false);
+            setCurrentToEdit(null);
+          }}
+          onUpdate={(data) => {
+            DefaultService.apiKubernertesMethodsApplyPost({
+              requestBody: {
+                manifest: data.rawYaml,
+              },
+            })
+              .then((res) => {
+                if (res.success) {
+                  toast.success(res.data.message);
+                  refetch();
+                  setShowCreateDialog(false);
+                } else {
+                  toast.error(res.error);
+                }
+              })
+              .catch((err) => {
+                toast.error(err);
+              });
+          }}
+        />
+      )}
     </div>
   );
+}
+
+
+
+function inferStatus(conditions?: DeploymentItem["status"]["conditions"]): string {
+  if (!conditions || conditions.length === 0) return "Unknown";
+  const progessingCondition = conditions.find(c=>c.type ==="Progressing")
+  const readyCondition = conditions.find((c) => c.type === "Available" || c.type === "Ready" );
+  if(readyCondition?.status === "False" && progessingCondition?.status === "True") return "Pending"
+  if (readyCondition?.status === "True") return "Running";
+  if (readyCondition?.status === "False") return "Failed";
+  return "Pending";
 }

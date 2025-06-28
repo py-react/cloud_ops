@@ -252,7 +252,7 @@ class HealthCheckResponse(BaseModel):
     supported_events: List[str] = Field(..., description="List of supported event types")
     allowed_repositories: Dict[str, str] = Field(..., description="Mapping of repository names to repository identifiers")
     allowed_branches: Dict[str, List[str]] = Field(..., description="Mapping of repository names to allowed branch lists")
-    deployments: Dict[str, DeploymentInfo] = Field(..., description="Mapping of repository names to deployment info")
+    deployments: Optional[Dict[str, DeploymentInfo]] = Field(None, description="Mapping of repository names to deployment info")
     timestamp: str = Field(..., description="Current timestamp")
 
 PR_SUPPORTED_ACTION = [
@@ -295,7 +295,9 @@ def is_valid_payload(payload: PullRequestWebhookPayload) -> bool:
     current_branch_name = extract_branch_name(payload.pull_request.base.ref)
     current_repo_name = payload.repository.name
     utils = AllowedRepoUtils()
-    ALLOWED_REPOSITORIES, ALLOWED_BRANCHES = utils.get_all()
+    all_data = utils.get_all()
+    ALLOWED_REPOSITORIES = all_data[0]
+    ALLOWED_BRANCHES = all_data[1]
     # Check if repository is allowed and get its allowed branches
     if current_repo_name not in ALLOWED_REPOSITORIES:
         return False
@@ -388,7 +390,8 @@ async def POST(
 async def GET(request: Request) -> HealthCheckResponse:
     """Health check endpoint"""
     utils = AllowedRepoUtils()
-    ALLOWED_REPOSITORIES, ALLOWED_BRANCHES,DEPLOYMENTS = utils.get_all()
+    ALLOWED_REPOSITORIES, ALLOWED_BRANCHES, DEPLOYMENTS = utils.get_all()
+    
     return HealthCheckResponse(
         status="healthy",
         supported_events=SUPPORTED_EVENTS,

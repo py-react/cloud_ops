@@ -38,7 +38,7 @@ export const $ServiceInfo = {
 		deployments: {
 	type: 'array',
 	contains: {
-		type: 'DeploymentInfo',
+		type: 'kubernertes__flow__v2__index__DeploymentInfo',
 	},
 },
 		daemonsets: {

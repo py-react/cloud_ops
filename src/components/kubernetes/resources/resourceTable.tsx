@@ -1,13 +1,27 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { CheckCircle, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon, X, Skull, RotateCcw, CircleCheck, HelpCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon, X, Skull, RotateCcw, CircleCheck, HelpCircle, Copy, Undo2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from "@/libs/utils"
+
+type ResourceTableActionProps = {
+  showPlay?: boolean;
+  showStop?: boolean;
+  showPause?: boolean;
+  showViewDetails?: boolean;
+  showViewLogs?: boolean;
+  showViewConfig?: boolean;
+  showEdit?: boolean;
+  showDelete?: boolean;
+  showClone?: boolean;
+  showUndo?: boolean;
+};
+
 interface ResourceTableProps<T> {
   columns: { header: string; accessor: string }[];
-  data: T[];
+  data: (T & ResourceTableActionProps)[];
   onViewDetails?: (resource: T) => void;
   onViewLogs?: (resource: T) => void;
   onViewConfig?: (resource: T) => void;
@@ -16,8 +30,27 @@ interface ResourceTableProps<T> {
   onEdit?: (resource: T) => void;
   onStop?: (resource: T) => void;
   onPause?: (resource: T) => void;
+  onClone?: (resource: T) => void;
+  onUndo?: (resource: T) => void;
   className?: string;
   tableClassName?: string;
+}
+
+// Default all ResourceTableActionProps to true if not provided
+function withDefaultActionProps<T>(row: T & ResourceTableActionProps): T & Required<ResourceTableActionProps> {
+  return {
+    showPlay: row.showPlay !== undefined ? row.showPlay : true,
+    showStop: row.showStop !== undefined ? row.showStop : true,
+    showPause: row.showPause !== undefined ? row.showPause : true,
+    showViewDetails: row.showViewDetails !== undefined ? row.showViewDetails : true,
+    showViewLogs: row.showViewLogs !== undefined ? row.showViewLogs : true,
+    showViewConfig: row.showViewConfig !== undefined ? row.showViewConfig : true,
+    showEdit: row.showEdit !== undefined ? row.showEdit : true,
+    showDelete: row.showDelete !== undefined ? row.showDelete : true,
+    showClone: row.showClone !== undefined ? row.showClone : true,
+    showUndo: row.showClone !== undefined ? row.showClone : true,
+    ...row,
+  };
 }
 
 export function ResourceTable<T>({
@@ -31,6 +64,8 @@ export function ResourceTable<T>({
   onPlay,
   onStop,
   onPause,
+  onClone,
+  onUndo,
   className,
   tableClassName,
 }: ResourceTableProps<T>) {
@@ -61,6 +96,12 @@ export function ResourceTable<T>({
   const handlePause = (resource: T) => {
     if (onPause) onPause(resource);
   };
+  const handleClone = (resource: T) => {
+    if (onClone) onClone(resource);
+  };
+  const handleUndo = (resource: T) => {
+    if (onUndo) onUndo(resource);
+  };
 
   const showActions = onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay || onStop || onPause || onEdit
 
@@ -80,7 +121,9 @@ export function ResourceTable<T>({
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
-                data.map((row, index) => (
+                data.map((row, index) => {
+                  const rowWithDefaults = withDefaultActionProps(row);
+                  return (
                   <TableRow key={index}>
                     {columns.map((column) => (
                       <TableCell key={column.accessor}>
@@ -90,7 +133,7 @@ export function ResourceTable<T>({
                     {showActions ? (
                       <TableCell>
                         <div className="flex items-center justify-start gap-2">
-                          {!!onPlay ? (
+                          {(!!onPlay && rowWithDefaults.showPlay) ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -100,7 +143,7 @@ export function ResourceTable<T>({
                               <span className="sr-only">Play</span>
                             </Button>
                           ) : null}
-                          {!!onStop ? (
+                          {(!!onStop && rowWithDefaults.showStop) ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -110,7 +153,7 @@ export function ResourceTable<T>({
                               <span className="sr-only">Stop</span>
                             </Button>
                           ) : null}
-                          {!!onPause ? (
+                          {(!!onPause && rowWithDefaults.showPause) ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -120,7 +163,7 @@ export function ResourceTable<T>({
                               <span className="sr-only">Pause</span>
                             </Button>
                           ) : null}
-                          {!!onViewDetails ? (
+                          {(!!onViewDetails && rowWithDefaults.showViewDetails) ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -130,7 +173,7 @@ export function ResourceTable<T>({
                               <span className="sr-only">Details</span>
                             </Button>
                           ) : null}
-                          {!!onViewLogs ? (
+                          {(!!onViewLogs && rowWithDefaults.showViewLogs) ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -140,7 +183,7 @@ export function ResourceTable<T>({
                               <span className="sr-only">Logs</span>
                             </Button>
                           ) : null}
-                          {!!onViewConfig ? (
+                          {(!!onViewConfig && rowWithDefaults.showViewConfig) ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -150,7 +193,7 @@ export function ResourceTable<T>({
                               <span className="sr-only">Config</span>
                             </Button>
                           ) : null}
-                          {!!onEdit ? (
+                          {(!!onEdit && rowWithDefaults.showEdit) ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -160,7 +203,27 @@ export function ResourceTable<T>({
                               <span className="sr-only">Edit</span>
                             </Button>
                           ) : null}
-                          {!!onDelete ? (
+                          {(!!onClone && rowWithDefaults.showClone) ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleClone(row)}
+                            >
+                              <Copy className="h-4 w-4" />
+                              <span className="sr-only">Clone</span>
+                            </Button>
+                          ) : null}
+                          {(!!onUndo && rowWithDefaults.showUndo) ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUndo(row)}
+                            >
+                              <Undo2 className="h-4 w-4" />
+                              <span className="sr-only">Restore</span>
+                            </Button>
+                          ) : null}
+                          {(!!onDelete && rowWithDefaults.showDelete) ? (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -174,7 +237,7 @@ export function ResourceTable<T>({
                       </TableCell>
                     ) : null}
                   </TableRow>
-                ))
+                )})
               ) : (
                 <TableRow>
                   <TableCell
@@ -202,8 +265,16 @@ function renderCellContent(type: string, value: any) {
       pending: { icon: Clock, color: 'text-yellow-500', label: 'Pending' },
       failed: { icon: AlertTriangle, color: 'text-red-500', label: 'Failed' },
     };
+    const statusMap2 = {
+      active: { icon: CheckCircle, color: 'text-green-500', label: 'Active' },
+      inactive: { icon: Clock, color: 'text-yellow-500', label: 'Inactive' },
+      deleted: { icon: AlertTriangle, color: 'text-red-500', label: 'Deleted' },
+    };
 
-    const status = statusMap[(value as string).toLowerCase() as keyof typeof statusMap] || statusMap.pending;
+    const status =
+      statusMap[(value as string).toLowerCase() as keyof typeof statusMap] ||
+      statusMap2[(value as string).toLowerCase() as keyof typeof statusMap2] ||
+      statusMap.pending;
     const Icon = status.icon;
 
     return (

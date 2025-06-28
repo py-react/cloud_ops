@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { ResourceTable } from "../resources/resourceTable";
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
+import { DefaultService } from "@/gingerJs_api_client";
+import { toast } from "sonner";
+import ResourceForm from "@/components/resource-form/resource-form";
+import yaml from "js-yaml"
 
 export interface DeploymentItem {
   metadata: {
@@ -65,11 +69,14 @@ export interface Condition {
   lastUpdateTime: string;
 }
 
-interface IDeploymentList {
+interface DeploymentListProps {
   deployments: DeploymentItem[];
+  refetch: () => void;
 }
 
-export function DeploymentList({ deployments }: IDeploymentList) {
+export function DeploymentList({ deployments,refetch }: DeploymentListProps) {
+  const [editDetails,setEditDetails] = useState(false)
+  const [currentToEdit,setCurrentToEdit] = useState(null)
   const columns = [
     { header: "Name", accessor: "name" },
     { header: "Namespace", accessor: "namespace" },
@@ -92,36 +99,92 @@ export function DeploymentList({ deployments }: IDeploymentList) {
         ([key, value]) => `${key}: ${value}`
       ),
       status: inferStatus(dep.status.conditions),
+      last_applied:dep.metadata?.annotations[
+        "kubectl.kubernetes.io/last-applied-configuration"
+      ],
       // Include full object for dialogs or mock config
       fullData: dep,
+      showEdit:true,
+      showDelete:true
     })
   });
 
   return (
-    <ResourceTable
-      columns={columns}
-      data={data}
-      onViewDetails={(res) => {
-        // You can access full deployment object using res.fullData
-        console.log("View Details for Deployment:", res);
-      }}
-      onViewLogs={(res) => {
-        console.log("View Logs for Deployment:", res);
-      }}
-      onViewConfig={(res) => {
-        console.log("View Config for Deployment:", res.fullData);
-      }}
-      tableClassName="max-h-[490px]"
-    />
+    <>
+      <ResourceTable
+        columns={columns}
+        data={data}
+        // onViewDetails={(res) => {
+        //   // You can access full deployment object using res.fullData
+        //   console.log("View Details for Deployment:", res);
+        // }}
+        // onViewLogs={(res) => {
+        //   console.log("View Logs for Deployment:", res);
+        // }}
+        onEdit={(res) => {
+          setEditDetails(true);
+          setCurrentToEdit(res);
+        }}
+        onDelete={(data) => {
+          DefaultService.apiKubernertesMethodsDeletePost({
+            requestBody: {
+              manifest: yaml.dump(JSON.parse(data.last_applied)),
+            },
+          })
+            .then((res) => {
+              if (res.success) {
+                toast.success(res.data.message);
+                refetch();
+              } else {
+                toast.error(res.error);
+              }
+            })
+            .catch((err) => {
+              toast.error(err);
+            });
+        }}
+        // onViewConfig={(res) => {
+        //   console.log("View Config for Deployment:", res.fullData);
+        // }}
+      />
+      {editDetails && currentToEdit && (
+        <ResourceForm
+          resourceType="deployments"
+          editDetails={editDetails}
+          rawYaml={yaml.dump(JSON.parse(currentToEdit?.last_applied))}
+          onClose={()=>setEditDetails(false)}
+          onUpdate={(data) => {
+            DefaultService.apiKubernertesMethodsApplyPost({
+              requestBody: {
+                manifest: data.rawYaml,
+              },
+            })
+              .then((res) => {
+                if (res.success) {
+                  toast.success(res.data.message);
+                  refetch();
+                  setEditDetails(false);
+                  setCurrentToEdit(null);
+                } else {
+                  toast.error(res.error);
+                }
+              })
+              .catch((err) => {
+                toast.error(err);
+              });
+          }}
+        />
+      )}
+    </>
   );
 }
 
 function inferStatus(conditions?: DeploymentItem["status"]["conditions"]): string {
   if (!conditions || conditions.length === 0) return "Unknown";
-
-  const readyCondition = conditions.find((c) => c.type === "Available" || c.type === "Ready");
+  const progessingCondition = conditions.find(c=>c.type ==="Progressing")
+  const readyCondition = conditions.find((c) => c.type === "Available" || c.type === "Ready" );
+  if(readyCondition?.status === "False" && progessingCondition?.status === "True") return "Pending"
   if (readyCondition?.status === "True") return "Running";
   if (readyCondition?.status === "False") return "Failed";
-
   return "Pending";
 }

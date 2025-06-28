@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ContainerDetails } from "@/components/docker/containers/ContainerDetails";
+import { ContainerDetails } from "@/components/docker/containers/details/ContainerDetails";
 import { useContainerDetails } from "@/components/docker/containers/hooks/useContainerDetails";
 import { Plus, Loader2, ContainerIcon, ChevronRight, Terminal, ServerIcon } from "lucide-react";
 import { ContainerRunnerForm } from "@/components/docker/containers/forms/ContainerRunnerForm";
@@ -10,7 +10,7 @@ import { useContainers } from 'src/hooks/useContainers';
 import RouteDescription from '@/components/route-description';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ContainersTable } from '@/components/docker/containers/ContainersTable';
+import { ContainersTable } from '@/components/docker/containers/list/ContainersTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DefaultService } from "@/gingerJs_api_client";
 

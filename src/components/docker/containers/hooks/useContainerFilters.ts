@@ -3,7 +3,7 @@ import type { Container } from 'src/types/container';
 
 export function useContainerFilters(containers: Container[]) {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('running');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const filteredContainers = useMemo(() => {
     return containers.filter(container => {

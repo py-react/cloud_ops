@@ -14,9 +14,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Get_Packages_Response"
-                }
+                "schema": {}
               }
             }
           }
@@ -1378,6 +1376,100 @@
         }
       }
     },
+    "/api/kubernertes/resources/{type}/create/configmaps": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_kubernertes_resources__type__create_configmaps_post",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/resources___type___ConfigMapCreatePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/resources/{type}/create/deployments": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_kubernertes_resources__type__create_deployments_post",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/resources___type___DeploymentCreatePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/kubernertes/user": {
       "get": {
         "summary": "",
@@ -1623,16 +1715,652 @@
         }
       }
     },
-    "/api/networks": {
+    "/api/integration/github/webhook": {
       "get": {
         "summary": "",
-        "operationId": "_api_networks_get",
+        "description": "Health check endpoint",
+        "operationId": "_api_integration_github_webhook_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "GitHub webhook endpoint",
+        "operationId": "_api_integration_github_webhook_post",
+        "parameters": [
+          {
+            "name": "x-github-event",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "X-Github-Event"
+            }
+          },
+          {
+            "name": "x-hub-signature-256",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "X-Hub-Signature-256"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_integration_github_webhook_put",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBranchesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_integration_github_webhook_delete",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/integration/kubernetes/release": {
+      "get": {
+        "summary": "",
+        "description": "Get deployment details.",
+        "operationId": "_api_integration_kubernetes_release_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "default",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Create a new deployment with the specified configuration.",
+        "operationId": "_api_integration_kubernetes_release_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeploymentConfigType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "description": "Update an existing deployment with new configuration.",
+        "operationId": "_api_integration_kubernetes_release_put",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeploymentConfigType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "description": "Delete a deployment and its associated service.",
+        "operationId": "_api_integration_kubernetes_release_delete",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/integration/kubernetes/release/run": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_integration_kubernetes_release_run_get",
+        "parameters": [
+          {
+            "name": "config_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Config Id"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_integration_kubernetes_release_run_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeploymentRunType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_integration_kubernetes_release_run_put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeploymentRunType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_integration_kubernetes_release_run_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "",
+        "description": "Update only the status of a deployment run.",
+        "operationId": "_api_integration_kubernetes_release_run_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/networks": {
+      "get": {
+        "summary": "",
+        "description": "List all Docker networks.\n\nReturns:\n    NetworkListResponse: List of network information",
+        "operationId": "_api_networks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "description": "Update an existing Docker network by creating a new one with updated attributes\nand removing the old one.\n\nArgs:\n    request: Request object\n    params: Network update parameters\n    \nReturns:\n    NetworkCreateResponse: Updated network information\n    \nRaises:\n    HTTPException: If network update fails",
+        "operationId": "_api_networks_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkUpdateParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Create a new Docker network.\n\nArgs:\n    params: Network creation parameters\n    \nReturns:\n    NetworkCreateResponse: Created network information\n    \nRaises:\n    HTTPException: If network creation fails",
+        "operationId": "_api_networks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkCreateParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "description": "Delete a Docker network.\n\nArgs:\n    params: Network deletion parameters\n    \nReturns:\n    NetworkDeleteResponse: Deletion confirmation\n    \nRaises:\n    HTTPException: If network deletion fails",
+        "operationId": "_api_networks_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkDeleteParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkDeleteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1976,6 +2704,132 @@
         }
       }
     },
+    "/settings/docker": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_docker_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/release_strategies": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_release_strategies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/source_control_settings": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_source_control_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/deployment_strategy": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_deployment_strategy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/release_config": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_release_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/source_control": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_source_control_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/settings/kubernetes": {
       "get": {
         "summary": "",
@@ -2282,6 +3136,24 @@
         }
       }
     },
+    "/orchestration/kubernetes/namespaced/configmaps": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_configmaps_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/orchestration/kubernetes/namespaced/certificate": {
       "get": {
         "summary": "",
@@ -2390,6 +3262,24 @@
         }
       }
     },
+    "/orchestration/kubernetes/namespaced/ingresses": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_ingresses_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/orchestration/kubernetes/namespaced/pods": {
       "get": {
         "summary": "",
@@ -2408,28 +3298,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/deployment": {
+    "/orchestration/kubernetes/namespaced/issuers": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_deployment_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/orchestration/kubernetes/namespaced/configmap": {
-      "get": {
-        "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_configmap_get",
+        "operationId": "_orchestration_kubernetes_namespaced_issuers_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2466,6 +3338,24 @@
       "get": {
         "summary": "",
         "operationId": "_orchestration_kubernetes_namespaced_issuer_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/namespaced/deployments": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_deployments_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2548,6 +3438,85 @@
           "labels"
         ],
         "title": "AddVolumeData"
+      },
+      "ContainerConfig": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "command": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Command"
+          },
+          "args": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Args"
+          },
+          "env": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EnvVar"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Env"
+          },
+          "ports": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ServicePortConfig"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ports"
+          },
+          "resources": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResourceRequirements"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ContainerConfig"
       },
       "ContainerInfo": {
         "properties": {
@@ -3036,41 +4005,213 @@
         ],
         "title": "DaemonSetInfo"
       },
-      "DeploymentInfo": {
+      "DeploymentConfigType": {
         "properties": {
-          "component_type": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "type": {
             "type": "string",
-            "title": "Component Type"
+            "title": "Type"
+          },
+          "namespace": {
+            "type": "string",
+            "title": "Namespace"
           },
           "deployment_name": {
             "type": "string",
             "title": "Deployment Name"
           },
-          "available_replicas": {
-            "type": "integer",
-            "title": "Available Replicas"
+          "tag": {
+            "type": "string",
+            "title": "Tag"
           },
-          "expected_replicas": {
-            "type": "integer",
-            "title": "Expected Replicas"
+          "code_source_control_name": {
+            "type": "string",
+            "title": "Code Source Control Name"
           },
-          "pods": {
+          "deployment_strategy_id": {
+            "type": "integer",
+            "title": "Deployment Strategy Id"
+          },
+          "replicas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replicas",
+            "default": 1
+          },
+          "containers": {
             "items": {
-              "$ref": "#/components/schemas/PodInfo"
+              "$ref": "#/components/schemas/ContainerConfig"
             },
             "type": "array",
-            "title": "Pods"
+            "title": "Containers"
+          },
+          "service_ports": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ServicePortConfig"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Ports"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          },
+          "annotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annotations"
+          },
+          "soft_delete": {
+            "type": "boolean",
+            "title": "Soft Delete",
+            "default": false
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At"
+          },
+          "hard_delete": {
+            "type": "boolean",
+            "title": "Hard Delete",
+            "default": false
           }
         },
         "type": "object",
         "required": [
-          "component_type",
+          "type",
+          "namespace",
           "deployment_name",
-          "available_replicas",
-          "expected_replicas",
-          "pods"
+          "tag",
+          "code_source_control_name",
+          "deployment_strategy_id",
+          "containers"
         ],
-        "title": "DeploymentInfo"
+        "title": "DeploymentConfigType"
+      },
+      "DeploymentRunType": {
+        "properties": {
+          "pr_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pr Url"
+          },
+          "jira": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jira"
+          },
+          "image_name": {
+            "type": "string",
+            "title": "Image Name"
+          },
+          "deployment_config_id": {
+            "type": "integer",
+            "title": "Deployment Config Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "default": "pending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image_name",
+          "deployment_config_id"
+        ],
+        "title": "DeploymentRunType"
+      },
+      "DeploymentStageInfo": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "pr_url": {
+            "type": "string",
+            "title": "Pr Url"
+          },
+          "jira": {
+            "type": "string",
+            "title": "Jira"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag",
+          "pr_url",
+          "jira"
+        ],
+        "title": "DeploymentStageInfo"
       },
       "DockerConfig": {
         "properties": {
@@ -3196,6 +4337,42 @@
         "type": "object",
         "title": "DockerRequest"
       },
+      "EnvVar": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "value_from": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value From"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "EnvVar"
+      },
       "GetContainerResponse": {
         "properties": {
           "containers": {
@@ -3216,22 +4393,6 @@
           "length"
         ],
         "title": "GetContainerResponse"
-      },
-      "Get_Packages_Response": {
-        "properties": {
-          "packages": {
-            "items": {
-              "$ref": "#/components/schemas/Package_Info"
-            },
-            "type": "array",
-            "title": "Packages"
-          }
-        },
-        "type": "object",
-        "required": [
-          "packages"
-        ],
-        "title": "Get_Packages_Response"
       },
       "HTTPValidationError": {
         "properties": {
@@ -3279,6 +4440,72 @@
         },
         "type": "object",
         "title": "HealthCheck"
+      },
+      "HealthCheckResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Service status",
+            "default": "healthy"
+          },
+          "supported_events": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Supported Events",
+            "description": "List of supported event types"
+          },
+          "allowed_repositories": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Allowed Repositories",
+            "description": "Mapping of repository names to repository identifiers"
+          },
+          "allowed_branches": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Allowed Branches",
+            "description": "Mapping of repository names to allowed branch lists"
+          },
+          "deployments": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/integration__github__webhook__index__DeploymentInfo"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployments",
+            "description": "Mapping of repository names to deployment info"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp",
+            "description": "Current timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "supported_events",
+          "allowed_repositories",
+          "allowed_branches",
+          "timestamp"
+        ],
+        "title": "HealthCheckResponse",
+        "description": "Response model for health check endpoint"
       },
       "HostConfig": {
         "properties": {
@@ -3522,6 +4749,26 @@
         ],
         "title": "JobInfo"
       },
+      "LastAndCurrentDeploymentInfo": {
+        "properties": {
+          "stage": {
+            "$ref": "#/components/schemas/DeploymentStageInfo"
+          },
+          "dev": {
+            "$ref": "#/components/schemas/DeploymentStageInfo"
+          },
+          "prod": {
+            "$ref": "#/components/schemas/DeploymentStageInfo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stage",
+          "dev",
+          "prod"
+        ],
+        "title": "LastAndCurrentDeploymentInfo"
+      },
       "NamespaceInfo": {
         "properties": {
           "ingresses": {
@@ -3556,7 +4803,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/DeploymentInfo"
+                  "$ref": "#/components/schemas/kubernertes__flow__v2__index__DeploymentInfo"
                 },
                 "type": "array"
               },
@@ -3635,6 +4882,434 @@
           "nodes"
         ],
         "title": "NamespaceInfo"
+      },
+      "NetworkCreateParams": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the network to create"
+          },
+          "driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver",
+            "description": "Network driver to use",
+            "default": "bridge"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options",
+            "description": "Network driver options"
+          },
+          "ipam": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipam",
+            "description": "IPAM configuration"
+          },
+          "check_duplicate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check Duplicate",
+            "description": "Check for duplicate networks",
+            "default": true
+          },
+          "internal": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Internal",
+            "description": "Create an internal network",
+            "default": false
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels",
+            "description": "Network labels"
+          },
+          "enable_ipv6": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Ipv6",
+            "description": "Enable IPv6",
+            "default": false
+          },
+          "attachable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attachable",
+            "description": "Make network attachable",
+            "default": false
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope",
+            "description": "Network scope"
+          },
+          "ingress": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingress",
+            "description": "Create an ingress network",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "NetworkCreateParams"
+      },
+      "NetworkCreateResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "network": {
+            "$ref": "#/components/schemas/NetworkInfo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "network"
+        ],
+        "title": "NetworkCreateResponse"
+      },
+      "NetworkDeleteParams": {
+        "properties": {
+          "network_id": {
+            "type": "string",
+            "title": "Network Id",
+            "description": "ID of the network to delete"
+          }
+        },
+        "type": "object",
+        "required": [
+          "network_id"
+        ],
+        "title": "NetworkDeleteParams"
+      },
+      "NetworkDeleteResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "network_id": {
+            "type": "string",
+            "title": "Network Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "network_id"
+        ],
+        "title": "NetworkDeleteResponse"
+      },
+      "NetworkInfo": {
+        "properties": {
+          "Name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "Id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "Created": {
+            "type": "string",
+            "title": "Created"
+          },
+          "Scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "Driver": {
+            "type": "string",
+            "title": "Driver"
+          },
+          "EnableIPv6": {
+            "type": "boolean",
+            "title": "Enableipv6",
+            "default": false
+          },
+          "IPAM": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Ipam"
+          },
+          "Internal": {
+            "type": "boolean",
+            "title": "Internal",
+            "default": false
+          },
+          "Attachable": {
+            "type": "boolean",
+            "title": "Attachable",
+            "default": false
+          },
+          "Ingress": {
+            "type": "boolean",
+            "title": "Ingress",
+            "default": false
+          },
+          "ConfigFrom": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Configfrom"
+          },
+          "ConfigOnly": {
+            "type": "boolean",
+            "title": "Configonly",
+            "default": false
+          },
+          "Containers": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Containers"
+          },
+          "Options": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Options"
+          },
+          "Labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Labels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "Name",
+          "Id",
+          "Created",
+          "Scope",
+          "Driver"
+        ],
+        "title": "NetworkInfo"
+      },
+      "NetworkListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NetworkInfo"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "NetworkListResponse"
+      },
+      "NetworkUpdateParams": {
+        "properties": {
+          "network_id": {
+            "type": "string",
+            "title": "Network Id",
+            "description": "ID of the network to update"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "driver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options"
+          },
+          "ipam": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipam"
+          },
+          "internal": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Internal"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          },
+          "enable_ipv6": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Ipv6"
+          },
+          "attachable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attachable"
+          },
+          "ingress": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingress"
+          }
+        },
+        "type": "object",
+        "required": [
+          "network_id"
+        ],
+        "title": "NetworkUpdateParams"
       },
       "NodeInfo": {
         "properties": {
@@ -3730,73 +5405,6 @@
         ],
         "title": "NodeInfo"
       },
-      "Package_Info": {
-        "properties": {
-          "name": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Name"
-          },
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags"
-          },
-          "created": {
-            "type": "string",
-            "title": "Created"
-          },
-          "size": {
-            "type": "integer",
-            "title": "Size"
-          },
-          "virtual_size": {
-            "type": "integer",
-            "title": "Virtual Size"
-          },
-          "repo_tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Repo Tags"
-          },
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Labels",
-            "default": {}
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "id",
-          "tags",
-          "created",
-          "size",
-          "virtual_size",
-          "repo_tags"
-        ],
-        "title": "Package_Info"
-      },
       "PodInfo": {
         "properties": {
           "component_type": {
@@ -3875,6 +5483,40 @@
           "image"
         ],
         "title": "PullConfig"
+      },
+      "ResourceRequirements": {
+        "properties": {
+          "requests": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requests"
+          },
+          "limits": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limits"
+          }
+        },
+        "type": "object",
+        "title": "ResourceRequirements"
       },
       "ResourceResponse": {
         "properties": {
@@ -4527,7 +6169,7 @@
           },
           "deployments": {
             "items": {
-              "$ref": "#/components/schemas/DeploymentInfo"
+              "$ref": "#/components/schemas/kubernertes__flow__v2__index__DeploymentInfo"
             },
             "type": "array",
             "title": "Deployments",
@@ -4599,6 +6241,36 @@
           "ports"
         ],
         "title": "ServiceInfo"
+      },
+      "ServicePortConfig": {
+        "properties": {
+          "port": {
+            "type": "integer",
+            "title": "Port"
+          },
+          "target_port": {
+            "type": "integer",
+            "title": "Target Port"
+          },
+          "protocol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol",
+            "default": "TCP"
+          }
+        },
+        "type": "object",
+        "required": [
+          "port",
+          "target_port"
+        ],
+        "title": "ServicePortConfig"
       },
       "StatefulSetInfo": {
         "properties": {
@@ -5173,6 +6845,27 @@
         ],
         "title": "SystemInfo"
       },
+      "UpdateBranchesRequest": {
+        "properties": {
+          "repo_name": {
+            "type": "string",
+            "title": "Repo Name"
+          },
+          "branches": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Branches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "repo_name",
+          "branches"
+        ],
+        "title": "UpdateBranchesRequest"
+      },
       "UpdateDockerConfig": {
         "properties": {
           "cpuShares": {
@@ -5259,6 +6952,68 @@
           "action"
         ],
         "title": "VolumeActionRequest"
+      },
+      "integration__github__webhook__index__DeploymentInfo": {
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "title": "Namespace"
+          },
+          "deployment_name": {
+            "type": "string",
+            "title": "Deployment Name"
+          },
+          "last_deployment": {
+            "$ref": "#/components/schemas/LastAndCurrentDeploymentInfo"
+          },
+          "current_deployment": {
+            "$ref": "#/components/schemas/LastAndCurrentDeploymentInfo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "namespace",
+          "deployment_name",
+          "last_deployment",
+          "current_deployment"
+        ],
+        "title": "DeploymentInfo"
+      },
+      "kubernertes__flow__v2__index__DeploymentInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "deployment_name": {
+            "type": "string",
+            "title": "Deployment Name"
+          },
+          "available_replicas": {
+            "type": "integer",
+            "title": "Available Replicas"
+          },
+          "expected_replicas": {
+            "type": "integer",
+            "title": "Expected Replicas"
+          },
+          "pods": {
+            "items": {
+              "$ref": "#/components/schemas/PodInfo"
+            },
+            "type": "array",
+            "title": "Pods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "deployment_name",
+          "available_replicas",
+          "expected_replicas",
+          "pods"
+        ],
+        "title": "DeploymentInfo"
       },
       "kubernertes__methods__apply__index__ApplyBody": {
         "properties": {
@@ -5376,6 +7131,226 @@
         },
         "type": "object",
         "title": "NodeSpec"
+      },
+      "resources___type___ConfigMapCreatePayload": {
+        "properties": {
+          "metadata": {
+            "$ref": "#/components/schemas/resources___type___MetadataDict"
+          },
+          "data": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Data"
+          },
+          "binaryData": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Binarydata"
+          },
+          "immutable": {
+            "type": "boolean",
+            "title": "Immutable"
+          }
+        },
+        "type": "object",
+        "title": "ConfigMapCreatePayload"
+      },
+      "resources___type___Container": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "image": {
+            "type": "string",
+            "title": "Image"
+          },
+          "ports": {
+            "items": {
+              "$ref": "#/components/schemas/resources___type___ContainerPort"
+            },
+            "type": "array",
+            "title": "Ports"
+          },
+          "env": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Env"
+          },
+          "resources": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Resources"
+          },
+          "command": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Command"
+          },
+          "args": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Args"
+          }
+        },
+        "type": "object",
+        "title": "Container"
+      },
+      "resources___type___ContainerPort": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "containerPort": {
+            "type": "integer",
+            "title": "Containerport"
+          },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol"
+          }
+        },
+        "type": "object",
+        "title": "ContainerPort"
+      },
+      "resources___type___DeploymentCreatePayload": {
+        "properties": {
+          "metadata": {
+            "$ref": "#/components/schemas/resources___type___MetadataDict"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/resources___type___DeploymentSpec"
+          }
+        },
+        "type": "object",
+        "title": "DeploymentCreatePayload"
+      },
+      "resources___type___DeploymentSpec": {
+        "properties": {
+          "replicas": {
+            "type": "integer",
+            "title": "Replicas"
+          },
+          "selector": {
+            "$ref": "#/components/schemas/resources___type___Selector"
+          },
+          "template": {
+            "$ref": "#/components/schemas/resources___type___PodTemplateSpec"
+          },
+          "strategy": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Strategy"
+          }
+        },
+        "type": "object",
+        "title": "DeploymentSpec"
+      },
+      "resources___type___MetadataDict": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "namespace": {
+            "type": "string",
+            "title": "Namespace"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Labels"
+          },
+          "annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Annotations"
+          }
+        },
+        "type": "object",
+        "title": "MetadataDict"
+      },
+      "resources___type___PodSpec": {
+        "properties": {
+          "containers": {
+            "items": {
+              "$ref": "#/components/schemas/resources___type___Container"
+            },
+            "type": "array",
+            "title": "Containers"
+          },
+          "restartPolicy": {
+            "type": "string",
+            "title": "Restartpolicy"
+          },
+          "terminationGracePeriodSeconds": {
+            "type": "integer",
+            "title": "Terminationgraceperiodseconds"
+          }
+        },
+        "type": "object",
+        "title": "PodSpec"
+      },
+      "resources___type___PodTemplateMetadata": {
+        "properties": {
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Labels"
+          },
+          "annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Annotations"
+          }
+        },
+        "type": "object",
+        "title": "PodTemplateMetadata"
+      },
+      "resources___type___PodTemplateSpec": {
+        "properties": {
+          "metadata": {
+            "$ref": "#/components/schemas/resources___type___PodTemplateMetadata"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/resources___type___PodSpec"
+          }
+        },
+        "type": "object",
+        "title": "PodTemplateSpec"
+      },
+      "resources___type___Selector": {
+        "properties": {
+          "matchLabels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Matchlabels"
+          }
+        },
+        "type": "object",
+        "title": "Selector"
       }
     }
   }

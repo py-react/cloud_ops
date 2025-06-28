@@ -150,6 +150,7 @@ export function ContainerRunnerForm({
   });
 
   const onSubmit = async (data: ContainerRunConfig) => {
+    console.log({data})
     try {
       if(submitting) return;
       setSubmitting(true);
@@ -215,7 +216,7 @@ export function ContainerRunnerForm({
               <form
                 id="container-runner-form"
                 className="space-y-6"
-                onSubmit={(e) => e.preventDefault()}
+                onSubmit={form.handleSubmit(onSubmit)}
               >
                 <div className="space-y-6">
                   {/* Step Content */}
@@ -232,8 +233,8 @@ export function ContainerRunnerForm({
       <div className="bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 pt-6 flex justify-between items-center">
         <div className="flex items-center gap-4 w-full justify-end">
           <Button
-            type="button"
-            onClick={form.handleSubmit(onSubmit)}
+            form="container-runner-form"
+            type="submit"
             disabled={!form.getValues("image") || submitting}
             className="ml-4"
           >

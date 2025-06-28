@@ -1,4 +1,4 @@
-
+import type { integration__github__webhook__index__DeploymentInfo } from './integration__github__webhook__index__DeploymentInfo';
 
 /**
  * Response model for health check endpoint
@@ -20,6 +20,10 @@ export type HealthCheckResponse = {
 	 * Mapping of repository names to allowed branch lists
 	 */
 	allowed_branches: Record<string, Array<string>>;
+	/**
+	 * Mapping of repository names to deployment info
+	 */
+	deployments?: Record<string, integration__github__webhook__index__DeploymentInfo> | null;
 	/**
 	 * Current timestamp
 	 */

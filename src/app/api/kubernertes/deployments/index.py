@@ -6,9 +6,6 @@ from pydantic import BaseModel
 from datetime import datetime
 import json
 
-
-
-
 # Pydantic models for structured response
 class ContainerState(BaseModel):
     state: str
