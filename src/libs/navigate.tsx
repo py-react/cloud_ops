@@ -25,7 +25,7 @@ const useNavigate = () => {
     }
 
     try {
-      triggerLoadingEvent(true);
+      // triggerLoadingEvent(true);
       
       // Move function declarations outside the block for strict mode
       const getData = (
@@ -111,7 +111,7 @@ const useNavigate = () => {
           window.history.pushState(state, title, responseUrl);
         }
 
-        triggerLoadingEvent(false);
+        // triggerLoadingEvent(false);
         window.dispatchEvent(new PopStateEvent("popstate", { state }));
         window.scroll({
           top: 0,

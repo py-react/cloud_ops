@@ -1,15 +1,16 @@
 from fastapi import Request
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
-from typing import List, Dict
 from fastapi.responses import JSONResponse
-
+from typing import List, Dict, Optional
 
 def get_events_for_object(namespace: str, api_core: client.CoreV1Api, involved_object_kind: str, involved_object_name: str) -> List[Dict]:
+    """Get events for a specific Kubernetes object"""
     events = []
     try:
         field_selector = f"involvedObject.kind={involved_object_kind},involvedObject.name={involved_object_name}"
         event_list = api_core.list_namespaced_event(namespace, field_selector=field_selector)
+        
         for event in event_list.items:
             event_info = {
                 "metadata": {
@@ -56,9 +57,11 @@ def get_events_for_object(namespace: str, api_core: client.CoreV1Api, involved_o
             events.append(event_info)
     except Exception as e:
         print(f"Error fetching events for {involved_object_kind} {involved_object_name}: {e}")
+    
     return events
 
-def find_pods_using_configmap(namespace: str, configmap_name: str, api_core: client.CoreV1Api) -> List[Dict]:
+def find_pods_using_secret(namespace: str, secret_name: str, api_core: client.CoreV1Api) -> List[Dict]:
+    """Find all pods that reference a specific secret"""
     pods = api_core.list_namespaced_pod(namespace)
     referencing_pods = []
     for pod in pods.items:
@@ -66,7 +69,7 @@ def find_pods_using_configmap(namespace: str, configmap_name: str, api_core: cli
         # Check volumes
         if pod.spec.volumes:
             for volume in pod.spec.volumes:
-                if volume.config_map and volume.config_map.name == configmap_name:
+                if volume.secret and volume.secret.secret_name == secret_name:
                     referenced_as.add("volume")
                     break
         # Check env in containers
@@ -74,8 +77,8 @@ def find_pods_using_configmap(namespace: str, configmap_name: str, api_core: cli
             for container in pod.spec.containers:
                 if container.env:
                     for env_var in container.env:
-                        if env_var.value_from and env_var.value_from.config_map_key_ref:
-                            if env_var.value_from.config_map_key_ref.name == configmap_name:
+                        if env_var.value_from and env_var.value_from.secret_key_ref:
+                            if env_var.value_from.secret_key_ref.name == secret_name:
                                 referenced_as.add("env")
                                 break
         if referenced_as:
@@ -97,28 +100,55 @@ def find_pods_using_configmap(namespace: str, configmap_name: str, api_core: cli
             referencing_pods.append(pod_info)
     return referencing_pods
 
-async def GET(request: Request, namespace: str, configmap_name: str):
-    """Get details for a specific configmap in a namespace."""
+async def GET(request: Request, namespace: str, secret_name: Optional[str] = None):
+    """Get detailed information for all secrets or a specific secret in a namespace, with bubbled-up events."""
     try:
         config.load_config()
         api_core = client.CoreV1Api()
-        cm = api_core.read_namespaced_config_map(configmap_name, namespace)
-        cm_info = {
-            "name": cm.metadata.name,
-            "namespace": cm.metadata.namespace,
-            "labels": dict(cm.metadata.labels) if cm.metadata.labels else {},
-            "annotations": dict(cm.metadata.annotations) if cm.metadata.annotations else {},
-            "creation_timestamp": str(cm.metadata.creation_timestamp) if cm.metadata.creation_timestamp else None,
-            "data_keys": list(cm.data.keys()) if cm.data else [],
-            "data": dict(cm.data) if cm.data else {},
-            "events": get_events_for_object(namespace, api_core, "ConfigMap", cm.metadata.name),
-            "referenced_by_pods": find_pods_using_configmap(namespace, cm.metadata.name, api_core)
-        }
-        return JSONResponse(content={
-            "namespace": namespace,
-            "configmap": cm_info
-        })
+        if secret_name:
+            try:
+                secret = api_core.read_namespaced_secret(secret_name, namespace)
+                secret_info = {
+                    "name": secret.metadata.name,
+                    "namespace": secret.metadata.namespace,
+                    "type": secret.type,
+                    "labels": dict(secret.metadata.labels) if secret.metadata.labels else {},
+                    "annotations": dict(secret.metadata.annotations) if secret.metadata.annotations else {},
+                    "creation_timestamp": str(secret.metadata.creation_timestamp) if secret.metadata.creation_timestamp else None,
+                    "data_keys": list(secret.data.keys()) if secret.data else [],
+                    "events": get_events_for_object(namespace, api_core, "Secret", secret.metadata.name),
+                    "referenced_by_pods": find_pods_using_secret(namespace, secret.metadata.name, api_core)
+                }
+                return JSONResponse(content={
+                    "namespace": namespace,
+                    "secret": secret_info
+                })
+            except ApiException as e:
+                if e.status == 404:
+                    return JSONResponse(status_code=404, content={"error": f"Secret '{secret_name}' not found in namespace '{namespace}'"})
+                return JSONResponse(status_code=500, content={"error": str(e)})
+        else:
+            secrets = api_core.list_namespaced_secret(namespace)
+            secret_infos = []
+            all_events = []
+            for secret in secrets.items:
+                secret_info = {
+                    "name": secret.metadata.name,
+                    "namespace": secret.metadata.namespace,
+                    "type": secret.type,
+                    "labels": dict(secret.metadata.labels) if secret.metadata.labels else {},
+                    "annotations": dict(secret.metadata.annotations) if secret.metadata.annotations else {},
+                    "creation_timestamp": str(secret.metadata.creation_timestamp) if secret.metadata.creation_timestamp else None,
+                    "data_keys": list(secret.data.keys()) if secret.data else [],
+                    "events": get_events_for_object(namespace, api_core, "Secret", secret.metadata.name),
+                    "referenced_by_pods": find_pods_using_secret(namespace, secret.metadata.name, api_core)
+                }
+                secret_infos.append(secret_info)
+                all_events.extend(secret_info["events"])
+            return JSONResponse(content={
+                "namespace": namespace,
+                "secrets": secret_infos,
+                "events": all_events
+            })
     except ApiException as e:
-        if e.status == 404:
-            return JSONResponse(status_code=404, content={"error": f"ConfigMap '{configmap_name}' not found in namespace '{namespace}'"})
         return JSONResponse(status_code=500, content={"error": str(e)})

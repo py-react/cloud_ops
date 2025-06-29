@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import yaml from "js-yaml";
+import { useNavigate } from "react-router-dom";
 
 const columns = [
   { header: "Name", accessor: "name" },
@@ -46,6 +47,7 @@ interface PodData {
 }
 
 export default function PodsPage() {
+  const navigate = useNavigate()
   const { selectedNamespace } = useContext(NamespaceContext);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentToEdit, setCurrentToEdit] = useState<PodData | null>(null);
@@ -57,6 +59,10 @@ export default function PodsPage() {
     nameSpace: selectedNamespace,
     type: "pods",
   });
+
+  const handleViewDetails = (pod: any) => {
+    navigate(`/orchestration/kubernetes/${pod.namespace}/pods/${pod.name}`)
+  };
 
   // Transform API data to match table format
   const transformedPods: PodData[] =
@@ -87,6 +93,7 @@ export default function PodsPage() {
             "kubectl.kubernetes.io/last-applied-configuration"
           ],
         fullData: pod,
+        showViewDetails:true,
         showEdit:true,
         showDelete: true,
       };
@@ -133,6 +140,7 @@ export default function PodsPage() {
             <ResourceTable
               columns={columns}
               data={transformedPods}
+              onViewDetails={handleViewDetails}
               onEdit={(res: PodData) => {
                 setShowCreateDialog(true);
                 setCurrentToEdit(res);

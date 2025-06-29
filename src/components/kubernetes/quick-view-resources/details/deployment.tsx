@@ -76,8 +76,8 @@ const AIInsights: React.FC = () => (
       <div className="flex items-center space-x-3">
         <Bot className="h-6 w-6" />
         <div>
-          <h3 className="text-lg font-semibold">AI Insights</h3>
-          <p className="text-sm text-indigo-100">Powered by machine learning</p>
+          <h3 className="text-lg font-semibold">Deployment AI Insights</h3>
+          <p className="text-sm text-indigo-100">Deployment analysis & recommendations</p>
         </div>
       </div>
       <Sparkles className="h-5 w-5 animate-pulse" />
@@ -471,6 +471,7 @@ function DeploymentDetailedInfo({ kubernetesData }) {
 
   return (
     <div className="min-h-screen">
+      <AIInsights />
       {/* Deployment Overview */}
       {!kubernetesData ? (
         <div className="bg-white rounded-xl border border-slate-200 p-6 mb-8">
@@ -781,7 +782,7 @@ function DeploymentDetailedInfo({ kubernetesData }) {
       </div>
 
       {/* Events */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden p-4">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden p-4 mb-8">
         <div className="px-6 pb-4 border-b border-slate-200">
           <div className="flex items-center space-x-3">
             <Clock className="h-5 w-5 text-amber-500" />

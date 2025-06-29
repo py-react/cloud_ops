@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import yaml from "js-yaml"
+import { useNavigate } from "react-router-dom";
 
 const columns = [
   { header: "Name", accessor: "name" },
@@ -44,6 +45,7 @@ interface ConfigMapData {
 }
 
 export default function ConfigMapsPage() {
+  const navigate = useNavigate()
   const { selectedNamespace } = useContext(NamespaceContext);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentToEdit, setCurrentToEdit] = useState<ConfigMapData | null>(null);
@@ -55,6 +57,10 @@ export default function ConfigMapsPage() {
     nameSpace: selectedNamespace,
     type: "configmaps",
   });
+
+  const handleViewDetails = (configMaps: any) => {
+    navigate(`/orchestration/kubernetes/${configMaps.namespace}/configmaps/${configMaps.name}`)
+  };
 
   // Transform API data to match table format
   const transformedConfigMaps: ConfigMapData[] =
@@ -72,6 +78,7 @@ export default function ConfigMapsPage() {
         : "Unknown",
       last_applied: cm.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
       fullData: cm,
+      showViewDetails:true,
       showEdit: true,
       showDelete: true,
     })) || [];
@@ -117,6 +124,7 @@ export default function ConfigMapsPage() {
             <ResourceTable
               columns={columns}
               data={transformedConfigMaps}
+              onViewDetails={handleViewDetails}
               onEdit={(res: ConfigMapData) => {
                 setShowCreateDialog(true);
                 setCurrentToEdit(res);

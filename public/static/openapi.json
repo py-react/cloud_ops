@@ -1205,6 +1205,161 @@
         }
       }
     },
+    "/api/kubernertes/configmaps": {
+      "get": {
+        "summary": "",
+        "description": "Get details for a specific configmap in a namespace.",
+        "operationId": "_api_kubernertes_configmaps_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "configmap_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Configmap Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/ingress": {
+      "get": {
+        "summary": "",
+        "description": "Get detailed information for all ingress resources or a specific ingress in a namespace, with bubbled-up events.",
+        "operationId": "_api_kubernertes_ingress_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "ingress_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ingress Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/secrets": {
+      "get": {
+        "summary": "",
+        "description": "Get detailed information for all secrets or a specific secret in a namespace, with bubbled-up events.",
+        "operationId": "_api_kubernertes_secrets_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "secret_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Secret Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/kubernertes/resources": {
       "get": {
         "summary": "",
@@ -1614,6 +1769,114 @@
                 }
               ],
               "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/pods": {
+      "get": {
+        "summary": "",
+        "description": "Get detailed information for all pods or a specific pod in a namespace, with bubbled-up events.",
+        "operationId": "_api_kubernertes_pods_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "pod_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pod Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/service": {
+      "get": {
+        "summary": "",
+        "description": "Get detailed information for all services or a specific service in a namespace, with bubbled-up events.",
+        "operationId": "_api_kubernertes_service_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "service_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Service Name"
             }
           }
         ],
@@ -3057,6 +3320,24 @@
         }
       }
     },
+    "/orchestration/kubernetes/{namespace}/configmaps/{name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes__namespace__configmaps__name__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/orchestration/kubernetes/{namespace}/certificate": {
       "get": {
         "summary": "",
@@ -3079,6 +3360,24 @@
       "get": {
         "summary": "",
         "operationId": "_orchestration_kubernetes__namespace__secrets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/{namespace}/secrets/{name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes__namespace__secrets__name__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3165,10 +3464,46 @@
         }
       }
     },
+    "/orchestration/kubernetes/{namespace}/ingresses/{name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes__namespace__ingresses__name__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/orchestration/kubernetes/{namespace}/pods": {
       "get": {
         "summary": "",
         "operationId": "_orchestration_kubernetes__namespace__pods_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/{namespace}/pods/{name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes__namespace__pods__name__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3205,6 +3540,24 @@
       "get": {
         "summary": "",
         "operationId": "_orchestration_kubernetes__namespace__services_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/{namespace}/services/{name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes__namespace__services__name__get",
         "responses": {
           "200": {
             "description": "Successful Response",

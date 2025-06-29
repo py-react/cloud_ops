@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import yaml from "js-yaml";
+import useNavigate from "@/libs/navigate";
 
 const columns = [
   { header: "Name", accessor: "name" },
@@ -44,6 +45,7 @@ interface IngressData {
 }
 
 export default function IngressPage() {
+  const navigate = useNavigate()
   const { selectedNamespace } = useContext(NamespaceContext);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentToEdit, setCurrentToEdit] = useState<IngressData | null>(null);
@@ -55,6 +57,10 @@ export default function IngressPage() {
     nameSpace: selectedNamespace,
     type: "ingresses",
   });
+
+  const handleViewDetails = (ingress: any) => {
+    navigate(`/orchestration/kubernetes/${ingress.namespace}/ingresses/${ingress.name}`)
+  };
 
   // Transform API data to match table format
   const transformedIngress: IngressData[] =
@@ -88,6 +94,7 @@ export default function IngressPage() {
           : "Unknown",
         last_applied: ing.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
         fullData: ing,
+        showViewDetails:true,
         showEdit: true,
         showDelete: true,
       };
@@ -134,6 +141,7 @@ export default function IngressPage() {
           </CardHeader>
           <CardContent className="p-0 shadow-none">
             <ResourceTable
+            onViewDetails={handleViewDetails}
               columns={columns}
               data={transformedIngress}
               onEdit={(res: IngressData) => {

@@ -1,24 +1,17 @@
-from fastapi import FastAPI, Request
+from fastapi import Request
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
-from typing import List, Dict, Optional, Any
-from datetime import datetime
-import json
 from fastapi.responses import JSONResponse
-
-# =============================================================================
-# Helper Functions
-# =============================================================================
-
+from typing import List, Dict, Optional
+from datetime import datetime
 
 def get_events_for_object(namespace: str, api_core: client.CoreV1Api, involved_object_kind: str, involved_object_name: str) -> List[Dict]:
     """Get events for a specific Kubernetes object"""
     events = []
     try:
         field_selector = f"involvedObject.kind={involved_object_kind},involvedObject.name={involved_object_name}"
-        event_list = api_core.list_namespaced_event(
-            namespace, field_selector=field_selector)
-
+        event_list = api_core.list_namespaced_event(namespace, field_selector=field_selector)
+        
         for event in event_list.items:
             event_info = {
                 "metadata": {
@@ -64,20 +57,19 @@ def get_events_for_object(namespace: str, api_core: client.CoreV1Api, involved_o
             }
             events.append(event_info)
     except Exception as e:
-        print(
-            f"Error fetching events for {involved_object_kind} {involved_object_name}: {e}")
-
+        print(f"Error fetching events for {involved_object_kind} {involved_object_name}: {e}")
+    
     return events
 
 
 def get_pod_resources(pod) -> Dict[str, Dict[str, str]]:
     """Extract resource requests and limits from pod containers"""
     resources = {}
-
+    
     if pod.spec.containers:
         for container in pod.spec.containers:
             container_resources = {}
-
+            
             if container.resources:
                 if container.resources.requests:
                     requests = {}
@@ -87,7 +79,7 @@ def get_pod_resources(pod) -> Dict[str, Dict[str, str]]:
                         requests['memory'] = container.resources.requests['memory']
                     if requests:
                         container_resources['requests'] = requests
-
+                
                 if container.resources.limits:
                     limits = {}
                     if container.resources.limits.get('cpu'):
@@ -96,19 +88,18 @@ def get_pod_resources(pod) -> Dict[str, Dict[str, str]]:
                         limits['memory'] = container.resources.limits['memory']
                     if limits:
                         container_resources['limits'] = limits
-
+            
             if container_resources:
                 resources[container.name] = container_resources
-
+    
     return resources
-
 
 def get_pod_volumes_and_secrets(pod) -> tuple[List[str], List[str], List[str]]:
     """Extract secrets, configmaps, and PVCs from pod volumes and environment variables"""
     secrets = []
     configmaps = []
     persistent_volume_claims = []
-
+    
     # Check volumes
     if pod.spec.volumes:
         for volume in pod.spec.volumes:
@@ -117,9 +108,8 @@ def get_pod_volumes_and_secrets(pod) -> tuple[List[str], List[str], List[str]]:
             elif volume.config_map:
                 configmaps.append(volume.config_map.name)
             elif volume.persistent_volume_claim:
-                persistent_volume_claims.append(
-                    volume.persistent_volume_claim.claim_name)
-
+                persistent_volume_claims.append(volume.persistent_volume_claim.claim_name)
+    
     # Check environment variables for configmap and secret references
     if pod.spec.containers:
         for container in pod.spec.containers:
@@ -134,29 +124,25 @@ def get_pod_volumes_and_secrets(pod) -> tuple[List[str], List[str], List[str]]:
                             secret_name = env_var.value_from.secret_key_ref.name
                             if secret_name not in secrets:
                                 secrets.append(secret_name)
-
+    
     return secrets, configmaps, persistent_volume_claims
-
 
 def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
     """Get comprehensive information about a pod"""
     # Get pod resources
     resources = get_pod_resources(pod)
-
+    
     # Get pod volumes and secrets
-    secrets, configmaps, persistent_volume_claims = get_pod_volumes_and_secrets(
-        pod)
-
+    secrets, configmaps, persistent_volume_claims = get_pod_volumes_and_secrets(pod)
+    
     # Get pod events
-    pod_events = get_events_for_object(
-        namespace, api_core, "Pod", pod.metadata.name)
-
+    pod_events = get_events_for_object(namespace, api_core, "Pod", pod.metadata.name)
+    
     # Calculate pod age
     age = None
     if pod.metadata.creation_timestamp:
-        age = str(datetime.now(pod.metadata.creation_timestamp.tzinfo) -
-                  pod.metadata.creation_timestamp)
-
+        age = str(datetime.now(pod.metadata.creation_timestamp.tzinfo) - pod.metadata.creation_timestamp)
+    
     # Get detailed container information
     containers = []
     if pod.spec.containers:
@@ -177,7 +163,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 "readiness_probe": None,
                 "startup_probe": None
             }
-
+            
             # Get container ports
             if container.ports:
                 for port in container.ports:
@@ -189,7 +175,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                         "host_ip": port.host_ip
                     }
                     container_info["ports"].append(port_info)
-
+            
             # Get environment variables
             if container.env:
                 for env_var in container.env:
@@ -223,7 +209,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                                 "key": env_var.value_from.secret_key_ref.key
                             }
                     container_info["env"].append(env_info)
-
+            
             # Get volume mounts
             if container.volume_mounts:
                 for volume_mount in container.volume_mounts:
@@ -234,16 +220,14 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                         "read_only": volume_mount.read_only
                     }
                     container_info["volume_mounts"].append(mount_info)
-
+            
             # Get container resources
             if container.resources:
                 if container.resources.requests:
-                    container_info["resources"]["requests"] = dict(
-                        container.resources.requests)
+                    container_info["resources"]["requests"] = dict(container.resources.requests)
                 if container.resources.limits:
-                    container_info["resources"]["limits"] = dict(
-                        container.resources.limits)
-
+                    container_info["resources"]["limits"] = dict(container.resources.limits)
+            
             # Get detailed security context
             if container.security_context:
                 security_context = {}
@@ -280,7 +264,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     }
                 if security_context:
                     container_info["security_context"] = security_context
-
+            
             # Get health checks
             if container.liveness_probe:
                 container_info["liveness_probe"] = {
@@ -290,7 +274,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     "success_threshold": container.liveness_probe.success_threshold,
                     "failure_threshold": container.liveness_probe.failure_threshold
                 }
-
+            
             if container.readiness_probe:
                 container_info["readiness_probe"] = {
                     "initial_delay_seconds": container.readiness_probe.initial_delay_seconds,
@@ -299,7 +283,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     "success_threshold": container.readiness_probe.success_threshold,
                     "failure_threshold": container.readiness_probe.failure_threshold
                 }
-
+            
             if container.startup_probe:
                 container_info["startup_probe"] = {
                     "initial_delay_seconds": container.startup_probe.initial_delay_seconds,
@@ -308,9 +292,9 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     "success_threshold": container.startup_probe.success_threshold,
                     "failure_threshold": container.startup_probe.failure_threshold
                 }
-
+            
             containers.append(container_info)
-
+    
     # Get container statuses with enhanced information
     container_statuses = []
     if pod.status.container_statuses:
@@ -323,11 +307,10 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 "exit_code": None,
                 "finished_at": None
             }
-
+            
             if container_status.state.running:
                 state_info["state"] = "running"
-                state_info["started_at"] = str(
-                    container_status.state.running.started_at) if container_status.state.running.started_at else None
+                state_info["started_at"] = str(container_status.state.running.started_at) if container_status.state.running.started_at else None
             elif container_status.state.waiting:
                 state_info["state"] = "waiting"
                 state_info["reason"] = container_status.state.waiting.reason
@@ -337,9 +320,8 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 state_info["reason"] = container_status.state.terminated.reason
                 state_info["message"] = container_status.state.terminated.message
                 state_info["exit_code"] = container_status.state.terminated.exit_code
-                state_info["finished_at"] = str(
-                    container_status.state.terminated.finished_at) if container_status.state.terminated.finished_at else None
-
+                state_info["finished_at"] = str(container_status.state.terminated.finished_at) if container_status.state.terminated.finished_at else None
+            
             container_status_info = {
                 "name": container_status.name,
                 "state": state_info,
@@ -350,7 +332,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 "started": container_status.started
             }
             container_statuses.append(container_status_info)
-
+    
     # Get init containers if any
     init_containers = []
     if pod.spec.init_containers:
@@ -366,7 +348,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 "resources": {},
                 "security_context": None
             }
-
+            
             # Get init container env vars
             if container.env:
                 for env_var in container.env:
@@ -375,7 +357,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                         "value": env_var.value
                     }
                     init_container_info["env"].append(env_info)
-
+            
             # Get init container volume mounts
             if container.volume_mounts:
                 for volume_mount in container.volume_mounts:
@@ -385,16 +367,14 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                         "read_only": volume_mount.read_only
                     }
                     init_container_info["volume_mounts"].append(mount_info)
-
+            
             # Get init container resources
             if container.resources:
                 if container.resources.requests:
-                    init_container_info["resources"]["requests"] = dict(
-                        container.resources.requests)
+                    init_container_info["resources"]["requests"] = dict(container.resources.requests)
                 if container.resources.limits:
-                    init_container_info["resources"]["limits"] = dict(
-                        container.resources.limits)
-
+                    init_container_info["resources"]["limits"] = dict(container.resources.limits)
+            
             # Get init container security context
             if container.security_context:
                 security_context = {}
@@ -406,9 +386,9 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     security_context["read_only_root_filesystem"] = container.security_context.read_only_root_filesystem
                 if security_context:
                     init_container_info["security_context"] = security_context
-
+            
             init_containers.append(init_container_info)
-
+    
     # Get init container statuses
     init_container_statuses = []
     if pod.status.init_container_statuses:
@@ -421,11 +401,10 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 "exit_code": None,
                 "finished_at": None
             }
-
+            
             if container_status.state.running:
                 state_info["state"] = "running"
-                state_info["started_at"] = str(
-                    container_status.state.running.started_at) if container_status.state.running.started_at else None
+                state_info["started_at"] = str(container_status.state.running.started_at) if container_status.state.running.started_at else None
             elif container_status.state.waiting:
                 state_info["state"] = "waiting"
                 state_info["reason"] = container_status.state.waiting.reason
@@ -435,9 +414,8 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 state_info["reason"] = container_status.state.terminated.reason
                 state_info["message"] = container_status.state.terminated.message
                 state_info["exit_code"] = container_status.state.terminated.exit_code
-                state_info["finished_at"] = str(
-                    container_status.state.terminated.finished_at) if container_status.state.terminated.finished_at else None
-
+                state_info["finished_at"] = str(container_status.state.terminated.finished_at) if container_status.state.terminated.finished_at else None
+            
             init_status_info = {
                 "name": container_status.name,
                 "state": state_info,
@@ -447,7 +425,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 "image_id": container_status.image_id
             }
             init_container_statuses.append(init_status_info)
-
+    
     # Get pod volumes information
     volumes = []
     if pod.spec.volumes:
@@ -456,7 +434,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 "name": volume.name,
                 "type": "empty_dir"  # default
             }
-
+            
             if volume.secret:
                 volume_info["type"] = "secret"
                 volume_info["secret_name"] = volume.secret.secret_name
@@ -477,9 +455,9 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 volume_info["type"] = "host_path"
                 volume_info["path"] = volume.host_path.path
                 volume_info["type"] = volume.host_path.type
-
+            
             volumes.append(volume_info)
-
+    
     # Get pod security context
     pod_security_context = None
     if pod.spec.security_context:
@@ -499,7 +477,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     "value": sysctl.value
                 } for sysctl in pod.spec.security_context.sysctls
             ]
-
+    
     # Get affinity rules
     affinity = None
     if pod.spec.affinity:
@@ -562,7 +540,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     } for pref in pod.spec.affinity.pod_anti_affinity.preferred_during_scheduling_ignored_during_execution
                 ] if pod.spec.affinity.pod_anti_affinity.preferred_during_scheduling_ignored_during_execution else []
             }
-
+    
     # Get tolerations
     tolerations = []
     if pod.spec.tolerations:
@@ -575,7 +553,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                 "toleration_seconds": toleration.toleration_seconds
             }
             tolerations.append(toleration_info)
-
+    
     # Get related resources for this pod
     related_configmaps = []
     if configmaps:
@@ -590,7 +568,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     "annotations": dict(cm.metadata.annotations) if cm.metadata.annotations else {}
                 }
                 related_configmaps.append(cm_info)
-
+    
     related_secrets = []
     if secrets:
         secrets_list = api_core.list_namespaced_secret(namespace)
@@ -605,7 +583,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     "annotations": dict(secret.metadata.annotations) if secret.metadata.annotations else {}
                 }
                 related_secrets.append(secret_info)
-
+    
     related_pvcs = []
     if persistent_volume_claims:
         pvcs_list = api_core.list_namespaced_persistent_volume_claim(namespace)
@@ -623,7 +601,7 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
                     "annotations": dict(pvc.metadata.annotations) if pvc.metadata.annotations else {}
                 }
                 related_pvcs.append(pvc_info)
-
+    
     pod_info = {
         "pod_name": pod.metadata.name,
         "status": pod.status.phase,
@@ -657,544 +635,42 @@ def get_pod_info(pod, namespace: str, api_core: client.CoreV1Api) -> Dict:
         "share_process_namespace": pod.spec.share_process_namespace,
         "automount_service_account_token": pod.spec.automount_service_account_token
     }
-
+    
     return pod_info
 
-# =============================================================================
-# Main Functions
-# =============================================================================
 
-
-def fetch_specific_deployment(namespace: str, deployment_name: str, resource_type: str, apps_v1_api: client.AppsV1Api, core_v1_api: client.CoreV1Api, networking_v1_api: client.NetworkingV1Api) -> Dict:
-    """Fetch information for a specific deployment"""
+async def GET(request: Request, namespace: str, pod_name: Optional[str] = None):
+    """Get detailed information for all pods or a specific pod in a namespace, with bubbled-up events."""
     try:
-        # Initialize Kubernetes client
         config.load_config()
-
-        # Get the resource based on the specified type
-        if resource_type.lower() == "deployments":
-            deployment = apps_v1_api.read_namespaced_deployment(
-                deployment_name, namespace)
-            deployment_events = get_events_for_object(
-                namespace, core_v1_api, "Deployment", deployment_name)
-            deployment_selector_str = ",".join(
-                [f"{key}={value}" for key, value in deployment.spec.selector.match_labels.items()])
-            replicas = deployment.spec.replicas or 0
-            available_replicas = deployment.status.ready_replicas or 0
-        elif resource_type.lower() == "statefulsets":
-            statefulset = apps_v1_api.read_namespaced_stateful_set(
-                deployment_name, namespace)
-            deployment = statefulset  # Use statefulset as deployment for consistency
-            deployment_events = get_events_for_object(
-                namespace, core_v1_api, "StatefulSet", deployment_name)
-            deployment_selector_str = ",".join(
-                [f"{key}={value}" for key, value in statefulset.spec.selector.match_labels.items()])
-            replicas = statefulset.spec.replicas or 0
-            available_replicas = statefulset.status.ready_replicas or 0
-        elif resource_type.lower() == "daemonsets":
-            daemonset = apps_v1_api.read_namespaced_daemon_set(
-                deployment_name, namespace)
-            deployment = daemonset  # Use daemonset as deployment for consistency
-            deployment_events = get_events_for_object(
-                namespace, core_v1_api, "DaemonSet", deployment_name)
-            deployment_selector_str = ",".join(
-                [f"{key}={value}" for key, value in daemonset.spec.selector.match_labels.items()])
-            replicas = daemonset.status.desired_number_scheduled or 0
-            available_replicas = daemonset.status.number_available or 0
+        api_core = client.CoreV1Api()
+        if pod_name:
+            try:
+                pod = api_core.read_namespaced_pod(pod_name, namespace)
+                pod_info = get_pod_info(pod, namespace, api_core)
+                pod_events = get_events_for_object(namespace, api_core, "Pod", pod.metadata.name)
+                return JSONResponse(content={
+                    "namespace": namespace,
+                    "pod": pod_info,
+                    "events": pod_events
+                })
+            except ApiException as e:
+                if e.status == 404:
+                    return JSONResponse(status_code=404, content={"error": f"Pod '{pod_name}' not found in namespace '{namespace}'"})
+                return JSONResponse(status_code=500, content={"error": str(e)})
         else:
-            raise Exception(
-                f"Unsupported resource type: {resource_type}. Supported types are: Deployment, StatefulSet, DaemonSet")
-
-        deployment_info = {
-            "deployment_name": deployment.metadata.name,
-            "resource_type": resource_type,
-            "replicasets": [],
-            "labels": dict(deployment.metadata.labels) if deployment.metadata.labels else {},
-            "annotations": dict(deployment.metadata.annotations) if deployment.metadata.annotations else {},
-            "status_color": "unknown",
-            "replicas": replicas,
-            "available_replicas": available_replicas
-        }
-
-        # Get ReplicaSets for this deployment (only for Deployments)
-        if resource_type.lower() == "deployment":
-            replica_sets = apps_v1_api.list_namespaced_replica_set(
-                namespace, label_selector=deployment_selector_str)
-
-            for rs in replica_sets.items:
-                available_replicas = rs.status.available_replicas or 0
-
-                if rs.spec.replicas > 0 and rs.status.available_replicas is not None:
-                    # Get events for replicaset
-                    rs_events = get_events_for_object(namespace, core_v1_api, "ReplicaSet", rs.metadata.name)
-
-                    replica_set_info = {
-                            "replicaset_name": rs.metadata.name,
-                            "replicas": rs.spec.replicas,
-                            "available_replicas": rs.status.available_replicas,
-                        "labels": dict(rs.metadata.labels) if rs.metadata.labels else {},
-                        "annotations": dict(rs.metadata.annotations) if rs.metadata.annotations else {}
-                    }
-
-                    deployment_info["replicasets"].append(replica_set_info)
-
-            # Aggregate overall deployment status
-            all_status_colors = []
-            for rs in deployment_info["replicasets"]:
-                if rs["available_replicas"] == rs["replicas"] and rs["replicas"] > 0:
-                    all_status_colors.append("green")
-                elif rs["available_replicas"] > 0:
-                    all_status_colors.append("yellow")
-                else:
-                    all_status_colors.append("red")
-
-            if all_status_colors:
-                if "red" in all_status_colors:
-                    deployment_info["status_color"] = "red"
-                elif "yellow" in all_status_colors:
-                    deployment_info["status_color"] = "yellow"
-                else:
-                    deployment_info["status_color"] = "green"
-            else:
-                # For StatefulSets and DaemonSets, determine status directly
-                if available_replicas == replicas and replicas > 0:
-                    deployment_info["status_color"] = "green"
-                elif available_replicas > 0:
-                    deployment_info["status_color"] = "yellow"
-                else:
-                    deployment_info["status_color"] = "red"
-
-        # Get related pods
-        related_pods = []
-        related_events = []  # Collect all events at top level
-        pods = core_v1_api.list_namespaced_pod(
-            namespace, label_selector=deployment_selector_str)
-        for pod in pods.items:
-            pod_info = get_pod_info(pod, namespace, core_v1_api)
-
-            # Add pod events to top level with source label
-            if pod_info.get("events"):
-                for event in pod_info["events"]:
-                    event["source"] = f"Pod: {pod.metadata.name}"
-                    related_events.append(event)
-                # Remove events from pod_info to avoid duplication
-                del pod_info["events"]
-
-            # Add events from pod's related resources
-            if pod_info.get("related_configmaps"):
-                for cm in pod_info["related_configmaps"]:
-                    if cm.get("events"):
-                        for event in cm["events"]:
-                            event["source"] = f"ConfigMap: {cm['name']} (used by Pod: {pod.metadata.name})"
-                            related_events.append(event)
-                        # Remove events from configmap to avoid duplication
-                        del cm["events"]
-
-            if pod_info.get("related_secrets"):
-                for secret in pod_info["related_secrets"]:
-                    if secret.get("events"):
-                        for event in secret["events"]:
-                            event["source"] = f"Secret: {secret['name']} (used by Pod: {pod.metadata.name})"
-                            related_events.append(event)
-                        # Remove events from secret to avoid duplication
-                        del secret["events"]
-
-            if pod_info.get("related_pvcs"):
-                for pvc in pod_info["related_pvcs"]:
-                    if pvc.get("events"):
-                        for event in pvc["events"]:
-                            event["source"] = f"PVC: {pvc['name']} (used by Pod: {pod.metadata.name})"
-                            related_events.append(event)
-                        # Remove events from PVC to avoid duplication
-                        del pvc["events"]
-
-            related_pods.append(pod_info)
-
-        # Get related services
-        related_services = []
-        services = core_v1_api.list_namespaced_service(namespace)
-        for svc in services.items:
-            if svc.spec.selector:
-                svc_selector_str = ",".join(
-                    [f"{key}={value}" for key, value in svc.spec.selector.items()])
-                if svc_selector_str == deployment_selector_str:
-                    service_events = get_events_for_object(
-                        namespace, core_v1_api, "Service", svc.metadata.name)
-
-                    # Add service events to top level
-                    for event in service_events:
-                        event["source"] = f"Service: {svc.metadata.name}"
-                        related_events.append(event)
-
-                    service_info = {
-                        "service_name": svc.metadata.name,
-                        "type": svc.spec.type,
-                        "cluster_ip": svc.spec.cluster_ip,
-                        "external_ip": svc.status.load_balancer.ingress[0].ip if svc.status.load_balancer and svc.status.load_balancer.ingress else None,
-                        "ports": [{"port": port.port, "target_port": port.target_port, "protocol": port.protocol} for port in svc.spec.ports],
-                        "selector": svc.spec.selector,
-                        "labels": dict(svc.metadata.labels) if svc.metadata.labels else {},
-                        "annotations": dict(svc.metadata.annotations) if svc.metadata.annotations else {}
-                    }
-
-                    related_services.append(service_info)
-
-        # Get related network policies
-        related_network_policies = []
-        network_policies = networking_v1_api.list_namespaced_network_policy(
-            namespace)
-        for np in network_policies.items:
-            # Check if network policy affects this deployment's pods
-            if np.spec.pod_selector and np.spec.pod_selector.match_labels:
-                np_selector = np.spec.pod_selector.match_labels
-                # Check if deployment labels match network policy selector
-                deployment_labels = deployment.metadata.labels or {}
-                if any(key in deployment_labels and deployment_labels[key] == value for key, value in np_selector.items()):
-                    np_events = get_events_for_object(
-                        namespace, core_v1_api, "NetworkPolicy", np.metadata.name)
-
-                    # Add network policy events to top level
-                    for event in np_events:
-                        event["source"] = f"NetworkPolicy: {np.metadata.name}"
-                        related_events.append(event)
-
-                    np_info = {
-                        "name": np.metadata.name,
-                        "policy_types": np.spec.policy_types,
-                        "pod_selector": dict(np.spec.pod_selector.match_labels) if np.spec.pod_selector and np.spec.pod_selector.match_labels else {},
-                        "ingress_rules": [],
-                        "egress_rules": [],
-                        "labels": dict(np.metadata.labels) if np.metadata.labels else {},
-                        "annotations": dict(np.metadata.annotations) if np.metadata.annotations else {},
-                        "creation_timestamp": str(np.metadata.creation_timestamp) if np.metadata.creation_timestamp else None,
-                        "uid": np.metadata.uid,
-                        "resource_version": np.metadata.resource_version
-                    }
-
-                    # Extract detailed ingress rules
-                    if np.spec.ingress:
-                        for rule in np.spec.ingress:
-                            ingress_rule = {
-                                "from": [],
-                                "ports": []
-                            }
-                            if rule.from_:
-                                for from_item in rule.from_:
-                                    from_info = {}
-                                    if from_item.pod_selector:
-                                        from_info["pod_selector"] = {
-                                            "match_labels": dict(from_item.pod_selector.match_labels) if from_item.pod_selector.match_labels else {},
-                                            "match_expressions": [
-                                                {
-                                                    "key": expr.key,
-                                                    "operator": expr.operator,
-                                                    "values": expr.values
-                                                } for expr in from_item.pod_selector.match_expressions
-                                            ] if from_item.pod_selector.match_expressions else []
-                                        }
-                                    if from_item.namespace_selector:
-                                        from_info["namespace_selector"] = {
-                                            "match_labels": dict(from_item.namespace_selector.match_labels) if from_item.namespace_selector.match_labels else {},
-                                            "match_expressions": [
-                                                {
-                                                    "key": expr.key,
-                                                    "operator": expr.operator,
-                                                    "values": expr.values
-                                                } for expr in from_item.namespace_selector.match_expressions
-                                            ] if from_item.namespace_selector.match_expressions else []
-                                        }
-                                    if from_item.ip_block:
-                                        from_info["ip_block"] = {
-                                            "cidr": from_item.ip_block.cidr,
-                                            "exceptions": getattr(from_item.ip_block, 'except', [])
-                                        }
-                                    if from_info:
-                                        ingress_rule["from"].append(from_info)
-
-                            if rule.ports:
-                                for port in rule.ports:
-                                    port_info = {
-                                        "protocol": port.protocol,
-                                        "port": port.port,
-                                        "end_port": port.end_port if hasattr(port, 'end_port') and port.end_port else None
-                                    }
-                                    ingress_rule["ports"].append(port_info)
-
-                            np_info["ingress_rules"].append(ingress_rule)
-
-                    # Extract detailed egress rules
-                    if np.spec.egress:
-                        for rule in np.spec.egress:
-                            egress_rule = {
-                                "to": [],
-                                "ports": []
-                            }
-                            if rule.to:
-                                for to_item in rule.to:
-                                    to_info = {}
-                                    if to_item.pod_selector:
-                                        to_info["pod_selector"] = {
-                                            "match_labels": dict(to_item.pod_selector.match_labels) if to_item.pod_selector.match_labels else {},
-                                            "match_expressions": [
-                                                {
-                                                    "key": expr.key,
-                                                    "operator": expr.operator,
-                                                    "values": expr.values
-                                                } for expr in to_item.pod_selector.match_expressions
-                                            ] if to_item.pod_selector.match_expressions else []
-                                        }
-                                    if to_item.namespace_selector:
-                                        to_info["namespace_selector"] = {
-                                            "match_labels": dict(to_item.namespace_selector.match_labels) if to_item.namespace_selector.match_labels else {},
-                                            "match_expressions": [
-                                                {
-                                                    "key": expr.key,
-                                                    "operator": expr.operator,
-                                                    "values": expr.values
-                                                } for expr in to_item.namespace_selector.match_expressions
-                                            ] if to_item.namespace_selector.match_expressions else []
-                                        }
-                                    if to_item.ip_block:
-                                        to_info["ip_block"] = {
-                                            "cidr": to_item.ip_block.cidr,
-                                            "exceptions": getattr(to_item.ip_block, 'except', [])
-                                        }
-                                    if to_info:
-                                        egress_rule["to"].append(to_info)
-
-                            if rule.ports:
-                                for port in rule.ports:
-                                    port_info = {
-                                        "protocol": port.protocol,
-                                        "port": port.port,
-                                        "end_port": port.end_port if hasattr(port, 'end_port') and port.end_port else None
-                                    }
-                                    egress_rule["ports"].append(port_info)
-
-                            np_info["egress_rules"].append(egress_rule)
-
-                    related_network_policies.append(np_info)
-
-        # Get related ingresses (through services)
-        related_ingresses = []
-        ingresses = networking_v1_api.list_namespaced_ingress(namespace)
-        for ingress in ingresses.items:
-            # Check if this ingress references any of our related services
-            service_names = []
-            for rule in ingress.spec.rules:
-                if rule.http and rule.http.paths:
-                    for path in rule.http.paths:
-                        if path.backend and path.backend.service:
-                            service_names.append(path.backend.service.name)
-
-            # Check if any of our related services are referenced by this ingress
-            if any(svc["service_name"] in service_names for svc in related_services):
-                ingress_events = get_events_for_object(
-                    namespace, core_v1_api, "Ingress", ingress.metadata.name)
-
-                # Add ingress events to top level
-                for event in ingress_events:
-                    event["source"] = f"Ingress: {ingress.metadata.name}"
-                    related_events.append(event)
-
-                ingress_info = {
-                    "ingress_name": ingress.metadata.name,
-                    "host": ingress.spec.rules[0].host if ingress.spec.rules else None,
-                    "path": ingress.spec.rules[0].http.paths[0].path if ingress.spec.rules and ingress.spec.rules[0].http.paths else None,
-                    "services": service_names,
-                    "labels": dict(ingress.metadata.labels) if ingress.metadata.labels else {},
-                    "annotations": dict(ingress.metadata.annotations) if ingress.metadata.annotations else {},
-                    "tls": []
-                }
-
-                # Extract TLS configuration
-                if ingress.spec.tls:
-                    for tls in ingress.spec.tls:
-                        tls_info = {
-                            "hosts": tls.hosts if tls.hosts else [],
-                            "secret_name": tls.secret_name if tls.secret_name else None
-                        }
-                        ingress_info["tls"].append(tls_info)
-
-                related_ingresses.append(ingress_info)
-
-        # Add deployment events to top level
-        for event in deployment_events:
-            event["source"] = f"{resource_type}: {deployment.metadata.name}"
-            related_events.append(event)
-
-        # Add replica set events to top level
-        for rs in deployment_info.get("replicasets", []):
-            rs_events = get_events_for_object(
-                namespace, core_v1_api, "ReplicaSet", rs['replicaset_name'])
-            for event in rs_events:
-                event["source"] = f"ReplicaSet: {rs['replicaset_name']} (owned by {resource_type}: {deployment.metadata.name})"
-                related_events.append(event)
-
-        # Sort events by timestamp (most recent first)
-        related_events.sort(key=lambda x: x.get(
-            "last_timestamp", ""), reverse=True)
-
-        return {
-            "namespace": namespace,
-            "deployment": deployment_info,
-            "related_pods": related_pods,
-            "related_services": related_services,
-            "related_network_policies": related_network_policies,
-            "related_ingresses": related_ingresses,
-            "deployment_name": deployment_name,
-            "resource_type": resource_type,
-            "related_events": related_events
-        }
-
-    except ApiException as e:
-        if e.status == 404:
-            raise Exception(
-                f"{resource_type} '{deployment_name}' not found in namespace '{namespace}'")
-        else:
-            raise Exception(f"Error fetching {resource_type}: {e}")
-
-
-def fetch_all_deployments(namespace: str, apps_v1_api: client.AppsV1Api, core_v1_api: client.CoreV1Api) -> List[Dict]:
-    """Fetch all deployments, statefulsets, and daemonsets in a namespace"""
-    deployments = []
-    related_events = []  # Collect all events at top level
-
-    # Get Deployments
-    try:
-        deployment_list = apps_v1_api.list_namespaced_deployment(namespace)
-        for deployment in deployment_list.items:
-            expected_replicas = deployment.spec.replicas or 0
-            available_replicas = deployment.status.ready_replicas or 0
-
-            if available_replicas == expected_replicas and expected_replicas > 0:
-                status_color = "green"
-            elif available_replicas > 0:
-                status_color = "yellow"
-            else:
-                status_color = "red"
-
-            deployment_events = get_events_for_object(
-                namespace, core_v1_api, "Deployment", deployment.metadata.name)
-
-            # Add deployment events to top level
-            for event in deployment_events:
-                event["source"] = f"Deployment: {deployment.metadata.name}"
-                related_events.append(event)
-
-            deployment_info = {
-                "deployment_name": deployment.metadata.name,
-                "resource_type": "Deployment",
-                "replicas": expected_replicas,
-                "available_replicas": available_replicas,
-                "status_color": status_color,
-                "labels": dict(deployment.metadata.labels) if deployment.metadata.labels else {},
-                "annotations": dict(deployment.metadata.annotations) if deployment.metadata.annotations else {}
-            }
-            deployments.append(deployment_info)
-    except ApiException as e:
-        print(f"Error fetching deployments: {e}")
-
-    # Get StatefulSets
-    try:
-        statefulset_list = apps_v1_api.list_namespaced_stateful_set(namespace)
-        for statefulset in statefulset_list.items:
-            expected_replicas = statefulset.spec.replicas or 0
-            available_replicas = statefulset.status.ready_replicas or 0
-
-            if available_replicas == expected_replicas and expected_replicas > 0:
-                status_color = "green"
-            elif available_replicas > 0:
-                status_color = "yellow"
-            else:
-                status_color = "red"
-
-            statefulset_events = get_events_for_object(
-                namespace, core_v1_api, "StatefulSet", statefulset.metadata.name)
-
-            # Add statefulset events to top level
-            for event in statefulset_events:
-                event["source"] = f"StatefulSet: {statefulset.metadata.name}"
-                related_events.append(event)
-
-            statefulset_info = {
-                "deployment_name": statefulset.metadata.name,
-                "resource_type": "StatefulSet",
-                "replicas": expected_replicas,
-                "available_replicas": available_replicas,
-                "status_color": status_color,
-                "labels": dict(statefulset.metadata.labels) if statefulset.metadata.labels else {},
-                "annotations": dict(statefulset.metadata.annotations) if statefulset.metadata.annotations else {}
-            }
-            deployments.append(statefulset_info)
-    except ApiException as e:
-        print(f"Error fetching statefulsets: {e}")
-
-    # Get DaemonSets
-    try:
-        daemonset_list = apps_v1_api.list_namespaced_daemon_set(namespace)
-        for daemonset in daemonset_list.items:
-            desired_replicas = daemonset.status.desired_number_scheduled or 0
-            available_replicas = daemonset.status.number_available or 0
-
-        if available_replicas == desired_replicas and desired_replicas > 0:
-            status_color = "green"
-        elif available_replicas > 0:
-            status_color = "yellow"
-        else:
-            status_color = "red"
-
-        daemonset_events = get_events_for_object(namespace, core_v1_api, "DaemonSet", daemonset.metadata.name)
-        
-        # Add daemonset events to top level
-        for event in daemonset_events:
-            event["source"] = f"DaemonSet: {daemonset.metadata.name}"
-            related_events.append(event)
-        
-        daemonset_info = {
-            "deployment_name": daemonset.metadata.name,
-            "resource_type": "DaemonSet",
-            "replicas": desired_replicas,
-            "available_replicas": available_replicas,
-            "status_color": status_color,
-            "labels": dict(daemonset.metadata.labels) if daemonset.metadata.labels else {},
-            "annotations": dict(daemonset.metadata.annotations) if daemonset.metadata.annotations else {}
-        }
-        deployments.append(daemonset_info)
-    except ApiException as e:
-        print(f"Error fetching daemonsets: {e}")
-    
-    # Sort events by timestamp (most recent first)
-    related_events.sort(key=lambda x: x.get("last_timestamp", ""), reverse=True)
-    
-    return deployments, related_events
-
-async def GET(request: Request, namespace: str, deployment_name: Optional[str] = None, resource_type: Optional[str] = None):
-    """FastAPI endpoint to get comprehensive namespace information with optional deployment filtering"""
-    try:
-        # Initialize Kubernetes client
-        config.load_config()
-        apps_v1_api = client.AppsV1Api()
-        core_v1_api = client.CoreV1Api()
-        networking_v1_api = client.NetworkingV1Api()
-        
-        if deployment_name:
-            # Get specific deployment details
-            if not resource_type:
-                resource_type = "Deployment"  # Default to Deployment if not specified
-            result = fetch_specific_deployment(namespace, deployment_name, resource_type, apps_v1_api, core_v1_api, networking_v1_api)
-            return JSONResponse(content=result)
-        else:
-            # Get all deployments, statefulsets, and daemonsets
-            deployments, related_events = fetch_all_deployments(namespace, apps_v1_api, core_v1_api)
+            pods = api_core.list_namespaced_pod(namespace)
+            pod_infos = []
+            all_events = []
+            for pod in pods.items:
+                pod_info = get_pod_info(pod, namespace, api_core)
+                pod_infos.append(pod_info)
+                pod_events = get_events_for_object(namespace, api_core, "Pod", pod.metadata.name)
+                all_events.extend(pod_events)
             return JSONResponse(content={
                 "namespace": namespace,
-                "deployments": deployments,
-                "related_events": related_events
+                "pods": pod_infos,
+                "events": all_events
             })
-            
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)}
-        )
+    except ApiException as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})

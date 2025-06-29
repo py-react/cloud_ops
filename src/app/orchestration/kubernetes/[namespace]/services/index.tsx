@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import yaml from "js-yaml";
+import useNavigate from "@/libs/navigate";
 
 const columns = [
   { header: "Name", accessor: "name" },
@@ -44,6 +45,7 @@ interface ServiceData {
 }
 
 export default function ServicesPage() {
+  const navigate = useNavigate()
   const { selectedNamespace } = useContext(NamespaceContext);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentToEdit, setCurrentToEdit] = useState<ServiceData | null>(null);
@@ -55,6 +57,10 @@ export default function ServicesPage() {
     nameSpace: selectedNamespace,
     type: "services",
   });
+
+  const handleViewDetails = (service: any) => {
+    navigate(`/orchestration/kubernetes/${service.namespace}/services/${service.name}`)
+  };
 
   // Transform API data to match table format
   const transformedServices: ServiceData[] =
@@ -78,6 +84,7 @@ export default function ServicesPage() {
           : "Unknown",
         last_applied: service.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
         fullData: service,
+        showViewDetails:true,
         showEdit: true,
         showDelete: true,
       };
@@ -124,6 +131,7 @@ export default function ServicesPage() {
             <ResourceTable
               columns={columns}
               data={transformedServices}
+              onViewDetails={handleViewDetails}
               onEdit={(res: ServiceData) => {
                 setShowCreateDialog(true);
                 setCurrentToEdit(res);

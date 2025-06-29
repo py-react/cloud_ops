@@ -126,6 +126,18 @@ export type TDataApiKubernertesContextGet = {
 export type TDataApiKubernertesContextPost = {
                 requestBody: ContextPostData
             }
+export type TDataApiKubernertesConfigmapsGet = {
+                configmapName: string
+namespace: string
+            }
+export type TDataApiKubernertesIngressGet = {
+                ingressName?: string | null
+namespace: string
+            }
+export type TDataApiKubernertesSecretsGet = {
+                namespace: string
+secretName?: string | null
+            }
 export type TDataApiKubernertesResourcesGet = {
                 namespace?: string | null
 resources?: string | null
@@ -158,6 +170,14 @@ type: string
             }
 export type TDataApiKubernertesUserGet = {
                 namespace?: string | null
+            }
+export type TDataApiKubernertesPodsGet = {
+                namespace: string
+podName?: string | null
+            }
+export type TDataApiKubernertesServiceGet = {
+                namespace: string
+serviceName?: string | null
             }
 export type TDataApiKubernertesLimitRangeGet = {
                 namespace?: string | null
@@ -897,6 +917,72 @@ requestBody,
 	}
 
 	/**
+	 * Get details for a specific configmap in a namespace.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiKubernertesConfigmapsGet(data: TDataApiKubernertesConfigmapsGet): CancelablePromise<unknown> {
+		const {
+configmapName,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/kubernertes/configmaps',
+			query: {
+				namespace, configmap_name: configmapName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Get detailed information for all ingress resources or a specific ingress in a namespace, with bubbled-up events.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiKubernertesIngressGet(data: TDataApiKubernertesIngressGet): CancelablePromise<unknown> {
+		const {
+ingressName,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/kubernertes/ingress',
+			query: {
+				namespace, ingress_name: ingressName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Get detailed information for all secrets or a specific secret in a namespace, with bubbled-up events.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiKubernertesSecretsGet(data: TDataApiKubernertesSecretsGet): CancelablePromise<unknown> {
+		const {
+namespace,
+secretName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/kubernertes/secrets',
+			query: {
+				namespace, secret_name: secretName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
 	 * @returns ResourceResponse Successful Response
 	 * @throws ApiError
 	 */
@@ -1037,6 +1123,50 @@ namespace,
 			url: '/api/kubernertes/user',
 			query: {
 				namespace
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Get detailed information for all pods or a specific pod in a namespace, with bubbled-up events.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiKubernertesPodsGet(data: TDataApiKubernertesPodsGet): CancelablePromise<unknown> {
+		const {
+namespace,
+podName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/kubernertes/pods',
+			query: {
+				namespace, pod_name: podName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Get detailed information for all services or a specific service in a namespace, with bubbled-up events.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiKubernertesServiceGet(data: TDataApiKubernertesServiceGet): CancelablePromise<unknown> {
+		const {
+namespace,
+serviceName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/kubernertes/service',
+			query: {
+				namespace, service_name: serviceName
 			},
 			errors: {
 				422: `Validation Error`,
@@ -1800,10 +1930,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced',
+			url: '/orchestration/kubernetes/{namespace}',
 		});
 	}
 
@@ -1811,10 +1941,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedConfigmapsGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceConfigmapsGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/configmaps',
+			url: '/orchestration/kubernetes/{namespace}/configmaps',
 		});
 	}
 
@@ -1822,10 +1952,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedCertificateGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceConfigmapsNameGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/certificate',
+			url: '/orchestration/kubernetes/{namespace}/configmaps/{name}',
 		});
 	}
 
@@ -1833,10 +1963,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedSecretsGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceCertificateGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/secrets',
+			url: '/orchestration/kubernetes/{namespace}/certificate',
 		});
 	}
 
@@ -1844,10 +1974,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedResourcesGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceSecretsGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/resources',
+			url: '/orchestration/kubernetes/{namespace}/secrets',
 		});
 	}
 
@@ -1855,10 +1985,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedResourcesResourceTypeGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceSecretsNameGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/resources/{resourceType}',
+			url: '/orchestration/kubernetes/{namespace}/secrets/{name}',
 		});
 	}
 
@@ -1866,10 +1996,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedNamespaceGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceResourcesGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/namespace',
+			url: '/orchestration/kubernetes/{namespace}/resources',
 		});
 	}
 
@@ -1877,10 +2007,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedIngressesGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceResourcesResourceTypeGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/ingresses',
+			url: '/orchestration/kubernetes/{namespace}/resources/{resourceType}',
 		});
 	}
 
@@ -1888,10 +2018,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedPodsGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceNamespaceGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/pods',
+			url: '/orchestration/kubernetes/{namespace}/namespace',
 		});
 	}
 
@@ -1899,10 +2029,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedIssuersGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceIngressesGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/issuers',
+			url: '/orchestration/kubernetes/{namespace}/ingresses',
 		});
 	}
 
@@ -1910,10 +2040,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedServicesGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespacePodsGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/services',
+			url: '/orchestration/kubernetes/{namespace}/pods',
 		});
 	}
 
@@ -1921,10 +2051,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedIssuerGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespacePodsNameGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/issuer',
+			url: '/orchestration/kubernetes/{namespace}/pods/{name}',
 		});
 	}
 
@@ -1932,10 +2062,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedDeploymentsGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceIssuersGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/deployments',
+			url: '/orchestration/kubernetes/{namespace}/issuers',
 		});
 	}
 
@@ -1943,10 +2073,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedDeploymentsTypeGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceServicesGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/deployments/{type}',
+			url: '/orchestration/kubernetes/{namespace}/services',
 		});
 	}
 
@@ -1954,10 +2084,65 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static orchestrationKubernetesNamespacedFlowGet(): CancelablePromise<string> {
+	public static orchestrationKubernetesNamespaceServicesNameGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/flow',
+			url: '/orchestration/kubernetes/{namespace}/services/{name}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static orchestrationKubernetesNamespaceIssuerGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/{namespace}/issuer',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static orchestrationKubernetesNamespaceDeploymentsGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/{namespace}/deployments',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static orchestrationKubernetesNamespaceDeploymentsTypeGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/{namespace}/deployments/{type}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static orchestrationKubernetesNamespaceDeploymentsTypeNameGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/{namespace}/deployments/{type}/{name}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static orchestrationKubernetesNamespaceFlowGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/{namespace}/flow',
 		});
 	}
 

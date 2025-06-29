@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import yaml from "js-yaml";
+import useNavigate from "@/libs/navigate";
 
 const columns = [
   { header: "Name", accessor: "name" },
@@ -42,6 +43,7 @@ interface SecretData {
 }
 
 export default function SecretsPage() {
+  const navigate = useNavigate()
   const { selectedNamespace } = useContext(NamespaceContext);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentToEdit, setCurrentToEdit] = useState<SecretData | null>(null);
@@ -69,9 +71,14 @@ export default function SecretsPage() {
         : "Unknown",
       last_applied: secret.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
       fullData: secret,
+      showViewDetails: true,
       showEdit: true,
       showDelete: true,
     })) || [];
+
+    const handleViewDetails = (secret: any) => {
+      navigate(`/orchestration/kubernetes/${secret.namespace}/secrets/${secret.name}`)
+    };
 
   if (error) {
     return (
@@ -118,6 +125,7 @@ export default function SecretsPage() {
                 setShowCreateDialog(true);
                 setCurrentToEdit(res);
               }}
+              onViewDetails={handleViewDetails}
               onDelete={(data: SecretData) => {
                 let manifest = data.last_applied
                   ? yaml.dump(JSON.parse(data.last_applied))
