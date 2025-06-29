@@ -7,7 +7,6 @@ import { VolumeConfig } from './sections/VolumeConfig';
 import { HealthConfig } from './sections/HealthConfig';
 import { AdvancedConfig } from './sections/AdvancedConfig';
 import { SecurityConfig } from './sections/SecurityConfig';
-import type { ContainerRunConfig } from './types';
 import { toast } from 'sonner';
 import { Loader2, Info, ContainerIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ import {
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Tabs } from '@/components/ui/tabs';
+import { DockerConfig } from '@/gingerJs_api_client';
 
 const steps = [
   {
@@ -139,17 +139,17 @@ export function ContainerRunnerForm({
   submitting,
   setSubmitting,
 }: {
-  onSubmitHandler: (data: ContainerRunConfig) => Promise<void>;
+  onSubmitHandler: (data: DockerConfig) => Promise<void>;
   submitting: boolean;
   setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const [activeTab, setActiveTab] = useState(steps[0].id);
-  const form = useForm<ContainerRunConfig>({
+  const form = useForm<DockerConfig>({
     resolver: zodResolver(schema),
     defaultValues,
   });
 
-  const onSubmit = async (data: ContainerRunConfig) => {
+  const onSubmit = async (data: DockerConfig) => {
     console.log({data})
     try {
       if(submitting) return;

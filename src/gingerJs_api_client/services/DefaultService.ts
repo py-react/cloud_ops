@@ -1938,6 +1938,17 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static orchestrationKubernetesNamespacedDeploymentsTypeGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/namespaced/deployments/{type}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static orchestrationKubernetesNamespacedFlowGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',

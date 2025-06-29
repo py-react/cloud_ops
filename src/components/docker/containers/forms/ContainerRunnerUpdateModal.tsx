@@ -9,11 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DockerConfig } from "@/gingerJs_api_client";
 
 interface ContainerRunnerUpdateModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: ContainerRunConfig) => Promise<void>;
+  onSubmit: (data: DockerConfig) => Promise<void>;
   data: Container;
 }
 

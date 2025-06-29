@@ -11,7 +11,7 @@ export function useContainerStats(containerId: string | null) {
     
     try {
       setLoading(true);
-      const response = await DefaultService.apiContainersStatsContainerIdGet({ containerId });
+      const response = await DefaultService.apiDockerContainersStatsContainerIdGet({ containerId });
       setStats(response.stats);
       setError(null);
     } catch (err) {

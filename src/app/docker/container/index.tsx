@@ -3,7 +3,7 @@ import { ContainerDetails } from "@/components/docker/containers/details/Contain
 import { useContainerDetails } from "@/components/docker/containers/hooks/useContainerDetails";
 import { Plus, Loader2, ContainerIcon, ChevronRight, Terminal, ServerIcon } from "lucide-react";
 import { ContainerRunnerForm } from "@/components/docker/containers/forms/ContainerRunnerForm";
-import { ContainerRunConfig } from "@/components/docker/containers/forms/types";
+// import { ContainerRunConfig } from "@/components/docker/containers/forms/types";
 import { toast } from "sonner";
 import { ContainerRunnerUpdateModal } from "@/components/docker/containers/forms/ContainerRunnerUpdateModal";
 import { useContainers } from 'src/hooks/useContainers';
@@ -12,7 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { ContainersTable } from '@/components/docker/containers/list/ContainersTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DefaultService } from "@/gingerJs_api_client";
+import { DefaultService, DockerConfig } from "@/gingerJs_api_client";
 
 function ContainersPage() {
   const [showRunnerModal, setShowRunnerModal] = useState(false);
@@ -70,38 +70,37 @@ function ContainersPage() {
                 onLogs={() => { /* implement logs handler if needed */ }}
                 onStop={async (container) => {
                   // Stop container logic
-                  await fetch("/api/containers", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "stop", containerId: container.id }),
-                  });
+                  await DefaultService.apiDockerContainersPost({requestBody:{
+                    action:"stop",
+                    containerId:container.id
+                  }})
                   refetch();
                 }}
                 onDelete={async (container) => {
                   // Remove container logic
-                  await fetch("/api/containers", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "remove", containerId: container.id }),
-                  });
+                  await DefaultService.apiDockerContainersPost({requestBody:{
+                    action:"remove",
+                    containerId:container.id
+                  }})
+                  
                   refetch();
                 }}
                 onRerun={async (container) => {
                   // Rerun container logic
-                  await fetch("/api/containers", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "rerun", containerId: container.id }),
-                  });
+                  await DefaultService.apiDockerContainersPost({requestBody:{
+                    action:"rerun",
+                    containerId:container.id
+                  }})
+                  
                   refetch();
                 }}
                 onPause={async (container) => {
                   // Pause container logic
-                  await fetch("/api/containers", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "pause", containerId: container.id }),
-                  });
+                  
+                  await DefaultService.apiDockerContainersPost({requestBody:{
+                    action:"pause",
+                    containerId:container.id
+                  }})
                   refetch();
                 }}
                 loading={loading}
@@ -121,26 +120,24 @@ function ContainersPage() {
           </DialogHeader>
           <div className="flex-1 h-[calc(100vh-8rem)] px-6">
             <ContainerRunnerForm
-              onSubmitHandler={async (data: ContainerRunConfig) => {
+              onSubmitHandler={async (data: DockerConfig) => {
                 setRunnerSubmitting(true);
-                const response = await fetch("/api/containers", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
+                await DefaultService.apiDockerContainersPost({
+                  requestBody: {
                     action: "run",
                     instanceConfig: data,
-                  }),
+                  },
+                }).then((res) => {
+                  if (res.error) {
+                    toast.error(res.message);
+                    return;
+                  }
+                  setShowRunnerModal(false);
+                  toast.success(res.message);
+                  showDetails(res.container);
+                  refetch();
                 });
-                const responseData = await response.json();
-                setRunnerSubmitting(false);
-                if (responseData.error) {
-                  toast.error(responseData.message);
-                  return;
-                }
-                setShowRunnerModal(false);
-                toast.success(responseData.message);
-                showDetails(responseData.container);
-                refetch();
+                
               }}
               submitting={runnerSubmitting}
               setSubmitting={setRunnerSubmitting}
@@ -162,7 +159,7 @@ function ContainersPage() {
           open={editingContainer}
           data={selectedContainer}
           onClose={() => editSelected(false)}
-          onSubmit={async (data: ContainerRunConfig) => {
+          onSubmit={async (data: DockerConfig) => {
             await DefaultService.apiDockerContainersPost({
               requestBody: {
                 action: "update",

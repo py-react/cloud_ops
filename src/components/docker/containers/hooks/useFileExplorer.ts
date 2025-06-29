@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { FileExplorerState,FileSystemEntry, FileExplorerCommand } from '@/types/file-explorer';
+import { DefaultService } from '@/gingerJs_api_client';
+import { toast } from 'sonner';
 
 export function useFileExplorer(containerId: string,attachTerminalToPath:(action: "attach" | "set",path?: string) => void) {
   const [state, setState] = useState<FileExplorerState>({
@@ -23,20 +25,10 @@ export function useFileExplorer(containerId: string,attachTerminalToPath:(action
         },
       };
 
-      // TODO: Replace with actual API call
-      const response = await fetch('/api/containers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(command),
-      });
+      const response = await DefaultService.apiDockerContainersPost({requestBody:command}).catch(err=>toast.error(err.message))
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch directory contents');
-      }
-
-      const data = (await response.json()).files;
+      const data = response.files;
       const entries = parseListOutput(data);
-      console.log({entries})
       
       setState(prev => ({
         ...prev,

@@ -17,6 +17,7 @@ import Logs from "./sections/logs";
 import Files from "./sections/files";
 import Terminal from "./sections/terminal";
 import Stats from "./sections/stats";
+import { DefaultService } from "@/gingerJs_api_client";
 
 interface ContainerDetailsProps {
   container: Container;
@@ -88,10 +89,10 @@ export function ContainerDetails({
   ];
 
   const refreshShowDetailsAfterAction = async (action: string) => {
-    const containersResponse = await fetch("/api/containers", {
-      method: "GET",
-    });
-    const containers = (await containersResponse.json()).containers;
+    
+    const containersResponse = await DefaultService.apiDockerContainersGet().catch(err=>toast.error(err.message))
+
+    const containers = containersResponse.containers;
     setContainers(containers);
     if (action === "remove") {
       showDetails(null);
@@ -138,24 +139,20 @@ export function ContainerDetails({
                 onClick={async () => {
                   setTakingAction(true);
                   setActionType("rerun");
-                  const responseObj = await fetch("/api/containers", {
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    method: "POST",
-                    body: JSON.stringify({
-                      action: "rerun",
-                      containerId: container.id,
-                    }),
-                  });
-                  const responseData = await responseObj.json();
-                  if (responseData.error) {
-                    setTakingAction(false);
-                    toast.error(responseData.message);
-                  } else {
-                    toast.success(responseData.message);
-                    refreshShowDetailsAfterAction("rerun");
-                  }
+                  DefaultService.apiDockerContainersPost({requestBody:{
+                    action:"rerun",
+                    containerId:container.id
+                  }}).then(responseData=>{
+                    if (responseData.error) {
+                      setTakingAction(false);
+                      toast.error(responseData.message);
+                    } else {
+                      toast.success(responseData.message);
+                      refreshShowDetailsAfterAction("rerun");
+                    }
+                  }).catch(err=>{
+                    toast.error(err.message)
+                  })
                 }}
               >
                 {takingAction && actionType === "rerun" ? (
@@ -173,17 +170,15 @@ export function ContainerDetails({
                 onClick={async () => {
                   setTakingAction(true);
                   setActionType("pause");
-                  const responseObj = await fetch("/api/containers", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      action: "pause",
-                      containerId: container.id,
-                    }),
-                  });
-                  const responseData = await responseObj.json();
+                  const responseData =
+                    await DefaultService.apiDockerContainersPost({
+                      requestBody: {
+                        action: "pause",
+                        containerId: container.id,
+                      },
+                    }).catch((err) => {
+                      toast.error(err.message);
+                    });
                   if (responseData.error) {
                     setTakingAction(false);
                     toast.error(responseData.message);
@@ -208,17 +203,15 @@ export function ContainerDetails({
                 onClick={async () => {
                   setTakingAction(true);
                   setActionType("stop");
-                  const responseObj = await fetch("/api/containers", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      action: "stop",
-                      containerId: container.id,
-                    }),
-                  });
-                  const responseData = await responseObj.json();
+                  const responseData =
+                    await DefaultService.apiDockerContainersPost({
+                      requestBody: {
+                        action: "stop",
+                        containerId: container.id,
+                      },
+                    }).catch((err) => {
+                      toast.error(err.message);
+                    });
                   if (responseData.error) {
                     setTakingAction(false);
                     toast.error(responseData.message);
@@ -242,17 +235,15 @@ export function ContainerDetails({
               onClick={async () => {
                 setTakingAction(true);
                 setActionType("remove");
-                const responseObj = await fetch("/api/containers", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    action: "remove",
-                    containerId: container.id,
-                  }),
-                });
-                const responseData = await responseObj.json();
+                const responseData =
+                  await DefaultService.apiDockerContainersPost({
+                    requestBody: {
+                      action: "remove",
+                      containerId: container.id,
+                    },
+                  }).catch((err) => {
+                    toast.error(err.message);
+                  });
                 if (responseData.error) {
                   setTakingAction(false);
                   toast.error(responseData.message);

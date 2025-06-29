@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
+import { DockerConfig } from '@/gingerJs_api_client';
 
 const steps = [
   {
@@ -30,14 +31,14 @@ export const ContainerRunnerUpdate = ({
   data,
 }: {
   data: Container;
-  onSubmitHandler: (data: ContainerRunConfig) => Promise<void>;
+  onSubmitHandler: (data: DockerConfig) => Promise<void>;
   submitting: boolean;
   setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const [activeTab,setActiveTab] = useState(steps[0].id);
   const { stats, loading: statsLoading } = useContainerStats(data.id);
 
-  const form = useForm<ContainerRunConfig>({
+  const form = useForm<DockerConfig>({
     defaultValues: {
       image: data.image,
       memory: data.host_config.Memory ? formatBytesForForm(data.host_config.Memory) : 
@@ -52,7 +53,7 @@ export const ContainerRunnerUpdate = ({
     formState: { errors },
   } = form;
 
-  const onSubmit = async(formData: ContainerRunConfig) => {
+  const onSubmit = async(formData: DockerConfig) => {
     try {
       if(submitting) return;
       setSubmitting(true);

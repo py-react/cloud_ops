@@ -12,6 +12,7 @@ export type ServiceInfo = {
 	externalIP: string;
 	age: string;
 	ports: Array<Record<string, unknown>>;
+	replicasets?: Array<kubernertes__flow__v2__index__DeploymentInfo>;
 	deployments?: Array<kubernertes__flow__v2__index__DeploymentInfo>;
 	daemonsets?: Array<DaemonSetInfo>;
 	statefulsets?: Array<StatefulSetInfo>;

@@ -7,7 +7,7 @@ export type PodInfo = {
 	restarts: number;
 	age: string;
 	ip: string | null;
-	node: string;
+	node: string | null;
 	resources: Record<string, Record<string, string>>;
 };
 
