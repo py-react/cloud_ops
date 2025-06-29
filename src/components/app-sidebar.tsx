@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/sidebar";
 import CustomLink from "@/libs/Link";
 import { ShuffleIcon } from "@radix-ui/react-icons";
+import { NamespaceContext } from "./kubernetes/contextProvider/NamespaceContext";
 
 export type MenuItem = string;
 
@@ -70,7 +71,11 @@ function SidebarToggle() {
   );
 }
 
-// Menu items.
+
+export function AppSidebar({ ...props }: AppSidebarProps) {
+  const {selectedNamespace} = React.useContext(NamespaceContext)
+
+  // Menu items.
 const items = {
   header: {
     title: "Dashboard",
@@ -145,52 +150,52 @@ const items = {
           items: [
             {
               title: "Resources",
-              url: "/namespaced/resources",
+              url: `/${selectedNamespace}/resources`,
               icon: ListIcon,
             },
             // {
             //   title: "Flow",
-            //   url: "/namespaced/flow",
+            //   url: `/${selectedNamespace}/flow`,
             //   icon: Share2Icon,
             // },
             {
               title: "Deployment",
-              url: "/namespaced/deployments",
+              url: `/${selectedNamespace}/deployments`,
               icon: RocketIcon,
             },
             {
               title: "Config Map",
-              url: "/namespaced/configmaps",
+              url: `/${selectedNamespace}/configmaps`,
               icon: ShieldIcon,
             },
             {
               title: "Pods",
-              url: "/namespaced/pods",
+              url: `/${selectedNamespace}/pods`,
               icon: BoxIcon,
             },
             {
               title: "Secrets",
-              url: "/namespaced/secrets",
+              url: `/${selectedNamespace}/secrets`,
               icon: FileKeyIcon,
             },
             {
               title: "Services",
-              url: "/namespaced/services",
+              url: `/${selectedNamespace}/services`,
               icon: NetworkIcon,
             },
             {
               title: "Ingress",
-              url: "/namespaced/ingresses",
+              url: `/${selectedNamespace}/ingresses`,
               icon: Globe,
             },
             // {
             //   title: "certificate",
-            //   url: "/namespaced/certificates",
+            //   url: `/${selectedNamespace}/certificates`,
             //   icon: Certificate,
             // },
             // {
             //   title: "issuer",
-            //   url: "/namespaced/issuers",
+            //   url: `/${selectedNamespace}/issuers`,
             //   icon: HandCoinsIcon,
             // },
           ],
@@ -283,7 +288,6 @@ const items = {
   },
 };
 
-export function AppSidebar({ ...props }: AppSidebarProps) {
   return (
     <>
       <Sidebar {...props}>

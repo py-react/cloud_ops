@@ -23,6 +23,7 @@ import yaml from "js-yaml"
 import { ResourceFlow } from "@/components/kubernetes/DeploymentOverview";
 import DeploymentDetails from "@/components/kubernetes/quick-view-resources/details/deployment";
 import { useParams } from "react-router-dom";
+import useNavigate from "@/libs/navigate";
 
 // Define types for better type safety
 interface DeploymentItem {
@@ -450,7 +451,8 @@ export  function Page(){
 }
 
 export default function DeploymentsPage() {
-  const {type} = useParams()
+  const navigate = useNavigate()
+  const {namespace,type} = useParams()
   const { selectedNamespace } = useContext(NamespaceContext);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentToEdit, setCurrentToEdit] = useState<any>(null);
@@ -522,9 +524,7 @@ export default function DeploymentsPage() {
     }) || [];
 
   const handleViewDetails = (deployment: any) => {
-    setCurrentDeployment(deployment.fullData);
-    setCurrentStep('overview');
-    setShowDetailsWizard(true);
+    navigate(`/orchestration/kubernetes/${namespace}/deployments/${type}/${deployment.name}`)
   };
 
   const sections = [

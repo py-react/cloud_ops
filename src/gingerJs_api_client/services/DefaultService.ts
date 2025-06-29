@@ -166,7 +166,9 @@ export type TDataApiKubernertesResourceQuotaGet = {
                 namespace?: string | null
             }
 export type TDataApiKubernertesDeploymentsGet = {
-                namespace: string
+                deploymentName?: string | null
+namespace: string
+resourceType?: string | null
             }
 export type TDataApiKubernertesFlowV1Get = {
                 namespace: string
@@ -1083,18 +1085,21 @@ namespace,
 	}
 
 	/**
+	 * FastAPI endpoint to get comprehensive namespace information with optional deployment filtering
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
 	public static apiKubernertesDeploymentsGet(data: TDataApiKubernertesDeploymentsGet): CancelablePromise<unknown> {
 		const {
+deploymentName,
 namespace,
+resourceType,
 } = data;
 		return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/kubernertes/deployments',
 			query: {
-				namespace
+				namespace, deployment_name: deploymentName, resource_type: resourceType
 			},
 			errors: {
 				422: `Validation Error`,

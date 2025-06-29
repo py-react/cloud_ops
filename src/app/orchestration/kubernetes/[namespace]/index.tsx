@@ -1,0 +1,288 @@
+
+
+
+import React, { useCallback, useContext, useEffect, useState } from "react";
+import useKubernertesResources from "@/hooks/use-resource";
+import {
+  Globe,
+  Share2Icon,
+  RocketIcon,
+  BoxIcon,
+  FileKeyIcon,
+  NetworkIcon,
+  ShieldIcon,
+  BadgeIcon as Certificate,
+  HandCoinsIcon,
+  Plus,
+} from "lucide-react";
+import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
+import { DefaultService } from "@/gingerJs_api_client";
+import Events from "@/components/kubernetes/resources/events";
+import ClusterInfo from "@/components/kubernetes/dashboard/clusterInfo";
+import ClusterMetrics from "@/components/kubernetes/dashboard/clusterMatrics";
+import RouteDescription from "@/components/route-description";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import useNavigate from "@/libs/navigate";
+import { Button } from "@/components/ui/button";
+import ApplyResourceDialog from '@/components/kubernetes/applyResource/ApplyResourceDialog';
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
+import { useParams } from "react-router-dom";
+
+const shortcutToResources = {
+  deployment: {
+    id: "deployments",
+    title: "Deployments",
+    icon: <RocketIcon size={20} color="white" />,
+    color: "bg-blue-500",
+  },
+  pod: {
+    id: "pods",
+    title: "Pods",
+    icon: <BoxIcon size={20} color="white" />,
+    color: "bg-green-500",
+  },
+  configmap: {
+    id: "configmaps",
+    title: "ConfigMaps",
+    icon: <ShieldIcon size={20} color="white" />,
+    color: "bg-indigo-500",
+  },
+  secret: {
+    id: "secrets",
+    title: "Secrets",
+    icon: <FileKeyIcon size={20} color="white" />,
+    color: "bg-purple-500",
+  },
+  service: {
+    id: "services",
+    title: "Services",
+    icon: <NetworkIcon size={20} color="white" />,
+    color: "bg-orange-500",
+  },
+  ingress: {
+    id: "ingresses",
+    title: "Ingress",
+    icon: <Globe size={20} color="white" />,
+    color: "bg-yellow-500",
+  },
+  certificate: {
+    id: "certificates",
+    title: "Certificates",
+    icon: <Certificate size={20} color="white" />,
+    color: "bg-teal-500",
+  },
+  issuer: {
+    id: "issuers",
+    title: "Issuers",
+    icon: <HandCoinsIcon size={20} color="white" />,
+    color: "bg-red-500",
+  },
+};
+
+function Kubernetes() {
+  const navigate = useNavigate()
+  const [showApplyResouceFormm,setShowApplyResourceForm] = useState(false)
+  const [resources, setResources] = useState([]);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [clusterInfo, setCLusterInfo] = useState({});
+  const [isLoadingClusterInfo, setIsLoadingClusterInfo] = useState(true);
+  const [clusterInfoError, setClusterInfoError] = useState("");
+
+  const [clusterMettrics, setCLusterMetrics] = useState({});
+  const [isLoadingClusterMetrics, setIsLoadingClusterMetrics] = useState(true);
+  const [clusterMetricsError, setClusterMetricsError] = useState("");
+
+  const {namespace} = useParams()
+
+  const {
+    error: recentEventsError,
+    resource: recentEvents,
+    isLoading: isRecentEventsLoading,
+  } = useKubernertesResources({
+    nameSpace: null,
+    type: "events",
+  });
+
+  const fetchClusterInfo = useCallback(async () => {
+    setIsLoadingClusterInfo(true);
+    const response = await DefaultService.apiKubernertesClusterGet().catch(
+      (err) => {
+        setClusterInfoError("Unable to fetch cluster info");
+      }
+    );
+    if (response.status != "error") {
+      setCLusterInfo(response.data);
+      setIsLoadingClusterInfo(false);
+    }
+  }, []);
+
+  const fetchClusterMetrics = useCallback(async () => {
+    setIsLoadingClusterMetrics(true);
+    const response = await DefaultService.apiKubernertesClusterMetricsGet().catch(
+      (err) => {
+        setClusterMetricsError("Unable to fetch cluster info");
+      }
+    );
+    if (response.status != "error") {
+      setCLusterMetrics(response.data);
+      setIsLoadingClusterMetrics(false);
+    }
+  }, []);
+
+  const fetchShortcutToResourcesData = useCallback(async () => {
+    setIsLoading(true);
+    const response = await DefaultService.apiKubernertesResourcesGet({
+      scope: null,
+      resources: Object.keys(shortcutToResources).join(","),
+    }).catch((err) => {
+      setError("Unable to fetch ResourceData");
+
+    });
+    setResources(response as []);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchShortcutToResourcesData();
+    fetchClusterInfo();
+    fetchClusterMetrics()
+  }, []);
+
+  return (
+    <div>
+      <ApplyResourceDialog open={showApplyResouceFormm} onClose={() => setShowApplyResourceForm(false)} />
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Kubernetes</h1>
+      <div className="space-y-6">
+        <RouteDescription
+          title={
+            <div className="flex items-center justify-between">
+              <h2>Dashboard</h2>
+              <div className="flex items-center gap-2">
+                
+                <Button
+                  variant={"outline"}
+                  className=""
+                  onClick={() => {
+                    navigate(`/orchestration/kubernetes/${namespace}/flow`);
+                  }}
+                >
+                  <Share2Icon className="mr-2 h-4 w-4" />
+                  View Cluster Flow
+                </Button>
+                <Button
+                  className=""
+                  onClick={()=>{
+                    setShowApplyResourceForm(true)
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Apply Resource file
+                </Button>
+              </div>
+            </div>
+          }
+          shortDescription="Welcome to your Kubernetes Dashboard. Monitor and manage your cluster resources from this central hub."
+          description="Get an overview of your cluster health, resource utilization, and running workloads. Use the navigation on the left to access specific resource types like Pods, Services, Deployments, and more."
+        />
+        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200">
+          <CardHeader>
+            <CardTitle>Quick Links</CardTitle>
+            <CardDescription>
+              Quickly navigate to your most used resource
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="shadow-none">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {(isLoading || error) && (
+                <>
+                  {Object.values(shortcutToResources).map((item) => {
+                    return (
+                      <ResourceCard
+                        key={item.id}
+                        title={item.title}
+                        count={0}
+                        color={item.color}
+                        icon={item.icon}
+                        onClick={() => {}}
+                        isLoading={isLoading}
+                        error={!!error}
+                      />
+                    );
+                  })}
+                </>
+              )}
+              {!isLoading && !error && (
+                <>
+                  {resources?.map((resource: Record<string, any>) => (
+                    <ResourceCard
+                      key={resource.kind}
+                      title={
+                        shortcutToResources[
+                          resource.kind.toLowerCase() as keyof typeof shortcutToResources
+                        ].title
+                      }
+                      count={resource.count}
+                      icon={
+                        shortcutToResources[
+                          resource.kind.toLowerCase() as keyof typeof shortcutToResources
+                        ].icon
+                      }
+                      color={
+                        shortcutToResources[
+                          resource.kind.toLowerCase() as keyof typeof shortcutToResources
+                        ].color
+                      }
+                      onClick={() => {
+                        const resourceType =
+                          shortcutToResources[
+                            resource.kind.toLowerCase() as keyof typeof shortcutToResources
+                          ].id;
+                        navigate(
+                          `/orchestration/kubernetes/${namespace}/${resourceType}`
+                        );
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="col-span-2 grid gap-6">
+            <ClusterInfo
+              isLoading={isLoadingClusterInfo}
+              error={clusterInfoError}
+              nodesCount={clusterInfo?.nodes_count || 0}
+              podsCount={clusterInfo?.pods_count || 0}
+              runningPods={clusterInfo?.running_pods || 0}
+              namespacesCount={clusterInfo?.namespaces_count || 0}
+            />
+            <Events
+              events={recentEvents}
+              isLoading={isRecentEventsLoading}
+              error={recentEventsError || ""}
+            />
+          </div>
+          <div className="col-span-1">
+            <ClusterMetrics
+              isLoading={isLoadingClusterMetrics}
+              error={clusterMetricsError}
+              usage={{
+                cpu: clusterMettrics?.usage?.cpu?.percentage,
+                memory: clusterMettrics?.usage?.memory?.percentage,
+                disk: clusterMettrics?.usage?.disk?.percentage,
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Kubernetes;
+
+

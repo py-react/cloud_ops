@@ -1,5 +1,7 @@
 import { DefaultService } from "@/gingerJs_api_client";
+import useNavigate from "@/libs/navigate";
 import React, { createContext, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 interface INamespaceContext {
@@ -25,10 +27,12 @@ export const NamespaceContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const navigate = useNavigate()
+  const {namespace} = useParams()
   const [namespaces, setNamespaces] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedNamespace, setSelectedNamespace] = useState<string>("default");
+  const [selectedNamespace, setSelectedNamespace] = useState<string>(namespace || "default");
 
   const fetchNamespaces = async () => {
     setIsLoading(true);
@@ -65,7 +69,16 @@ export const NamespaceContextProvider = ({
         namespaces,
         isLoading,
         fetchNamespaces,
-        setSelectedNamespace,
+        setSelectedNamespace:(namespace)=>{
+          const currentPath = window.location.pathname;
+          const pathSegments = currentPath.split('/');
+          const namespaceIndex = pathSegments.findIndex(segment => segment === selectedNamespace);
+          if (namespaceIndex !== -1) {
+            pathSegments[namespaceIndex] = namespace as string;
+            navigate(pathSegments.join('/'));
+            setSelectedNamespace(namespace);
+          }
+        },
         selectedNamespace,
         error,
       }}

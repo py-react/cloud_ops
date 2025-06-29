@@ -1730,6 +1730,7 @@
     "/api/kubernertes/deployments": {
       "get": {
         "summary": "",
+        "description": "FastAPI endpoint to get comprehensive namespace information with optional deployment filtering",
         "operationId": "_api_kubernertes_deployments_get",
         "parameters": [
           {
@@ -1739,6 +1740,38 @@
             "schema": {
               "type": "string",
               "title": "Namespace"
+            }
+          },
+          {
+            "name": "deployment_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Deployment Name"
+            }
+          },
+          {
+            "name": "resource_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resource Type"
             }
           }
         ],
@@ -2988,10 +3021,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced": {
+    "/orchestration/kubernetes/{namespace}": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_get",
+        "operationId": "_orchestration_kubernetes__namespace__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3006,10 +3039,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/configmaps": {
+    "/orchestration/kubernetes/{namespace}/configmaps": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_configmaps_get",
+        "operationId": "_orchestration_kubernetes__namespace__configmaps_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3024,10 +3057,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/certificate": {
+    "/orchestration/kubernetes/{namespace}/certificate": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_certificate_get",
+        "operationId": "_orchestration_kubernetes__namespace__certificate_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3042,10 +3075,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/secrets": {
+    "/orchestration/kubernetes/{namespace}/secrets": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_secrets_get",
+        "operationId": "_orchestration_kubernetes__namespace__secrets_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3060,10 +3093,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/resources": {
+    "/orchestration/kubernetes/{namespace}/resources": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_resources_get",
+        "operationId": "_orchestration_kubernetes__namespace__resources_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3078,10 +3111,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/resources/{resourceType}": {
+    "/orchestration/kubernetes/{namespace}/resources/{resourceType}": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_resources__resourceType__get",
+        "operationId": "_orchestration_kubernetes__namespace__resources__resourceType__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3096,10 +3129,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/namespace": {
+    "/orchestration/kubernetes/{namespace}/namespace": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_namespace_get",
+        "operationId": "_orchestration_kubernetes__namespace__namespace_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3114,10 +3147,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/ingresses": {
+    "/orchestration/kubernetes/{namespace}/ingresses": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_ingresses_get",
+        "operationId": "_orchestration_kubernetes__namespace__ingresses_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3132,10 +3165,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/pods": {
+    "/orchestration/kubernetes/{namespace}/pods": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_pods_get",
+        "operationId": "_orchestration_kubernetes__namespace__pods_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3150,10 +3183,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/issuers": {
+    "/orchestration/kubernetes/{namespace}/issuers": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_issuers_get",
+        "operationId": "_orchestration_kubernetes__namespace__issuers_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3168,10 +3201,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/services": {
+    "/orchestration/kubernetes/{namespace}/services": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_services_get",
+        "operationId": "_orchestration_kubernetes__namespace__services_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3186,10 +3219,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/issuer": {
+    "/orchestration/kubernetes/{namespace}/issuer": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_issuer_get",
+        "operationId": "_orchestration_kubernetes__namespace__issuer_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3204,10 +3237,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/deployments": {
+    "/orchestration/kubernetes/{namespace}/deployments": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_deployments_get",
+        "operationId": "_orchestration_kubernetes__namespace__deployments_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3222,10 +3255,10 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/deployments/{type}": {
+    "/orchestration/kubernetes/{namespace}/deployments/{type}": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_deployments__type__get",
+        "operationId": "_orchestration_kubernetes__namespace__deployments__type__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3240,10 +3273,28 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/flow": {
+    "/orchestration/kubernetes/{namespace}/deployments/{type}/{name}": {
       "get": {
         "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_flow_get",
+        "operationId": "_orchestration_kubernetes__namespace__deployments__type___name__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orchestration/kubernetes/{namespace}/flow": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes__namespace__flow_get",
         "responses": {
           "200": {
             "description": "Successful Response",

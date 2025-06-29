@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import RouteDescription from "@/components/route-description";
 import { Button } from "@/components/ui/button";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
+import { useParams } from "react-router-dom";
 
 export interface ResourceInfo {
   name: string;
@@ -25,7 +26,7 @@ export interface ResourceInfo {
 
 export default function KubernetesResourcesPage() {
   const navigate = useNavigate();
-  const {setSelectedNamespace} = useContext(NamespaceContext)
+  const {namespace} = useParams()
   const [searchTerm, setSearchTerm] = useState("");
   const [resources, setResources] = useState<ResourceInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,12 +55,12 @@ export default function KubernetesResourcesPage() {
 
   const handleQuickViewMatchResourceSelect = (resourceType: string)=>{
     navigate(
-      `/orchestration/kubernetes/namespaced/${resourceType.toLowerCase()}`
+      `/orchestration/kubernetes/${namespace}/${resourceType.toLowerCase()}`
     );
   }
   const handleAnyDeploymentsSelect = (resourceType: string)=>{
     navigate(
-      `/orchestration/kubernetes/namespaced/deployments/${resourceType.toLowerCase()}`
+      `/orchestration/kubernetes/${namespace}/deployments/${resourceType.toLowerCase()}`
     );
   }
 
@@ -88,7 +89,7 @@ export default function KubernetesResourcesPage() {
       }
     } else {
       navigate(
-        `/orchestration/kubernetes/namespaced/resources/${normalizedType}`
+        `/orchestration/kubernetes/${namespace}/resources/${normalizedType}`
       );
     }
   };

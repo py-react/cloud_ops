@@ -1,781 +1,874 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs-v2';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Circle, 
-  Server, 
-  Package, 
+import React, { useState } from "react";
+import {
+  Bot,
+  Activity,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Layers,
+  Server,
+  Network,
+  Globe,
   HardDrive,
   FileText,
-  Activity,
-  Clock,
-  Settings,
-  Network,
-  Database
-} from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+  Shield,
+  Sparkles,
+  TrendingUp,
+  Zap,
+  ChevronDown,
+  ChevronRight,
+  Container,
+  Database,
+  Key,
+  Lock,
+  Tag,
+  ExternalLink,
+  Play,
+  Pause,
+  RotateCcw,
+} from "lucide-react";
+import { MetricSkeletonLoader, SkeletonLoader, TableSkeletonLoader } from "./loader";
 
-// TypeScript interfaces for the API response
-interface ContainerInfo {
-  name: string;
-  image: string;
-  ports: Array<{ container_port: number; protocol: string }>;
-  env_vars: Array<{ name: string; value?: string; source?: string; secret_name?: string; configmap_name?: string }>;
-  resources: { requests: Record<string, string>; limits: Record<string, string> };
-  volume_mounts: Array<{ name: string; mount_path: string }>;
-}
-
-interface VolumeInfo {
-  name: string;
-  type?: string;
-  secret_name?: string;
-  configmap_name?: string;
-  claim_name?: string;
-  host_path?: string;
-}
-
-interface PodInfo {
-  pod_name: string;
+interface StatusBadgeProps {
   status: string;
-  node_name?: string;
-  creation_timestamp?: string;
-  labels?: Record<string, string>;
-  annotations?: Record<string, string>;
-  containers: ContainerInfo[];
-  volumes: VolumeInfo[];
-  secrets: string[];
-  configmaps: string[];
-  persistent_volumes: string[];
-  events: Array<{
-    type: string;
-    reason: string;
-    message: string;
-    count: number;
-    first_timestamp?: string;
-    last_timestamp?: string;
-  }>;
-  restart_count: number;
-  ready_containers: number;
-  total_containers: number;
+  className?: string;
 }
 
-interface ReplicaSetInfo {
-  replicaset_name: string;
-  replicas: number;
-  available_replicas: number;
-  pods: PodInfo[];
-  status_color: string;
-  creation_timestamp?: string;
-  labels?: Record<string, string>;
-  annotations?: Record<string, string>;
-}
-
-interface DeploymentInfo {
-  deployment_name: string;
-  replicasets: ReplicaSetInfo[];
-  secrets: string[];
-  persistent_volumes: string[];
-  configmaps: string[];
-  status_color: string;
-  events: Array<{
-    type: string;
-    reason: string;
-    message: string;
-    count: number;
-    first_timestamp?: string;
-    last_timestamp?: string;
-    involved_object?: {
-      kind: string;
-      name: string;
-      uid: string;
-    };
-  }>;
-  creation_timestamp?: string;
-  labels?: Record<string, string>;
-  annotations?: Record<string, string>;
-  replicas: number;
-  strategy?: {
-    type: string;
-    max_surge?: string;
-    max_unavailable?: string | number;
-  };
-}
-
-interface ServiceInfo {
-  service_name: string;
-  type: string;
-  cluster_ip: string;
-  ports: Array<{ port: number; target_port: number }>;
-  selector?: Record<string, string>;
-  deployments: DeploymentInfo[];
-  ingresses: any[];
-}
-
-interface SecretInfo {
-  name: string;
-  type?: string;
-  creation_timestamp?: string;
-  labels?: Record<string, string>;
-  annotations?: Record<string, string>;
-  data_keys: string[];
-  string_data_keys: string[];
-  error?: string;
-}
-
-interface ConfigMapInfo {
-  name: string;
-  creation_timestamp?: string;
-  labels?: Record<string, string>;
-  annotations?: Record<string, string>;
-  data_keys: string[];
-  binary_data_keys: string[];
-  error?: string;
-}
-
-interface PersistentVolumeInfo {
-  name: string;
-  status?: string;
-  access_modes?: string[];
-  storage_class_name?: string;
-  capacity?: string;
-  volume_name?: string;
-  creation_timestamp?: string;
-  labels?: Record<string, string>;
-  annotations?: Record<string, string>;
-  error?: string;
-}
-
-interface DeploymentResponse {
-  namespace: string;
-  deployment_name?: string;
-  ingresses: any[];
-  services: ServiceInfo[];
-  deployments: DeploymentInfo[];
-  secrets: SecretInfo[];
-  configmaps: ConfigMapInfo[];
-  persistent_volumes: PersistentVolumeInfo[];
-  pod_status: string;
-  total_expected_replicas: number;
-  available_replicas: number;
-}
-
-interface DeploymentDetailsProps {
-  namespace: string;
-  deploymentName: string;
-}
-
-const DeploymentDetails: React.FC<DeploymentDetailsProps> = ({ namespace, deploymentName }) => {
-  const [data, setData] = useState<DeploymentResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedPods, setExpandedPods] = useState<Set<string>>(new Set());
-  const [expandedContainers, setExpandedContainers] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    const fetchDeploymentData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await fetch(
-          `/api/kubernertes/deployments?namespace=${encodeURIComponent(namespace)}&deployment_name=${encodeURIComponent(deploymentName)}`
-        );
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        setData(result.items);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch deployment data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDeploymentData();
-  }, [namespace, deploymentName]);
-
-  const togglePodExpansion = (podName: string) => {
-    const newExpanded = new Set(expandedPods);
-    if (newExpanded.has(podName)) {
-      newExpanded.delete(podName);
-    } else {
-      newExpanded.add(podName);
-    }
-    setExpandedPods(newExpanded);
-  };
-
-  const toggleContainerExpansion = (containerKey: string) => {
-    const newExpanded = new Set(expandedContainers);
-    if (newExpanded.has(containerKey)) {
-      newExpanded.delete(containerKey);
-    } else {
-      newExpanded.add(containerKey);
-    }
-    setExpandedContainers(newExpanded);
-  };
-
+const StatusBadge: React.FC<StatusBadgeProps> = ({
+  status,
+  className = "",
+}) => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'green':
-      case 'running':
-        return 'bg-green-500';
-      case 'yellow':
-      case 'pending':
-        return 'bg-yellow-500';
-      case 'red':
-      case 'failed':
-      case 'error':
-        return 'bg-red-500';
+      case "running":
+        return "bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm";
+      case "pending":
+        return "bg-amber-50 text-amber-700 border border-amber-200 shadow-sm";
+      case "failed":
+      case "error":
+        return "bg-red-50 text-red-700 border border-red-200 shadow-sm";
+      case "bound":
+        return "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm";
+      case "warning":
+        return "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm";
+      case "healthy":
+        return "bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm";
       default:
-        return 'bg-gray-500';
+        return "bg-slate-50 text-slate-700 border border-slate-200 shadow-sm";
     }
   };
 
-  const formatTimestamp = (timestamp?: string) => {
-    if (!timestamp) return 'N/A';
-    return new Date(timestamp).toLocaleString();
-  };
-
-  const formatResources = (resources: { requests: Record<string, string>; limits: Record<string, string> }) => {
-    const requests = Object.entries(resources.requests).map(([key, value]) => `${key}: ${value}`).join(', ');
-    const limits = Object.entries(resources.limits).map(([key, value]) => `${key}: ${value}`).join(', ');
-    return { requests: requests || 'None', limits: limits || 'None' };
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="border-red-200 bg-red-50">
-        <CardContent className="pt-6">
-          <div className="flex items-center space-x-2 text-red-600">
-            <Circle className="h-5 w-5" />
-            <span>Error loading deployment: {error}</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!data) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center text-gray-500">No deployment data found</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Get deployment data from services or direct deployments
-  const deploymentData = data.services?.[0]?.deployments?.[0] || data.deployments?.[0];
-  const serviceData = data.services?.[0];
-
-  if (!deploymentData) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center text-gray-500">
-            Deployment "{deploymentName}" not found in namespace "{namespace}"
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">{deploymentData.deployment_name}</h2>
-          <p className="text-gray-600">Namespace: {data.namespace}</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge 
-            variant="outline" 
-            className={`border-2 ${getStatusColor(deploymentData.status_color)}`}
-          >
-            {deploymentData.status_color.toUpperCase()}
-          </Badge>
-          <Badge variant="secondary">
-            {data.available_replicas}/{data.total_expected_replicas} Replicas
-          </Badge>
-        </div>
-      </div>
-
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="pods">Pods</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-          <TabsTrigger value="events">Events</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          {/* Deployment Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="h-5 w-5" />
-                <span>Deployment Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Replicas</label>
-                  <p className="text-lg">{deploymentData.replicas}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Strategy</label>
-                  <p className="text-lg">{deploymentData.strategy?.type || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Created</label>
-                  <p className="text-sm">{formatTimestamp(deploymentData.creation_timestamp)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Status</label>
-                  <Badge className={getStatusColor(deploymentData.status_color)}>
-                    {deploymentData.status_color}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Service Info */}
-          {serviceData && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Network className="h-5 w-5" />
-                  <span>Service Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Service Name</label>
-                    <p className="text-lg">{serviceData.service_name}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Type</label>
-                    <p className="text-lg">{serviceData.type}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Cluster IP</label>
-                    <p className="text-lg font-mono">{serviceData.cluster_ip}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Ports</label>
-                    <div className="space-y-1">
-                      {serviceData.ports.map((port, index) => (
-                        <p key={index} className="text-sm">
-                          {port.port} → {port.target_port}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* ReplicaSet Info */}
-          {deploymentData.replicasets.map((rs, rsIndex) => (
-            <Card key={rs.replicaset_name}>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Server className="h-5 w-5" />
-                  <span>ReplicaSet: {rs.replicaset_name}</span>
-                  <Badge className={getStatusColor(rs.status_color)}>
-                    {rs.status_color}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Replicas</label>
-                    <p className="text-lg">{rs.available_replicas}/{rs.replicas}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Pods</label>
-                    <p className="text-lg">{rs.pods.length}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Created</label>
-                    <p className="text-sm">{formatTimestamp(rs.creation_timestamp)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="pods" className="space-y-4">
-          {deploymentData.replicasets.map((rs) =>
-            rs.pods.map((pod) => (
-              <Card key={pod.pod_name}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center space-x-2">
-                      <Package className="h-5 w-5" />
-                      <span>{pod.pod_name}</span>
-                      <Badge className={getStatusColor(pod.status)}>
-                        {pod.status}
-                      </Badge>
-                    </CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => togglePodExpansion(pod.pod_name)}
-                    >
-                      {expandedPods.has(pod.pod_name) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Node</label>
-                      <p className="text-sm">{pod.node_name || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Containers</label>
-                      <p className="text-sm">{pod.ready_containers}/{pod.total_containers}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Restarts</label>
-                      <p className="text-sm">{pod.restart_count}</p>
-                    </div>
-                  </div>
-
-                  {expandedPods.has(pod.pod_name) && (
-                    <div className="space-y-4 border-t pt-4">
-                      {/* Containers */}
-                      <div>
-                        <h4 className="font-medium mb-2">Containers</h4>
-                        <div className="space-y-2">
-                          {pod.containers.map((container, containerIndex) => {
-                            const containerKey = `${pod.pod_name}-${container.name}`;
-                            return (
-                              <Card key={container.name} className="border-l-4 border-blue-200">
-                                <CardHeader className="pb-2">
-                                  <div className="flex items-center justify-between">
-                                    <CardTitle className="text-sm flex items-center space-x-2">
-                                      <Activity className="h-4 w-4" />
-                                      <span>{container.name}</span>
-                                    </CardTitle>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => toggleContainerExpansion(containerKey)}
-                                    >
-                                      {expandedContainers.has(containerKey) ? (
-                                        <ChevronDown className="h-3 w-3" />
-                                      ) : (
-                                        <ChevronRight className="h-3 w-3" />
-                                      )}
-                                    </Button>
-                                  </div>
-                                </CardHeader>
-                                <CardContent className="pt-0">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="text-xs font-medium text-gray-500">Image</label>
-                                      <p className="text-xs font-mono">{container.image}</p>
-                                    </div>
-                                    <div>
-                                      <label className="text-xs font-medium text-gray-500">Ports</label>
-                                      <p className="text-xs">
-                                        {container.ports.length > 0
-                                          ? container.ports.map(p => `${p.container_port}(${p.protocol})`).join(', ')
-                                          : 'None'
-                                        }
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {expandedContainers.has(containerKey) && (
-                                    <div className="mt-4 space-y-3 border-t pt-3">
-                                      {/* Resources */}
-                                      <div>
-                                        <label className="text-xs font-medium text-gray-500">Resources</label>
-                                        <div className="text-xs space-y-1">
-                                          <p><strong>Requests:</strong> {formatResources(container.resources).requests}</p>
-                                          <p><strong>Limits:</strong> {formatResources(container.resources).limits}</p>
-                                        </div>
-                                      </div>
-
-                                      {/* Environment Variables */}
-                                      {container.env_vars.length > 0 && (
-                                        <div>
-                                          <label className="text-xs font-medium text-gray-500">Environment Variables</label>
-                                          <div className="text-xs space-y-1">
-                                            {container.env_vars.map((env, envIndex) => (
-                                              <div key={envIndex} className="flex justify-between">
-                                                <span className="font-mono">{env.name}</span>
-                                                <span className="text-gray-500">
-                                                  {env.value || `${env.source}: ${env.secret_name || env.configmap_name}`}
-                                                </span>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {/* Volume Mounts */}
-                                      {container.volume_mounts.length > 0 && (
-                                        <div>
-                                          <label className="text-xs font-medium text-gray-500">Volume Mounts</label>
-                                          <div className="text-xs space-y-1">
-                                            {container.volume_mounts.map((vm, vmIndex) => (
-                                              <div key={vmIndex} className="flex justify-between">
-                                                <span>{vm.name}</span>
-                                                <span className="text-gray-500">{vm.mount_path}</span>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </CardContent>
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Volumes */}
-                      {pod.volumes.length > 0 && (
-                        <div>
-                          <h4 className="font-medium mb-2">Volumes</h4>
-                          <div className="grid grid-cols-2 gap-2">
-                            {pod.volumes.map((volume, volumeIndex) => (
-                              <div key={volumeIndex} className="text-sm p-2 bg-gray-50 rounded">
-                                <div className="font-medium">{volume.name}</div>
-                                <div className="text-gray-500">{volume.type || 'N/A'}</div>
-                                {volume.configmap_name && (
-                                  <div className="text-blue-600">ConfigMap: {volume.configmap_name}</div>
-                                )}
-                                {volume.secret_name && (
-                                  <div className="text-red-600">Secret: {volume.secret_name}</div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="resources" className="space-y-4">
-          {/* Secrets */}
-          {data.secrets.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5" />
-                  <span>Secrets ({data.secrets.length})</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {data.secrets.map((secret) => (
-                    <div key={secret.name} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <div>
-                        <div className="font-medium">{secret.name}</div>
-                        <div className="text-sm text-gray-500">{secret.type || 'N/A'}</div>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {secret.data_keys.length} keys
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* ConfigMaps */}
-          {data.configmaps.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5" />
-                  <span>ConfigMaps ({data.configmaps.length})</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {data.configmaps.map((configmap) => (
-                    <div key={configmap.name} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <div>
-                        <div className="font-medium">{configmap.name}</div>
-                        <div className="text-sm text-gray-500">
-                          Created: {formatTimestamp(configmap.creation_timestamp)}
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {configmap.data_keys.length} keys
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Persistent Volumes */}
-          {data.persistent_volumes.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <HardDrive className="h-5 w-5" />
-                  <span>Persistent Volumes ({data.persistent_volumes.length})</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {data.persistent_volumes.map((pvc) => (
-                    <div key={pvc.name} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <div>
-                        <div className="font-medium">{pvc.name}</div>
-                        <div className="text-sm text-gray-500">
-                          Status: {pvc.status || 'N/A'} | Class: {pvc.storage_class_name || 'N/A'}
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {pvc.capacity || 'N/A'}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {data.secrets.length === 0 && data.configmaps.length === 0 && data.persistent_volumes.length === 0 && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center text-gray-500">No resources found</div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="events" className="space-y-4">
-          {/* Deployment Events */}
-          {deploymentData.events.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Clock className="h-5 w-5" />
-                  <span>Deployment Events ({deploymentData.events.length})</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {deploymentData.events.map((event, index) => (
-                    <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded">
-                      <Circle className={`h-3 w-3 mt-1 ${getStatusColor(event.type)}`} />
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium">{event.reason}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {event.type}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">{event.message}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatTimestamp(event.last_timestamp)} (Count: {event.count})
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center text-gray-500">No events found</div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Pod Events */}
-          {deploymentData.replicasets.some(rs => rs.pods.some(pod => pod.events.length > 0)) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Clock className="h-5 w-5" />
-                  <span>Pod Events</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {deploymentData.replicasets.map((rs) =>
-                    rs.pods.map((pod) =>
-                      pod.events.length > 0 ? (
-                        <div key={pod.pod_name}>
-                          <h4 className="font-medium mb-2">{pod.pod_name}</h4>
-                          <div className="space-y-2">
-                            {pod.events.map((event, index) => (
-                              <div key={index} className="flex items-start space-x-3 p-2 bg-gray-50 rounded">
-                                <Circle className={`h-2 w-2 mt-1 ${getStatusColor(event.type)}`} />
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-sm font-medium">{event.reason}</span>
-                                    <Badge variant="outline" className="text-xs">
-                                      {event.type}
-                                    </Badge>
-                                  </div>
-                                  <p className="text-xs text-gray-600 mt-1">{event.message}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null
-                    )
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${status?getStatusColor(
+        status
+      ):status} ${className}`}
+    >
+      {status}
+    </span>
   );
 };
 
-export default DeploymentDetails;
+// AI Insights Component
+const AIInsights: React.FC = () => (
+  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 mb-8 rounded-xl">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center space-x-3">
+        <Bot className="h-6 w-6" />
+        <div>
+          <h3 className="text-lg font-semibold">AI Insights</h3>
+          <p className="text-sm text-indigo-100">Powered by machine learning</p>
+        </div>
+      </div>
+      <Sparkles className="h-5 w-5 animate-pulse" />
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
+        <div className="flex items-center space-x-2 mb-2">
+          <AlertCircle className="h-4 w-4 text-amber-300" />
+          <span className="text-sm font-medium">Storage Issue</span>
+        </div>
+        <p className="text-xs text-indigo-100">
+          Pod web-1 pending due to unbound PVC
+        </p>
+      </div>
+
+      <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
+        <div className="flex items-center space-x-2 mb-2">
+          <TrendingUp className="h-4 w-4 text-blue-300" />
+          <span className="text-sm font-medium">Scaling</span>
+        </div>
+        <p className="text-xs text-indigo-100">
+          Consider horizontal pod autoscaling
+        </p>
+      </div>
+
+      <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
+        <div className="flex items-center space-x-2 mb-2">
+          <Zap className="h-4 w-4 text-emerald-300" />
+          <span className="text-sm font-medium">Performance</span>
+        </div>
+        <p className="text-xs text-indigo-100">
+          Add CPU/memory limits for better scheduling
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// Container Status Icon
+const getContainerStatusIcon = (status: string, ready: boolean) => {
+  if (status === "Running" && ready) {
+    return <Play className="h-4 w-4 text-emerald-500" />;
+  } else if (status === "Running" && !ready) {
+    return <Pause className="h-4 w-4 text-amber-500" />;
+  } else {
+    return <RotateCcw className="h-4 w-4 text-slate-400" />;
+  }
+};
+
+// Pod Row Component
+const PodRow: React.FC<{ pod: any }> = ({ pod }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <>
+      <tr className="hover:bg-slate-50 transition-colors">
+        <td className="px-6 py-4">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center space-x-2 text-left"
+          >
+            {expanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+            <Server className="h-4 w-4 text-indigo-500" />
+            <span className="font-medium text-slate-900">{pod.pod_name}</span>
+          </button>
+        </td>
+        <td className="px-6 py-4">
+          <StatusBadge status={pod.status} />
+        </td>
+        <td className="px-6 py-4 text-sm text-slate-600">
+          {pod.node_name || (
+            <span className="text-amber-600">Not assigned</span>
+          )}
+        </td>
+        <td className="px-6 py-4 text-sm font-mono text-slate-600">
+          {pod.ip || <span className="text-slate-400">-</span>}
+        </td>
+        <td className="px-6 py-4 text-sm text-slate-600">{pod.age}</td>
+        <td className="px-6 py-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-slate-600">
+              {pod.containers.length}
+            </span>
+            <div className="flex space-x-1">
+              {pod.containers.map((container: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    backgroundColor:
+                      container.status === "Running" && container.ready
+                        ? "#10b981"
+                        : container.status === "Running"
+                        ? "#f59e0b"
+                        : "#6b7280",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </td>
+      </tr>
+
+      {expanded && (
+        <tr>
+          <td colSpan={6} className="px-6 py-6 bg-slate-50">
+            <div className="space-y-6">
+              {/* Containers - Enhanced with detailed view */}
+              <div>
+                <h4 className="flex items-center space-x-2 text-sm font-semibold text-slate-700 mb-4">
+                  <Container className="h-4 w-4 text-indigo-500" />
+                  <span>Containers ({pod.containers.length})</span>
+                </h4>
+                <div className="space-y-4">
+                  {pod.containers.map((container: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="bg-white rounded-lg border border-slate-200 overflow-hidden"
+                    >
+                      {/* Container Header */}
+                      <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            {getContainerStatusIcon(
+                              container.status,
+                              container.ready
+                            )}
+                            <div>
+                              <h5 className="font-medium text-slate-900">
+                                {container.name}
+                              </h5>
+                              <p className="text-xs text-slate-600 font-mono">
+                                {container.image}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <StatusBadge status={container.status} />
+                            {container.restart_count > 0 && (
+                              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-md font-medium">
+                                {container.restart_count} restarts
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Container Details */}
+                      <div className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Ports */}
+                          <div>
+                            <h6 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+                              Ports
+                            </h6>
+                            <div className="space-y-1">
+                              {container.ports.map(
+                                (port: any, portIdx: number) => (
+                                  <div
+                                    key={portIdx}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-mono">
+                                      {port.container_port}
+                                    </span>
+                                    <span className="text-xs text-slate-500">
+                                      {port.protocol}
+                                    </span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Resource Requests */}
+                          <div>
+                            <h6 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+                              Requests
+                            </h6>
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-600">CPU:</span>
+                                <span className="font-mono text-slate-900">
+                                  {container.resources?.requests?.cpu ||
+                                    "Not set"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-600">Memory:</span>
+                                <span className="font-mono text-slate-900">
+                                  {container.resources?.requests?.memory ||
+                                    "Not set"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Resource Limits */}
+                          <div>
+                            <h6 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+                              Limits
+                            </h6>
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-600">CPU:</span>
+                                <span className="font-mono text-slate-900">
+                                  {container.resources?.limits?.cpu ||
+                                    "Not set"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-slate-600">Memory:</span>
+                                <span className="font-mono text-slate-900">
+                                  {container.resources?.limits?.memory ||
+                                    "Not set"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* PVCs */}
+              {pod.related_pvcs && pod.related_pvcs.length > 0 && (
+                <div>
+                  <h4 className="flex items-center space-x-2 text-sm font-semibold text-slate-700 mb-3">
+                    <HardDrive className="h-4 w-4 text-purple-500" />
+                    <span>Persistent Volume Claims</span>
+                  </h4>
+                  <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                              Name
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                              Status
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                              Capacity
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                              Access Mode
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {pod.related_pvcs.map((pvc: any, idx: number) => (
+                            <tr key={idx}>
+                              <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                                {pvc.name}
+                              </td>
+                              <td className="px-4 py-3">
+                                <StatusBadge status={pvc.status} />
+                              </td>
+                              <td className="px-4 py-3 text-sm text-slate-600">
+                                {pvc.capacity || "Pending"}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-slate-600">
+                                {pvc.access_modes.join(", ")}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ConfigMaps */}
+              {pod.related_configmaps && pod.related_configmaps.length > 0 && (
+                <div>
+                  <h4 className="flex items-center space-x-2 text-sm font-semibold text-slate-700 mb-3">
+                    <FileText className="h-4 w-4 text-blue-500" />
+                    <span>ConfigMaps</span>
+                  </h4>
+                  <div className="space-y-3">
+                    {pod.related_configmaps.map((cm: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="bg-white rounded-lg border border-slate-200 p-4"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-medium text-slate-900">
+                            {cm.name}
+                          </span>
+                          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md">
+                            {Object.keys(cm.data || {}).length} keys
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.keys(cm.data || {})
+                            .slice(0, 4)
+                            .map((key: string) => (
+                              <span
+                                key={key}
+                                className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-md font-mono"
+                              >
+                                {key}
+                              </span>
+                            ))}
+                          {Object.keys(cm.data || {}).length > 4 && (
+                            <span className="text-xs text-slate-500">
+                              +{Object.keys(cm.data).length - 4} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Secrets */}
+              {pod.related_secrets && pod.related_secrets.length > 0 && (
+                <div>
+                  <h4 className="flex items-center space-x-2 text-sm font-semibold text-slate-700 mb-3">
+                    <Shield className="h-4 w-4 text-red-500" />
+                    <span>Secrets</span>
+                  </h4>
+                  <div className="space-y-3">
+                    {pod.related_secrets.map((secret: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="bg-white rounded-lg border border-slate-200 p-4"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-medium text-slate-900">
+                            {secret.name}
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-md">
+                              {secret.type}
+                            </span>
+                            <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-md">
+                              {Object.keys(secret.data || {}).length} keys
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.keys(secret.data || {}).map((key: string) => (
+                            <span
+                              key={key}
+                              className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-md font-mono"
+                            >
+                              {key}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+};
+
+function DeploymentDetailedInfo({ kubernetesData }) {
+  const {
+    deployment,
+    related_pods,
+    related_services,
+    related_ingresses,
+    related_events,
+    namespace,
+  } = kubernetesData || {};
+
+  const healthyPods = related_pods?.filter(
+    (pod) => pod.status === "Running"
+  ).length || 0;
+  const totalPods = related_pods?.length || 0;
+  const healthPercentage =
+    totalPods > 0 ? Math.round((healthyPods / totalPods) * 100) : 0;
+
+  return (
+    <div className="min-h-screen">
+      {/* Deployment Overview */}
+      {!kubernetesData ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-8">
+          <div className="animate-pulse">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-slate-200 rounded-xl"></div>
+                <div>
+                  <div className="h-6 w-32 bg-slate-200 rounded mb-2"></div>
+                  <div className="h-4 w-20 bg-slate-200 rounded"></div>
+                </div>
+              </div>
+              <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <MetricSkeletonLoader key={index} />
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <div className="h-4 w-24 bg-slate-200 rounded"></div>
+                <div className="h-4 w-16 bg-slate-200 rounded"></div>
+              </div>
+              <div className="w-full h-2 bg-slate-200 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-indigo-100 rounded-xl">
+                <Layers className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {deployment.deployment_name}
+                </h2>
+                <p className="text-sm text-slate-500">
+                  {deployment.resource_type}
+                </p>
+              </div>
+            </div>
+            <StatusBadge
+              status={
+                deployment.status_color === "yellow" ? "Warning" : "Healthy"
+              }
+            />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mx-auto mb-2">
+                <Server className="h-6 w-6 text-blue-600" />
+              </div>
+              <p className="text-2xl font-bold text-slate-900">
+                {deployment.replicas}
+              </p>
+              <p className="text-sm text-slate-500 font-medium">Desired</p>
+            </div>
+
+            <div className="text-center">
+              <div className="flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-xl mx-auto mb-2">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+              </div>
+              <p className="text-2xl font-bold text-slate-900">
+                {deployment.available_replicas}
+              </p>
+              <p className="text-sm text-slate-500 font-medium">Available</p>
+            </div>
+
+            <div className="text-center">
+              <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-xl mx-auto mb-2">
+                <Activity className="h-6 w-6 text-amber-600" />
+              </div>
+              <p className="text-2xl font-bold text-slate-900">
+                {healthPercentage}%
+              </p>
+              <p className="text-sm text-slate-500 font-medium">Health</p>
+            </div>
+
+            <div className="text-center">
+              <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-xl mx-auto mb-2">
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <p className="text-2xl font-bold text-slate-900">
+                {totalPods - healthyPods}
+              </p>
+              <p className="text-sm text-slate-500 font-medium">Issues</p>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between text-sm text-slate-600 mb-2">
+              <span>Replica Status</span>
+              <span>
+                {deployment.available_replicas}/{deployment.replicas} Ready
+              </span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full transition-all duration-700"
+                style={{
+                  width: `${
+                    (deployment.available_replicas / deployment.replicas) * 100
+                  }%`,
+                }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pods Table */}
+      <div className="bg-white rounded-xl border border-slate-200 mb-8 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <div className="flex items-center space-x-3">
+            <Server className="h-5 w-5 text-indigo-500" />
+            <h2 className="text-lg font-semibold text-slate-900">Pods</h2>
+            {!kubernetesData ? (
+              <SkeletonLoader className="w-8" />
+            ) : (
+              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
+                {related_pods.length}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {}
+
+        {!kubernetesData ? (
+          <div className="p-6">
+            <TableSkeletonLoader />
+          </div>
+        ) : related_pods && related_pods.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Node
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    IP
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Age
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Containers
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {related_pods.map((pod, index) => (
+                  <PodRow key={index} pod={pod} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-12 text-center text-slate-500">
+            <Server className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">No Pods Found</p>
+            <p className="text-sm">
+              No pods are currently running in this deployment.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Services and Ingress Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Services */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200">
+            <div className="flex items-center space-x-3">
+              <Network className="h-5 w-5 text-blue-500" />
+              <h2 className="text-lg font-semibold text-slate-900">Services</h2>
+              {!kubernetesData ? (
+                <SkeletonLoader className="w-8" />
+              ) : (
+                <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
+                  {related_services.length}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {!kubernetesData ? (
+            <div className="p-6">
+              <SkeletonLoader rows={3} height="h-16" />
+            </div>
+          ) : related_services && related_services.length > 0 ? (
+            <div className="p-6">
+              {related_services.map((service, index) => (
+                <div
+                  key={index}
+                  className="border-b border-slate-100 last:border-b-0 pb-4 last:pb-0 mb-4 last:mb-0"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-slate-900">
+                      {service.service_name}
+                    </h3>
+                    <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-medium">
+                      {service.type}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-slate-500">Cluster IP</p>
+                      <code className="text-slate-900 font-mono">
+                        {service.cluster_ip || "None"}
+                      </code>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">Ports</p>
+                      <div className="space-y-1">
+                        {service.ports.map((port, idx) => (
+                          <code
+                            key={idx}
+                            className="text-slate-900 font-mono block"
+                          >
+                            {port.port}:{port.target_port}
+                          </code>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 text-center text-slate-500">
+              <Network className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No Services</p>
+            </div>
+          )}
+        </div>
+
+        {/* Ingresses */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200">
+            <div className="flex items-center space-x-3">
+              <Globe className="h-5 w-5 text-emerald-500" />
+              <h2 className="text-lg font-semibold text-slate-900">
+                Ingresses
+              </h2>
+              {!kubernetesData ? (
+                <SkeletonLoader className="w-8" />
+              ) : (
+                <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
+                  {related_ingresses.length}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {!kubernetesData ? (
+            <div className="p-6">
+              <SkeletonLoader rows={2} height="h-16" />
+            </div>
+          ) : related_ingresses && related_ingresses.length > 0 ? (
+            <div className="p-6">
+              {related_ingresses.map((ingress, index) => (
+                <div
+                  key={index}
+                  className="border-b border-slate-100 last:border-b-0 pb-4 last:pb-0 mb-4 last:mb-0"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-slate-900">
+                      {ingress.ingress_name}
+                    </h3>
+                    <ExternalLink className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <p className="text-slate-500">Host</p>
+                      <code className="text-emerald-700 font-mono">
+                        {ingress.host}
+                      </code>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">Path</p>
+                      <code className="text-slate-900 font-mono">
+                        {ingress.path}
+                      </code>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 text-center text-slate-500">
+              <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No Ingresses</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Events */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <div className="flex items-center space-x-3">
+            <Clock className="h-5 w-5 text-amber-500" />
+            <h2 className="text-lg font-semibold text-slate-900">
+              Recent Events
+            </h2>
+            {!kubernetesData ? (
+              <SkeletonLoader className="w-8" />
+            ) : (
+              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
+                {related_events.length}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {!kubernetesData ? (
+          <div className="divide-y divide-slate-100">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <div key={index} className="p-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-5 h-5 bg-slate-200 rounded-full mt-1"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex justify-between">
+                      <SkeletonLoader className="w-32" />
+                      <SkeletonLoader className="w-12" />
+                    </div>
+                    <SkeletonLoader className="w-full" />
+                    <div className="flex justify-between">
+                      <SkeletonLoader className="w-24" />
+                      <SkeletonLoader className="w-32" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : related_events.length > 0 ? (
+          <div className="divide-y divide-slate-100">
+            {related_events.map((event, index) => (
+              <div
+                key={index}
+                className="p-6 hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 mt-1">
+                    {event.type.toLowerCase() === "warning" ? (
+                      <AlertCircle className="h-5 w-5 text-amber-500" />
+                    ) : (
+                      <CheckCircle2 className="h-5 w-5 text-blue-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-slate-900">
+                        {event.reason}
+                      </h4>
+                      <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-xs font-medium">
+                        {event.count}x
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-600 mb-2">
+                      {event.message}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>{event.source}</span>
+                      <span>
+                        {new Date(event.lastTimestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-12 text-center text-slate-500">
+            <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No Recent Events</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+export default DeploymentDetailedInfo;
