@@ -502,8 +502,8 @@ function DeploymentDetailedInfo({ kubernetesData }) {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
+          <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-indigo-100 rounded-xl">
                 <Layers className="h-6 w-6 text-indigo-600" />
@@ -524,7 +524,7 @@ function DeploymentDetailedInfo({ kubernetesData }) {
             />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-4">
             <div className="text-center">
               <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mx-auto mb-2">
                 <Server className="h-6 w-6 text-blue-600" />
@@ -566,7 +566,7 @@ function DeploymentDetailedInfo({ kubernetesData }) {
             </div>
           </div>
 
-          <div>
+          <div className="p-6">
             <div className="flex items-center justify-between text-sm text-slate-600 mb-2">
               <span>Replica Status</span>
               <span>
@@ -588,8 +588,8 @@ function DeploymentDetailedInfo({ kubernetesData }) {
       )}
 
       {/* Pods Table */}
-      <div className="bg-white rounded-xl border border-slate-200 mb-8 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200">
+      <div className="bg-white rounded-xl border border-slate-200 mb-8 p-4 overflow-hidden">
+        <div className="px-6 pb-4 border-b border-slate-200">
           <div className="flex items-center space-x-3">
             <Server className="h-5 w-5 text-indigo-500" />
             <h2 className="text-lg font-semibold text-slate-900">Pods</h2>
@@ -603,8 +603,6 @@ function DeploymentDetailedInfo({ kubernetesData }) {
           </div>
         </div>
 
-        {}
-
         {!kubernetesData ? (
           <div className="p-6">
             <TableSkeletonLoader />
@@ -612,7 +610,7 @@ function DeploymentDetailedInfo({ kubernetesData }) {
         ) : related_pods && related_pods.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-slate-50">
+              <thead className="bg-slate-50 p-4">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Name
@@ -634,7 +632,7 @@ function DeploymentDetailedInfo({ kubernetesData }) {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
+              <tbody className="bg-white divide-y divide-slate-200 p-4">
                 {related_pods.map((pod, index) => (
                   <PodRow key={index} pod={pod} />
                 ))}
@@ -655,8 +653,8 @@ function DeploymentDetailedInfo({ kubernetesData }) {
       {/* Services and Ingress Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Services */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden p-4">
+          <div className="px-6 pb-4 border-b border-slate-200">
             <div className="flex items-center space-x-3">
               <Network className="h-5 w-5 text-blue-500" />
               <h2 className="text-lg font-semibold text-slate-900">Services</h2>
@@ -675,7 +673,7 @@ function DeploymentDetailedInfo({ kubernetesData }) {
               <SkeletonLoader rows={3} height="h-16" />
             </div>
           ) : related_services && related_services.length > 0 ? (
-            <div className="p-6">
+            <div className="px-6 pt-6">
               {related_services.map((service, index) => (
                 <div
                   key={index}
@@ -722,8 +720,8 @@ function DeploymentDetailedInfo({ kubernetesData }) {
         </div>
 
         {/* Ingresses */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden p-4">
+          <div className="px-6 pb-4 border-b border-slate-200">
             <div className="flex items-center space-x-3">
               <Globe className="h-5 w-5 text-emerald-500" />
               <h2 className="text-lg font-semibold text-slate-900">
@@ -744,7 +742,7 @@ function DeploymentDetailedInfo({ kubernetesData }) {
               <SkeletonLoader rows={2} height="h-16" />
             </div>
           ) : related_ingresses && related_ingresses.length > 0 ? (
-            <div className="p-6">
+            <div className="px-6 pt-6">
               {related_ingresses.map((ingress, index) => (
                 <div
                   key={index}
@@ -783,8 +781,8 @@ function DeploymentDetailedInfo({ kubernetesData }) {
       </div>
 
       {/* Events */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden p-4">
+        <div className="px-6 pb-4 border-b border-slate-200">
           <div className="flex items-center space-x-3">
             <Clock className="h-5 w-5 text-amber-500" />
             <h2 className="text-lg font-semibold text-slate-900">
