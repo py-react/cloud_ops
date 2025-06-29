@@ -7,7 +7,7 @@ const Logs = ({ container }: { container: any }) => {
   useEffect(() => {
     (async () => {
       try {
-        const response = await DefaultService.apiContainersPost({
+        const response = await DefaultService.apiDockerContainersPost({
           requestBody: {
             action: "logs",
             containerId: container.id,

@@ -1,36 +1,97 @@
-import React,{ useContext, useState } from 'react'
-import { Button } from "@/components/ui/button"
+import React, { useState, useContext } from "react";
+import { Button } from "@/components/ui/button";
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
+import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
+import useKubernertesResources from "@/hooks/use-resource";
+import ResourceForm from "@/components/resource-form/resource-form";
 
-import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext'
-import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector'
-import useKubernertesResources from '@/hooks/use-resource'
-import RouteDescription from '@/components/route-description'
+import { DefaultService } from "@/gingerJs_api_client";
+import { toast } from "sonner";
+import { RouteIcon } from "lucide-react";
+import RouteDescription from "@/components/route-description";
 import {
   Card,
-  CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardContent,
 } from "@/components/ui/card";
-import { Globe, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { IngressList } from '@/components/kubernetes/quick-view-resources/IngressList'
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
+import yaml from "js-yaml";
+
+const columns = [
+  { header: "Name", accessor: "name" },
+  { header: "Namespace", accessor: "namespace" },
+  { header: "Class", accessor: "ingressClass" },
+  { header: "Hosts", accessor: "hosts" },
+  { header: "Address", accessor: "address" },
+  { header: "Ports", accessor: "ports" },
+  { header: "Age", accessor: "age" },
+];
+
+interface IngressData {
+  name: string;
+  namespace: string;
+  ingressClass: string;
+  hosts: string;
+  address: string;
+  ports: string;
+  age: string;
+  last_applied?: string;
+  fullData: any;
+  showEdit: boolean;
+  showDelete: boolean;
+}
 
 export default function IngressPage() {
-  const {selectedNamespace} = useContext(NamespaceContext)
-  const [searchTerm, setSearchTerm] = useState("");
-
+  const { selectedNamespace } = useContext(NamespaceContext);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [currentToEdit, setCurrentToEdit] = useState<IngressData | null>(null);
   const {
-    resource:ingress,
-    isLoading,
-    error
-  } = useKubernertesResources({nameSpace:selectedNamespace,type:"ingresses"})
+    resource: ingress,
+    error,
+    refetch,
+  } = useKubernertesResources({
+    nameSpace: selectedNamespace,
+    type: "ingresses",
+  });
 
-  const filteredIngress =
-  ingress?.filter(
-      (ingress) =>
-        ingress.metadata.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+  // Transform API data to match table format
+  const transformedIngress: IngressData[] =
+    ingress?.map((ing: any) => {
+      const hosts = ing.spec?.rules?.map((rule: any) => rule.host).filter(Boolean) || [];
+      const hostsDisplay = hosts.length > 0 ? hosts.join(', ') : 'N/A';
+      
+      const addresses = ing.status?.loadBalancer?.ingress || [];
+      const addressDisplay = addresses.length > 0 
+        ? addresses.map((addr: any) => addr.ip || addr.hostname).join(', ')
+        : 'N/A';
+
+      const ports = ing.spec?.rules?.flatMap((rule: any) => 
+        rule.http?.paths?.map((path: any) => 
+          path.backend?.service?.port?.number || path.backend?.service?.port?.name || 'N/A'
+        ) || []
+      ) || [];
+      const portsDisplay = Array.from(new Set(ports)).join(', ') || 'N/A';
+
+      return {
+        name: ing.metadata?.name || "",
+        namespace: ing.metadata?.namespace || "",
+        ingressClass: ing.spec?.ingressClassName || 
+                     ing.metadata?.annotations?.['kubernetes.io/ingress.class'] || 
+                     'N/A',
+        hosts: hostsDisplay,
+        address: addressDisplay,
+        ports: portsDisplay,
+        age: ing.metadata?.creationTimestamp 
+          ? new Date(ing.metadata.creationTimestamp).toLocaleDateString()
+          : "Unknown",
+        last_applied: ing.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
+        fullData: ing,
+        showEdit: true,
+        showDelete: true,
+      };
+    }) || [];
 
   if (error) {
     return (
@@ -39,50 +100,122 @@ export default function IngressPage() {
       </div>
     );
   }
+
   return (
-    <div>
+    <div className="w-full">
       <div className="space-y-6">
         <RouteDescription
           title={
             <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              <h2>Ingresses</h2>
+              <RouteIcon className="h-4 w-4" />
+              <h2>Ingress</h2>
             </div>
           }
-            shortDescription='Manage your Kubernetes Ingress resources—configure routing rules to expose services externally.'
-            description='Ingress in Kubernetes is an API object that manages external access to services within a cluster, typically over HTTP or HTTPS. It defines routing rules to direct traffic based on hostnames or paths, allowing multiple services to share a single external IP. Ingress works in conjunction with an Ingress Controller, which implements the actual routing.'
-          />
-          <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
+          shortDescription="Manage your Kubernetes Ingress resources—configure external access to your services."
+          description="Ingress resources in Kubernetes provide HTTP and HTTPS routing to services within the cluster. They act as an entry point for external traffic and can handle load balancing, SSL termination, and name-based virtual hosting. Ingress controllers implement the actual routing logic based on these resource definitions."
+        />
+        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-lg">Your Ingresses</CardTitle>
+              <CardTitle className="text-lg">Your Ingress</CardTitle>
               <CardDescription>
-                Ingresses from {selectedNamespace||"All"} namespace
+                {transformedIngress.length} Ingress resources found
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <NamespaceSelector />
-              <Button >
+              <Button onClick={() => {
+                  setShowCreateDialog(true)
+              }}>
+                <RouteIcon className="w-4 h-4 mr-2" />
                 Create Ingress
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
-          <div className="relative px-6">
-                <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search ingresses..."
-                  className="w-full pl-9 bg-background"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            <IngressList ingress={filteredIngress} />
+            <ResourceTable
+              columns={columns}
+              data={transformedIngress}
+              onEdit={(res: IngressData) => {
+                setShowCreateDialog(true);
+                setCurrentToEdit(res);
+              }}
+              onDelete={(data: IngressData) => {
+                let manifest = data.last_applied 
+                  ? yaml.dump(JSON.parse(data.last_applied)) 
+                  : "";
+                if (!manifest) {
+                  manifest = yaml.dump({
+                    apiVersion: data.fullData.apiVersion,
+                    kind: data.fullData.kind,
+                    metadata: {
+                      name: data.fullData.metadata.name,
+                      namespace: data.fullData.metadata.namespace,
+                    },
+                  });
+                }
+                DefaultService.apiKubernertesMethodsDeletePost({
+                  requestBody: {
+                    manifest: manifest,
+                  },
+                })
+                  .then((res: any) => {
+                    if (res.success) {
+                      toast.success(res.data.message);
+                      refetch();
+                    } else {
+                      toast.error(res.error);
+                    }
+                  })
+                  .catch((err) => {
+                    toast.error(err);
+                  });
+              }}
+            />
           </CardContent>
         </Card>
       </div>
+      {showCreateDialog && (
+        <ResourceForm
+          heading="Ingress resource"
+          description="A Kubernetes Ingress resource provides HTTP and HTTPS routing to services within the cluster. It acts as an entry point for external traffic and can handle load balancing, SSL termination, and name-based virtual hosting. Ingress controllers implement the actual routing logic based on these resource definitions."
+          editDetails={showCreateDialog}
+          rawYaml={
+            currentToEdit
+              ? yaml.dump(
+                  currentToEdit?.last_applied
+                    ? JSON.parse(currentToEdit?.last_applied)
+                    : currentToEdit.fullData
+                )
+              : ""
+          }
+          resourceType="ingress"
+          onClose={() => {
+            setShowCreateDialog(false);
+            setCurrentToEdit(null);
+          }}
+          onUpdate={(data) => {
+            DefaultService.apiKubernertesMethodsApplyPost({
+              requestBody: {
+                manifest: data.rawYaml,
+              },
+            })
+              .then((res: any) => {
+                if (res.success) {
+                  toast.success(res.data.message);
+                  refetch();
+                  setShowCreateDialog(false);
+                } else {
+                  toast.error(res.error);
+                }
+              })
+              .catch((err) => {
+                toast.error(err);
+              });
+          }}
+        />
+      )}
     </div>
-  )
+  );
 }
 

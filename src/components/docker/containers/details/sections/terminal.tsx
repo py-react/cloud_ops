@@ -19,7 +19,7 @@ const Terminal = ({
             defaultHandler={async (...cmd: string[]) => {
               try {
                 console.log({ cmd });
-                const response = await DefaultService.apiContainersPost({
+                const response = await DefaultService.apiDockerContainersPost({
                   requestBody: {
                     action: "command" as RunContainer["action"],
                     containerId: container.id,

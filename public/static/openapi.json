@@ -5,56 +5,6 @@
     "version": "0.1.0"
   },
   "paths": {
-    "/api/packges": {
-      "get": {
-        "summary": "",
-        "operationId": "_api_packges_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "",
-        "operationId": "_api_packges_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RunImage"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/swarm/init": {
       "post": {
         "summary": "",
@@ -370,56 +320,6 @@
         }
       }
     },
-    "/api/storages": {
-      "get": {
-        "summary": "",
-        "operationId": "_api_storages_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "",
-        "operationId": "_api_storages_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VolumeActionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/infra": {
       "get": {
         "summary": "",
@@ -604,6 +504,361 @@
                 "schema": {
                   "$ref": "#/components/schemas/InfraDeleteResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docker/storages": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_docker_storages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_docker_storages_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolumeActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docker/networks": {
+      "get": {
+        "summary": "",
+        "description": "List all Docker networks.\n\nReturns:\n    NetworkListResponse: List of network information",
+        "operationId": "_api_docker_networks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "description": "Update an existing Docker network by creating a new one with updated attributes\nand removing the old one.\n\nArgs:\n    request: Request object\n    params: Network update parameters\n    \nReturns:\n    NetworkCreateResponse: Updated network information\n    \nRaises:\n    HTTPException: If network update fails",
+        "operationId": "_api_docker_networks_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkUpdateParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Create a new Docker network.\n\nArgs:\n    params: Network creation parameters\n    \nReturns:\n    NetworkCreateResponse: Created network information\n    \nRaises:\n    HTTPException: If network creation fails",
+        "operationId": "_api_docker_networks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkCreateParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "description": "Delete a Docker network.\n\nArgs:\n    params: Network deletion parameters\n    \nReturns:\n    NetworkDeleteResponse: Deletion confirmation\n    \nRaises:\n    HTTPException: If network deletion fails",
+        "operationId": "_api_docker_networks_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkDeleteParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkDeleteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docker/packages": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_docker_packages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_docker_packages_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunImage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docker/containers": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_docker_containers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetContainerResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_docker_containers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunContainer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docker/containers/stats/{container_id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_docker_containers_stats__container_id__get",
+        "parameters": [
+          {
+            "name": "container_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Container Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docker/systems": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_docker_systems_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemInfo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -810,7 +1065,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/kubernertes__methods__apply__index__ApplyBody"
+                "$ref": "#/components/schemas/ApplyBody"
               }
             }
           },
@@ -846,43 +1101,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/kubernertes__methods__delete__index__ApplyBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/kubernertes/methods/patch": {
-      "post": {
-        "summary": "",
-        "operationId": "_api_kubernertes_methods_patch_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/kubernertes__methods__patch__index__ApplyBody"
+                "$ref": "#/components/schemas/ApplyBody"
               }
             }
           },
@@ -1354,100 +1573,6 @@
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/kubernertes/resources/{type}/create/configmaps": {
-      "post": {
-        "summary": "",
-        "operationId": "_api_kubernertes_resources__type__create_configmaps_post",
-        "parameters": [
-          {
-            "name": "type",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Type"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/resources___type___ConfigMapCreatePayload"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/kubernertes/resources/{type}/create/deployments": {
-      "post": {
-        "summary": "",
-        "operationId": "_api_kubernertes_resources__type__create_deployments_post",
-        "parameters": [
-          {
-            "name": "type",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Type"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/resources___type___DeploymentCreatePayload"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2237,136 +2362,6 @@
         }
       }
     },
-    "/api/networks": {
-      "get": {
-        "summary": "",
-        "description": "List all Docker networks.\n\nReturns:\n    NetworkListResponse: List of network information",
-        "operationId": "_api_networks_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NetworkListResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "",
-        "description": "Update an existing Docker network by creating a new one with updated attributes\nand removing the old one.\n\nArgs:\n    request: Request object\n    params: Network update parameters\n    \nReturns:\n    NetworkCreateResponse: Updated network information\n    \nRaises:\n    HTTPException: If network update fails",
-        "operationId": "_api_networks_put",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NetworkUpdateParams"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NetworkCreateResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "",
-        "description": "Create a new Docker network.\n\nArgs:\n    params: Network creation parameters\n    \nReturns:\n    NetworkCreateResponse: Created network information\n    \nRaises:\n    HTTPException: If network creation fails",
-        "operationId": "_api_networks_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NetworkCreateParams"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NetworkCreateResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "",
-        "description": "Delete a Docker network.\n\nArgs:\n    params: Network deletion parameters\n    \nReturns:\n    NetworkDeleteResponse: Deletion confirmation\n    \nRaises:\n    HTTPException: If network deletion fails",
-        "operationId": "_api_networks_delete",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NetworkDeleteParams"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NetworkDeleteResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/queue": {
       "get": {
         "summary": "",
@@ -2438,131 +2433,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/StopQueue"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/containers": {
-      "get": {
-        "summary": "",
-        "operationId": "_api_containers_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetContainerResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "",
-        "operationId": "_api_containers_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RunContainer"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/containers/stats/{container_id}": {
-      "get": {
-        "summary": "",
-        "operationId": "_api_containers_stats__container_id__get",
-        "parameters": [
-          {
-            "name": "container_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Container Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/systems": {
-      "post": {
-        "summary": "",
-        "operationId": "_api_systems_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SystemInfo"
               }
             }
           },
@@ -3172,24 +3042,6 @@
         }
       }
     },
-    "/orchestration/kubernetes/namespaced/ingress": {
-      "get": {
-        "summary": "",
-        "operationId": "_orchestration_kubernetes_namespaced_ingress_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/orchestration/kubernetes/namespaced/secrets": {
       "get": {
         "summary": "",
@@ -3370,6 +3222,24 @@
         }
       }
     },
+    "/orchestration/kubernetes/namespaced/deployments/{type}": {
+      "get": {
+        "summary": "",
+        "operationId": "_orchestration_kubernetes_namespaced_deployments__type__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/orchestration/kubernetes/namespaced/flow": {
       "get": {
         "summary": "",
@@ -3438,6 +3308,19 @@
           "labels"
         ],
         "title": "AddVolumeData"
+      },
+      "ApplyBody": {
+        "properties": {
+          "manifest": {
+            "type": "string",
+            "title": "Manifest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "manifest"
+        ],
+        "title": "ApplyBody"
       },
       "ContainerConfig": {
         "properties": {
@@ -5439,7 +5322,14 @@
             "title": "Ip"
           },
           "node": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Node"
           },
           "resources": {
@@ -6166,6 +6056,14 @@
             },
             "type": "array",
             "title": "Ports"
+          },
+          "replicasets": {
+            "items": {
+              "$ref": "#/components/schemas/kubernertes__flow__v2__index__DeploymentInfo"
+            },
+            "type": "array",
+            "title": "Replicasets",
+            "default": []
           },
           "deployments": {
             "items": {
@@ -7015,56 +6913,6 @@
         ],
         "title": "DeploymentInfo"
       },
-      "kubernertes__methods__apply__index__ApplyBody": {
-        "properties": {
-          "manifest": {
-            "type": "string",
-            "title": "Manifest"
-          }
-        },
-        "type": "object",
-        "required": [
-          "manifest"
-        ],
-        "title": "ApplyBody"
-      },
-      "kubernertes__methods__delete__index__ApplyBody": {
-        "properties": {
-          "manifest": {
-            "type": "string",
-            "title": "Manifest"
-          }
-        },
-        "type": "object",
-        "required": [
-          "manifest"
-        ],
-        "title": "ApplyBody"
-      },
-      "kubernertes__methods__patch__index__ApplyBody": {
-        "properties": {
-          "manifest": {
-            "type": "string",
-            "title": "Manifest"
-          },
-          "op_name": {
-            "type": "string",
-            "title": "Op Name"
-          },
-          "data": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Data"
-          }
-        },
-        "type": "object",
-        "required": [
-          "manifest",
-          "op_name",
-          "data"
-        ],
-        "title": "ApplyBody"
-      },
       "nodes___node_id___NodeSpec": {
         "properties": {
           "Availability": {
@@ -7131,226 +6979,6 @@
         },
         "type": "object",
         "title": "NodeSpec"
-      },
-      "resources___type___ConfigMapCreatePayload": {
-        "properties": {
-          "metadata": {
-            "$ref": "#/components/schemas/resources___type___MetadataDict"
-          },
-          "data": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Data"
-          },
-          "binaryData": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Binarydata"
-          },
-          "immutable": {
-            "type": "boolean",
-            "title": "Immutable"
-          }
-        },
-        "type": "object",
-        "title": "ConfigMapCreatePayload"
-      },
-      "resources___type___Container": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "image": {
-            "type": "string",
-            "title": "Image"
-          },
-          "ports": {
-            "items": {
-              "$ref": "#/components/schemas/resources___type___ContainerPort"
-            },
-            "type": "array",
-            "title": "Ports"
-          },
-          "env": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Env"
-          },
-          "resources": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Resources"
-          },
-          "command": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Command"
-          },
-          "args": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Args"
-          }
-        },
-        "type": "object",
-        "title": "Container"
-      },
-      "resources___type___ContainerPort": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "containerPort": {
-            "type": "integer",
-            "title": "Containerport"
-          },
-          "protocol": {
-            "type": "string",
-            "title": "Protocol"
-          }
-        },
-        "type": "object",
-        "title": "ContainerPort"
-      },
-      "resources___type___DeploymentCreatePayload": {
-        "properties": {
-          "metadata": {
-            "$ref": "#/components/schemas/resources___type___MetadataDict"
-          },
-          "spec": {
-            "$ref": "#/components/schemas/resources___type___DeploymentSpec"
-          }
-        },
-        "type": "object",
-        "title": "DeploymentCreatePayload"
-      },
-      "resources___type___DeploymentSpec": {
-        "properties": {
-          "replicas": {
-            "type": "integer",
-            "title": "Replicas"
-          },
-          "selector": {
-            "$ref": "#/components/schemas/resources___type___Selector"
-          },
-          "template": {
-            "$ref": "#/components/schemas/resources___type___PodTemplateSpec"
-          },
-          "strategy": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Strategy"
-          }
-        },
-        "type": "object",
-        "title": "DeploymentSpec"
-      },
-      "resources___type___MetadataDict": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "namespace": {
-            "type": "string",
-            "title": "Namespace"
-          },
-          "labels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Labels"
-          },
-          "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Annotations"
-          }
-        },
-        "type": "object",
-        "title": "MetadataDict"
-      },
-      "resources___type___PodSpec": {
-        "properties": {
-          "containers": {
-            "items": {
-              "$ref": "#/components/schemas/resources___type___Container"
-            },
-            "type": "array",
-            "title": "Containers"
-          },
-          "restartPolicy": {
-            "type": "string",
-            "title": "Restartpolicy"
-          },
-          "terminationGracePeriodSeconds": {
-            "type": "integer",
-            "title": "Terminationgraceperiodseconds"
-          }
-        },
-        "type": "object",
-        "title": "PodSpec"
-      },
-      "resources___type___PodTemplateMetadata": {
-        "properties": {
-          "labels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Labels"
-          },
-          "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Annotations"
-          }
-        },
-        "type": "object",
-        "title": "PodTemplateMetadata"
-      },
-      "resources___type___PodTemplateSpec": {
-        "properties": {
-          "metadata": {
-            "$ref": "#/components/schemas/resources___type___PodTemplateMetadata"
-          },
-          "spec": {
-            "$ref": "#/components/schemas/resources___type___PodSpec"
-          }
-        },
-        "type": "object",
-        "title": "PodTemplateSpec"
-      },
-      "resources___type___Selector": {
-        "properties": {
-          "matchLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Matchlabels"
-          }
-        },
-        "type": "object",
-        "title": "Selector"
       }
     }
   }

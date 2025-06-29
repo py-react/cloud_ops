@@ -2,14 +2,16 @@ import React, { useEffect, useState } from "react";
 import useAutoRefresh from "@/components/docker/containers/hooks/useAutoRefresh"; 
 import { Loader } from "lucide-react";
 import SystemInfo from "@/components/docker/systemOverview/Overview";
+import { DefaultService } from "@/gingerJs_api_client";
 
 const fetchInfo = async () => {
   // Simulating an API call
-  return new Promise(async (resolve) => {
-    const infoResponse = await fetch("/api/systems", { method: "POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"info"}) });
-    const info = (await infoResponse.json()).info;
-    resolve(info);
-  });
+  const data = await DefaultService.apiDockerSystemsPost({
+    requestBody:{
+      action:"info"
+    }
+  })
+  return data.info
 };
 
 const ContainerListPage: React.FC = ({info}:any) => {

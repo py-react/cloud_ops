@@ -1,4 +1,4 @@
-export const $kubernertes__methods__apply__index__ApplyBody = {
+export const $ApplyBody = {
 	properties: {
 		manifest: {
 	type: 'string',

@@ -57,9 +57,17 @@ export default function KubernetesResourcesPage() {
       `/orchestration/kubernetes/namespaced/${resourceType.toLowerCase()}`
     );
   }
+  const handleAnyDeploymentsSelect = (resourceType: string)=>{
+    navigate(
+      `/orchestration/kubernetes/namespaced/deployments/${resourceType.toLowerCase()}`
+    );
+  }
 
   const resourceTypes = {
     deployments: true,
+    replicasets: true,
+    statefulsets: true,
+    daemonsets: true,
     configmaps: true,
     pods: true,
     secrets: true,
@@ -73,7 +81,11 @@ export default function KubernetesResourcesPage() {
     const normalizedType = resourceType.toLowerCase();
     
     if (normalizedType in resourceTypes) {
-      handleQuickViewMatchResourceSelect(resourceType);
+      if(["deployments","replicasets","statefulsets","daemonsets"].includes(normalizedType)){
+        handleAnyDeploymentsSelect(normalizedType);
+      }else{
+        handleQuickViewMatchResourceSelect(resourceType);
+      }
     } else {
       navigate(
         `/orchestration/kubernetes/namespaced/resources/${normalizedType}`

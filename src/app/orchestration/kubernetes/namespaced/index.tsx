@@ -4,7 +4,7 @@ import { useEffect } from "react"
 function Namespaced() {
   const navigate = useNavigate()
   useEffect(()=>{
-    navigate("/orchestration/kubernetes/namespaced/deployment")
+    navigate("/orchestration/kubernetes/namespaced/deployments")
   },[])
   return "redirecting..."
 }

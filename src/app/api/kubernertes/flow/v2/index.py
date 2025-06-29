@@ -16,7 +16,7 @@ class PodInfo(BaseModel):
     restarts: int
     age: str
     ip: Optional[str]
-    node: str
+    node: Optional[str]
     resources: Dict[str, Dict[str, str]]
 
 class DeploymentInfo(BaseModel):
@@ -58,6 +58,7 @@ class ServiceInfo(BaseModel):
     externalIP: str
     age: str
     ports: List[Dict[str, Any]]
+    replicasets: List[DeploymentInfo] = []
     deployments: List[DeploymentInfo] = []
     daemonsets: List[DaemonSetInfo] = []
     statefulsets: List[StatefulSetInfo] = []
@@ -323,7 +324,7 @@ def get_deployments_for_selector(namespace, selector_str, namespace_default_requ
     core_v1_api = client.CoreV1Api()
     deployments = []
     try:
-        dep_list = apps_v1_api.list_namespaced_deployment(namespace, label_selector=selector_str)
+        dep_list = apps_v1_api.list_namespaced_replica_set(namespace, label_selector=selector_str)
         for dep in dep_list.items:
             pods = []
             match_labels = dep.spec.selector.match_labels
@@ -375,9 +376,10 @@ def get_daemonsets_for_selector(namespace, selector_str, namespace_default_reque
                 pod_list = core_v1_api.list_namespaced_pod(namespace, label_selector=pod_selector)
                 for pod in pod_list.items:
                     pods.append(get_pod_info(pod, namespace_default_requests))
-            removeIndex = find_index_by_attribute(all_daemonsets,"deployment_name",ds.metadata.name)
+            removeIndex = find_index_by_attribute(all_daemonsets,"daemonset_name",ds.metadata.name)
             if removeIndex != -1:
                 del all_daemonsets[removeIndex]
+
 
     except Exception as e:
         print("Error fetching daemonsets:", e)
@@ -408,7 +410,7 @@ def get_statefulsets_for_selector(namespace, selector_str, namespace_default_req
                 pod_list = core_v1_api.list_namespaced_pod(namespace, label_selector=pod_selector)
                 for pod in pod_list.items:
                     pods.append(get_pod_info(pod, namespace_default_requests))
-            removeIndex = find_index_by_attribute(all_statefulsets,"deployment_name",ss.metadata.name)
+            removeIndex = find_index_by_attribute(all_statefulsets,"statefulset_name",ss.metadata.name)
             if removeIndex != -1:
                 del all_statefulsets[removeIndex]
     except Exception as e:
@@ -473,6 +475,34 @@ def get_cronjobs_for_selector(namespace, selector_str, namespace_default_request
 # Functions to Get All Workloads (Unlinked) Without Filtering by Service Selector
 # =============================================================================
 
+def get_all_replicasets(namespace, namespace_default_requests) -> List[Dict]:
+    apps_v1_api = client.AppsV1Api()
+    core_v1_api = client.CoreV1Api()
+    deployments = []
+    try:
+        dep_list = apps_v1_api.list_namespaced_replica_set(namespace).items
+        for dep in dep_list:
+            pods = []
+            match_labels = dep.spec.selector.match_labels
+            available_replicas = dep.status.ready_replicas or 0
+            expected_replicas = dep.spec.replicas or 0
+            
+            deployments.append({
+                "component_type": "deploymentV2",
+                "deployment_name": dep.metadata.name,
+                "match_labels": match_labels,
+                "available_replicas": available_replicas,
+                "expected_replicas": expected_replicas,
+                "pods": pods
+            })
+            if expected_replicas > 0 and available_replicas is not None:
+                pod_selector = ",".join([f"{k}={v}" for k, v in match_labels.items()])
+                pod_list = core_v1_api.list_namespaced_pod(namespace, label_selector=pod_selector)
+                for pod in pod_list.items:
+                    pods.append(get_pod_info(pod, namespace_default_requests))
+    except Exception as e:
+        print("Error fetching all deployments:", e)
+    return deployments
 def get_all_deployments(namespace, namespace_default_requests) -> List[Dict]:
     apps_v1_api = client.AppsV1Api()
     core_v1_api = client.CoreV1Api()
@@ -569,7 +599,7 @@ def get_services(
         namespace_default_requests,
         all_deployments,
         all_statefulsets,
-        all_daemonsets
+        all_daemonsets,
     ) -> Dict[str, Dict]:
     core_v1_api = client.CoreV1Api()
 
@@ -577,7 +607,7 @@ def get_services(
     svc_list = core_v1_api.list_namespaced_service(namespace).items
     for svc in svc_list:
         if svc.metadata.name == "kubernetes":
-            print()
+            continue # previously this was just print()
         ports = []
         for p in svc.spec.ports:
             target_port = int(p.target_port) if isinstance(p.target_port, (int, float)) else None
@@ -739,18 +769,19 @@ def fetch_namespace_hierarchy(namespace: str) -> Dict:
         })
 
     # Fetch all workloads regardless of service link.
-    all_deployments = get_all_deployments(namespace, namespace_default_requests)
+    all_replicasets = get_all_replicasets(namespace, namespace_default_requests)
+    # all_deployments = get_all_deployments(namespace, namespace_default_requests)
     all_statefulsets = get_all_statefulsets(namespace, namespace_default_requests)
     all_daemonsets = get_all_daemonsets(namespace, namespace_default_requests)
 
     # Build Ingress and Service hierarchy
     ingress_map = get_ingresses(namespace)
     service_map = get_services(
-        namespace,
-        namespace_default_requests,
-        all_deployments,
-        all_statefulsets,
-        all_daemonsets,
+        namespace=namespace,
+        namespace_default_requests=namespace_default_requests,
+        all_deployments=all_replicasets,
+        all_statefulsets=all_statefulsets,
+        all_daemonsets=all_daemonsets,
     )
     link_services_to_ingresses(ingress_map, service_map)
     # Unlinked services remain at top level.
@@ -758,7 +789,7 @@ def fetch_namespace_hierarchy(namespace: str) -> Dict:
 
     # Match unlinked deployments to services.
     remaining_deployments = []
-    for dep in all_deployments:
+    for dep in all_replicasets:
         attached = False
         for svc in unlinked_services:
             if find_index_by_attribute(svc["statefulsets"],"deployment_name",dep["deployment_name"]) > -1:
@@ -856,7 +887,7 @@ def fetch_namespace_hierarchy(namespace: str) -> Dict:
         "jobs":get_jobs_for_selector(namespace,"",namespace_default_requests),
         "nodes": node_info_list
     }
-    print(hierarchy,"findMe")
+    print(hierarchy)
     return hierarchy
 
 # =============================================================================

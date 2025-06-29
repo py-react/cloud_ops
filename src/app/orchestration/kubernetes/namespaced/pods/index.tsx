@@ -1,46 +1,96 @@
-import React, { useContext, useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
-import { Pod, PodTable } from '@/components/kubernetes/PodTable'
-import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext'
-import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector'
-import useKubernertesResources from '@/hooks/use-resource'
-import RouteDescription from '@/components/route-description'
+import React, { useState, useContext } from "react";
+import { Button } from "@/components/ui/button";
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
+import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
+import useKubernertesResources from "@/hooks/use-resource";
+import ResourceForm from "@/components/resource-form/resource-form";
+
+import { DefaultService } from "@/gingerJs_api_client";
+import { toast } from "sonner";
+import { BoxIcon } from "lucide-react";
+import RouteDescription from "@/components/route-description";
 import {
   Card,
-  CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardContent,
 } from "@/components/ui/card";
-import { BoxIcon, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { PodsList } from '@/components/kubernetes/quick-view-resources/PodsList'
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
+import yaml from "js-yaml";
+
+const columns = [
+  { header: "Name", accessor: "name" },
+  { header: "Namespace", accessor: "namespace" },
+  { header: "Status", accessor: "status" },
+  { header: "Ready", accessor: "ready" },
+  { header: "Restarts", accessor: "restarts" },
+  { header: "Age", accessor: "age" },
+  { header: "IP", accessor: "podIP" },
+  { header: "Node", accessor: "nodeName" },
+];
+
+interface PodData {
+  name: string;
+  namespace: string;
+  status: string;
+  ready: string;
+  restarts: number;
+  age: string;
+  podIP: string;
+  nodeName: string;
+  last_applied?: string;
+  fullData: any;
+  showEdit: boolean;
+  showDelete: boolean;
+}
 
 export default function PodsPage() {
-  const { selectedNamespace } = useContext(NamespaceContext)
-  const [searchTerm, setSearchTerm] = useState("");
-
+  const { selectedNamespace } = useContext(NamespaceContext);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [currentToEdit, setCurrentToEdit] = useState<PodData | null>(null);
   const {
     resource: pods,
-    isLoading,
     error,
-    refetch
-  } = useKubernertesResources({ nameSpace: selectedNamespace, type: "pods" })
+    refetch,
+  } = useKubernertesResources({
+    nameSpace: selectedNamespace,
+    type: "pods",
+  });
 
-  const filteredPods =
-    pods?.filter(
-      (pod) =>
-        pod.metadata.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+  // Transform API data to match table format
+  const transformedPods: PodData[] =
+    pods?.map((pod: any) => {
+      const containerStatuses = pod.status?.containerStatuses || [];
+      const totalRestarts = containerStatuses.reduce(
+        (sum: number, container: any) => sum + (container.restartCount || 0),
+        0
+      );
+      const readyContainers = containerStatuses.filter(
+        (container: any) => container.ready
+      ).length;
+      const totalContainers = containerStatuses.length;
 
-
-  const handleEdit = (pod: Pod) => {
-    // Implement edit functionality
-    console.log('Edit pod:', pod)
-  }
-
-
+      return {
+        name: pod.metadata?.name || "",
+        namespace: pod.metadata?.namespace || "",
+        status: pod.status?.phase || "Unknown",
+        ready: `${readyContainers}/${totalContainers}`,
+        restarts: totalRestarts,
+        age: pod.metadata?.creationTimestamp
+          ? new Date(pod.metadata.creationTimestamp).toLocaleDateString()
+          : "Unknown",
+        podIP: pod.status?.podIP || "N/A",
+        nodeName: pod.spec?.nodeName || "N/A",
+        last_applied:
+          pod.metadata?.annotations?.[
+            "kubectl.kubernetes.io/last-applied-configuration"
+          ],
+        fullData: pod,
+        showEdit:true,
+        showDelete: true,
+      };
+    }) || [];
 
   if (error) {
     return (
@@ -50,55 +100,127 @@ export default function PodsPage() {
     );
   }
 
-
   return (
-    <div className='w-full'>
+    <div className="w-full">
       <div className="space-y-6">
         <RouteDescription
           title={
             <div className="flex items-center gap-2">
-              <BoxIcon className='h-4 w-4' />
+              <BoxIcon className="h-4 w-4" />
               <h2>Pods</h2>
             </div>
           }
-          shortDescription='Manage your Kubernetes Pods—inspect status, view logs, restart, or delete running workloads.'
-          description='Pods are the smallest and most fundamental compute units in Kubernetes. Each Pod encapsulates one or more containers that share the same network namespace and storage. They are designed to run a single instance of a process and are managed by higher-level controllers like Deployments.'
+          shortDescription="Manage your Kubernetes Pods—inspect status, view logs, restart, or delete running workloads."
+          description="Pods are the smallest and most fundamental compute units in Kubernetes. Each Pod encapsulates one or more containers that share the same network namespace and storage. They are designed to run a single instance of a process and are managed by higher-level controllers like Deployments."
         />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">Your Pods</CardTitle>
               <CardDescription>
-                Pods from {selectedNamespace || "All"} namespace
+                {transformedPods.length} Pods found
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              
               <NamespaceSelector />
-              <Button >
-                Create pods
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <BoxIcon className="w-4 h-4 mr-2" />
+                Create Pod
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
-          <div className="relative px-6">
-                <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search pods..."
-                  className="w-full pl-9 bg-background"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            <PodsList
-              pods={filteredPods as Pod[]}
-              onEdit={handleEdit}
-              onDelete={() => { }}
+            <ResourceTable
+              columns={columns}
+              data={transformedPods}
+              onEdit={(res: PodData) => {
+                setShowCreateDialog(true);
+                setCurrentToEdit(res);
+              }}
+              onDelete={(data: PodData) => {
+                let menifest = data.last_applied
+                  ? yaml.dump(JSON.parse(data.last_applied))
+                  : "";
+                if (!menifest) {
+                  menifest = yaml.dump({
+                    apiVersion: data.fullData.apiVersion,
+                    kind: data.fullData.kind,
+                    metadata: {
+                      name: data.fullData.metadata.name,
+                      namespace: data.fullData.metadata.namespace,
+                    },
+                  });
+                }
+                DefaultService.apiKubernertesMethodsDeletePost({
+                  requestBody: {
+                    manifest: menifest,
+                  },
+                })
+                  .then((res: any) => {
+                    if (res.success) {
+                      toast.success(res.data.message);
+                      refetch();
+                    } else {
+                      toast.error(res.error);
+                    }
+                  })
+                  .catch((err) => {
+                    toast.error(err);
+                  });
+              }}
             />
           </CardContent>
         </Card>
       </div>
+      {showCreateDialog && (
+        <ResourceForm
+          heading="Pod resource"
+          description="A Kubernetes Pod is the smallest and most fundamental compute unit in the Kubernetes object model. Each Pod encapsulates one or more containers that share the same network namespace and storage. Pods are designed to run a single instance of a process and are managed by higher-level controllers like Deployments, ReplicaSets, and StatefulSets."
+          editDetails={showCreateDialog}
+          rawYaml={
+            currentToEdit
+              ? yaml.dump(
+                  currentToEdit?.last_applied
+                    ? JSON.parse(currentToEdit?.last_applied)
+                    : (() => {
+                        const {
+                          managedFields,
+                          ...metadataWithoutManagedFields
+                        } = currentToEdit.fullData.metadata;
+                        return {
+                          ...currentToEdit.fullData,
+                          metadata: metadataWithoutManagedFields,
+                        };
+                      })()
+                )
+              : ""
+          }
+          resourceType="pods"
+          onClose={() => {
+            setShowCreateDialog(false);
+            setCurrentToEdit(null);
+          }}
+          onUpdate={(data) => {
+            DefaultService.apiKubernertesMethodsApplyPost({
+              requestBody: {
+                manifest: data.rawYaml,
+              },
+            })
+              .then((res: any) => {
+                if (res.success) {
+                  toast.success(res.data.message);
+                  refetch();
+                  setShowCreateDialog(false);
+                } else {
+                  toast.error(res.error);
+                }
+              })
+              .catch((err) => {
+                toast.error(err);
+              });
+          }}
+        />
+      )}
     </div>
-  )
+  );
 }

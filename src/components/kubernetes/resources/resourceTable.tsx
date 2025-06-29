@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { CheckCircle, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon, X, Skull, RotateCcw, CircleCheck, HelpCircle, Copy, Undo2 } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon, X, Skull, RotateCcw, CircleCheck, HelpCircle, Copy, Undo2, MoreHorizontal, MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from "@/libs/utils"
 
 type ResourceTableActionProps = {
@@ -103,7 +109,7 @@ export function ResourceTable<T>({
     if (onUndo) onUndo(resource);
   };
 
-  const showActions = onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay || onStop || onPause || onEdit
+  const showActions = onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay || onStop || onPause || onEdit || onUndo || onClone
 
   return (
     <Card className={cn("shadow-none", className)}>
@@ -132,108 +138,79 @@ export function ResourceTable<T>({
                     ))}
                     {showActions ? (
                       <TableCell>
-                        <div className="flex items-center justify-start gap-2">
-                          {(!!onPlay && rowWithDefaults.showPlay) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handlePlay(row)}
-                            >
-                              <Play className="h-4 w-4 text-green-500" />
-                              <span className="sr-only">Play</span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
                             </Button>
-                          ) : null}
-                          {(!!onStop && rowWithDefaults.showStop) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleStop(row)}
-                            >
-                              <StopCircleIcon className="h-4 w-4 text-red-500" />
-                              <span className="sr-only">Stop</span>
-                            </Button>
-                          ) : null}
-                          {(!!onPause && rowWithDefaults.showPause) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handlePause(row)}
-                            >
-                              <PauseIcon className="h-4 w-4 text-yellow-600" />
-                              <span className="sr-only">Pause</span>
-                            </Button>
-                          ) : null}
-                          {(!!onViewDetails && rowWithDefaults.showViewDetails) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewDetails(row)}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              <span className="sr-only">Details</span>
-                            </Button>
-                          ) : null}
-                          {(!!onViewLogs && rowWithDefaults.showViewLogs) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewLogs(row)}
-                            >
-                              <Terminal className="h-4 w-4" />
-                              <span className="sr-only">Logs</span>
-                            </Button>
-                          ) : null}
-                          {(!!onViewConfig && rowWithDefaults.showViewConfig) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewConfig(row)}
-                            >
-                              <FileText className="h-4 w-4" />
-                              <span className="sr-only">Config</span>
-                            </Button>
-                          ) : null}
-                          {(!!onEdit && rowWithDefaults.showEdit) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onEdit(row)}
-                            >
-                              <EditIcon className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                          ) : null}
-                          {(!!onClone && rowWithDefaults.showClone) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleClone(row)}
-                            >
-                              <Copy className="h-4 w-4" />
-                              <span className="sr-only">Clone</span>
-                            </Button>
-                          ) : null}
-                          {(!!onUndo && rowWithDefaults.showUndo) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleUndo(row)}
-                            >
-                              <Undo2 className="h-4 w-4" />
-                              <span className="sr-only">Restore</span>
-                            </Button>
-                          ) : null}
-                          {(!!onDelete && rowWithDefaults.showDelete) ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(row)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                              <span className="sr-only">Delete</span>
-                            </Button>
-                          ) : null}
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {onPlay && rowWithDefaults.showPlay && (
+                              <DropdownMenuItem onSelect={() => handlePlay(row)}>
+                                <Play className="h-4 w-4 text-green-500 mr-2" />
+                                Play
+                              </DropdownMenuItem>
+                            )}
+                            {onStop && rowWithDefaults.showStop && (
+                              <DropdownMenuItem onSelect={() => handleStop(row)}>
+                                <StopCircleIcon className="h-4 w-4 text-red-500 mr-2" />
+                                Stop
+                              </DropdownMenuItem>
+                            )}
+                            {onPause && rowWithDefaults.showPause && (
+                              <DropdownMenuItem onSelect={() => handlePause(row)}>
+                                <PauseIcon className="h-4 w-4 text-yellow-600 mr-2" />
+                                Pause
+                              </DropdownMenuItem>
+                            )}
+                            {onViewDetails && rowWithDefaults.showViewDetails && (
+                              <DropdownMenuItem onSelect={() => handleViewDetails(row)}>
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                            )}
+                            {onViewLogs && rowWithDefaults.showViewLogs && (
+                              <DropdownMenuItem onSelect={() => handleViewLogs(row)}>
+                                <Terminal className="h-4 w-4 mr-2" />
+                                View Logs
+                              </DropdownMenuItem>
+                            )}
+                            {onViewConfig && rowWithDefaults.showViewConfig && (
+                              <DropdownMenuItem onSelect={() => handleViewConfig(row)}>
+                                <FileText className="h-4 w-4 mr-2" />
+                                View Config
+                              </DropdownMenuItem>
+                            )}
+                            {onEdit && rowWithDefaults.showEdit && (
+                              <DropdownMenuItem onSelect={() => onEdit(row)}>
+                                <EditIcon className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                            )}
+                            {onClone && rowWithDefaults.showClone && (
+                              <DropdownMenuItem onSelect={() => handleClone(row)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Clone
+                              </DropdownMenuItem>
+                            )}
+                            {onUndo && rowWithDefaults.showUndo && (
+                              <DropdownMenuItem onSelect={() => handleUndo(row)}>
+                                <Undo2 className="h-4 w-4 mr-2" />
+                                Restore
+                              </DropdownMenuItem>
+                            )}
+                            {onDelete && rowWithDefaults.showDelete && (
+                              <DropdownMenuItem 
+                                onSelect={() => handleDelete(row)}
+                                className="text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     ) : null}
                   </TableRow>

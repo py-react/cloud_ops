@@ -9,7 +9,7 @@ export function useContainers() {
   const fetchContainers = async () => {
     try {
       setLoading(true);
-      const response = await DefaultService.apiContainersGet();
+      const response = await DefaultService.apiDockerContainersGet();
       setContainers(response.containers);
       setError(null);
     } catch (err) {

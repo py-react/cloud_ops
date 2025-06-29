@@ -2,7 +2,7 @@ import yaml
 from typing import Optional, Dict, List, Any
 from kubernetes import client, config
 from kubernetes.dynamic import DynamicClient
-from kubernetes.dynamic.exceptions import ConflictError,NotFoundError
+from kubernetes.dynamic.exceptions import ConflictError,NotFoundError,ApiException
 import json
 import jsonpatch
 
@@ -150,11 +150,13 @@ class KubernetesResourceHelper:
                     body=resource,
                     content_type='application/merge-patch+json'
                 )
-                
+        
         except Exception as e:
             # Resource doesn't exist, create it
             if isinstance(e,NotFoundError):
                 return resource_client.create(body=resource, namespace=namespace)
+            elif isinstance(e,ApiException):
+                raise Exception(json.loads(e.body))
             else:
                 raise e
 
@@ -197,9 +199,14 @@ class KubernetesResourceHelper:
         kind = resource['kind']
         name = resource['metadata']['name']
         namespace = resource['metadata'].get('namespace', 'default')
-
         resource_client = self.dyn_client.resources.get(api_version=api_version, kind=kind)
-        return resource_client.delete(name=name, namespace=namespace)
+        print(f"Deleting {kind} '{name}' in namespace '{namespace}'")
+        try:
+            return resource_client.delete(name=name, namespace=namespace)
+        except ApiException as e:
+            raise Exception(json.loads(e.body))
+        except Exception as e:
+            raise e
     
     def edit_resource(self, resource: dict, modify_fn):
         """

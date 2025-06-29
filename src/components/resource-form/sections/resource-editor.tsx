@@ -4,7 +4,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessa
 import Editor from "@monaco-editor/react";
 import { SchemaValues } from '../resource-form';
 
-const ResourceEditor: React.FC = () => {
+const ResourceEditor: React.FC = ({resourceType}) => {
   const form = useFormContext<SchemaValues>();
   const { control, formState: { errors } } = form;
   
@@ -22,16 +22,13 @@ const ResourceEditor: React.FC = () => {
 
   return (
     <div className="">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Resource Quota Configuration</h3>
-      </div>
       <FormField
         control={control}
         name="rawYaml"
         render={({ field }) => (
           <FormItem>
             <FormLabel className={errors?.rawYaml?.message?.length ? "text-destructive" : "text-neutral-600"}>
-              Resource Quota YAML
+              {resourceType} YAML
             </FormLabel>
             <FormControl>
               <div

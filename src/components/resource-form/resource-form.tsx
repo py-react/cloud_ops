@@ -64,6 +64,9 @@ const ResourceForm: React.FC<IResourceForm> = ({
       longDescription:
         description || "Define resource deployment using YAML configuration.",
       component: ResourceEditor,
+      props:{
+        resourceType
+      }
     },
   ];
 

@@ -163,7 +163,7 @@ function ContainersPage() {
           data={selectedContainer}
           onClose={() => editSelected(false)}
           onSubmit={async (data: ContainerRunConfig) => {
-            await DefaultService.apiContainersPost({
+            await DefaultService.apiDockerContainersPost({
               requestBody: {
                 action: "update",
                 containerId: selectedContainer.id,

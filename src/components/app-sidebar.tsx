@@ -183,16 +183,16 @@ const items = {
               url: "/namespaced/ingresses",
               icon: Globe,
             },
-            {
-              title: "certificate",
-              url: "/namespaced/certificates",
-              icon: Certificate,
-            },
-            {
-              title: "issuer",
-              url: "/namespaced/issuers",
-              icon: HandCoinsIcon,
-            },
+            // {
+            //   title: "certificate",
+            //   url: "/namespaced/certificates",
+            //   icon: Certificate,
+            // },
+            // {
+            //   title: "issuer",
+            //   url: "/namespaced/issuers",
+            //   icon: HandCoinsIcon,
+            // },
           ],
         },
       ],

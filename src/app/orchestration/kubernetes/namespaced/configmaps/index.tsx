@@ -1,81 +1,87 @@
 import React, { useState, useContext } from "react";
-import { useKubernertesResources } from "@/hooks/use-resource";
-import { ConfigMapList } from '@/components/kubernetes/quick-view-resources/ConfigMapList';
-import { ConfigMapForm } from "@/components/kubernetes/quick-view-resources/forms/configmaps/ConfigMapForm";
-import { ConfigMapFormData } from "@/components/kubernetes/quick-view-resources/forms/configmaps/types";
-import { toast } from "sonner";
-import { Loader2, ContainerIcon } from "lucide-react";
-import RouteDescription from '@/components/route-description';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector';
-import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext';
-import { ConfigMap } from '@/components/kubernetes/quick-view-resources/ConfigMapList';
+import { Button } from "@/components/ui/button";
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
+import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
+import useKubernertesResources from "@/hooks/use-resource";
+import ResourceForm from "@/components/resource-form/resource-form"
+
 import { DefaultService } from "@/gingerJs_api_client";
+import { toast } from "sonner";
+import { ContainerIcon } from "lucide-react";
+import RouteDescription from "@/components/route-description";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
+import yaml from "js-yaml"
+
+const columns = [
+  { header: "Name", accessor: "name" },
+  {header:"Namespace",accessor:"namespace"},
+  { header: "Data Keys", accessor: "dataKeys" },
+  { header: "Binary Data Keys", accessor: "binaryDataKeys" },
+  { header: "Immutable", accessor: "immutable" },
+  { header: "Labels", accessor: "labels" },
+  { header: "Age", accessor: "age" },
+];
+
+interface ConfigMapData {
+  name: string;
+  namespace: string;
+  dataKeys: number;
+  binaryDataKeys: number;
+  immutable: string;
+  labels: string[];
+  age: string;
+  last_applied?: string;
+  fullData: any;
+  showEdit: boolean;
+  showDelete: boolean;
+}
 
 export default function ConfigMapsPage() {
   const { selectedNamespace } = useContext(NamespaceContext);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [currentToEdit, setCurrentToEdit] = useState<ConfigMapData | null>(null);
   const {
     resource: configMaps,
-    isLoading: loading,
     error,
-    refetch
-  } = useKubernertesResources({ nameSpace: selectedNamespace, type: "configmaps" });
+    refetch,
+  } = useKubernertesResources({
+    nameSpace: selectedNamespace,
+    type: "configmaps",
+  });
 
-  const handleCreateConfigMap = async (data: ConfigMapFormData) => {
-    function arrayToObject(arr: { key: string, value: string }[]) {
-      return arr.reduce((acc, { key, value }) => {
-        if (key) acc[key] = value;
-        return acc;
-      }, {} as Record<string, string>);
-    }
-    try {
-      // Transform arrays to objects for backend
-      const payload = {
-        ...data,
-        data: arrayToObject(data.data),
-        binaryData: arrayToObject(data.binaryData),
-        metadata: {
-          ...data.metadata,
-          labels: arrayToObject(data.metadata.labels),
-          annotations: arrayToObject(data.metadata.annotations),
-        }
-      };
-      const response = await DefaultService.apiKubernertesResourcesTypeCreateConfigmapsPost({
-        requestBody: payload,
-        type: "configmaps"
-      });
-      console.log(response);
-      setShowCreateDialog(false);
-      refetch();
-    } catch (error) {
-      console.error("Error creating ConfigMap:", error);
-      throw error;
-    }
-  };
-
-  const handleDelete = async (configMap: ConfigMap) => {
-    try {
-      await DefaultService.apiKubernertesResourcesTypeDelete({
-        type: "configmaps",
-        apiVersion: configMap.apiVersion as string,
-        name: configMap?.metadata?.name as string,
-        namespace: configMap?.metadata?.namespace as string,
-      });
-
-      refetch();
-      toast.success(
-        `ConfigMap ${configMap?.metadata?.name} deleted successfully`
-      );
-    } catch (err) {
-      toast.error(`Failed to delete config map ${configMap?.metadata?.name}`);
-    }
-  };
+  // Transform API data to match table format
+  const transformedConfigMaps: ConfigMapData[] =
+    configMaps?.map((cm: any) => ({
+      name: cm.metadata?.name || "",
+      namespace: cm.metadata?.namespace || "",
+      dataKeys: Object.keys(cm.data || {}).length,
+      binaryDataKeys: Object.keys(cm.binaryData || {}).length,
+      immutable: cm.immutable ? "Yes" : "No",
+      labels: Object.entries(cm.metadata?.labels || {}).map(
+        ([key, value]) => `${key}: ${value}`
+      ),
+      age: cm.metadata?.creationTimestamp 
+        ? new Date(cm.metadata.creationTimestamp).toLocaleDateString()
+        : "Unknown",
+      last_applied: cm.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
+      fullData: cm,
+      showEdit: true,
+      showDelete: true,
+    })) || [];
 
   if (error) {
-    return <div>Error loading ConfigMaps: {error}</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-destructive">{error}</div>
+      </div>
+    );
   }
 
   return (
@@ -96,7 +102,7 @@ export default function ConfigMapsPage() {
             <div>
               <CardTitle className="text-lg">Your ConfigMaps</CardTitle>
               <CardDescription>
-                {configMaps?.length || 0} ConfigMaps found
+                {transformedConfigMaps.length} ConfigMaps found
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -108,39 +114,89 @@ export default function ConfigMapsPage() {
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
-              </div>
-            ) : (
-              <ConfigMapList
-                configMaps={configMaps || []}
-                onEdit={async (configMap: ConfigMap) => {
-                  console.log("Edit config map:", configMap);
-                }}
-                onDelete={handleDelete}
-              />
-            )}
+            <ResourceTable
+              columns={columns}
+              data={transformedConfigMaps}
+              onEdit={(res: ConfigMapData) => {
+                setShowCreateDialog(true);
+                setCurrentToEdit(res);
+              }}
+              onDelete={(data: ConfigMapData) => {
+                let menifest = data.last_applied
+                  ? yaml.dump(JSON.parse(data.last_applied))
+                  : "";
+                if (!menifest) {
+                  menifest = yaml.dump({
+                    apiVersion: data.fullData.apiVersion,
+                    kind: data.fullData.kind,
+                    metadata: {
+                      name: data.fullData.metadata.name,
+                      namespace: data.fullData.metadata.namespace,
+                    },
+                  });
+                }
+                DefaultService.apiKubernertesMethodsDeletePost({
+                  requestBody: {
+                    manifest: menifest,
+                  },
+                })
+                  .then((res: any) => {
+                    if (res.success) {
+                      toast.success(res.data.message);
+                      refetch();
+                    } else {
+                      toast.error(res.error);
+                    }
+                  })
+                  .catch((err) => {
+                    toast.error(err);
+                  });
+              }}
+            />
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-none w-screen h-screen p-0">
-          <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
-            <DialogTitle className="flex items-center gap-2 w-full px-6">
-              <ContainerIcon className="h-5 w-5" />
-              ConfigMap Configuration
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 h-[calc(100vh-8rem)] px-6">
-            <ConfigMapForm
-              onSubmit={handleCreateConfigMap}
-              onCancel={() => setShowCreateDialog(false)}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      {showCreateDialog && (
+        <ResourceForm
+          heading="ConfigMap resource"
+          description="A Kubernetes ConfigMap is a resource used to store non-confidential configuration data in key-value pairs. ConfigMaps can be consumed by pods as environment variables, command-line arguments, or as configuration files in a volume. They are useful for storing configuration data that can be updated without rebuilding container images, making them ideal for managing application configuration and settings."
+          editDetails={showCreateDialog}
+          rawYaml={
+            currentToEdit
+              ? yaml.dump(
+                  currentToEdit?.last_applied
+                    ? JSON.parse(currentToEdit?.last_applied)
+                    : currentToEdit.fullData
+                )
+              : ""
+          }
+          resourceType="configmaps"
+          onClose={() => {
+            setShowCreateDialog(false);
+            setCurrentToEdit(null);
+          }}
+          onUpdate={(data) => {
+            DefaultService.apiKubernertesMethodsApplyPost({
+              requestBody: {
+                manifest: data.rawYaml,
+              },
+            })
+              .then((res: any) => {
+                if (res.success) {
+                  toast.success(res.data.message);
+                  refetch();
+                  setShowCreateDialog(false);
+                } else {
+                  
+                    toast.error(res.error);
+                }
+              })
+              .catch((err) => {
+                toast.error(err);
+              });
+          }}
+        />
+      )}
     </div>
   );
 }

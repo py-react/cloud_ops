@@ -3,6 +3,7 @@ import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
 import type { PackageInfo } from 'src/types/package';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { TooltipWrapper } from '@/components/ui/tooltip';
 
 // Utility function to format size into readable units (KB, MB, GB)
 const formatSize = (bytes: number) => {
@@ -47,7 +48,9 @@ export function PackagesList({ packages, onPlay, onDelete }: PackagesListProps) 
     tags: (
       <div className="flex flex-wrap gap-1">
         {pkg.tags?.length ? pkg.tags.map((tag) => (
-          <Badge key={tag} variant="secondary" className="max-w-max">{tag.split(":")[1]}</Badge>
+          <TooltipWrapper content={tag.split(":")[1]}>
+            <span  key={tag} className="truncate w-[120px]">{tag.split(":")[1]}</span>
+          </TooltipWrapper>
         )) : <em>None</em>}
       </div>
     ),

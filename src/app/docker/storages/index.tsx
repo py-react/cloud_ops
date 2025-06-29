@@ -20,7 +20,7 @@ import { DefaultService } from '@/gingerJs_api_client';
 import { VolumeActionRequest } from '@/gingerJs_api_client/models/VolumeActionRequest';
 
 const fetchStorages = async () => {
-  const response = await DefaultService.apiStoragesGet();
+  const response = await DefaultService.apiDockerStoragesGet();
   return (response as { storages: StorageInfo[] }).storages;
 };
 
@@ -29,7 +29,7 @@ const deleteStorage = async (id: string): Promise<void> => {
     action: "remove",
     volume_id: id
   };
-  await DefaultService.apiStoragesPost({ requestBody: request });
+  await DefaultService.apiDockerStoragesPost({ requestBody: request });
 };
 
 const createStorage = async (data: any): Promise<void> => {
@@ -45,7 +45,7 @@ const createStorage = async (data: any): Promise<void> => {
     action: "add",
     add_data: transformedData
   };
-  await DefaultService.apiStoragesPost({ requestBody: request });
+  await DefaultService.apiDockerStoragesPost({ requestBody: request });
 };
 
 export default function StoragePage() {

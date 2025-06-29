@@ -18,13 +18,13 @@ import { EditNetworkForm } from '@/components/docker/network/forms/EditNetworkFo
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const fetchNetworks = async () => {
-  const response = await DefaultService.apiNetworksGet();
+  const response = await DefaultService.apiDockerNetworksGet();
   return response.items;
 };
 
 const deleteNetwork = async (id: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    DefaultService.apiNetworksDelete({ requestBody: { network_id: id } })
+    DefaultService.apiDockerNetworksDelete({ requestBody: { network_id: id } })
       .then(() => {
         resolve();
       })
@@ -36,7 +36,7 @@ const deleteNetwork = async (id: string): Promise<void> => {
 
 const createNetwork = async (data: any): Promise<void> => {
   return new Promise((resolve, reject) => {
-    DefaultService.apiNetworksPost({ requestBody: {
+    DefaultService.apiDockerNetworksPost({ requestBody: {
       name: data.name,
       driver: data.driver,
       scope: data.scope,
@@ -60,7 +60,7 @@ const createNetwork = async (data: any): Promise<void> => {
 
 const patchNetwork = async (data: any): Promise<void> => {
   return new Promise((resolve, reject) => {
-    DefaultService.apiNetworksPut({ requestBody: {
+    DefaultService.apiDockerNetworksPut({ requestBody: {
       network_id:data.network_id,
       name: data.name,
       driver: data.driver,

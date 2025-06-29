@@ -13,7 +13,7 @@ import { PackageRunnerForm } from '@/components/docker/packages/forms/PackagePul
 import { PackageCreatorForm } from '@/components/docker/packages/forms/PackageCreatorForm';
 
 const fetchPackages = async () => {
-  const response = await DefaultService.apiPackgesGet();
+  const response = await DefaultService.apiDockerPackagesGet();
   // Map Package_Info to PackageInfo shape if needed
   return response.packages.map(pkg => ({
     id: pkg.id,
@@ -51,7 +51,7 @@ const PackagesPage = () => {
   const handlePlay = async (row: PackageTableData) => {
     const pkg = row.package;
     try {
-      await DefaultService.apiPackgesPost({
+      await DefaultService.apiDockerPackagesPost({
         requestBody: {
           action: 'run',
           packageId: pkg.id,
@@ -75,7 +75,7 @@ const PackagesPage = () => {
   const handleDelete = async (row: PackageTableData) => {
     const pkg = row.package;
     try {
-      const responseData = await DefaultService.apiPackgesPost({
+      const responseData = await DefaultService.apiDockerPackagesPost({
         requestBody: {
           action: 'remove',
           packageId: pkg.id,

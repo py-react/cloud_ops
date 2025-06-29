@@ -1,3 +1,4 @@
+import type { ApplyBody } from '../models/ApplyBody';
 import type { ContextPostData } from '../models/ContextPostData';
 import type { CreateNamespacePayload } from '../models/CreateNamespacePayload';
 import type { CreateQueueJob } from '../models/CreateQueueJob';
@@ -9,9 +10,6 @@ import type { InfraCreateUpdateRequest } from '../models/InfraCreateUpdateReques
 import type { InfraDeleteResponse } from '../models/InfraDeleteResponse';
 import type { InfraPostResponse } from '../models/InfraPostResponse';
 import type { InfraPutResponse } from '../models/InfraPutResponse';
-import type { kubernertes__methods__apply__index__ApplyBody } from '../models/kubernertes__methods__apply__index__ApplyBody';
-import type { kubernertes__methods__delete__index__ApplyBody } from '../models/kubernertes__methods__delete__index__ApplyBody';
-import type { kubernertes__methods__patch__index__ApplyBody } from '../models/kubernertes__methods__patch__index__ApplyBody';
 import type { NamespaceInfo } from '../models/NamespaceInfo';
 import type { NetworkCreateParams } from '../models/NetworkCreateParams';
 import type { NetworkCreateResponse } from '../models/NetworkCreateResponse';
@@ -21,8 +19,6 @@ import type { NetworkListResponse } from '../models/NetworkListResponse';
 import type { NetworkUpdateParams } from '../models/NetworkUpdateParams';
 import type { nodes___node_id___NodeSpec } from '../models/nodes___node_id___NodeSpec';
 import type { ResourceResponse } from '../models/ResourceResponse';
-import type { resources___type___ConfigMapCreatePayload } from '../models/resources___type___ConfigMapCreatePayload';
-import type { resources___type___DeploymentCreatePayload } from '../models/resources___type___DeploymentCreatePayload';
 import type { ResourceScope } from '../models/ResourceScope';
 import type { RunContainer } from '../models/RunContainer';
 import type { RunImage } from '../models/RunImage';
@@ -39,9 +35,6 @@ import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 
-export type TDataApiPackgesPost = {
-                requestBody: RunImage
-            }
 export type TDataApiSwarmInitPost = {
                 requestBody: SwarmInitParams
             }
@@ -67,9 +60,6 @@ export type TDataApiSwarmServicesServiceIdGet = {
 export type TDataApiSwarmServicesCreatePost = {
                 requestBody: ServiceCreationSpec
             }
-export type TDataApiStoragesPost = {
-                requestBody: VolumeActionRequest
-            }
 export type TDataApiInfraGet = {
                 category: string
 project?: string
@@ -88,6 +78,30 @@ fileName: string
 project: string
 subCategory: string
             }
+export type TDataApiDockerStoragesPost = {
+                requestBody: VolumeActionRequest
+            }
+export type TDataApiDockerNetworksPut = {
+                requestBody: NetworkUpdateParams
+            }
+export type TDataApiDockerNetworksPost = {
+                requestBody: NetworkCreateParams
+            }
+export type TDataApiDockerNetworksDelete = {
+                requestBody: NetworkDeleteParams
+            }
+export type TDataApiDockerPackagesPost = {
+                requestBody: RunImage
+            }
+export type TDataApiDockerContainersPost = {
+                requestBody: RunContainer
+            }
+export type TDataApiDockerContainersStatsContainerIdGet = {
+                containerId: string
+            }
+export type TDataApiDockerSystemsPost = {
+                requestBody: SystemInfo
+            }
 export type TDataApiKubernertesClusterNamespaceGet = {
                 labelSelector?: string | null
             }
@@ -101,13 +115,10 @@ export type TDataApiKubernertesMethodsGet = {
                 type: string
             }
 export type TDataApiKubernertesMethodsApplyPost = {
-                requestBody: kubernertes__methods__apply__index__ApplyBody
+                requestBody: ApplyBody
             }
 export type TDataApiKubernertesMethodsDeletePost = {
-                requestBody: kubernertes__methods__delete__index__ApplyBody
-            }
-export type TDataApiKubernertesMethodsPatchPost = {
-                requestBody: kubernertes__methods__patch__index__ApplyBody
+                requestBody: ApplyBody
             }
 export type TDataApiKubernertesContextGet = {
                 action: 'all' | 'current'
@@ -143,14 +154,6 @@ export type TDataApiKubernertesResourcesTypeDelete = {
                 apiVersion: string
 name: string
 namespace?: string | null
-type: string
-            }
-export type TDataApiKubernertesResourcesTypeCreateConfigmapsPost = {
-                requestBody: resources___type___ConfigMapCreatePayload
-type: string
-            }
-export type TDataApiKubernertesResourcesTypeCreateDeploymentsPost = {
-                requestBody: resources___type___DeploymentCreatePayload
 type: string
             }
 export type TDataApiKubernertesUserGet = {
@@ -213,65 +216,17 @@ export type TDataApiIntegrationKubernetesReleaseRunPatch = {
                 id: number
 status: string
             }
-export type TDataApiNetworksPut = {
-                requestBody: NetworkUpdateParams
-            }
-export type TDataApiNetworksPost = {
-                requestBody: NetworkCreateParams
-            }
-export type TDataApiNetworksDelete = {
-                requestBody: NetworkDeleteParams
-            }
 export type TDataApiQueuePost = {
                 requestBody: RunQueue
             }
 export type TDataApiQueueDelete = {
                 requestBody: StopQueue
             }
-export type TDataApiContainersPost = {
-                requestBody: RunContainer
-            }
-export type TDataApiContainersStatsContainerIdGet = {
-                containerId: string
-            }
-export type TDataApiSystemsPost = {
-                requestBody: SystemInfo
-            }
 export type TDataApiQueueJobPost = {
                 requestBody: CreateQueueJob
             }
 
 export class DefaultService {
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static apiPackgesGet(): CancelablePromise<unknown> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/api/packges',
-		});
-	}
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static apiPackgesPost(data: TDataApiPackgesPost): CancelablePromise<unknown> {
-		const {
-requestBody,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/api/packges',
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
 
 	/**
 	 * @returns unknown Successful Response
@@ -447,36 +402,6 @@ requestBody,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiStoragesGet(): CancelablePromise<unknown> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/api/storages',
-		});
-	}
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static apiStoragesPost(data: TDataApiStoragesPost): CancelablePromise<unknown> {
-		const {
-requestBody,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/api/storages',
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
 	public static apiInfraGet(data: TDataApiInfraGet): CancelablePromise<unknown> {
 		const {
 category,
@@ -551,6 +476,239 @@ subCategory,
 			query: {
 				category, sub_category: subCategory, project, file_name: fileName
 			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerStoragesGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/docker/storages',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerStoragesPost(data: TDataApiDockerStoragesPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/docker/storages',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * List all Docker networks.
+ * 
+ * Returns:
+ * NetworkListResponse: List of network information
+	 * @returns NetworkListResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerNetworksGet(): CancelablePromise<NetworkListResponse> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/docker/networks',
+		});
+	}
+
+	/**
+	 * Update an existing Docker network by creating a new one with updated attributes
+ * and removing the old one.
+ * 
+ * Args:
+ * request: Request object
+ * params: Network update parameters
+ * 
+ * Returns:
+ * NetworkCreateResponse: Updated network information
+ * 
+ * Raises:
+ * HTTPException: If network update fails
+	 * @returns NetworkCreateResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerNetworksPut(data: TDataApiDockerNetworksPut): CancelablePromise<NetworkCreateResponse> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/docker/networks',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Create a new Docker network.
+ * 
+ * Args:
+ * params: Network creation parameters
+ * 
+ * Returns:
+ * NetworkCreateResponse: Created network information
+ * 
+ * Raises:
+ * HTTPException: If network creation fails
+	 * @returns NetworkCreateResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerNetworksPost(data: TDataApiDockerNetworksPost): CancelablePromise<NetworkCreateResponse> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/docker/networks',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Delete a Docker network.
+ * 
+ * Args:
+ * params: Network deletion parameters
+ * 
+ * Returns:
+ * NetworkDeleteResponse: Deletion confirmation
+ * 
+ * Raises:
+ * HTTPException: If network deletion fails
+	 * @returns NetworkDeleteResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerNetworksDelete(data: TDataApiDockerNetworksDelete): CancelablePromise<NetworkDeleteResponse> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/docker/networks',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerPackagesGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/docker/packages',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerPackagesPost(data: TDataApiDockerPackagesPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/docker/packages',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns GetContainerResponse Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerContainersGet(): CancelablePromise<GetContainerResponse> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/docker/containers',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerContainersPost(data: TDataApiDockerContainersPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/docker/containers',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerContainersStatsContainerIdGet(data: TDataApiDockerContainersStatsContainerIdGet): CancelablePromise<unknown> {
+		const {
+containerId,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/docker/containers/stats/{container_id}',
+			path: {
+				container_id: containerId
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerSystemsPost(data: TDataApiDockerSystemsPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/docker/systems',
+			body: requestBody,
+			mediaType: 'application/json',
 			errors: {
 				422: `Validation Error`,
 			},
@@ -688,25 +846,6 @@ requestBody,
 		return __request(OpenAPI, {
 			method: 'POST',
 			url: '/api/kubernertes/methods/delete',
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static apiKubernertesMethodsPatchPost(data: TDataApiKubernertesMethodsPatchPost): CancelablePromise<unknown> {
-		const {
-requestBody,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/api/kubernertes/methods/patch',
 			body: requestBody,
 			mediaType: 'application/json',
 			errors: {
@@ -877,52 +1016,6 @@ type,
 			query: {
 				apiVersion, name, namespace
 			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static apiKubernertesResourcesTypeCreateConfigmapsPost(data: TDataApiKubernertesResourcesTypeCreateConfigmapsPost): CancelablePromise<unknown> {
-		const {
-requestBody,
-type,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/api/kubernertes/resources/{type}/create/configmaps',
-			path: {
-				type
-			},
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static apiKubernertesResourcesTypeCreateDeploymentsPost(data: TDataApiKubernertesResourcesTypeCreateDeploymentsPost): CancelablePromise<unknown> {
-		const {
-requestBody,
-type,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/api/kubernertes/resources/{type}/create/deployments',
-			path: {
-				type
-			},
-			body: requestBody,
-			mediaType: 'application/json',
 			errors: {
 				422: `Validation Error`,
 			},
@@ -1312,110 +1405,6 @@ status,
 	}
 
 	/**
-	 * List all Docker networks.
- * 
- * Returns:
- * NetworkListResponse: List of network information
-	 * @returns NetworkListResponse Successful Response
-	 * @throws ApiError
-	 */
-	public static apiNetworksGet(): CancelablePromise<NetworkListResponse> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/api/networks',
-		});
-	}
-
-	/**
-	 * Update an existing Docker network by creating a new one with updated attributes
- * and removing the old one.
- * 
- * Args:
- * request: Request object
- * params: Network update parameters
- * 
- * Returns:
- * NetworkCreateResponse: Updated network information
- * 
- * Raises:
- * HTTPException: If network update fails
-	 * @returns NetworkCreateResponse Successful Response
-	 * @throws ApiError
-	 */
-	public static apiNetworksPut(data: TDataApiNetworksPut): CancelablePromise<NetworkCreateResponse> {
-		const {
-requestBody,
-} = data;
-		return __request(OpenAPI, {
-			method: 'PUT',
-			url: '/api/networks',
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Create a new Docker network.
- * 
- * Args:
- * params: Network creation parameters
- * 
- * Returns:
- * NetworkCreateResponse: Created network information
- * 
- * Raises:
- * HTTPException: If network creation fails
-	 * @returns NetworkCreateResponse Successful Response
-	 * @throws ApiError
-	 */
-	public static apiNetworksPost(data: TDataApiNetworksPost): CancelablePromise<NetworkCreateResponse> {
-		const {
-requestBody,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/api/networks',
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Delete a Docker network.
- * 
- * Args:
- * params: Network deletion parameters
- * 
- * Returns:
- * NetworkDeleteResponse: Deletion confirmation
- * 
- * Raises:
- * HTTPException: If network deletion fails
-	 * @returns NetworkDeleteResponse Successful Response
-	 * @throws ApiError
-	 */
-	public static apiNetworksDelete(data: TDataApiNetworksDelete): CancelablePromise<NetworkDeleteResponse> {
-		const {
-requestBody,
-} = data;
-		return __request(OpenAPI, {
-			method: 'DELETE',
-			url: '/api/networks',
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
@@ -1467,75 +1456,6 @@ requestBody,
 		return __request(OpenAPI, {
 			method: 'DELETE',
 			url: '/api/queue',
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * @returns GetContainerResponse Successful Response
-	 * @throws ApiError
-	 */
-	public static apiContainersGet(): CancelablePromise<GetContainerResponse> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/api/containers',
-		});
-	}
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static apiContainersPost(data: TDataApiContainersPost): CancelablePromise<unknown> {
-		const {
-requestBody,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/api/containers',
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static apiContainersStatsContainerIdGet(data: TDataApiContainersStatsContainerIdGet): CancelablePromise<unknown> {
-		const {
-containerId,
-} = data;
-		return __request(OpenAPI, {
-			method: 'GET',
-			url: '/api/containers/stats/{container_id}',
-			path: {
-				container_id: containerId
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static apiSystemsPost(data: TDataApiSystemsPost): CancelablePromise<unknown> {
-		const {
-requestBody,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/api/systems',
 			body: requestBody,
 			mediaType: 'application/json',
 			errors: {
@@ -1901,17 +1821,6 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/orchestration/kubernetes/namespaced/certificate',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static orchestrationKubernetesNamespacedIngressGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/orchestration/kubernetes/namespaced/ingress',
 		});
 	}
 

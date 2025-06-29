@@ -1,60 +1,77 @@
+import React, { useState, useContext } from "react";
+import { Button } from "@/components/ui/button";
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
+import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
+import useKubernertesResources from "@/hooks/use-resource";
+import ResourceForm from "@/components/resource-form/resource-form";
 
-
-import React, { useContext, useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext'
-import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector'
-import useKubernertesResources from '@/hooks/use-resource'
-import RouteDescription from '@/components/route-description'
+import { DefaultService } from "@/gingerJs_api_client";
+import { toast } from "sonner";
+import { FileKeyIcon } from "lucide-react";
+import RouteDescription from "@/components/route-description";
 import {
   Card,
-  CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardContent,
 } from "@/components/ui/card";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { SecretsList } from '@/components/kubernetes/quick-view-resources/SecretsList'
-import { format } from 'date-fns'
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
+import yaml from "js-yaml";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+const columns = [
+  { header: "Name", accessor: "name" },
+  { header: "Namespace", accessor: "namespace" },
+  { header: "Type", accessor: "type" },
+  { header: "Data Keys", accessor: "dataKeys" },
+  { header: "Labels", accessor: "labels" },
+  { header: "Age", accessor: "age" },
+];
 
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tag, Clock, FileKeyIcon } from 'lucide-react'
-import { Badge } from "@/components/ui/badge"
-import SmartDataViewer from '@/components/queues/queueJob/SmartDataViewer'
+interface SecretData {
+  name: string;
+  namespace: string;
+  type: string;
+  dataKeys: number;
+  labels: string[];
+  age: string;
+  last_applied?: string;
+  fullData: any;
+  showEdit: boolean;
+  showDelete: boolean;
+}
 
 export default function SecretsPage() {
-  const { selectedNamespace } = useContext(NamespaceContext)
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showDetails, setShowDetails] = useState(false)
-  const [selectedSecret, setSelectedSecret] = useState({})
-
+  const { selectedNamespace } = useContext(NamespaceContext);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [currentToEdit, setCurrentToEdit] = useState<SecretData | null>(null);
   const {
     resource: secrets,
-    isLoading,
-    error
-  } = useKubernertesResources({ nameSpace: selectedNamespace, type: "secrets" })
+    error,
+    refetch,
+  } = useKubernertesResources({
+    nameSpace: selectedNamespace,
+    type: "secrets",
+  });
 
-  const filteredSecrets =
-    secrets?.filter(
-      (secret) =>
-        secret.metadata.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
-
-
-  const handleView = async (data) => {
-    setSelectedSecret(data.fullData)
-    setShowDetails(true)
-  }
-
+  // Transform API data to match table format
+  const transformedSecrets: SecretData[] =
+    secrets?.map((secret: any) => ({
+      name: secret.metadata?.name || "",
+      namespace: secret.metadata?.namespace || "",
+      type: secret.type || "Opaque",
+      dataKeys: Object.keys(secret.data || {}).length,
+      labels: Object.entries(secret.metadata?.labels || {}).map(
+        ([key, value]) => `${key}: ${value}`
+      ),
+      age: secret.metadata?.creationTimestamp 
+        ? new Date(secret.metadata.creationTimestamp).toLocaleDateString()
+        : "Unknown",
+      last_applied: secret.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
+      fullData: secret,
+      showEdit: true,
+      showDelete: true,
+    })) || [];
 
   if (error) {
     return (
@@ -65,7 +82,7 @@ export default function SecretsPage() {
   }
 
   return (
-    <div>
+    <div className="w-full">
       <div className="space-y-6">
         <RouteDescription
           title={
@@ -82,136 +99,99 @@ export default function SecretsPage() {
             <div>
               <CardTitle className="text-lg">Your Secrets</CardTitle>
               <CardDescription>
-                Secrets from {selectedNamespace || "All"} namespace
+                {transformedSecrets.length} Secrets found
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <NamespaceSelector />
-
-              <Button>Create pods</Button>
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <FileKeyIcon className="w-4 h-4 mr-2" />
+                Create Secret
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
-            <div className="relative px-6">
-              <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search secrets..."
-                className="w-full pl-9 bg-background"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <SecretsList secrets={filteredSecrets} onView={handleView} />
+            <ResourceTable
+              columns={columns}
+              data={transformedSecrets}
+              onEdit={(res: SecretData) => {
+                setShowCreateDialog(true);
+                setCurrentToEdit(res);
+              }}
+              onDelete={(data: SecretData) => {
+                let manifest = data.last_applied
+                  ? yaml.dump(JSON.parse(data.last_applied))
+                  : "";
+                if (!manifest) {
+                  manifest = yaml.dump({
+                    apiVersion: data.fullData.apiVersion,
+                    kind: data.fullData.kind,
+                    metadata: {
+                      name: data.fullData.metadata.name,
+                      namespace: data.fullData.metadata.namespace,
+                    },
+                  });
+                }
+                DefaultService.apiKubernertesMethodsDeletePost({
+                  requestBody: {
+                    manifest: manifest,
+                  },
+                })
+                  .then((res: any) => {
+                    if (res.success) {
+                      toast.success(res.data.message);
+                      refetch();
+                    } else {
+                      toast.error(res.error);
+                    }
+                  })
+                  .catch((err) => {
+                    toast.error(err);
+                  });
+              }}
+            />
           </CardContent>
         </Card>
       </div>
-      {showDetails && Object.keys(selectedSecret).length && (
-        <Dialog open={showDetails} onOpenChange={setShowDetails}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>{selectedSecret.metadata.name}</DialogTitle>
-              <DialogDescription>
-                Namespace: {selectedSecret.metadata.namespace}
-              </DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="h-[60vh]">
-              <div className="space-y-4 p-4">
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <FileKeyIcon className="h-5 w-5" /> Secret Details
-                  </h3>
-                  <div className="ml-4 mt-2 space-y-1">
-                    <p>
-                      <span className="font-medium">Type:</span>{" "}
-                      {selectedSecret.type}
-                    </p>
-                    <p>
-                      <span className="font-medium">UID:</span>{" "}
-                      {selectedSecret.metadata.uid}
-                    </p>
-                    <p>
-                      <span className="font-medium">Resource Version:</span>{" "}
-                      {selectedSecret.metadata.resourceVersion}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Tag className="h-5 w-5" /> Labels
-                  </h3>
-                  <div className="ml-4 mt-2">
-                    {Object.entries(selectedSecret.metadata.labels || {}).map(
-                      ([key, value]) => (
-                        <Badge
-                          key={key}
-                          variant="outline"
-                          className="mr-2 mb-2"
-                        >
-                          {key}: {value}
-                        </Badge>
-                      )
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Tag className="h-5 w-5" /> Annotations
-                  </h3>
-                  <div className="ml-4 mt-2">
-                    {Object.entries(
-                      selectedSecret.metadata.annotations || {}
-                    ).map(([key, value]) => (
-                      <div key={key} className="mb-2">
-                        {key.endsWith("last-applied-configuration") ? (
-                          <SmartDataViewer
-                            label={key}
-                            data={JSON.parse(value)}
-                          />
-                        ) : (
-                          <>
-                            <span className="font-medium">{key}:</span> {value}
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Clock className="h-5 w-5" /> Timestamps
-                  </h3>
-                  <div className="ml-4 mt-2">
-                    <p>
-                      <span className="font-medium">Created:</span>{" "}
-                      {format(
-                        new Date(selectedSecret.metadata.creationTimestamp),
-                        "PPpp"
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    Data
-                  </h3>
-                  <div className="ml-4 mt-2">
-                    {Object.entries(selectedSecret.data || {}).map(
-                      ([key, value]) => (
-                        <p key={key} className="flex gap-2">
-                          <span className="font-medium">{key}</span>
-                          <span>
-                            <Badge variant="secondary">Encrypted</Badge>
-                          </span>
-                        </p>
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
+      {showCreateDialog && (
+        <ResourceForm
+          heading="Secret resource"
+          description="A Kubernetes Secret is a resource used to securely store and manage sensitive information such as passwords, tokens, SSH keys, and TLS certificates. Unlike ConfigMaps, Secrets are base64 encoded and handled with tighter access controls to reduce the risk of exposure. They can be mounted into Pods as files or exposed as environment variables at runtime."
+          editDetails={showCreateDialog}
+          rawYaml={
+            currentToEdit
+              ? yaml.dump(
+                  currentToEdit?.last_applied
+                    ? JSON.parse(currentToEdit?.last_applied)
+                    : currentToEdit.fullData
+                )
+              : ""
+          }
+          resourceType="secrets"
+          onClose={() => {
+            setShowCreateDialog(false);
+            setCurrentToEdit(null);
+          }}
+          onUpdate={(data) => {
+            DefaultService.apiKubernertesMethodsApplyPost({
+              requestBody: {
+                manifest: data.rawYaml,
+              },
+            })
+              .then((res: any) => {
+                if (res.success) {
+                  toast.success(res.data.message);
+                  refetch();
+                  setShowCreateDialog(false);
+                } else {
+                  toast.error(res.error);
+                }
+              })
+              .catch((err) => {
+                toast.error(err);
+              });
+          }}
+        />
       )}
     </div>
   );
