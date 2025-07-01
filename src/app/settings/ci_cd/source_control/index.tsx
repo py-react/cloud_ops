@@ -23,6 +23,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import AddRepositoryForm from '@/components/ciCd/sourceControl/github/forms/AddRepositoryForm';
 import { DefaultService } from '@/gingerJs_api_client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface WebhookConfig {
   status: string;
@@ -47,6 +48,7 @@ interface EnhancedRepository extends Omit<Repository, 'allowedBranches' | 'suppo
 }
 
 const IntegrationsPage = () => {
+  const navigate = useNavigate()
   const [webhookConfig, setWebhookConfig] = useState<WebhookConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,13 +126,19 @@ const IntegrationsPage = () => {
     }
   };
 
+  const handleViewDetails = (repo: any,branch:string) => {
+    navigate(`/settings/ci_cd/source_control/${repo.name}/${branch}`)
+  };
+
   const enhancedData: EnhancedRepository[] = repositories.map(repository => ({
     ...repository,
     data:repository,
     allowedBranches: (
       <div className="flex flex-wrap gap-1">
         {repository.allowedBranches.map((branch, i) => (
-          <span key={i} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+          <span onClick={()=>{
+            handleViewDetails(repository,branch)
+          }} key={i} className="inline-flex items-center px-2 py-1 cursor-pointer rounded-full text-xs bg-green-100 text-green-800">
             {branch}
           </span>
         ))}

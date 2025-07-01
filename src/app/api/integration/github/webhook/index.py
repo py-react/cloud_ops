@@ -9,6 +9,9 @@ from pydantic import BaseModel, Field
 from app.github_client.config import get_config
 from app.github_client.handler import PullRequestHandler
 from app.github_client.allowed_repo import AllowedRepoUtils
+from app.db_client.controllers.source_code_build import (
+    SourceCodeBuildWithLogsType
+)
 import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -254,6 +257,7 @@ class HealthCheckResponse(BaseModel):
     allowed_branches: Dict[str, List[str]] = Field(..., description="Mapping of repository names to allowed branch lists")
     deployments: Optional[Dict[str, DeploymentInfo]] = Field(None, description="Mapping of repository names to deployment info")
     timestamp: str = Field(..., description="Current timestamp")
+    builds: Dict[str, Dict[str, Optional[SourceCodeBuildWithLogsType]]]
 
 PR_SUPPORTED_ACTION = [
     "opened",
@@ -391,13 +395,14 @@ async def GET(request: Request) -> HealthCheckResponse:
     """Health check endpoint"""
     utils = AllowedRepoUtils()
     ALLOWED_REPOSITORIES, ALLOWED_BRANCHES, DEPLOYMENTS = utils.get_all()
-    
+    builds = utils.get_last_builds_for_all_repo_branches()
     return HealthCheckResponse(
         status="healthy",
         supported_events=SUPPORTED_EVENTS,
         allowed_repositories=ALLOWED_REPOSITORIES,
         allowed_branches=ALLOWED_BRANCHES,
         deployments=DEPLOYMENTS,
+        builds=builds,
         timestamp=datetime.now().isoformat()
     )
 

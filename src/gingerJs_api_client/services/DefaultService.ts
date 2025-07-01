@@ -206,6 +206,10 @@ export type TDataApiIntegrationGithubWebhookPut = {
 export type TDataApiIntegrationGithubWebhookDelete = {
                 name: string
             }
+export type TDataApiIntegrationGithubBuildsGet = {
+                branchName: string
+repoName: string
+            }
 export type TDataApiIntegrationKubernetesReleaseGet = {
                 name?: string | null
 namespace?: string | null
@@ -1351,6 +1355,27 @@ name,
 	}
 
 	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubBuildsGet(data: TDataApiIntegrationGithubBuildsGet): CancelablePromise<unknown> {
+		const {
+branchName,
+repoName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/github/builds',
+			query: {
+				repo_name: repoName, branch_name: branchName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
 	 * Get deployment details.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
@@ -1710,17 +1735,6 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static settingsCiCdSourceControlSettingsGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/settings/ci_cd/source_control_settings',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
 	public static settingsCiCdDeploymentStrategyGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -1747,6 +1761,28 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/settings/ci_cd/source_control',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdSourceControlRepoNameGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/source_control/{repo_name}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdSourceControlRepoNameBranchNameGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/source_control/{repo_name}/{branch_name}',
 		});
 	}
 
@@ -2033,6 +2069,17 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/orchestration/kubernetes/{namespace}/ingresses',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static orchestrationKubernetesNamespaceIngressesNameGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/orchestration/kubernetes/{namespace}/ingresses/{name}',
 		});
 	}
 

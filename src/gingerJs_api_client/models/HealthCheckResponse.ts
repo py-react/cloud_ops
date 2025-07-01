@@ -1,4 +1,5 @@
 import type { integration__github__webhook__index__DeploymentInfo } from './integration__github__webhook__index__DeploymentInfo';
+import type { SourceCodeBuildWithLogsType } from './SourceCodeBuildWithLogsType';
 
 /**
  * Response model for health check endpoint
@@ -28,5 +29,6 @@ export type HealthCheckResponse = {
 	 * Current timestamp
 	 */
 	timestamp: string;
+	builds: Record<string, Record<string, SourceCodeBuildWithLogsType | null>>;
 };
 

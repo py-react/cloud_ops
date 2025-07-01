@@ -20,8 +20,8 @@ export default function RouteDescription({
 	return (
 		<Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
 			<CardHeader>
-				<CardTitle className="text-lg">{title}</CardTitle>
-				<CardDescription>
+				<CardTitle className="text-xl">{title}</CardTitle>
+				<CardDescription className="text-base">
 					{shortDescription}
 				</CardDescription>
 			</CardHeader>

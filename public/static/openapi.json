@@ -2269,6 +2269,52 @@
         }
       }
     },
+    "/api/integration/github/builds": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_integration_github_builds_get",
+        "parameters": [
+          {
+            "name": "repo_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo Name"
+            }
+          },
+          {
+            "name": "branch_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Branch Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/integration/kubernetes/release": {
       "get": {
         "summary": "",
@@ -2924,24 +2970,6 @@
         }
       }
     },
-    "/settings/ci_cd/source_control_settings": {
-      "get": {
-        "summary": "",
-        "operationId": "_settings_ci_cd_source_control_settings_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/settings/ci_cd/deployment_strategy": {
       "get": {
         "summary": "",
@@ -2982,6 +3010,42 @@
       "get": {
         "summary": "",
         "operationId": "_settings_ci_cd_source_control_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/source_control/{repo_name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_source_control__repo_name__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/source_control/{repo_name}/{branch_name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_source_control__repo_name___branch_name__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4782,6 +4846,23 @@
             "type": "string",
             "title": "Timestamp",
             "description": "Current timestamp"
+          },
+          "builds": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SourceCodeBuildWithLogsType"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Builds"
           }
         },
         "type": "object",
@@ -4789,7 +4870,8 @@
           "supported_events",
           "allowed_repositories",
           "allowed_branches",
-          "timestamp"
+          "timestamp",
+          "builds"
         ],
         "title": "HealthCheckResponse",
         "description": "Response model for health check endpoint"
@@ -6573,6 +6655,75 @@
           "target_port"
         ],
         "title": "ServicePortConfig"
+      },
+      "SourceCodeBuildLogType": {
+        "properties": {
+          "build_id": {
+            "type": "integer",
+            "title": "Build Id"
+          },
+          "logs": {
+            "type": "string",
+            "title": "Logs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "build_id",
+          "logs"
+        ],
+        "title": "SourceCodeBuildLogType"
+      },
+      "SourceCodeBuildWithLogsType": {
+        "properties": {
+          "image_name": {
+            "type": "string",
+            "title": "Image Name"
+          },
+          "repo_name_full_name": {
+            "type": "string",
+            "title": "Repo Name Full Name"
+          },
+          "repo_name": {
+            "type": "string",
+            "title": "Repo Name"
+          },
+          "pull_request_number": {
+            "type": "string",
+            "title": "Pull Request Number"
+          },
+          "user_login": {
+            "type": "string",
+            "title": "User Login"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "branch_name": {
+            "type": "string",
+            "title": "Branch Name"
+          },
+          "logs": {
+            "items": {
+              "$ref": "#/components/schemas/SourceCodeBuildLogType"
+            },
+            "type": "array",
+            "title": "Logs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image_name",
+          "repo_name_full_name",
+          "repo_name",
+          "pull_request_number",
+          "user_login",
+          "status",
+          "branch_name",
+          "logs"
+        ],
+        "title": "SourceCodeBuildWithLogsType"
       },
       "StatefulSetInfo": {
         "properties": {

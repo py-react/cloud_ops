@@ -46,5 +46,20 @@ export const $HealthCheckResponse = {
 	description: `Current timestamp`,
 	isRequired: true,
 },
+		builds: {
+	type: 'dictionary',
+	contains: {
+	type: 'dictionary',
+	contains: {
+	type: 'any-of',
+	contains: [{
+	type: 'SourceCodeBuildWithLogsType',
+}, {
+	type: 'null',
+}],
+},
+},
+	isRequired: true,
+},
 	},
 } as const;

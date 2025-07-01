@@ -10,6 +10,9 @@ from .client import GitHubAppClient
 from .commenter import PRCommenter
 from .detector import Detector
 from .utils import generate_image_name, decode_github_content
+from app.db_client.db import get_session
+from app.db_client.controllers.source_code_build.source_code_build import add_build_log, create_source_code_build, get_source_code_build, update_source_code_build_status, safe_add_build_log
+from app.db_client.models.source_code_build.types import SourceCodeBuildType
 
 client = clientContext.client
 logger = logging.getLogger(__name__)
@@ -24,6 +27,7 @@ class PullRequestHandler:
     2. Gets the Dockerfile content directly from the PR branch using GitHub API
     3. Builds a Docker image from the Dockerfile content
     4. Posts build status comments to the PR with the image name for user reference
+    5. Handles all build status and log updates in the database via centralized controller helpers for clarity and maintainability
     
     The Docker build process:
     - Creates a unique image name using format: {repo_name}_{branch_name}_{unique_id}
@@ -33,6 +37,10 @@ class PullRequestHandler:
     - Labels images with GitHub metadata for tracking
     - Handles various error cases gracefully with informative comments
     - Provides the image name in success comments for users to use later
+    
+    Database operations:
+    - All build status and log updates are handled through controller helper functions (update_source_code_build_status, safe_add_build_log, etc.)
+    - This ensures less repetition, better error handling, and easier maintenance
     
     Requirements:
     - Docker daemon must be running
@@ -59,13 +67,42 @@ class PullRequestHandler:
         Returns:
             Image name with tag
         """
+        build_id = None
+        status="started"
+        repo_name_full_name=repo_name
+        repo_name=repo_name.split('/')[-1] if '/' in repo_name else repo_name
+        pull_request_number=str(pr_number)
+        user_login=repo.get_pull(pr_number).user.login
+
+        try:
+            image_name = generate_image_name(repo_name, branch_name)
+        except Exception as e:
+            logger.info(f"failed to generate image image from {repo_name} and {branch_name}")
+            raise e
+        try:
+            # --- DB: Create SourceCodeBuild entry ---
+            session_gen = get_session()
+            session = next(session_gen)
+            build_data = SourceCodeBuildType(
+                image_name=image_name,
+                status=status,
+                repo_name_full_name=repo_name_full_name,
+                repo_name=repo_name.split('/')[-1] if '/' in repo_name else repo_name,
+                pull_request_number=pull_request_number,
+                user_login=user_login,
+                branch_name=branch_name
+            )
+            build_obj = create_source_code_build(session, build_data)
+            build_id = build_obj.id
+        except Exception as e:
+            logger.info(f"failed to create entry in database for {repo_name} and {branch_name} will not continue with build as well")
+            raise e
+
         try:
             # Create unique image name
-            image_name = generate_image_name(repo_name, branch_name)
             unique_id = image_name.split(':')[-1]
             
             logger.info(f"Building image {image_name} from branch {branch_name}")
-            
             # Try to get the Dockerfile content directly from the repository
             dockerfile_content = None
             possible_paths = ["Dockerfile", "dockerfile", "Dockerfile.txt", "docker/Dockerfile", "build/Dockerfile"]
@@ -113,16 +150,26 @@ class PullRequestHandler:
                     "com.github.unique_id": unique_id
                 }
             )
-            
+
+            # --- DB: Add build logs from Docker build output ---
+            session_gen = get_session()
+            session = next(session_gen)
+            safe_add_build_log(session,build_id,message=logs)
+            update_source_code_build_status(session,build_id,"success")
             logger.info(f"Successfully built image {image_name} with ID {image.id}")
             return image_name
-            
-        except (FileNotFoundError, ValueError) as e:
-            # Re-raise these specific exceptions to be handled by the caller
-            raise
+        
         except Exception as e:
             logger.error(f"Failed to build image: {e}")
-            raise
+            # Ensure SourceCodeBuild entry exists for logging
+            try:
+                session_gen = get_session()
+                session = next(session_gen)
+                update_source_code_build_status(session, build_id, "failed")
+                safe_add_build_log(session, build_id, str(e))
+            except Exception as inner_e:
+                logger.error(f"Failed to create SourceCodeBuild entry for error logging: {inner_e}")
+                raise e  # Re-raise original error if we can't log
     
     def cleanup_old_pr_resources(self, max_age_hours: int = 24) -> None:
         """

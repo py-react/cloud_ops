@@ -310,7 +310,7 @@ const items = {
               <SidebarGroup key={value.url}>
                 <SidebarGroupLabel>{value.title}</SidebarGroupLabel>
                 <SidebarGroupContent>
-                  <SidebarMenu>
+                  <SidebarMenu >
                     {value.childs.map((item) => {
                       return (
                         <SidebarMenuItem key={value.url + item.url}>

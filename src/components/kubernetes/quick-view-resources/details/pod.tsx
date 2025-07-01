@@ -534,19 +534,18 @@ export const PodDetailedInfo = ({data, loading, error}) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
         {/* AI Insights */}
         <PodAIInsights 
-          loading={loading.aiInsights} 
+          loading={loading} 
           podName={data?.pod.pod_name}
           podStatus={data?.pod.status}
         />
 
         {/* Pod Overview */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-8">
-          {loading.pod ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
+          {loading ? (
             <div className="animate-pulse">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-4">
@@ -567,7 +566,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between p-6">
                 <div className="flex items-center space-x-4">
                   <div className="p-3 bg-indigo-100 rounded-xl">
                     <Server className="h-6 w-6 text-indigo-600" />
@@ -580,7 +579,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
                 <StatusBadge status={data?.pod.status || 'Unknown'} />
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-4 pb-4">
                 <div className="text-center">
                   <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mx-auto mb-2">
                     <Container className="h-6 w-6 text-blue-600" />
@@ -624,7 +623,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
 
               {/* Pod Labels - Integrated into overview */}
               {data?.pod.labels && Object.keys(data.pod.labels).length > 0 && (
-                <div className="border-t border-slate-100 pt-6">
+                <div className="border-t border-slate-100 p-6">
                   <div className="flex items-center space-x-2 mb-4">
                     <Tag className="h-4 w-4 text-amber-500" />
                     <h3 className="text-sm font-semibold text-slate-700">Pod Labels</h3>
@@ -645,14 +644,14 @@ export const PodDetailedInfo = ({data, loading, error}) => {
         </div>
 
         {/* Pod Details Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-8">
-          <div className="flex items-center space-x-3 mb-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
+          <div className="flex items-center space-x-3 px-6 mb-6">
             <Info className="h-5 w-5 text-slate-500" />
             <h2 className="text-lg font-semibold text-slate-900">Pod Details</h2>
           </div>
 
           {loading.pod ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 px-6 pb-6 gap-6">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="animate-pulse">
                   <div className="h-4 w-16 bg-slate-200 rounded mb-2"></div>
@@ -661,7 +660,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 px-6 pb-6 gap-6">
               {/* Node Information */}
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
@@ -754,7 +753,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
         </div>
 
         {/* Containers Section */}
-        <div className="bg-white rounded-xl border border-slate-200 mb-8 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200">
             <div className="flex items-center space-x-3">
               <Container className="h-5 w-5 text-blue-500" />
@@ -799,7 +798,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
 
         {/* Persistent Volume Claims Table */}
         {data?.pod.related_pvcs && data.pod.related_pvcs.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 mb-8 overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200">
               <div className="flex items-center space-x-3">
                 <HardDrive className="h-5 w-5 text-purple-500" />
@@ -850,7 +849,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
         )}
 
         {/* Volumes Section */}
-        <div className="bg-white rounded-xl border border-slate-200 mb-8 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200">
             <div className="flex items-center space-x-3">
               <Database className="h-5 w-5 text-green-500" />
@@ -899,7 +898,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
         </div>
 
         {/* Events Section */}
-        <div className="bg-white rounded-xl border border-slate-200 mb-8 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200">
             <div className="flex items-center space-x-3">
               <AlertCircle className="h-5 w-5 text-orange-500" />
@@ -967,8 +966,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
               )}
             </>
           )}
-        </div>
-      </div>
+        </div> 
     </div>
   );
 };

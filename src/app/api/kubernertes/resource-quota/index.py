@@ -16,7 +16,6 @@ async def GET(namespace:Optional[str]=None):
             rq_list = v1.list_resource_quota_for_all_namespaces(async_req=True)
 
         quota = []
-        print(rq_list.get().items[0])
         # 3. Iterate and print basic info
         for rq in rq_list.get().items:
             # Extract last applied configuration from annotations

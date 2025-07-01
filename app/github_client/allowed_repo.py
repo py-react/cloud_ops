@@ -1,6 +1,9 @@
-from typing import List, Optional
+from typing import List, Optional,Dict
 from sqlmodel import Session
 from app.db_client.db import get_session
+from app.db_client.controllers.source_code_build import (
+    SourceCodeBuildWithLogsType
+)
 from app.db_client.controllers.code_source_control import (
     create_code_source_control, list_code_source_controls, get_code_source_control
 )
@@ -10,6 +13,8 @@ from app.db_client.controllers.code_source_control_branch import (
 from app.db_client.models.code_source_control.types import CodeSourceControlType
 from app.db_client.models.code_source_control_branch.types import CodeSourceControlBranchType
 from app.db_client.controllers.deployment_config import list_deployment_configs
+from app.db_client.controllers.source_code_build import get_source_code_build 
+
 
 class AllowedRepoUtils:
     def __init__(self, session: Optional[Session] = None):
@@ -25,10 +30,29 @@ class AllowedRepoUtils:
         if self.session_ctx:
             self.session_ctx.close()
 
+    def get_builds(self,branch_name,repo_name):
+        return get_source_code_build(self.session,repo_name=repo_name,branch_name=branch_name)
+    
+    def get_last_builds_for_all_repo_branches(self)->Dict[str, Dict[str, Optional[SourceCodeBuildWithLogsType]]]:
+        """
+        Returns a dict of the form {repo_name: {branch_name: last_build_or_None}}
+        """
+        result = {}
+        # Get all repos and branches
+        _, branches, _ = self.get_all()
+        for repo_name, branch_list in branches.items():
+            result[repo_name] = {}
+            for branch_name in branch_list:
+                builds = get_source_code_build(self.session, repo_name=repo_name, branch_name=branch_name, last=True)
+                if builds and len(builds) > 0:
+                    result[repo_name][branch_name] = builds[0]
+                else:
+                    result[repo_name][branch_name] = None
+        return result 
+
     def get_all(self):
         # First, get all deployment configs
         deployment_configs = list_deployment_configs(self.session)
-        print(deployment_configs,"findMe")
         # Get all repos
         repos = list_code_source_controls(self.session)
         result = {}
