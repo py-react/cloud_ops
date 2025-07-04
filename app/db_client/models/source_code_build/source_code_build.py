@@ -11,6 +11,8 @@ class SourceCodeBuild(SQLModel, table=True):
     user_login: str
     status: str
     branch_name: str
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=True)
+    time_taken: Optional[float] = Field(default=None, nullable=True)
 
 class SourceCodeBuildLog(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

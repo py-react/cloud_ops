@@ -5,6 +5,7 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { NamespaceContextProvider } from '@/components/kubernetes/contextProvider/NamespaceContext'
 import { KubeContextProvider } from '@/components/kubernetes/contextProvider/KubeContext'
+import BackButton from '@/components/BackButton'
 
 function AppLayout() {
   return (
@@ -13,7 +14,10 @@ function AppLayout() {
       <KubeContextProvider>
         <NamespaceContextProvider>
             <AppSidebar />
-            <Outlet />
+            <div className='w-full p-4'>
+              <BackButton />
+              <Outlet />
+            </div>
         </NamespaceContextProvider>
         </KubeContextProvider>
       </SidebarProvider>

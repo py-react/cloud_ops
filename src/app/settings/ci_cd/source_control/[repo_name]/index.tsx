@@ -13,7 +13,7 @@ const Page = ()=>{
             navigate("/settings/ci_cd")
         }
     },[])
-    return <>hello</>
+    return <>redireting...</>
 }
 
 export default Page

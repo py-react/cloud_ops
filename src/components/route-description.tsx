@@ -28,7 +28,7 @@ export default function RouteDescription({
 			{description && (
 				<CardContent className="shadow-none">
 					<div className="space-y-1">
-						<div className="text-sm text-muted-foreground">
+						<div className="text-base text-muted-foreground">
 							{description}
 						</div>
 					</div>

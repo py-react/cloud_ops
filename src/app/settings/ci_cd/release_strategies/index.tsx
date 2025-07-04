@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { FileCog, Orbit } from 'lucide-react';
+import { FileCog, ListTree, Orbit } from 'lucide-react';
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
 import RouteDescription from '@/components/route-description';
 import { TooltipWrapper } from '@/components/ui/tooltip';
@@ -91,18 +91,33 @@ const DeploymentStrategyPage = ({strategies}: DeploymentStrategyPageProps) => {
   });
 
   return (
-    <div title="Deployment Strategies" className="p-4 w-full">
+    <div title="Deployment Strategies">
       <div className="space-y-6">
         <RouteDescription
-          title={<span className="flex items-center gap-2"><Orbit className="h-4 w-4" /> Deployment Strategies</span>}
-          shortDescription="Browse supported Kubernetes deployment strategies for managing application rollouts."
+          title={
+            <div className="flex items-center space-x-4">
+            <div className="p-3 bg-blue-100 rounded-xl">
+              <Orbit className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+              Deployment Strategies
+              </h2>
+              <p className="text-base text-slate-500">
+              Browse supported Kubernetes deployment strategies for managing application rollouts.
+              </p>
+            </div>
+          </div>
+        }
+          shortDescription=""
           description="Kubernetes offers multiple deployment strategies to control how updates are rolled out across pods in a cluster. This page lists the strategies supported by our platform—such as Recreate, RollingUpdate, Blue/Green, and Canary—helping you choose the right approach based on your application's reliability, availability, and rollout preferences. Use this list to understand each strategy's purpose and when to apply it in your deployment workflows."
         />
         <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
           <CardHeader>
-            <CardTitle className="text-lg">
-              <div className="flex items-center justify-between">
-                <h2>Available Strategies</h2>
+            <CardTitle className="">
+              <div className="flex items-center space-x-3">
+                <ListTree className="h-5 w-5 text-blue-500" />
+                <h2 className='text-xl font-semibold text-slate-900'>Available Strategies</h2>
               </div>
             </CardTitle>
             <CardDescription>

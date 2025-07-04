@@ -85,7 +85,6 @@ def add_build_log(session: Session, build_id: int, logs):
                     cleaned_logs.append(parsed)
                 except Exception:
                     continue  # skip malformed lines
-        print(cleaned_logs,"findMeHere")
         parsed_logs = parse_docker_build_logs(cleaned_logs)
         processed_logs = '\n'.join(parsed_logs["lines"])
         log = SourceCodeBuildLog(build_id=build_id, logs=processed_logs)
@@ -103,6 +102,13 @@ def update_source_code_build_status(session: Session, build_id: int, status: str
     build_obj = session.get(SourceCodeBuild, build_id)
     if build_obj:
         build_obj.status = status
+        # If status is 'success', update timeTook attribute
+        if status == "success":
+            from datetime import datetime
+            now = datetime.utcnow()
+            if  build_obj.created_at:
+                time_taken = (now - build_obj.created_at).total_seconds()
+                build_obj.time_taken = time_taken
         session.add(build_obj)
         session.commit()
         session.refresh(build_obj)

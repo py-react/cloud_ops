@@ -8,7 +8,7 @@ const Table = React.forwardRef<
   <div className={cn("relative w-full overflow-auto", wrapperClassName)}>
     <table
       ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
+      className={cn("w-full caption-bottom text-base", className)}
       {...props}
     />
   </div>

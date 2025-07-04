@@ -113,90 +113,90 @@ export function ResourceTable<T>({
 
   return (
     <Card className={cn("shadow-none", className)}>
-      <div className="rounded-[calc(0.5rem-2px)] border">
+      <div className="rounded-[calc(0.5rem-2px)]">
           <Table wrapperClassName={tableClassName}>
-            <TableHeader className="bg-background z-10 border-b">
+            <TableHeader className="bg-slate-50 p-4 z-10">
               <TableRow className='sticky top-0'>
                 {columns.map((column) => (
-                  <TableHead key={column.accessor} className="bg-background">{column.header}</TableHead>
+                  <TableHead key={column.accessor} className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">{column.header}</TableHead>
                 ))}
                 {showActions ? (
-                  <TableHead className="bg-background">Actions</TableHead>
+                  <TableHead className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Actions</TableHead>
                 ) : null}
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className='bg-white divide-y divide-slate-200 p-4'>
               {data.length > 0 ? (
                 data.map((row, index) => {
                   const rowWithDefaults = withDefaultActionProps(row);
                   return (
-                  <TableRow key={index}>
+                  <TableRow className='hover:bg-slate-50 transition-colors' key={index}>
                     {columns.map((column) => (
-                      <TableCell key={column.accessor}>
+                      <TableCell className='px-6 py-4' key={column.accessor}>
                         {renderCellContent(column.accessor, column.accessor.split('.').reduce((obj: any, key: string) => obj && obj[key], row as Record<string,any>))}
                       </TableCell>
                     ))}
                     {showActions ? (
-                      <TableCell>
+                      <TableCell className='px-6 py-4'>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
+                            <Button variant="ghost">
+                              <MoreVertical className="h-5 w-5" />
                               <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {onPlay && rowWithDefaults.showPlay && (
                               <DropdownMenuItem onSelect={() => handlePlay(row)}>
-                                <Play className="h-4 w-4 text-green-500 mr-2" />
+                                <Play className="h-5 w-5 text-green-500 mr-2" />
                                 Play
                               </DropdownMenuItem>
                             )}
                             {onStop && rowWithDefaults.showStop && (
                               <DropdownMenuItem onSelect={() => handleStop(row)}>
-                                <StopCircleIcon className="h-4 w-4 text-red-500 mr-2" />
+                                <StopCircleIcon className="h-5 w-5 text-red-500 mr-2" />
                                 Stop
                               </DropdownMenuItem>
                             )}
                             {onPause && rowWithDefaults.showPause && (
                               <DropdownMenuItem onSelect={() => handlePause(row)}>
-                                <PauseIcon className="h-4 w-4 text-yellow-600 mr-2" />
+                                <PauseIcon className="h-5 w-5 text-yellow-600 mr-2" />
                                 Pause
                               </DropdownMenuItem>
                             )}
                             {onViewDetails && rowWithDefaults.showViewDetails && (
                               <DropdownMenuItem onSelect={() => handleViewDetails(row)}>
-                                <ExternalLink className="h-4 w-4 mr-2" />
+                                <ExternalLink className="h-5 w-5 mr-2" />
                                 View Details
                               </DropdownMenuItem>
                             )}
                             {onViewLogs && rowWithDefaults.showViewLogs && (
                               <DropdownMenuItem onSelect={() => handleViewLogs(row)}>
-                                <Terminal className="h-4 w-4 mr-2" />
+                                <Terminal className="h-5 w-5 mr-2" />
                                 View Logs
                               </DropdownMenuItem>
                             )}
                             {onViewConfig && rowWithDefaults.showViewConfig && (
                               <DropdownMenuItem onSelect={() => handleViewConfig(row)}>
-                                <FileText className="h-4 w-4 mr-2" />
+                                <FileText className="h-5 w-5 mr-2" />
                                 View Config
                               </DropdownMenuItem>
                             )}
                             {onEdit && rowWithDefaults.showEdit && (
                               <DropdownMenuItem onSelect={() => onEdit(row)}>
-                                <EditIcon className="h-4 w-4 mr-2" />
+                                <EditIcon className="h-5 w-5 mr-2" />
                                 Edit
                               </DropdownMenuItem>
                             )}
                             {onClone && rowWithDefaults.showClone && (
                               <DropdownMenuItem onSelect={() => handleClone(row)}>
-                                <Copy className="h-4 w-4 mr-2" />
+                                <Copy className="h-5 w-5 mr-2" />
                                 Clone
                               </DropdownMenuItem>
                             )}
                             {onUndo && rowWithDefaults.showUndo && (
                               <DropdownMenuItem onSelect={() => handleUndo(row)}>
-                                <Undo2 className="h-4 w-4 mr-2" />
+                                <Undo2 className="h-5 w-5 mr-2" />
                                 Restore
                               </DropdownMenuItem>
                             )}
@@ -205,7 +205,7 @@ export function ResourceTable<T>({
                                 onSelect={() => handleDelete(row)}
                                 className="text-red-600 focus:text-red-600"
                               >
-                                <Trash2 className="h-4 w-4 text-red-500 mr-2" />
+                                <Trash2 className="h-5 w-5 text-red-500 mr-2" />
                                 Delete
                               </DropdownMenuItem>
                             )}
@@ -256,7 +256,7 @@ function renderCellContent(type: string, value: any) {
 
     return (
       <div className="flex items-center gap-2 rounded-[0.5rem]">
-        <Icon className={`h-4 w-4 ${status.color}`} />
+        <Icon className={`h-5 w-5 ${status.color}`} />
         <span>{status.label}</span>
       </div>
     );
@@ -278,7 +278,7 @@ function renderCellContent(type: string, value: any) {
   
     return (
       <div className="flex items-center gap-2 rounded-[0.5rem]">
-        <Icon className={`h-4 w-4 ${status.color}`} />
+        <Icon className={`h-5 w-5 ${status.color}`} />
         <span>{status.label}</span>
       </div>
     );
@@ -300,7 +300,7 @@ function renderCellContent(type: string, value: any) {
   
     return (
       <div className="flex items-center gap-2 rounded-[0.5rem]">
-        <Icon className={`h-4 w-4 ${status.color}`} />
+        <Icon className={`h-5 w-5 ${status.color}`} />
         <span>{status.label}</span>
       </div>
     );
@@ -310,7 +310,7 @@ function renderCellContent(type: string, value: any) {
     return (
       <div className="flex flex-wrap gap-1 ">
         {value.map((label, i) => (
-          <Badge key={i} variant="outline" className="text-xs rounded-[0.5rem]">
+          <Badge key={i} variant="outline" className="text-base rounded-[0.5rem]">
             {label}
           </Badge>
         ))}

@@ -25,6 +25,18 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 
+function formatUtcToLocal(dateString:string) {
+  // dateString is in UTC
+  const utcDate = new Date(dateString+ "Z"); // JS auto-parses UTC
+
+  // Get local date equivalent (JS auto adjusts)
+  return utcDate.toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
+
 interface BuildLogsViewerProps {
   logs: Array<{
     build_id: number;
@@ -313,6 +325,12 @@ const BuildRow: React.FC<{ build: any }> = ({ build }) => {
             <span className="text-sm text-slate-900">{build.user_login}</span>
           </div>
         </td>
+        <td className="px-6 py-4 text-sm text-slate-900">
+            {build.created_at ? formatUtcToLocal(build.created_at) : "NA"}
+          </td>
+          <td className="px-6 py-4 text-sm text-slate-900">
+            {build.time_taken || "NA"}
+          </td>
       </tr>
 
       {expanded && (
@@ -387,7 +405,7 @@ export const SourceControlDetailedInfo = ({
   }
 
   return (
-    <div className="min-h-screen w-full p-4">
+    <div className="min-h-screen w-full">
       <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
         {loading ? (
           <div className="animate-pulse">
@@ -580,6 +598,12 @@ export const SourceControlDetailedInfo = ({
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Triggered By
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Created At
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Time Taken (seconds)
                   </th>
                 </tr>
               </thead>

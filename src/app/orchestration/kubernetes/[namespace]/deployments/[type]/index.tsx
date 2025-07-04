@@ -28,7 +28,7 @@ const columns = [
   { header: "Replicas", accessor: "replicas" },
   { header: "Ready", accessor: "readyReplicas" },
   { header: "Strategy", accessor: "strategy" },
-  { header: "Labels", accessor: "labels" },
+  // { header: "Labels", accessor: "labels" },
   { header: "Status", accessor: "status" },
 ];
 

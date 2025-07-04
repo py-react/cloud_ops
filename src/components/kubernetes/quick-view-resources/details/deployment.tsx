@@ -474,9 +474,9 @@ function DeploymentDetailedInfo({ kubernetesData }) {
       <AIInsights />
       {/* Deployment Overview */}
       {!kubernetesData ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-8">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
           <div className="animate-pulse">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between p-6">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-slate-200 rounded-xl"></div>
                 <div>
@@ -487,13 +487,13 @@ function DeploymentDetailedInfo({ kubernetesData }) {
               <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-4">
               {Array.from({ length: 4 }).map((_, index) => (
                 <MetricSkeletonLoader key={index} />
               ))}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 p-6">
               <div className="flex justify-between">
                 <div className="h-4 w-24 bg-slate-200 rounded"></div>
                 <div className="h-4 w-16 bg-slate-200 rounded"></div>

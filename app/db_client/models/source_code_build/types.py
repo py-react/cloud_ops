@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Sequence
+from typing import Sequence,Optional
 from datetime import datetime
 
 class SourceCodeBuildType(BaseModel):
@@ -10,6 +10,8 @@ class SourceCodeBuildType(BaseModel):
     user_login: str
     status: str
     branch_name : str
+    time_taken:Optional[float]
+    created_at: Optional[datetime]
 
 class SourceCodeBuildLogType(BaseModel):
     build_id: int

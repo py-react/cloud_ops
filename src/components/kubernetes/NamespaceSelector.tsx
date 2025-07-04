@@ -94,12 +94,12 @@ export function NamespaceSelector() {
                   key={namespace.metadata.name}
                   value={namespace.metadata.name}
                   onSelect={() => handleNamespaceChange(namespace.metadata.name)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-base"
                 >
-                  <Folder className="h-4 w-4" />
+                  <Folder className="h-5 w-5" />
                   <span className="flex-1 truncate">{namespace.metadata.name}</span>
                   {selectedNamespace === namespace.metadata.name && (
-                    <Check className="h-4 w-4 ml-auto text-primary" />
+                    <Check className="h-5 w-5 ml-auto text-primary" />
                   )}
                 </CommandItem>
               ))}

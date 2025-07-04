@@ -15,6 +15,7 @@ import {
   Webhook,
   CheckCircle,
   XCircle,
+  FolderGit,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
@@ -138,7 +139,7 @@ const IntegrationsPage = () => {
         {repository.allowedBranches.map((branch, i) => (
           <span onClick={()=>{
             handleViewDetails(repository,branch)
-          }} key={i} className="inline-flex items-center px-2 py-1 cursor-pointer rounded-full text-xs bg-green-100 text-green-800">
+          }} key={i} className="inline-flex items-center px-2 py-1 cursor-pointer rounded text-base bg-green-100 text-green-800">
             {branch}
           </span>
         ))}
@@ -182,51 +183,75 @@ const IntegrationsPage = () => {
   }
 
   return (
-    <div title="Integrations" className='p-4'>
+    <div title="Integrations">
       <div className="space-y-6">
         <RouteDescription
           title={
-            <div className="flex items-center gap-2">
-              <Plug className="h-4 w-4" />
-              <h2>Source Control</h2>
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <Plug className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Source Control
+                </h2>
+                <p className="text-base text-slate-500">
+                  Repository Configuration
+                </p>
+              </div>
             </div>
           }
-          shortDescription='Repository Configuration'
-          description='Manage repositories and their allowed branches to trigger Continuous Integration (CI) workflows through GitHub webhooks. Only specified repositories and branches will be permitted to initiate build, test, and deployment processes.'
+          shortDescription=""
+          description="Manage repositories and their allowed branches to trigger Continuous Integration (CI) workflows through GitHub webhooks. Only specified repositories and branches will be permitted to initiate build, test, and deployment processes."
         />
-        
+
         <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
           <CardHeader>
-            <CardTitle className="text-lg">
+            <CardTitle>
               <div className="flex items-center justify-between">
-                <h2>Active Repositories</h2>
+                <div className="flex items-center space-x-3">
+                  <FolderGit className="h-5 w-5 text-blue-500" />
+                  <h2 className="text-xl font-semibold text-slate-900">
+                    Active Repositories
+                  </h2>
+                </div>
                 <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" className="flex items-center gap-2">
-                      <Plug className="h-4 w-4" />
+                    <Button className="flex items-center gap-2">
+                      <Plug className="h-5 w-5" />
                       Add Repository
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-none  w-screen h-screen flex flex-col">
-                  <DialogHeader className="py-4 px-6 border-b">
-                      <DialogTitle className='flex gap-2 items-center'> <Plug className="w-4 h-4" />Add Repository</DialogTitle>
+                    <DialogHeader className="py-4 px-6 border-b">
+                      <DialogTitle className="flex gap-2 items-center">
+                        {" "}
+                        <Plug className="w-4 h-4" />
+                        Add Repository
+                      </DialogTitle>
                       <DialogDescription>
-                        Add a new GitHub repository and configure allowed branches.
+                        Add a new GitHub repository and configure allowed
+                        branches.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="flex-1 overflow-auto">
-                      <AddRepositoryForm onSuccess={() => {
-                        setAddDialogOpen(false)
-                        setEditingRepor({})
-                        fetchWebhookConfig()
-                      }} initialValues={editingRepo} isEdit={!!Object.keys(editingRepo).length}/>
+                      <AddRepositoryForm
+                        onSuccess={() => {
+                          setAddDialogOpen(false);
+                          setEditingRepor({});
+                          fetchWebhookConfig();
+                        }}
+                        initialValues={editingRepo}
+                        isEdit={!!Object.keys(editingRepo).length}
+                      />
                     </div>
                   </DialogContent>
                 </Dialog>
               </div>
             </CardTitle>
             <CardDescription>
-              Configure which repositories and branches are allowed to trigger build, test, and deployment processes.
+              Configure which repositories and branches are allowed to trigger
+              build, test, and deployment processes.
             </CardDescription>
           </CardHeader>
           <CardContent className="shadow-none p-0">
@@ -235,7 +260,6 @@ const IntegrationsPage = () => {
               data={enhancedData}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              className="mt-4"
             />
           </CardContent>
         </Card>

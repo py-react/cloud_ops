@@ -5,6 +5,56 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/packges": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_packges_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_packges_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunImage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/swarm/init": {
       "post": {
         "summary": "",
@@ -293,6 +343,56 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ServiceCreationSpec"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storages": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_storages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_storages_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolumeActionRequest"
               }
             }
           },
@@ -2802,6 +2902,42 @@
         }
       }
     },
+    "/api/systems": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_systems_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemInfo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/queueJob": {
       "get": {
         "summary": "",
@@ -2992,6 +3128,42 @@
       "get": {
         "summary": "",
         "operationId": "_settings_ci_cd_release_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/release_config/{namespace}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_release_config__namespace__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/release_config/{namespace}/{config_name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_release_config__namespace___config_name__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -6704,6 +6876,29 @@
             "type": "string",
             "title": "Branch Name"
           },
+          "time_taken": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Taken"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
           "logs": {
             "items": {
               "$ref": "#/components/schemas/SourceCodeBuildLogType"
@@ -6721,6 +6916,8 @@
           "user_login",
           "status",
           "branch_name",
+          "time_taken",
+          "created_at",
           "logs"
         ],
         "title": "SourceCodeBuildWithLogsType"

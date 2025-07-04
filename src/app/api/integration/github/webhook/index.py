@@ -261,7 +261,7 @@ class HealthCheckResponse(BaseModel):
 
 PR_SUPPORTED_ACTION = [
     "opened",
-    "closed",
+    # "closed",
     "reopened"
 ]
 
@@ -318,43 +318,43 @@ async def POST(
 ):
     """GitHub webhook endpoint"""
     try:
-        # Read request body
-        body = await request.body()
-        
-        # Verify signature
-        if not verify_signature(body, x_hub_signature_256, WEBHOOK_SECRET):
-            raise HTTPException(status_code=401, detail="Invalid signature")
-        
-        # Parse JSON payload
-        payload_data = json.loads(body)
-        
         # Validate event type
         if not x_github_event:
             raise HTTPException(status_code=400, detail="Unsupported event type")
-        
-        # Parse payload with Pydantic
-        try:
-            webhook_payload = PullRequestWebhookPayload(**payload_data)
-        except Exception as e:
-            print(f"Validation error: {e}")
-            # Try to provide more helpful error information
-            if "validation error" in str(e).lower():
-                raise HTTPException(status_code=400, detail=f"Invalid payload structure: {str(e)}")
-            else:
-                raise HTTPException(status_code=400, detail=f"Failed to parse payload: {str(e)}")
-        
-        # Validate payload
-        if not is_valid_payload(webhook_payload):
-            raise HTTPException(status_code=400, detail="Repository or branch not allowed")
-        
         # Handle pull request events
         if x_github_event == "pull_request":
+            # Read request body
+            body = await request.body()
+
+            
+            # Verify signature
+            if not verify_signature(body, x_hub_signature_256, WEBHOOK_SECRET):
+                raise HTTPException(status_code=401, detail="Invalid signature")
+            
+            # Parse JSON payload
+            payload_data = json.loads(body)
+            
+            # Parse payload with Pydantic
+            try:
+                webhook_payload = PullRequestWebhookPayload(**payload_data)
+            except Exception as e:
+                print(f"Validation error: {e}")
+                # Try to provide more helpful error information
+                if "validation error" in str(e).lower():
+                    raise HTTPException(status_code=400, detail=f"Invalid payload structure: {str(e)}")
+                else:
+                    raise HTTPException(status_code=400, detail=f"Failed to parse payload: {str(e)}")
+                
             event_type = f"pull_request.{webhook_payload.action}"
             
-            # Convert Pydantic model to dict for the handler
-            payload_dict = webhook_payload.model_dump()
+            if webhook_payload.action in PR_SUPPORTED_ACTION :
+                # Validate payload
+                if not is_valid_payload(webhook_payload):
+                    raise HTTPException(status_code=400, detail="Repository or branch not allowed")
+                
+                # Convert Pydantic model to dict for the handler
+                payload_dict = webhook_payload.model_dump()
             
-            if webhook_payload.action in PR_SUPPORTED_ACTION:
                 # Handle the pull request event in background
                 """Legacy function that maintains the original interface."""
                 config = get_config()
