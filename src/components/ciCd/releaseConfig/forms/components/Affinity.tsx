@@ -581,7 +581,6 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={() => removeAffinityType('nodeAffinity')}
               >
                 <Trash2 className="h-4 w-4 mr-1" />

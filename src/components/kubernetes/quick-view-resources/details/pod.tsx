@@ -232,7 +232,7 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
               </h6>
               <div className="space-y-1">
                 {container.volume_mounts && container.volume_mounts.length > 0 ? (
-                  container.volume_mounts.slice(0, 3).map((mount: any, mountIdx: number) => (
+                  container.volume_mounts.map((mount: any, mountIdx: number) => (
                     <div key={mountIdx} className="text-xs">
                       <div className="font-mono text-slate-700">{mount.name}</div>
                       <div className="text-slate-500 truncate">{mount.mount_path}</div>
@@ -244,9 +244,7 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
                 ) : (
                   <span className="text-xs text-slate-400">No volume mounts</span>
                 )}
-                {container.volume_mounts && container.volume_mounts.length > 3 && (
-                  <span className="text-xs text-slate-500">+{container.volume_mounts.length - 3} more</span>
-                )}
+                
               </div>
             </div>
             
@@ -258,7 +256,7 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
               </h6>
               <div className="space-y-1">
                 {container.env && container.env.length > 0 ? (
-                  container.env.slice(0, 3).map((envVar: any, envIdx: number) => (
+                  container.env.map((envVar: any, envIdx: number) => (
                     <div key={envIdx} className="text-xs font-mono text-slate-700">
                       {envVar.name}
                     </div>
@@ -266,9 +264,7 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
                 ) : (
                   <span className="text-xs text-slate-400">No environment variables</span>
                 )}
-                {container.env && container.env.length > 3 && (
-                  <span className="text-xs text-slate-500">+{container.env.length - 3} more</span>
-                )}
+                
               </div>
             </div>
           </div>
@@ -379,16 +375,11 @@ const PVCRow: React.FC<{ pvc: any }> = ({ pvc }) => {
                 <div>
                   <h5 className="text-sm font-semibold text-slate-700 mb-3">Labels</h5>
                   <div className="flex flex-wrap gap-1">
-                    {Object.entries(pvc.labels).slice(0, 4).map(([key, value]) => (
+                    {Object.entries(pvc.labels).map(([key, value]) => (
                       <span key={key} className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-mono bg-slate-100 text-slate-700">
                         {key}={value}
                       </span>
                     ))}
-                    {Object.keys(pvc.labels).length > 4 && (
-                      <span className="text-xs text-slate-500 font-bold">
-                        +{Object.keys(pvc.labels).length - 4} more
-                      </span>
-                    )}
                   </div>
                 </div>
               )}
@@ -518,6 +509,11 @@ export const PodDetailedInfo = ({data, loading, error}: {
   loading?: any;
   error?: string;
 }) => {
+  
+  // Accordion states for affinity sections
+  const [nodeAffinityExpanded, setNodeAffinityExpanded] = useState(false);
+  const [podAffinityExpanded, setPodAffinityExpanded] = useState(false);
+  const [podAntiAffinityExpanded, setPodAntiAffinityExpanded] = useState(false);
 
   if (error) {
     return (
@@ -768,13 +764,19 @@ export const PodDetailedInfo = ({data, loading, error}: {
               {/* Node Affinity */}
               {data.pod.affinity.node_affinity && (
                 <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Server className="h-4 w-4 text-blue-600" />
-                    <h3 className="font-semibold text-blue-900">Node Affinity</h3>
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-                      Required
-                    </span>
+                  <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setNodeAffinityExpanded(!nodeAffinityExpanded)}>
+                    <div className="flex items-center space-x-2">
+                      <Server className="h-4 w-4 text-blue-600" />
+                      <h3 className="font-semibold text-blue-900">Node Affinity</h3>
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                        Required
+                      </span>
+                    </div>
+                    {nodeAffinityExpanded ? <ChevronDown className="h-4 w-4 text-blue-600" /> : <ChevronRight className="h-4 w-4 text-blue-600" />}
                   </div>
+                  
+                  {nodeAffinityExpanded && (
+                    <>
                   
                   {/* Required Node Affinity */}
                   {data.pod.affinity.node_affinity.required_during_scheduling_ignored_during_execution && (
@@ -851,19 +853,27 @@ export const PodDetailedInfo = ({data, loading, error}: {
                       ))}
                     </div>
                   )}
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Pod Affinity */}
               {data.pod.affinity.pod_affinity && (
                 <div className="bg-green-50 rounded-lg border border-green-200 p-4">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Container className="h-4 w-4 text-green-600" />
-                    <h3 className="font-semibold text-green-900">Pod Affinity</h3>
-                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                      Attract
-                    </span>
+                  <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setPodAffinityExpanded(!podAffinityExpanded)}>
+                    <div className="flex items-center space-x-2">
+                      <Container className="h-4 w-4 text-green-600" />
+                      <h3 className="font-semibold text-green-900">Pod Affinity</h3>
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                        Attract
+                      </span>
+                    </div>
+                    {podAffinityExpanded ? <ChevronDown className="h-4 w-4 text-green-600" /> : <ChevronRight className="h-4 w-4 text-green-600" />}
                   </div>
+                  
+                  {podAffinityExpanded && (
+                    <>
                   
                   {/* Required Pod Affinity */}
                   {data.pod.affinity.pod_affinity.required_during_scheduling_ignored_during_execution && (
@@ -946,19 +956,27 @@ export const PodDetailedInfo = ({data, loading, error}: {
                       ))}
                     </div>
                   )}
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Pod Anti-Affinity */}
               {data.pod.affinity.pod_anti_affinity && (
                 <div className="bg-red-50 rounded-lg border border-red-200 p-4">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Shield className="h-4 w-4 text-red-600" />
-                    <h3 className="font-semibold text-red-900">Pod Anti-Affinity</h3>
-                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
-                      Repel
-                    </span>
+                  <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setPodAntiAffinityExpanded(!podAntiAffinityExpanded)}>
+                    <div className="flex items-center space-x-2">
+                      <Shield className="h-4 w-4 text-red-600" />
+                      <h3 className="font-semibold text-red-900">Pod Anti-Affinity</h3>
+                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
+                        Repel
+                      </span>
+                    </div>
+                    {podAntiAffinityExpanded ? <ChevronDown className="h-4 w-4 text-red-600" /> : <ChevronRight className="h-4 w-4 text-red-600" />}
                   </div>
+                  
+                  {podAntiAffinityExpanded && (
+                    <>
                   
                   {/* Required Pod Anti-Affinity */}
                   {data.pod.affinity.pod_anti_affinity.required_during_scheduling_ignored_during_execution && (
@@ -1023,6 +1041,8 @@ export const PodDetailedInfo = ({data, loading, error}: {
                         </div>
                       ))}
                     </div>
+                  )}
+                    </>
                   )}
                 </div>
               )}

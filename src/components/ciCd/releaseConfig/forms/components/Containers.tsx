@@ -159,7 +159,6 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
                   onClick={() => removeContainer(containerIndex)}
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
@@ -251,15 +250,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   <Key className="h-4 w-4" />
                   Environment Variables
                 </Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addEnvironmentVariable(containerIndex)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Env Var
-                </Button>
+                
               </div>
               {container.env?.map((env, envIndex) => (
                 <div key={envIndex} className="flex gap-2 items-end">
@@ -295,7 +286,6 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     onClick={() =>
                       removeEnvironmentVariable(containerIndex, envIndex)
                     }
@@ -305,6 +295,15 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   </Button>
                 </div>
               ))}
+              <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => addEnvironmentVariable(containerIndex)}
+                  className="w-full border-dashed"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Env Var
+                </Button>
             </div>
 
             {/* Ports */}
@@ -314,15 +313,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   <Network className="h-4 w-4" />
                   Container Ports
                 </Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addPort(containerIndex)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Port
-                </Button>
+                
               </div>
               {container.ports?.map((port, portIndex) => (
                 <div key={portIndex} className="flex gap-2 items-end">
@@ -382,7 +373,6 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     onClick={() => removePort(containerIndex, portIndex)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
@@ -390,6 +380,15 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   </Button>
                 </div>
               ))}
+              <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => addPort(containerIndex)}
+                  className="w-full border-dashed"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Port
+                </Button>
             </div>
 
             {/* Resources */}
@@ -497,15 +496,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   <HardDrive className="h-4 w-4" />
                   Volume Mounts
                 </Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addVolumeMount(containerIndex)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Mount
-                </Button>
+                
               </div>
               {container.volumeMounts?.map((mount, mountIndex) => (
                 <div key={mountIndex} className="flex gap-2 items-end">
@@ -554,7 +545,6 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
                       onClick={() => removeVolumeMount(containerIndex, mountIndex)}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
@@ -563,6 +553,15 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   </div>
                 </div>
               ))}
+              <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => addVolumeMount(containerIndex)}
+                  className="w-full border-dashed"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Mount
+                </Button>
             </div>
 
             {/* Advanced Settings */}
@@ -648,7 +647,6 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
                         onClick={() => {
                           const newContainers = [...formData.containers];
                           newContainers[containerIndex].envFrom = (newContainers[containerIndex].envFrom || []).filter((_, i) => i !== envFromIndex);
