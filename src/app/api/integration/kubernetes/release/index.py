@@ -21,12 +21,12 @@ def validate_deployment_config(config: DeploymentConfigType) -> None:
         if container.ports:
             port_numbers = set()
             for port in container.ports:
-                if port.target_port in port_numbers:
+                if port.containerPort in port_numbers:
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Duplicate target port {port.target_port} in container {container.name}"
+                        detail=f"Duplicate target port {port.containerPort} in container {container.name}"
                     )
-                port_numbers.add(port.target_port)
+                port_numbers.add(port.containerPort)
 
 async def POST(request: Request, body: DeploymentConfigType):
     """

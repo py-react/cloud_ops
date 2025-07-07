@@ -261,13 +261,21 @@ const ReleaseConfigDetailedInfo = () => {
                 <div className="text-xs text-slate-500 mb-2">
                   Ports:{" "}
                   {container.ports
-                    .map((p) => `${p.port}/${p.protocol}`)
+                    .map((p) => `${p.containerPort}/${p.protocol}`)
                     .join(", ")}
                 </div>
                 {container.env && (
                   <div className="text-xs text-slate-500 mb-2">
                     Env:{" "}
                     {Object.entries(container.env)
+                      .map(([k, v]) => `${k}=${v}`)
+                      .join(", ")}
+                  </div>
+                )}
+                {container.envFrom && (
+                  <div className="text-xs text-slate-500 mb-2">
+                    Env From:{" "}
+                    {Object.entries(container.envFrom)
                       .map(([k, v]) => `${k}=${v}`)
                       .join(", ")}
                   </div>
@@ -290,7 +298,7 @@ const ReleaseConfigDetailedInfo = () => {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden p-4">
           <div className="px-6 pb-4 border-b border-slate-200">
             <div className="flex items-center space-x-3">
-              <Network className="h-5 w-5 text-green-600" />
+              <Network className="h-5 w-5 text-blue-500" />
               <h2 className="text-lg font-semibold text-slate-900">
                 Service Ports
               </h2>
@@ -302,24 +310,34 @@ const ReleaseConfigDetailedInfo = () => {
                 No service ports defined.
               </div>
             ) : (
-              <table className="min-w-full text-xs">
-                <thead>
-                  <tr>
-                    <th className="px-2 py-1 text-left">Port</th>
-                    <th className="px-2 py-1 text-left">Target Port</th>
-                    <th className="px-2 py-1 text-left">Protocol</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {configData?.service_ports?.map((port, idx) => (
-                    <tr key={idx}>
-                      <td className="px-2 py-1">{port.port}</td>
-                      <td className="px-2 py-1">{port.target_port}</td>
-                      <td className="px-2 py-1">{port.protocol}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              
+                <div
+                  className="border-b border-slate-100 last:border-b-0 pb-4 last:pb-0 mb-4 last:mb-0"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-slate-900">
+                      {configData?.deployment_name}-service
+                    </h3>
+                    <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-medium">
+                      ClusterIP
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-slate-500">Ports</p>
+                      <div className="space-y-1">
+                        {configData?.service_ports.map((port, idx) => (
+                          <code
+                            key={idx}
+                            className="text-slate-900 font-mono block"
+                          >
+                            {port.port}:{port.target_port}
+                          </code>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
             )}
           </div>
         </div>

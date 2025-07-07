@@ -4014,6 +4014,17 @@
             ],
             "title": "Args"
           },
+          "workingDir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workingdir"
+          },
           "env": {
             "anyOf": [
               {
@@ -4028,11 +4039,26 @@
             ],
             "title": "Env"
           },
+          "envFrom": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Envfrom"
+          },
           "ports": {
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/ServicePortConfig"
+                  "$ref": "#/components/schemas/ContainerPortConfig"
                 },
                 "type": "array"
               },
@@ -4051,6 +4077,136 @@
                 "type": "null"
               }
             ]
+          },
+          "volumeMounts": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/VolumeMount"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volumemounts"
+          },
+          "livenessProbe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Probe"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "readinessProbe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Probe"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "startupProbe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Probe"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lifecycle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Lifecycle"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "terminationMessagePath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminationmessagepath"
+          },
+          "terminationMessagePolicy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminationmessagepolicy"
+          },
+          "imagePullPolicy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imagepullpolicy"
+          },
+          "securityContext": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SecurityContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stdin": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stdin"
+          },
+          "stdinOnce": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stdinonce"
+          },
+          "tty": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tty"
           }
         },
         "type": "object",
@@ -4170,6 +4326,42 @@
           "host_config"
         ],
         "title": "ContainerInfo"
+      },
+      "ContainerPortConfig": {
+        "properties": {
+          "containerPort": {
+            "type": "integer",
+            "title": "Containerport"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "protocol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol",
+            "default": "TCP"
+          }
+        },
+        "type": "object",
+        "required": [
+          "containerPort"
+        ],
+        "title": "ContainerPortConfig"
       },
       "ContextPostData": {
         "properties": {
@@ -4644,6 +4836,58 @@
             ],
             "title": "Annotations"
           },
+          "node_selector": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Selector"
+          },
+          "tolerations": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/K8sToleration"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tolerations"
+          },
+          "affinity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/K8sAffinity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "volumes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/K8sVolume"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volumes"
+          },
           "soft_delete": {
             "type": "boolean",
             "title": "Soft Delete",
@@ -4895,7 +5139,7 @@
             ],
             "title": "Value"
           },
-          "value_from": {
+          "valueFrom": {
             "anyOf": [
               {
                 "additionalProperties": true,
@@ -4905,7 +5149,7 @@
                 "type": "null"
               }
             ],
-            "title": "Value From"
+            "title": "Valuefrom"
           }
         },
         "type": "object",
@@ -5308,6 +5552,278 @@
         ],
         "title": "JobInfo"
       },
+      "K8sAffinity": {
+        "properties": {
+          "nodeAffinity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NodeAffinity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "podAffinity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PodAffinity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "podAntiAffinity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PodAntiAffinity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "K8sAffinity"
+      },
+      "K8sConfigMapVolume": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "defaultMode": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Defaultmode"
+          },
+          "optional": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Optional"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "K8sConfigMapVolume"
+      },
+      "K8sEmptyDirVolume": {
+        "properties": {
+          "medium": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medium"
+          },
+          "sizeLimit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sizelimit"
+          }
+        },
+        "type": "object",
+        "title": "K8sEmptyDirVolume"
+      },
+      "K8sPersistentVolumeClaimVolume": {
+        "properties": {
+          "claimName": {
+            "type": "string",
+            "title": "Claimname"
+          },
+          "readOnly": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readonly"
+          }
+        },
+        "type": "object",
+        "required": [
+          "claimName"
+        ],
+        "title": "K8sPersistentVolumeClaimVolume"
+      },
+      "K8sSecretVolume": {
+        "properties": {
+          "secretName": {
+            "type": "string",
+            "title": "Secretname"
+          },
+          "defaultMode": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Defaultmode"
+          },
+          "optional": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Optional"
+          }
+        },
+        "type": "object",
+        "required": [
+          "secretName"
+        ],
+        "title": "K8sSecretVolume"
+      },
+      "K8sToleration": {
+        "properties": {
+          "key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key"
+          },
+          "operator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "effect": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effect"
+          },
+          "tolerationSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tolerationseconds"
+          }
+        },
+        "type": "object",
+        "title": "K8sToleration"
+      },
+      "K8sVolume": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "emptyDir": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/K8sEmptyDirVolume"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "configMap": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/K8sConfigMapVolume"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "secret": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/K8sSecretVolume"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "persistentVolumeClaim": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/K8sPersistentVolumeClaimVolume"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "K8sVolume"
+      },
       "LastAndCurrentDeploymentInfo": {
         "properties": {
           "stage": {
@@ -5327,6 +5843,36 @@
           "prod"
         ],
         "title": "LastAndCurrentDeploymentInfo"
+      },
+      "Lifecycle": {
+        "properties": {
+          "preStop": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prestop"
+          },
+          "postStart": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poststart"
+          }
+        },
+        "type": "object",
+        "title": "Lifecycle"
       },
       "NamespaceInfo": {
         "properties": {
@@ -5870,6 +6416,36 @@
         ],
         "title": "NetworkUpdateParams"
       },
+      "NodeAffinity": {
+        "properties": {
+          "requiredDuringSchedulingIgnoredDuringExecution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NodeSelector"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preferredDuringSchedulingIgnoredDuringExecution": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PreferredSchedulingTerm"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferredduringschedulingignoredduringexecution"
+          }
+        },
+        "type": "object",
+        "title": "NodeAffinity"
+      },
       "NodeInfo": {
         "properties": {
           "component_type": {
@@ -5964,6 +6540,165 @@
         ],
         "title": "NodeInfo"
       },
+      "NodeSelector": {
+        "properties": {
+          "nodeSelectorTerms": {
+            "items": {
+              "$ref": "#/components/schemas/NodeSelectorTerm"
+            },
+            "type": "array",
+            "title": "Nodeselectorterms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodeSelectorTerms"
+        ],
+        "title": "NodeSelector"
+      },
+      "NodeSelectorTerm": {
+        "properties": {
+          "matchExpressions": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matchexpressions"
+          },
+          "matchFields": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matchfields"
+          }
+        },
+        "type": "object",
+        "title": "NodeSelectorTerm"
+      },
+      "PodAffinity": {
+        "properties": {
+          "requiredDuringSchedulingIgnoredDuringExecution": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PodAffinityTerm"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requiredduringschedulingignoredduringexecution"
+          },
+          "preferredDuringSchedulingIgnoredDuringExecution": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/WeightedPodAffinityTerm"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferredduringschedulingignoredduringexecution"
+          }
+        },
+        "type": "object",
+        "title": "PodAffinity"
+      },
+      "PodAffinityTerm": {
+        "properties": {
+          "labelSelector": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labelselector"
+          },
+          "namespaces": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Namespaces"
+          },
+          "topologyKey": {
+            "type": "string",
+            "title": "Topologykey"
+          }
+        },
+        "type": "object",
+        "required": [
+          "topologyKey"
+        ],
+        "title": "PodAffinityTerm"
+      },
+      "PodAntiAffinity": {
+        "properties": {
+          "requiredDuringSchedulingIgnoredDuringExecution": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PodAffinityTerm"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requiredduringschedulingignoredduringexecution"
+          },
+          "preferredDuringSchedulingIgnoredDuringExecution": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/WeightedPodAffinityTerm"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferredduringschedulingignoredduringexecution"
+          }
+        },
+        "type": "object",
+        "title": "PodAntiAffinity"
+      },
       "PodInfo": {
         "properties": {
           "component_type": {
@@ -6031,6 +6766,120 @@
           "resources"
         ],
         "title": "PodInfo"
+      },
+      "PreferredSchedulingTerm": {
+        "properties": {
+          "weight": {
+            "type": "integer",
+            "title": "Weight"
+          },
+          "preference": {
+            "$ref": "#/components/schemas/NodeSelectorTerm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "weight",
+          "preference"
+        ],
+        "title": "PreferredSchedulingTerm"
+      },
+      "Probe": {
+        "properties": {
+          "httpGet": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Httpget"
+          },
+          "exec": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exec"
+          },
+          "tcpSocket": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tcpsocket"
+          },
+          "initialDelaySeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initialdelayseconds"
+          },
+          "periodSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodseconds"
+          },
+          "timeoutSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeoutseconds"
+          },
+          "successThreshold": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Successthreshold"
+          },
+          "failureThreshold": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failurethreshold"
+          }
+        },
+        "type": "object",
+        "title": "Probe"
       },
       "PullConfig": {
         "properties": {
@@ -6268,6 +7117,56 @@
           "processFileName"
         ],
         "title": "RunQueue"
+      },
+      "SecurityContext": {
+        "properties": {
+          "allowPrivilegeEscalation": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowprivilegeescalation"
+          },
+          "runAsNonRoot": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runasnonroot"
+          },
+          "runAsUser": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runasuser"
+          },
+          "readOnlyRootFilesystem": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readonlyrootfilesystem"
+          }
+        },
+        "type": "object",
+        "title": "SecurityContext"
       },
       "ServiceCreationSpec": {
         "properties": {
@@ -7620,6 +8519,53 @@
           "action"
         ],
         "title": "VolumeActionRequest"
+      },
+      "VolumeMount": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "mountPath": {
+            "type": "string",
+            "title": "Mountpath"
+          },
+          "readOnly": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readonly",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "mountPath"
+        ],
+        "title": "VolumeMount"
+      },
+      "WeightedPodAffinityTerm": {
+        "properties": {
+          "weight": {
+            "type": "integer",
+            "title": "Weight"
+          },
+          "podAffinityTerm": {
+            "$ref": "#/components/schemas/PodAffinityTerm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "weight",
+          "podAffinityTerm"
+        ],
+        "title": "WeightedPodAffinityTerm"
       },
       "integration__github__webhook__index__DeploymentInfo": {
         "properties": {

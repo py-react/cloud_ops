@@ -49,6 +49,8 @@ import NodeSelector from "./components/NodeSelector";
 import Tolerations from "./components/Tolerations";
 import Affinity from "./components/Affinity";
 import Volumes from "./components/Volumes";
+import { DefaultService } from "@/gingerJs_api_client";
+import { toast } from "sonner";
 
 interface EnvironmentVariable {
   name: string;
@@ -1136,6 +1138,15 @@ const CreateRelease = () => {
 
   const handleSubmit = (data: DeploymentFormData) => {
     console.log("Deployment Form Data:", data);
+    DefaultService.apiIntegrationKubernetesReleasePost({requestBody:data}).then(res=>{
+      if(res.status === "success"){
+        toast.success("Created Release config")
+      }else{
+        toast.error(res.message)
+      }
+    }).catch(error=>{
+      toast.error(error.message)
+    })
     // Handle form submission
   };
 

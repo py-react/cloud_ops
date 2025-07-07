@@ -513,7 +513,11 @@ const EventRow: React.FC<{ event: any; source?: string }> = ({ event, source }) 
   );
 };
 
-export const PodDetailedInfo = ({data, loading, error}) => {
+export const PodDetailedInfo = ({data, loading, error}: {
+  data?: any;
+  loading?: any;
+  error?: string;
+}) => {
 
   if (error) {
     return (
@@ -752,6 +756,280 @@ export const PodDetailedInfo = ({data, loading, error}) => {
           )}
         </div>
 
+        {/* Affinity Section */}
+        {data?.pod.affinity && (
+          <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
+            <div className="flex items-center space-x-3 px-6 mb-6">
+              <Network className="h-5 w-5 text-indigo-500" />
+              <h2 className="text-lg font-semibold text-slate-900">Pod Affinity & Anti-Affinity</h2>
+            </div>
+
+            <div className="px-6 pb-6 space-y-6">
+              {/* Node Affinity */}
+              {data.pod.affinity.node_affinity && (
+                <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Server className="h-4 w-4 text-blue-600" />
+                    <h3 className="font-semibold text-blue-900">Node Affinity</h3>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                      Required
+                    </span>
+                  </div>
+                  
+                  {/* Required Node Affinity */}
+                  {data.pod.affinity.node_affinity.required_during_scheduling_ignored_during_execution && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-blue-800">Required During Scheduling</h4>
+                      {data.pod.affinity.node_affinity.required_during_scheduling_ignored_during_execution.node_selector_terms.map((term: any, termIdx: number) => (
+                        <div key={termIdx} className="bg-white rounded-md border border-blue-200 p-3">
+                          <div className="text-xs font-medium text-blue-700 mb-2">Node Selector Term {termIdx + 1}</div>
+                          {term.match_expressions && term.match_expressions.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="text-xs font-medium text-slate-600">Match Expressions:</div>
+                              {term.match_expressions.map((expr: any, exprIdx: number) => (
+                                <div key={exprIdx} className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                  <div className="font-mono text-slate-800">
+                                    <span className="font-medium">{expr.key}</span>
+                                    <span className="text-blue-600 mx-2">{expr.operator}</span>
+                                    {expr.values && expr.values.length > 0 && (
+                                      <span className="text-slate-600">[{expr.values.join(', ')}]</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {term.match_fields && term.match_fields.length > 0 && (
+                            <div className="space-y-2 mt-2">
+                              <div className="text-xs font-medium text-slate-600">Match Fields:</div>
+                              {term.match_fields.map((field: any, fieldIdx: number) => (
+                                <div key={fieldIdx} className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                  <div className="font-mono text-slate-800">
+                                    <span className="font-medium">{field.key}</span>
+                                    <span className="text-blue-600 mx-2">{field.operator}</span>
+                                    {field.values && field.values.length > 0 && (
+                                      <span className="text-slate-600">[{field.values.join(', ')}]</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Preferred Node Affinity */}
+                  {data.pod.affinity.node_affinity.preferred_during_scheduling_ignored_during_execution && (
+                    <div className="space-y-3 mt-4">
+                      <h4 className="text-sm font-medium text-blue-800">Preferred During Scheduling</h4>
+                      {data.pod.affinity.node_affinity.preferred_during_scheduling_ignored_during_execution.map((pref: any, prefIdx: number) => (
+                        <div key={prefIdx} className="bg-white rounded-md border border-blue-200 p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-xs font-medium text-blue-700">Preference {prefIdx + 1}</div>
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-medium">
+                              Weight: {pref.weight}
+                            </span>
+                          </div>
+                          {pref.preference.match_expressions && pref.preference.match_expressions.length > 0 && (
+                            <div className="space-y-2">
+                              {pref.preference.match_expressions.map((expr: any, exprIdx: number) => (
+                                <div key={exprIdx} className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                  <div className="font-mono text-slate-800">
+                                    <span className="font-medium">{expr.key}</span>
+                                    <span className="text-blue-600 mx-2">{expr.operator}</span>
+                                    {expr.values && expr.values.length > 0 && (
+                                      <span className="text-slate-600">[{expr.values.join(', ')}]</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Pod Affinity */}
+              {data.pod.affinity.pod_affinity && (
+                <div className="bg-green-50 rounded-lg border border-green-200 p-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Container className="h-4 w-4 text-green-600" />
+                    <h3 className="font-semibold text-green-900">Pod Affinity</h3>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                      Attract
+                    </span>
+                  </div>
+                  
+                  {/* Required Pod Affinity */}
+                  {data.pod.affinity.pod_affinity.required_during_scheduling_ignored_during_execution && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-green-800">Required During Scheduling</h4>
+                      {data.pod.affinity.pod_affinity.required_during_scheduling_ignored_during_execution.map((term: any, termIdx: number) => (
+                        <div key={termIdx} className="bg-white rounded-md border border-green-200 p-3">
+                          <div className="text-xs font-medium text-green-700 mb-2">Pod Affinity Term {termIdx + 1}</div>
+                          <div className="space-y-2">
+                            <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                              <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
+                              <div className="font-mono text-slate-900">{term.topology_key}</div>
+                            </div>
+                            {term.namespaces && term.namespaces.length > 0 && (
+                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                <div className="font-medium text-slate-700 mb-1">Namespaces:</div>
+                                <div className="font-mono text-slate-900">{term.namespaces.join(', ')}</div>
+                              </div>
+                            )}
+                            {term.label_selector && (
+                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
+                                {term.label_selector.match_labels && Object.keys(term.label_selector.match_labels).length > 0 && (
+                                  <div className="space-y-1">
+                                    <div className="text-xs text-slate-600">Match Labels:</div>
+                                    {Object.entries(term.label_selector.match_labels).map(([key, value]: [string, any]) => (
+                                      <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
+                                    ))}
+                                  </div>
+                                )}
+                                {term.label_selector.match_expressions && term.label_selector.match_expressions.length > 0 && (
+                                  <div className="space-y-1 mt-2">
+                                    <div className="text-xs text-slate-600">Match Expressions:</div>
+                                    {term.label_selector.match_expressions.map((expr: any, exprIdx: number) => (
+                                      <div key={exprIdx} className="font-mono text-slate-900">
+                                        {expr.key} {expr.operator} {expr.values ? `[${expr.values.join(', ')}]` : ''}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Preferred Pod Affinity */}
+                  {data.pod.affinity.pod_affinity.preferred_during_scheduling_ignored_during_execution && (
+                    <div className="space-y-3 mt-4">
+                      <h4 className="text-sm font-medium text-green-800">Preferred During Scheduling</h4>
+                      {data.pod.affinity.pod_affinity.preferred_during_scheduling_ignored_during_execution.map((pref: any, prefIdx: number) => (
+                        <div key={prefIdx} className="bg-white rounded-md border border-green-200 p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-xs font-medium text-green-700">Preference {prefIdx + 1}</div>
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">
+                              Weight: {pref.weight}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                              <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
+                              <div className="font-mono text-slate-900">{pref.pod_affinity_term.topology_key}</div>
+                            </div>
+                            {pref.pod_affinity_term.label_selector && (
+                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
+                                {pref.pod_affinity_term.label_selector.match_labels && Object.keys(pref.pod_affinity_term.label_selector.match_labels).length > 0 && (
+                                  <div className="space-y-1">
+                                    {Object.entries(pref.pod_affinity_term.label_selector.match_labels).map(([key, value]: [string, any]) => (
+                                      <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Pod Anti-Affinity */}
+              {data.pod.affinity.pod_anti_affinity && (
+                <div className="bg-red-50 rounded-lg border border-red-200 p-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Shield className="h-4 w-4 text-red-600" />
+                    <h3 className="font-semibold text-red-900">Pod Anti-Affinity</h3>
+                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
+                      Repel
+                    </span>
+                  </div>
+                  
+                  {/* Required Pod Anti-Affinity */}
+                  {data.pod.affinity.pod_anti_affinity.required_during_scheduling_ignored_during_execution && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-red-800">Required During Scheduling</h4>
+                      {data.pod.affinity.pod_anti_affinity.required_during_scheduling_ignored_during_execution.map((term: any, termIdx: number) => (
+                        <div key={termIdx} className="bg-white rounded-md border border-red-200 p-3">
+                          <div className="text-xs font-medium text-red-700 mb-2">Pod Anti-Affinity Term {termIdx + 1}</div>
+                          <div className="space-y-2">
+                            <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                              <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
+                              <div className="font-mono text-slate-900">{term.topology_key}</div>
+                            </div>
+                            {term.label_selector && (
+                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
+                                {term.label_selector.match_labels && Object.keys(term.label_selector.match_labels).length > 0 && (
+                                  <div className="space-y-1">
+                                    {Object.entries(term.label_selector.match_labels).map(([key, value]: [string, any]) => (
+                                      <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Preferred Pod Anti-Affinity */}
+                  {data.pod.affinity.pod_anti_affinity.preferred_during_scheduling_ignored_during_execution && (
+                    <div className="space-y-3 mt-4">
+                      <h4 className="text-sm font-medium text-red-800">Preferred During Scheduling</h4>
+                      {data.pod.affinity.pod_anti_affinity.preferred_during_scheduling_ignored_during_execution.map((pref: any, prefIdx: number) => (
+                        <div key={prefIdx} className="bg-white rounded-md border border-red-200 p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-xs font-medium text-red-700">Preference {prefIdx + 1}</div>
+                            <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-medium">
+                              Weight: {pref.weight}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                              <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
+                              <div className="font-mono text-slate-900">{pref.pod_affinity_term.topology_key}</div>
+                            </div>
+                            {pref.pod_affinity_term.label_selector && (
+                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
+                                {pref.pod_affinity_term.label_selector.match_labels && Object.keys(pref.pod_affinity_term.label_selector.match_labels).length > 0 && (
+                                  <div className="space-y-1">
+                                    {Object.entries(pref.pod_affinity_term.label_selector.match_labels).map(([key, value]: [string, any]) => (
+                                      <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Containers Section */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200">
@@ -774,7 +1052,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
             </div>
           ) : data?.pod.containers && data.pod.containers.length > 0 ? (
             <div className="p-6 space-y-4">
-              {data.pod.containers.map((container, idx) => {
+              {data.pod.containers.map((container: any, idx: number) => {
                 const containerStatus = data.pod.container_statuses.find(
                   (status: any) => status.name === container.name
                 );
@@ -838,7 +1116,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-slate-200">
-                    {data.pod.related_pvcs.map((pvc, index) => (
+                    {data.pod.related_pvcs.map((pvc: any, index: number) => (
                       <PVCRow key={index} pvc={pvc} />
                     ))}
                   </tbody>
@@ -871,7 +1149,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
           ) : data?.pod.volumes && data.pod.volumes.length > 0 ? (
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data.pod.volumes.map((volume, idx) => (
+                {data.pod.volumes.map((volume: any, idx: number) => (
                   <div key={idx} className="bg-slate-50 rounded-lg border border-slate-200 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium text-slate-900">{volume.name}</span>
@@ -908,7 +1186,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
               ) : (
                 <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
                   {((data?.events || []).length + 
-                    (data?.pod.related_pvcs || []).reduce((acc, pvc) => acc + (pvc.events || []).length, 0)) || 0}
+                    (data?.pod.related_pvcs || []).reduce((acc: number, pvc: any) => acc + (pvc.events || []).length, 0)) || 0}
                 </span>
               )}
             </div>
@@ -920,7 +1198,7 @@ export const PodDetailedInfo = ({data, loading, error}) => {
             <>
               {/* Check if we have any events */}
               {((data?.events || []).length > 0 || 
-                (data?.pod.related_pvcs || []).some(pvc => (pvc.events || []).length > 0)) ? (
+                (data?.pod.related_pvcs || []).some((pvc: any) => (pvc.events || []).length > 0)) ? (
                 <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead className="bg-slate-50">
@@ -944,13 +1222,13 @@ export const PodDetailedInfo = ({data, loading, error}) => {
                     </thead>
                     <tbody className="bg-white divide-y divide-slate-200">
                       {/* Pod Events */}
-                      {(data?.events || []).map((event, index) => (
+                      {(data?.events || []).map((event: any, index: number) => (
                         <EventRow key={`pod-${index}`} event={event} source="Pod" />
                       ))}
                       
                       {/* PVC Events */}
-                      {(data?.pod.related_pvcs || []).map((pvc) =>
-                        (pvc.events || []).map((event, index) => (
+                      {(data?.pod.related_pvcs || []).map((pvc: any) =>
+                        (pvc.events || []).map((event: any, index: number) => (
                           <EventRow key={`pvc-${pvc.name}-${index}`} event={event} source={`PVC: ${pvc.name}`} />
                         ))
                       )}
