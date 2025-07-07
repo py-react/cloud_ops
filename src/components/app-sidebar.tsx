@@ -336,36 +336,80 @@ const items = {
                       return (
                         <SidebarMenuItem key={menuKey}>
                           {hasSubItems ? (
-                            <SidebarMenuButton asChild onClick={() => handleToggleMenu(menuKey)} className="hover:bg-gray-100">
+                            <SidebarMenuButton
+                              asChild
+                              className="hover:bg-gray-100"
+                            >
                               <div className="flex items-center gap-2 cursor-pointer select-none">
-                                <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors">
-                                  <item.icon className="h-5 w-5" />
+                                <CustomLink
+                                  key={menuKey}
+                                  href={value.url + item.url}
+                                  className="flex items-center gap-2"
+                                >
+                                  <span
+                                    
+                                    className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors"
+                                  >
+                                    <item.icon className="h-5 w-5" />
+                                  </span>
+                                  <span className="font-medium">
+                                    {item.title}
+                                  </span>
+                                </CustomLink>
+                                <span onClick={() => handleToggleMenu(menuKey)} className="ml-auto">
+                                  {expandedMenus[menuKey] ? (
+                                    <ChevronUp className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                  )}
                                 </span>
-                                <span className="font-medium">{item.title}</span>
-                                <span className="ml-auto">{expandedMenus[menuKey] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
                               </div>
                             </SidebarMenuButton>
                           ) : (
-                            <SidebarMenuButton asChild className="hover:bg-gray-100">
-                              <CustomLink key={menuKey} href={value.url + item.url}>
+                            <SidebarMenuButton
+                              asChild
+                              className="hover:bg-gray-100"
+                            >
+                              <CustomLink
+                                key={menuKey}
+                                href={value.url + item.url}
+                              >
                                 <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors">
                                   <item.icon className="h-5 w-5" />
                                 </span>
-                                <span className="font-medium">{item.title}</span>
+                                <span className="font-medium">
+                                  {item.title}
+                                </span>
                               </CustomLink>
                             </SidebarMenuButton>
                           )}
                           {hasSubItems && (
                             <div
-                              className={`overflow-hidden transition-all duration-300 ${expandedMenus[menuKey] ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0 pointer-events-none'}`}
+                              className={`overflow-hidden transition-all duration-300 ${
+                                expandedMenus[menuKey]
+                                  ? "max-h-96 opacity-100 mt-2"
+                                  : "max-h-0 opacity-0 pointer-events-none"
+                              }`}
                             >
                               <SidebarMenuSub>
                                 {item.items.map((subItem) => {
                                   if (!subItem) return null;
                                   return (
-                                    <SidebarMenuSubItem key={value.url + item.url + subItem.url}>
-                                      <SidebarMenuSubButton asChild className="hover:bg-gray-100">
-                                        <CustomLink key={value.url + item.url + subItem.url} href={value.url + item.url + subItem.url}>
+                                    <SidebarMenuSubItem
+                                      key={value.url + item.url + subItem.url}
+                                    >
+                                      <SidebarMenuSubButton
+                                        asChild
+                                        className="hover:bg-gray-100"
+                                      >
+                                        <CustomLink
+                                          key={
+                                            value.url + item.url + subItem.url
+                                          }
+                                          href={
+                                            value.url + item.url + subItem.url
+                                          }
+                                        >
                                           <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors mr-2">
                                             <subItem.icon className="h-5 w-5" />
                                           </span>

@@ -280,7 +280,7 @@ const ReleaseConfigPage = () => {
               </DialogTitle>
             </DialogHeader>
             <div className="flex-1 overflow-auto p-6">
-              <CreateRelease />
+              <CreateRelease defaultValues={editingConfig} />
               {/* <ReleaseConfigForm
                 namespace={selectedNamespace}
                 onSuccess={() => {

@@ -28,6 +28,25 @@ export const $SourceCodeBuildWithLogsType = {
 	type: 'string',
 	isRequired: true,
 },
+		time_taken: {
+	type: 'any-of',
+	contains: [{
+	type: 'number',
+}, {
+	type: 'null',
+}],
+	isRequired: true,
+},
+		created_at: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+	format: 'date-time',
+}, {
+	type: 'null',
+}],
+	isRequired: true,
+},
 		logs: {
 	type: 'array',
 	contains: {

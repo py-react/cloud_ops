@@ -89,6 +89,23 @@ const PackagesPage = () => {
     }
   };
 
+  const handlePush = async (row: PackageTableData) => {
+    const pkg = row.package;
+    try {
+      await DefaultService.apiDockerRegistryPost({
+        requestBody: {
+          action: 'push',
+          packageId: pkg.id,
+        },
+      });
+      toast.success('Package pushed successfully');
+      const newPackages = await fetchPackages();
+      setPackages(newPackages);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to push package');
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="space-y-6">
@@ -126,7 +143,7 @@ const PackagesPage = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
-            <PackagesList packages={packages} onPlay={handlePlay} onDelete={handleDelete} />
+            <PackagesList packages={packages} onPlay={handlePlay} onDelete={handleDelete} onPush={handlePush} />
           </CardContent>
         </Card>
       </div>

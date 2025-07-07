@@ -1,25 +1,21 @@
-export const $EnvVar = {
+export const $K8sConfigMapVolume = {
 	properties: {
 		name: {
 	type: 'string',
 	isRequired: true,
 },
-		value: {
+		defaultMode: {
 	type: 'any-of',
 	contains: [{
-	type: 'string',
+	type: 'number',
 }, {
 	type: 'null',
 }],
 },
-		valueFrom: {
+		optional: {
 	type: 'any-of',
 	contains: [{
-	type: 'dictionary',
-	contains: {
-	properties: {
-	},
-},
+	type: 'boolean',
 }, {
 	type: 'null',
 }],

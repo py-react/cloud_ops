@@ -1,24 +1,30 @@
-export const $EnvVar = {
+export const $NodeSelectorTerm = {
 	properties: {
-		name: {
-	type: 'string',
-	isRequired: true,
-},
-		value: {
+		matchExpressions: {
 	type: 'any-of',
 	contains: [{
-	type: 'string',
-}, {
-	type: 'null',
-}],
-},
-		valueFrom: {
-	type: 'any-of',
-	contains: [{
+	type: 'array',
+	contains: {
 	type: 'dictionary',
 	contains: {
 	properties: {
 	},
+},
+},
+}, {
+	type: 'null',
+}],
+},
+		matchFields: {
+	type: 'any-of',
+	contains: [{
+	type: 'array',
+	contains: {
+	type: 'dictionary',
+	contains: {
+	properties: {
+	},
+},
 },
 }, {
 	type: 'null',

@@ -1,10 +1,6 @@
-export const $EnvVar = {
+export const $K8sEmptyDirVolume = {
 	properties: {
-		name: {
-	type: 'string',
-	isRequired: true,
-},
-		value: {
+		medium: {
 	type: 'any-of',
 	contains: [{
 	type: 'string',
@@ -12,14 +8,10 @@ export const $EnvVar = {
 	type: 'null',
 }],
 },
-		valueFrom: {
+		sizeLimit: {
 	type: 'any-of',
 	contains: [{
-	type: 'dictionary',
-	contains: {
-	properties: {
-	},
-},
+	type: 'string',
 }, {
 	type: 'null',
 }],

@@ -1,10 +1,10 @@
-export const $EnvVar = {
+export const $ContainerPortConfig = {
 	properties: {
-		name: {
-	type: 'string',
+		containerPort: {
+	type: 'number',
 	isRequired: true,
 },
-		value: {
+		name: {
 	type: 'any-of',
 	contains: [{
 	type: 'string',
@@ -12,14 +12,10 @@ export const $EnvVar = {
 	type: 'null',
 }],
 },
-		valueFrom: {
+		protocol: {
 	type: 'any-of',
 	contains: [{
-	type: 'dictionary',
-	contains: {
-	properties: {
-	},
-},
+	type: 'string',
 }, {
 	type: 'null',
 }],

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { CheckCircle, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon, X, Skull, RotateCcw, CircleCheck, HelpCircle, Copy, Undo2, MoreHorizontal, MoreVertical } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon, X, Skull, RotateCcw, CircleCheck, HelpCircle, Copy, Undo2, MoreHorizontal, MoreVertical, ArrowDownToLineIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +23,7 @@ type ResourceTableActionProps = {
   showDelete?: boolean;
   showClone?: boolean;
   showUndo?: boolean;
+  showPush?: boolean;
 };
 
 interface ResourceTableProps<T> {
@@ -38,6 +39,7 @@ interface ResourceTableProps<T> {
   onPause?: (resource: T) => void;
   onClone?: (resource: T) => void;
   onUndo?: (resource: T) => void;
+  onPush?: (resource: T) => void;
   className?: string;
   tableClassName?: string;
 }
@@ -55,6 +57,7 @@ function withDefaultActionProps<T>(row: T & ResourceTableActionProps): T & Requi
     showDelete: row.showDelete !== undefined ? row.showDelete : true,
     showClone: row.showClone !== undefined ? row.showClone : true,
     showUndo: row.showClone !== undefined ? row.showClone : true,
+    showPush: row.showPush !== undefined ? row.showPush : true,
     ...row,
   };
 }
@@ -72,6 +75,7 @@ export function ResourceTable<T>({
   onPause,
   onClone,
   onUndo,
+  onPush,
   className,
   tableClassName,
 }: ResourceTableProps<T>) {
@@ -107,6 +111,9 @@ export function ResourceTable<T>({
   };
   const handleUndo = (resource: T) => {
     if (onUndo) onUndo(resource);
+  };
+  const handlePush = (resource: T) => {
+    if (onPush) onPush(resource);
   };
 
   const showActions = onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay || onStop || onPause || onEdit || onUndo || onClone
@@ -207,6 +214,12 @@ export function ResourceTable<T>({
                               >
                                 <Trash2 className="h-5 w-5 text-red-500 mr-2" />
                                 Delete
+                              </DropdownMenuItem>
+                            )}
+                            {onPush && rowWithDefaults.showPush && (
+                              <DropdownMenuItem onSelect={() => handlePush(row)}>
+                                <ArrowDownToLineIcon className="h-5 w-5 mr-2" />
+                                Push
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>

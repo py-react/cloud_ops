@@ -29,9 +29,10 @@ interface PackagesListProps {
   packages: PackageInfo[];
   onPlay?: (pkg: PackageTableData) => void;
   onDelete?: (pkg: PackageTableData) => void;
+  onPush?: (pkg: PackageTableData) => void;
 }
 
-export function PackagesList({ packages, onPlay, onDelete }: PackagesListProps) {
+export function PackagesList({ packages, onPlay, onDelete, onPush }: PackagesListProps) {
   const columns = [
     { header: 'ID', accessor: 'id' },
     { header: 'Image', accessor: 'image' },
@@ -63,6 +64,7 @@ export function PackagesList({ packages, onPlay, onDelete }: PackagesListProps) 
       data={data}
       onPlay={onPlay}
       onDelete={onDelete}
+      onPush={onPush}
       tableClassName="max-h-[490px]"
     />
   );

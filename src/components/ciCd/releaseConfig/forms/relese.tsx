@@ -1084,9 +1084,9 @@ const templates: ITemplates = {
   },
 };
 
-const CreateRelease = () => {
+const CreateRelease = ({defaultValues}:{defaultValues:DeploymentFormData | undefined}) => {
   const form = useForm<DeploymentFormData>({
-    defaultValues: {
+    defaultValues: defaultValues || {
       type: "",
       namespace: "",
       deployment_name: "",

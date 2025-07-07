@@ -80,6 +80,47 @@ export const $DeploymentConfigType = {
 	type: 'null',
 }],
 },
+		node_selector: {
+	type: 'any-of',
+	contains: [{
+	type: 'dictionary',
+	contains: {
+	type: 'string',
+},
+}, {
+	type: 'null',
+}],
+},
+		tolerations: {
+	type: 'any-of',
+	contains: [{
+	type: 'array',
+	contains: {
+		type: 'K8sToleration',
+	},
+}, {
+	type: 'null',
+}],
+},
+		affinity: {
+	type: 'any-of',
+	contains: [{
+	type: 'K8sAffinity',
+}, {
+	type: 'null',
+}],
+},
+		volumes: {
+	type: 'any-of',
+	contains: [{
+	type: 'array',
+	contains: {
+		type: 'K8sVolume',
+	},
+}, {
+	type: 'null',
+}],
+},
 		soft_delete: {
 	type: 'boolean',
 },

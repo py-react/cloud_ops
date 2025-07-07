@@ -21,7 +21,7 @@ def run_kubectl_command(command: list[str]) -> str:
         result = subprocess.run(command, text=True, capture_output=True, check=True)
         return result.stdout
     except subprocess.CalledProcessError as e:
-        raise HTTPException(status_code=500, detail=f"Error running kubectl: {e.stderr}")
+        raise HTTPException(status_code=500, detail=f"Error running kubectl: {e.stderr}, command: {command}")
 
 async def GET(action:Literal["all","current"]):
     settings = load_settings()
@@ -48,7 +48,7 @@ async def POST(request:Request,data: ContextPostData):
     settings = load_settings()
     if data.type == ContextPostType.SWITCH:
         command = [
-            "kubectl", "config", "use-context", data.payload.switch, "--kubeconfig", settings.get("KUBECONFIG","~/.kube/config")
+            "kubectl", "config", "use-context", data.payload.switch
         ]
         output = run_kubectl_command(command)
         return {"message": f"Context '{data.payload.switch}' set successfully", "output": output}

@@ -35,6 +35,9 @@ import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 
+export type TDataApiPackgesPost = {
+                requestBody: RunImage
+            }
 export type TDataApiSwarmInitPost = {
                 requestBody: SwarmInitParams
             }
@@ -59,6 +62,9 @@ export type TDataApiSwarmServicesServiceIdGet = {
             }
 export type TDataApiSwarmServicesCreatePost = {
                 requestBody: ServiceCreationSpec
+            }
+export type TDataApiStoragesPost = {
+                requestBody: VolumeActionRequest
             }
 export type TDataApiInfraGet = {
                 category: string
@@ -92,6 +98,11 @@ export type TDataApiDockerNetworksDelete = {
             }
 export type TDataApiDockerPackagesPost = {
                 requestBody: RunImage
+            }
+export type TDataApiDockerRegistryGet = {
+                namespace?: string | null
+serviceName?: string | null
+servicePort?: number | null
             }
 export type TDataApiDockerContainersPost = {
                 requestBody: RunContainer
@@ -248,11 +259,44 @@ export type TDataApiQueuePost = {
 export type TDataApiQueueDelete = {
                 requestBody: StopQueue
             }
+export type TDataApiSystemsPost = {
+                requestBody: SystemInfo
+            }
 export type TDataApiQueueJobPost = {
                 requestBody: CreateQueueJob
             }
 
 export class DefaultService {
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiPackgesGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/packges',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiPackgesPost(data: TDataApiPackgesPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/packges',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
 
 	/**
 	 * @returns unknown Successful Response
@@ -416,6 +460,36 @@ requestBody,
 		return __request(OpenAPI, {
 			method: 'POST',
 			url: '/api/swarm/services/create',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiStoragesGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/storages',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiStoragesPost(data: TDataApiStoragesPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/storages',
 			body: requestBody,
 			mediaType: 'application/json',
 			errors: {
@@ -666,6 +740,28 @@ requestBody,
 			url: '/api/docker/packages',
 			body: requestBody,
 			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerRegistryGet(data: TDataApiDockerRegistryGet = {}): CancelablePromise<unknown> {
+		const {
+namespace,
+serviceName,
+servicePort,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/docker/registry',
+			query: {
+				namespace, service_name: serviceName, service_port: servicePort
+			},
 			errors: {
 				422: `Validation Error`,
 			},
@@ -1628,6 +1724,25 @@ requestBody,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
+	public static apiSystemsPost(data: TDataApiSystemsPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/systems',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
 	public static apiQueueJobGet(): CancelablePromise<unknown> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -1713,6 +1828,17 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static settingsDockerRegistryGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/docker/registry',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static settingsCiCdGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -1750,6 +1876,28 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/settings/ci_cd/release_config',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdReleaseConfigNamespaceGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/release_config/{namespace}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdReleaseConfigNamespaceConfigNameGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/release_config/{namespace}/{config_name}',
 		});
 	}
 
@@ -1860,72 +2008,6 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/infra/manager',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static dockerGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/docker',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static dockerStoragesGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/docker/storages',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static dockerNetworkGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/docker/network',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static dockerContainerGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/docker/container',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static dockerPackagesGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/docker/packages',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static dockerHubGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/docker/hub',
 		});
 	}
 
@@ -2201,6 +2283,83 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/queues',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeDockerGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee/docker',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeDockerStoragesGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee/docker/storages',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeDockerNetworkGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee/docker/network',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeDockerContainerGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee/docker/container',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeDockerPackagesGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee/docker/packages',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeDockerHubGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee/docker/hub',
 		});
 	}
 

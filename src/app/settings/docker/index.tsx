@@ -1,7 +1,7 @@
 import useNavigate from "@/libs/navigate"
 import { useEffect } from "react"
 
-function Kubernetes() {
+function Docker() {
   const navigate = useNavigate()
   useEffect(()=>{
     navigate("/settings/docker/registry")
@@ -9,4 +9,4 @@ function Kubernetes() {
   return "redirecting..."
 }
 
-export default Kubernetes
+export default Docker

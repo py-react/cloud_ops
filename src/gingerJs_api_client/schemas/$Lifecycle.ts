@@ -1,18 +1,18 @@
-export const $EnvVar = {
+export const $Lifecycle = {
 	properties: {
-		name: {
-	type: 'string',
-	isRequired: true,
-},
-		value: {
+		preStop: {
 	type: 'any-of',
 	contains: [{
-	type: 'string',
+	type: 'dictionary',
+	contains: {
+	properties: {
+	},
+},
 }, {
 	type: 'null',
 }],
 },
-		valueFrom: {
+		postStart: {
 	type: 'any-of',
 	contains: [{
 	type: 'dictionary',
