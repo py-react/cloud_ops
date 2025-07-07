@@ -329,7 +329,7 @@ const BuildRow: React.FC<{ build: any }> = ({ build }) => {
             {build.created_at ? formatUtcToLocal(build.created_at) : "NA"}
           </td>
           <td className="px-6 py-4 text-sm text-slate-900">
-            {build.time_taken || "NA"}
+            {Number(build.time_taken).toFixed(2) || "NA"}
           </td>
       </tr>
 

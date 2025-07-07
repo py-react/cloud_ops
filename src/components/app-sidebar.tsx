@@ -28,7 +28,9 @@ import {
   Cog,
   FileCog,
   Unplug,
-  Orbit
+  Orbit,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -75,6 +77,17 @@ function SidebarToggle() {
 export function AppSidebar({ ...props }: AppSidebarProps) {
   const {selectedNamespace} = React.useContext(NamespaceContext)
 
+  // Track expanded state for sidebar children
+  const [expandedMenus, setExpandedMenus] = React.useState<{ [key: string]: boolean }>({});
+
+  // Toggle expand/collapse for a given menu key
+  const handleToggleMenu = (key: string) => {
+    setExpandedMenus((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   // Menu items.
 const items = {
   header: {
@@ -96,37 +109,38 @@ const items = {
     //   ],
     // },
     docker: {
-      title: "Docker",
-      url: "/docker",
+      title: "CEE", // container excecution engine
+      url: "/cee",
+      color: "blue",
       childs: [
         {
-          title: "Overview",
-          url: "/",
+          title: "Docker",
+          url: "/docker",
           icon: Docker,
           items: [
             {
               title: "Conatiner",
-              url: "container",
+              url: "/container",
               icon: Server,
             },
             {
               title: "Packages",
-              url: "packages",
+              url: "/packages",
               icon: Box,
             },
             {
               title: "Storages",
-              url: "storages",
+              url: "/storages",
               icon: Database,
             },
             {
               title: "Network",
-              url: "network",
+              url: "/network",
               icon: NetworkIcon,
             },
             {
               title: "Hub",
-              url: "hub",
+              url: "/hub",
               icon: Computer,
             },
           ],
@@ -136,6 +150,7 @@ const items = {
     orchestration: {
       title: "Orchestration",
       url: "/orchestration",
+      color: "green",
       childs: [
         {
           title: "Docker Swarms",
@@ -205,6 +220,7 @@ const items = {
     settings:{
       title: "Control Center",
       url: "/settings",
+      color: "yellow",
       childs:[
         {
           title: "Kubernetes",
@@ -251,7 +267,7 @@ const items = {
               items: [],
             },
             {
-              title: "Release Strategies",
+              title: "Strategies",
               url: "/release_strategies",
               icon: Orbit,
               items: [],
@@ -276,6 +292,7 @@ const items = {
     infraManager: {
       title: "Infra",
       url: "/infra",
+      color: "purple",
       childs: [
         {
           title: "Manager",
@@ -294,9 +311,11 @@ const items = {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild>
+              <SidebarMenuButton size="lg" asChild className="hover:bg-gray-100">
                 <CustomLink href={items.header.url}>
-                  <items.header.icon className="h-6 w-6" />
+                  <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors">
+                    <items.header.icon className="h-6 w-6" />
+                  </span>
                   <span className="font-semibold">{items.header.title}</span>
                 </CustomLink>
               </SidebarMenuButton>
@@ -304,7 +323,7 @@ const items = {
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          {Object.values(items.items).map((value) => {
+          {Object.entries(items.items).map(([valueKey, value]) => {
             if (!value) return null;
             return (
               <SidebarGroup key={value.url}>
@@ -312,29 +331,53 @@ const items = {
                 <SidebarGroupContent>
                   <SidebarMenu >
                     {value.childs.map((item) => {
+                      const hasSubItems = item.items && item.items.length > 0;
+                      const menuKey = value.url + item.url;
                       return (
-                        <SidebarMenuItem key={value.url + item.url}>
-                          <SidebarMenuButton asChild>
-                            <CustomLink key={value.url + item.url} href={value.url + item.url}>
-                              <item.icon />
-                              <span>{item.title}</span>
-                            </CustomLink>
-                          </SidebarMenuButton>
-                          <SidebarMenuSub>
-                            {item.items.map((subItem) => {
-                              if (!subItem) return null;
-                              return (
-                                <SidebarMenuSubItem key={value.url + item.url + subItem.url}>
-                                  <SidebarMenuSubButton asChild>
-                                    <CustomLink key={value.url + item.url + subItem.url} href={value.url + item.url + subItem.url}>
-                                      <subItem.icon className="mr-2 h-4 w-4" />
-                                      {subItem.title}
-                                    </CustomLink>
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                              );
-                            })}
-                          </SidebarMenuSub>
+                        <SidebarMenuItem key={menuKey}>
+                          {hasSubItems ? (
+                            <SidebarMenuButton asChild onClick={() => handleToggleMenu(menuKey)} className="hover:bg-gray-100">
+                              <div className="flex items-center gap-2 cursor-pointer select-none">
+                                <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors">
+                                  <item.icon className="h-5 w-5" />
+                                </span>
+                                <span className="font-medium">{item.title}</span>
+                                <span className="ml-auto">{expandedMenus[menuKey] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
+                              </div>
+                            </SidebarMenuButton>
+                          ) : (
+                            <SidebarMenuButton asChild className="hover:bg-gray-100">
+                              <CustomLink key={menuKey} href={value.url + item.url}>
+                                <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors">
+                                  <item.icon className="h-5 w-5" />
+                                </span>
+                                <span className="font-medium">{item.title}</span>
+                              </CustomLink>
+                            </SidebarMenuButton>
+                          )}
+                          {hasSubItems && (
+                            <div
+                              className={`overflow-hidden transition-all duration-300 ${expandedMenus[menuKey] ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0 pointer-events-none'}`}
+                            >
+                              <SidebarMenuSub>
+                                {item.items.map((subItem) => {
+                                  if (!subItem) return null;
+                                  return (
+                                    <SidebarMenuSubItem key={value.url + item.url + subItem.url}>
+                                      <SidebarMenuSubButton asChild className="hover:bg-gray-100">
+                                        <CustomLink key={value.url + item.url + subItem.url} href={value.url + item.url + subItem.url}>
+                                          <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors mr-2">
+                                            <subItem.icon className="h-5 w-5" />
+                                          </span>
+                                          {subItem.title}
+                                        </CustomLink>
+                                      </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                  );
+                                })}
+                              </SidebarMenuSub>
+                            </div>
+                          )}
                         </SidebarMenuItem>
                       );
                     })}

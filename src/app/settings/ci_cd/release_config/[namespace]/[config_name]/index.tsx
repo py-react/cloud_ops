@@ -18,7 +18,7 @@ import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 
-import { ReleaseRun, type ReleaseRunData } from "@/components/ciCd/releaseConfig/forms/releaseConfig";
+import { ReleaseRun, type ReleaseRunData } from "@/components/ciCd/releaseConfig/forms/releaseRun";
 import { Button } from "@/components/ui/button";
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {

@@ -18,14 +18,14 @@ class StrategyHandler:
             "config": {}
         },
         "blue-green": {
-            "type": "RollingUpdate",
+            "type": "BlueGreen",
             "config": {
                 "maxSurge": "100%",
                 "maxUnavailable": 0
             }
         },
         "canary": {
-            "type": "RollingUpdate",
+            "type": "Canary",
             "config": {
                 "maxSurge": "20%",
                 "maxUnavailable": 0

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import useNavigate from '@/libs/navigate';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { useNavigationHistory } from '@/libs/navigationHistory';
+import useNavigate from '@/libs/navigate';
 
 interface BackButtonProps {
   className?: string;
@@ -10,25 +11,27 @@ interface BackButtonProps {
 
 const BackButton: React.FC<BackButtonProps> = ({ className = '', children }) => {
   const navigate = useNavigate();
-  const [canGoBack, setCanGoBack] = useState(false);
+  const { canGoBack, goBack, historyChanged } = useNavigationHistory();
+  const [canNavigateBack, setCanNavigateBack] = useState(false);
 
   useEffect(() => {
-    setCanGoBack(window.history.length > 1);
-  }, []);
+    const canGo = canGoBack();
+    setCanNavigateBack(canGo);
+  }, [historyChanged, canGoBack]);
 
   const handleBack = () => {
-    if (!canGoBack) {
-      console.warn('No previous page to go back to');
+    if (!canNavigateBack) {
       navigate('/', { replace: true });
       return;
     }
 
-    // Get the previous path from history state
-    const state = window.history.state;
-    if (state && state.previousPath) {
-      navigate(state.previousPath, { replace: true });
+    // Use linked list navigation - get the previous page path
+    const previousPage = goBack();
+    
+    if (previousPage) {
+      navigate(previousPage.path, { replace: true });
     } else {
-      // If no previous path in state, go to root
+      // Fallback to root if linked list navigation fails
       navigate('/', { replace: true });
     }
   };
@@ -39,7 +42,7 @@ const BackButton: React.FC<BackButtonProps> = ({ className = '', children }) => 
       variant={"ghost"}
       className={`mb-4 ${className}`}
       aria-label="Go back"
-      disabled={!canGoBack}
+      disabled={!canNavigateBack}
     >
       <ArrowLeft className='w-4 h-4' />
     </Button>

@@ -13,8 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { FileCog, SlidersHorizontal } from "lucide-react";
+import { FileCog, Play, SlidersHorizontal } from "lucide-react";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import RouteDescription from "@/components/route-description";
 // import ReleaseConfigForm from "@/components/ciCd/releaseConfig/forms/ReleaseConfigForm";
@@ -24,6 +25,7 @@ import { ReleaseConfigFilters } from "@/components/ciCd/releaseConfig/common/Rel
 import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 import useNavigate from "@/libs/navigate";
+import CreateRelease from "@/components/ciCd/releaseConfig/forms/relese";
 
 const columns = [
   { header: "Deployment Name", accessor: "deployment_name" },
@@ -262,16 +264,23 @@ const ReleaseConfigPage = () => {
           <DialogContent className="max-w-none w-screen h-screen flex flex-col">
             <DialogHeader className="py-4 px-6 border-b">
               <DialogTitle className="flex gap-2 items-center">
-                <FileCog className="w-4 h-4" />{" "}
-                {editingConfig && editingConfig.name
-                  ? "Edit Release Config"
-                  : "Add Release Config"}
+                <div className="p-3 bg-gray-100 rounded-xl">
+                  <FileCog className="w-6 h-6 text-gray-600" />{" "}
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {editingConfig && editingConfig.name
+                      ? "Edit Release Config"
+                      : "Add Release Config"}
+                  </h2>
+                  <p className="text-base text-slate-500">
+                    Configure a new release environment and deployment settings.
+                  </p>
+                </div>
               </DialogTitle>
-              <DialogDescription>
-                Configure a new release environment and deployment settings.
-              </DialogDescription>
             </DialogHeader>
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto p-6">
+              <CreateRelease />
               {/* <ReleaseConfigForm
                 namespace={selectedNamespace}
                 onSuccess={() => {
@@ -284,6 +293,22 @@ const ReleaseConfigPage = () => {
                 isEdit={!!editingConfig && !!editingConfig.deployment_name}
               /> */}
             </div>
+            {/* Submit Actions */}
+            <DialogFooter>
+              <div className="flex gap-4 justify-end">
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+                <Button
+                  form="release-form"
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Create Deployment
+                </Button>
+              </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

@@ -17,8 +17,8 @@ async def POST(request: Request, body: DeploymentRunType):
         result = manager.run_deployment_from_run(body)
         return {
             "status": "success",
-            "message": "Deployment run created successfully",
-            "data": result
+            "message": result["deployment_result"],
+            "data": result["run"]
         }
     except HTTPException as he:
         return JSONResponse(content={"status": "error", "message": he.detail}, status_code=he.status_code)

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 // Extend Window interface to include our custom property
 declare global {
@@ -109,6 +109,11 @@ const useNavigate = () => {
           window.history.replaceState(state, title, responseUrl);
         } else {
           window.history.pushState(state, title, responseUrl);
+          // Track navigation in linked list (only for push, not replace)
+          const trackEvent = new CustomEvent('trackNavigation', { 
+            detail: { path: responseUrl, title } 
+          });
+          window.dispatchEvent(trackEvent);
         }
 
         // triggerLoadingEvent(false);
@@ -126,6 +131,8 @@ const useNavigate = () => {
       console.error("Error loading content:", error);
     }
   }, []);
+
+
 
   return navigate;
 };

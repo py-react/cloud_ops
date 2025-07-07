@@ -3358,114 +3358,6 @@
         }
       }
     },
-    "/docker": {
-      "get": {
-        "summary": "",
-        "operationId": "_docker_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/docker/storages": {
-      "get": {
-        "summary": "",
-        "operationId": "_docker_storages_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/docker/network": {
-      "get": {
-        "summary": "",
-        "operationId": "_docker_network_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/docker/container": {
-      "get": {
-        "summary": "",
-        "operationId": "_docker_container_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/docker/packages": {
-      "get": {
-        "summary": "",
-        "operationId": "_docker_packages_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/docker/hub": {
-      "get": {
-        "summary": "",
-        "operationId": "_docker_hub_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/orchestration": {
       "get": {
         "summary": "",
@@ -3902,6 +3794,132 @@
       "get": {
         "summary": "",
         "operationId": "_queues_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cee": {
+      "get": {
+        "summary": "",
+        "operationId": "_cee_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cee/docker": {
+      "get": {
+        "summary": "",
+        "operationId": "_cee_docker_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cee/docker/storages": {
+      "get": {
+        "summary": "",
+        "operationId": "_cee_docker_storages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cee/docker/network": {
+      "get": {
+        "summary": "",
+        "operationId": "_cee_docker_network_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cee/docker/container": {
+      "get": {
+        "summary": "",
+        "operationId": "_cee_docker_container_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cee/docker/packages": {
+      "get": {
+        "summary": "",
+        "operationId": "_cee_docker_packages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cee/docker/hub": {
+      "get": {
+        "summary": "",
+        "operationId": "_cee_docker_hub_get",
         "responses": {
           "200": {
             "description": "Successful Response",
