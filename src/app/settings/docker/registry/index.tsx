@@ -1,21 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FileText, Monitor, Loader2, ArrowLeft, Eye, Package, Clock, Tag, Layers, Settings, ChevronDown, ChevronRight, FolderOpen } from 'lucide-react'
 import { toast } from 'sonner'
 import { DefaultService } from '@/gingerJs_api_client'
 import { Editor } from "@monaco-editor/react"
+import RouteDescription from '@/components/route-description'
+import { ResourceTable } from '@/components/kubernetes/resources/resourceTable'
 
+// Type definitions
 interface RegistryResponse {
   repositories: string[]
-}
-
-interface RegistryError {
-  error: boolean
-  message: string
-  status?: string
-  details?: string
-  namespace?: string
-  service?: string
 }
 
 interface ImageManifest {
@@ -56,11 +51,6 @@ interface ImageConfig {
     comment?: string
     empty_layer?: boolean
   }>
-}
-
-interface ImageTag {
-  name: string
-  tags: string[]
 }
 
 interface LayerContents {
@@ -112,7 +102,16 @@ interface TreeNode {
   is_symlink: boolean
 }
 
-// View states
+// Define columns for ResourceTable
+const repositoryColumns = [
+  { header: 'Repository Name', accessor: 'name' },
+  { header: 'Type', accessor: 'type' },
+]
+
+const tagColumns = [
+  { header: 'Tag Name', accessor: 'name' },
+]
+
 type ViewState = 'repositories' | 'image-tags' | 'image-details'
 
 const Registry = () => {
@@ -149,6 +148,7 @@ const Registry = () => {
     history: false
   })
 
+  // API methods and helper functions will be added here in the next step
   const fetchRegistryStatus = async () => {
     try {
       setLoading(true)
@@ -156,7 +156,6 @@ const Registry = () => {
       
       const data = await DefaultService.apiDockerRegistryGet({}) as any
 
-      // Check if response is an error (registry not initialized)
       if (data?.error) {
         setError(data.message)
         setIsRegistryInitialized(false)
@@ -164,7 +163,6 @@ const Registry = () => {
         return
       }
 
-      // Success response with repositories
       if (data?.repositories !== undefined) {
         setRepositories(data.repositories)
         setIsRegistryInitialized(true)
@@ -172,7 +170,6 @@ const Registry = () => {
         return
       }
 
-      // Fallback for unexpected response format
       throw new Error('Unexpected response format')
       
     } catch (err) {
@@ -326,11 +323,6 @@ const Registry = () => {
     }))
   }
 
-  const formatFileMode = (mode: string) => {
-    // Convert octal mode to readable format
-    return mode
-  }
-
   const formatTimestamp = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleString()
   }
@@ -351,37 +343,37 @@ const Registry = () => {
         const parentPath = currentPath
         currentPath = currentPath ? `${currentPath}/${part}` : part
         
-                  if (!nodeMap.has(currentPath)) {
-            const isLastPart = i === parts.length - 1
-            const nodeType = isLastPart 
-              ? (file.type === 'other' ? 'file' : file.type as 'file' | 'directory' | 'symlink')
-              : 'directory'
-              
-            const node: TreeNode = {
-              name: part,
-              path: currentPath,
-              type: nodeType,
-              size: isLastPart ? file.size : 0,
-              mode: isLastPart ? file.mode : '0755',
-              mtime: isLastPart ? file.mtime : Date.now() / 1000,
-              children: nodeType === 'directory' ? [] : undefined,
-              linkname: isLastPart ? file.linkname : undefined,
-              is_file: isLastPart ? file.is_file : false,
-              is_dir: nodeType === 'directory',
-              is_symlink: isLastPart ? file.is_symlink : false
-            }
-
-            nodeMap.set(currentPath, node)
-
-            if (parentPath) {
-              const parent = nodeMap.get(parentPath)
-              if (parent && parent.children) {
-                parent.children.push(node)
-              }
-            } else {
-              tree.push(node)
-            }
+        if (!nodeMap.has(currentPath)) {
+          const isLastPart = i === parts.length - 1
+          const nodeType = isLastPart 
+            ? (file.type === 'other' ? 'file' : file.type as 'file' | 'directory' | 'symlink')
+            : 'directory'
+            
+          const node: TreeNode = {
+            name: part,
+            path: currentPath,
+            type: nodeType,
+            size: isLastPart ? file.size : 0,
+            mode: isLastPart ? file.mode : '0755',
+            mtime: isLastPart ? file.mtime : Date.now() / 1000,
+            children: nodeType === 'directory' ? [] : undefined,
+            linkname: isLastPart ? file.linkname : undefined,
+            is_file: isLastPart ? file.is_file : false,
+            is_dir: nodeType === 'directory',
+            is_symlink: isLastPart ? file.is_symlink : false
           }
+
+          nodeMap.set(currentPath, node)
+
+          if (parentPath) {
+            const parent = nodeMap.get(parentPath)
+            if (parent && parent.children) {
+              parent.children.push(node)
+            }
+          } else {
+            tree.push(node)
+          }
+        }
       }
     }
 
@@ -434,6 +426,74 @@ const Registry = () => {
 
   const closeFileViewer = () => {
     setViewingFile(null)
+  }
+
+  const parseDockerfileCommand = (createdBy: string): { command: string; isShellCommand: boolean } => {
+    // Remove common prefixes
+    let command = createdBy
+      .replace(/^\/bin\/sh -c #\(nop\)\s*/, '')
+      .replace(/^\/bin\/sh -c /, 'RUN ')
+      .replace(/^ADD /, 'ADD ')
+      .replace(/^COPY /, 'COPY ')
+      .trim()
+
+    // Check if it's a shell command (starts with RUN and contains complex shell operations)
+    const isShellCommand = command.startsWith('RUN ') && (
+      command.includes('&&') || 
+      command.includes('||') || 
+      command.includes('|') ||
+      command.includes(';') ||
+      command.length > 100
+    )
+
+    return { command, isShellCommand }
+  }
+
+  const formatShellCommand = (command: string): string => {
+    if (!command.startsWith('RUN ')) return command
+    
+    // Extract the shell part after RUN
+    const shellPart = command.substring(4)
+    
+    // Split on && and add proper indentation
+    const formatted = shellPart
+      .split(' && ')
+      .map((part, index) => {
+        if (index === 0) return `RUN ${part.trim()}`
+        return `    && ${part.trim()}`
+      })
+      .join(' \\\n')
+    
+    return formatted
+  }
+
+  const navigateBack = () => {
+    if (viewState === 'image-details') {
+      setViewState('image-tags')
+      setImageManifest(null)
+      setImageConfig(null)
+      setSelectedTag(null)
+    } else if (viewState === 'image-tags') {
+      setViewState('repositories')
+      setSelectedRepository(null)
+      setImageTags([])
+    }
+  }
+
+  const handleCreateRegistry = () => {
+    toast.info('Registry creation feature coming soon')
+  }
+
+  const handleLearnMore = () => {
+    toast.info('Opening registry documentation...')
+  }
+
+  const handlePushFirstImage = () => {
+    toast.info('Image push workflow coming soon')
+  }
+
+  const handleViewPushCommands = () => {
+    toast.info('Showing push commands...')
   }
 
   // TreeView Component
@@ -510,83 +570,9 @@ const Registry = () => {
     )
   }
 
-  const parseDockerfileCommand = (createdBy: string): { command: string; isShellCommand: boolean } => {
-    // Remove common prefixes
-    let command = createdBy
-      .replace(/^\/bin\/sh -c #\(nop\)\s*/, '')
-      .replace(/^\/bin\/sh -c /, 'RUN ')
-      .replace(/^ADD /, 'ADD ')
-      .replace(/^COPY /, 'COPY ')
-      .trim()
-
-    // Check if it's a shell command (starts with RUN and contains complex shell operations)
-    const isShellCommand = command.startsWith('RUN ') && (
-      command.includes('&&') || 
-      command.includes('||') || 
-      command.includes('|') ||
-      command.includes(';') ||
-      command.length > 100
-    )
-
-    return { command, isShellCommand }
-  }
-
-  const formatShellCommand = (command: string): string => {
-    if (!command.startsWith('RUN ')) return command
-    
-    // Extract the shell part after RUN
-    const shellPart = command.substring(4)
-    
-    // Split on && and add proper indentation
-    const formatted = shellPart
-      .split(' && ')
-      .map((part, index) => {
-        if (index === 0) return `RUN ${part.trim()}`
-        return `    && ${part.trim()}`
-      })
-      .join(' \\\n')
-    
-    return formatted
-  }
-
-
-
-  const navigateBack = () => {
-    if (viewState === 'image-details') {
-      setViewState('image-tags')
-      setImageManifest(null)
-      setImageConfig(null)
-      setSelectedTag(null)
-    } else if (viewState === 'image-tags') {
-      setViewState('repositories')
-      setSelectedRepository(null)
-      setImageTags([])
-    }
-  }
-
   useEffect(() => {
     fetchRegistryStatus()
   }, [])
-
-  const handleCreateRegistry = () => {
-    // TODO: Implement registry creation logic
-    toast.info('Registry creation feature coming soon')
-  }
-
-  const handleLearnMore = () => {
-    // TODO: Implement navigation to documentation
-    toast.info('Opening registry documentation...')
-  }
-
-  const handlePushFirstImage = () => {
-    // TODO: Implement image push workflow
-    toast.info('Image push workflow coming soon')
-  }
-
-  const handleViewPushCommands = () => {
-    // TODO: Implement push commands modal
-    toast.info('Showing push commands...')
-  }
 
   // Loading state
   if (loading) {
@@ -601,63 +587,174 @@ const Registry = () => {
     )
   }
 
-  // Registry not initialized state (error response)
+  // Error state
   if (error && !isRegistryInitialized) {
     return (
-      <div className="h-[80vh] flex items-center justify-center p-4 w-full">
-        <div className="max-w-2xl w-full bg-white rounded-xl shadow-2xl p-8 text-center space-y-6">
-          <FileText className="w-20 h-20 mx-auto text-blue-500" />
-          <h1 className="text-4xl font-bold text-gray-900">Docker Registry Not Initialized</h1>
-          <p className="text-xl text-gray-600">
-            Get started by creating your Docker image registry. This will set up a secure container registry where you can store and manage your Docker images.
-          </p>
+      <div title="Docker Registry">
+        <div className="space-y-6">
+          <RouteDescription
+            title={
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    Docker Registry
+                  </h2>
+                  <p className="text-base text-slate-500">
+                    Manage your Docker images and container registry
+                  </p>
+                </div>
+              </div>
+            }
+            shortDescription=""
+            description="A Docker registry is a storage and distribution system for named Docker images. It allows you to push and pull container images, making it easy to share and deploy applications across different environments."
+          />
           
-          <div className="flex gap-4 justify-center">
-            <Button 
-              onClick={handleCreateRegistry}
-              className="px-8"
-            >
-              Create Registry
-            </Button>
-            <Button 
-              onClick={handleLearnMore}
-              variant="outline"
-              className="px-8"
-            >
-              Learn More
-            </Button>
-          </div>
+          <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+            <CardContent className="text-center space-y-6 py-12">
+              <FileText className="w-20 h-20 mx-auto text-blue-500" />
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Registry Not Initialized</h3>
+                <p className="text-gray-600 max-w-md mx-auto">
+                  Get started by creating your Docker image registry. This will set up a secure container registry where you can store and manage your Docker images.
+                </p>
+              </div>
+              
+              <div className="flex gap-4 justify-center">
+                <Button onClick={handleCreateRegistry}>
+                  Create Registry
+                </Button>
+                <Button onClick={handleLearnMore} variant="outline">
+                  Learn More
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
   }
 
-  // Registry initialized but no images state (empty repositories)
-  if (isRegistryInitialized && repositories.length === 0 && viewState === 'repositories') {
+  // Empty registry state
+  if (isRegistryInitialized && repositories.length === 0) {
     return (
-      <div className="h-[80vh] flex items-center justify-center p-4 w-full">
-        <div className="max-w-2xl w-full bg-white rounded-xl shadow-2xl p-8 text-center space-y-6">
-          <Monitor className="w-20 h-20 mx-auto text-blue-500" />
-          <h1 className="text-4xl font-bold text-gray-900">No Images in Registry</h1>
-          <p className="text-xl text-gray-600">
-            Your Docker registry is ready! Push your first container image to get started. You can use docker push commands or integrate with your CI/CD pipeline.
-          </p>
+      <div title="Docker Registry">
+        <div className="space-y-6">
+          <RouteDescription
+            title={
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <Monitor className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    Docker Registry
+                  </h2>
+                  <p className="text-base text-slate-500">
+                    Manage your Docker images and container registry
+                  </p>
+                </div>
+              </div>
+            }
+            shortDescription=""
+            description="Your Docker registry is ready! Push your first container image to get started. You can use docker push commands or integrate with your CI/CD pipeline."
+          />
           
-          <div className="flex gap-4 justify-center">
-            <Button 
-              onClick={handlePushFirstImage}
-              className="px-8"
-            >
-              Push First Image
-            </Button>
-            <Button 
-              onClick={handleViewPushCommands}
-              variant="outline"
-              className="px-8"
-            >
-              View Push Commands
+          <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+            <CardContent className="text-center space-y-6 py-12">
+              <Monitor className="w-20 h-20 mx-auto text-blue-500" />
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">No Images in Registry</h3>
+                <p className="text-gray-600 max-w-md mx-auto">
+                  Your Docker registry is ready! Push your first container image to get started. You can use docker push commands or integrate with your CI/CD pipeline.
+                </p>
+              </div>
+              
+              <div className="flex gap-4 justify-center">
+                <Button onClick={handlePushFirstImage}>
+                  Push First Image
+                </Button>
+                <Button onClick={handleViewPushCommands} variant="outline">
+                  View Push Commands
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Image Tags View
+  if (viewState === 'image-tags' && selectedRepository) {
+    const tagData = imageTags.map(tag => ({
+      name: tag,
+      created: 'N/A',
+      status: 'Available',
+      rawTag: tag,
+      showEdit: false,
+      showDelete: false,
+      showViewDetails: true
+    }))
+
+    return (
+      <div title="Docker Registry - Image Tags">
+        <div className="space-y-6">
+          <RouteDescription
+            title={
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <Package className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {selectedRepository}
+                  </h2>
+                  <p className="text-base text-slate-500">
+                    Available image tags and versions
+                  </p>
+                </div>
+              </div>
+            }
+            shortDescription=""
+            description="Browse through the available tags for this repository. Each tag represents a different version or variant of the image."
+          />
+
+          <div className="flex gap-4 mb-6">
+            <Button variant="outline" size="sm" onClick={navigateBack}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Repositories
             </Button>
           </div>
+          
+          <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="w-5 h-5 text-blue-500" />
+                Available Tags ({imageTags.length})
+              </CardTitle>
+              <CardDescription>
+                Select a tag to view detailed image information
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="p-0">
+              {detailLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                </div>
+              ) : (
+                <ResourceTable
+                  columns={tagColumns}
+                  data={tagData}
+                  onViewDetails={(row) => fetchImageManifest(selectedRepository, row.rawTag)}
+                  className="shadow-none"
+                />
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
@@ -666,52 +763,75 @@ const Registry = () => {
   // Image Details View
   if (viewState === 'image-details' && imageManifest && selectedRepository && selectedTag) {
     return (
-      <div className="p-6 w-full">
-        <div className="max-w-6xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <Button variant="outline" size="sm" onClick={navigateBack}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Tags
-              </Button>
-              <div className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-blue-500" />
-                <span className="font-medium text-gray-900">{selectedRepository}:{selectedTag}</span>
+      <div title="Docker Registry - Image Details">
+        <div className="space-y-6">
+          <RouteDescription
+            title={
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <Package className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {selectedRepository}:{selectedTag}
+                  </h2>
+                  <p className="text-base text-slate-500">
+                    Detailed image inspection and layer analysis
+                  </p>
+                </div>
               </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="bg-gray-50 p-3 rounded">
-                <div className="font-medium text-gray-700">Media Type</div>
-                <div className="text-gray-600">{imageManifest.mediaType}</div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <div className="font-medium text-gray-700">Schema Version</div>
-                <div className="text-gray-600">{imageManifest.schemaVersion}</div>
-              </div>
-              <div className="bg-gray-50 p-3 rounded">
-                <div className="font-medium text-gray-700">Layers</div>
-                <div className="text-gray-600">{imageManifest.layers.length}</div>
-              </div>
-            </div>
+            }
+            shortDescription=""
+            description="Examine the structure, configuration, and build history of your Docker image. Explore individual layers and their contents to understand how your image was constructed."
+          />
+
+          <div className="flex gap-4 mb-6">
+            <Button variant="outline" size="sm" onClick={navigateBack}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Tags
+            </Button>
           </div>
 
-          {/* Layers Section */}
-          <div className="bg-white rounded-xl shadow-sm border">
-            <div 
-              className="p-4 border-b cursor-pointer flex items-center justify-between"
-              onClick={() => toggleSection('layers')}
-            >
-              <div className="flex items-center gap-2">
-                <Layers className="w-5 h-5 text-blue-500" />
-                <h2 className="text-xl font-semibold text-gray-800">Layers ({imageManifest.layers.length})</h2>
+          {/* Image Overview */}
+          <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+            <CardHeader>
+              <CardTitle>Image Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="bg-gray-50 p-3 rounded">
+                  <div className="font-medium text-gray-700">Media Type</div>
+                  <div className="text-gray-600">{imageManifest.mediaType}</div>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <div className="font-medium text-gray-700">Schema Version</div>
+                  <div className="text-gray-600">{imageManifest.schemaVersion}</div>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <div className="font-medium text-gray-700">Layers</div>
+                  <div className="text-gray-600">{imageManifest.layers.length}</div>
+                </div>
               </div>
-              {expandedSections.layers ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-            </div>
+            </CardContent>
+          </Card>
+
+          {/* Layers Section */}
+          <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle 
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={() => toggleSection('layers')}
+                >
+                  <Layers className="w-5 h-5 text-blue-500" />
+                  Layers ({imageManifest.layers.length})
+                  {expandedSections.layers ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                </CardTitle>
+              </div>
+            </CardHeader>
             
             {expandedSections.layers && (
-              <div className="p-4 space-y-3">
+              <CardContent className="space-y-3">
                 {imageManifest.layers.map((layer, index) => (
                   <div key={index} className="border rounded-lg bg-gray-50">
                     <div className="p-3">
@@ -789,18 +909,18 @@ const Registry = () => {
                     )}
                   </div>
                 ))}
-              </div>
+              </CardContent>
             )}
-          </div>
+          </Card>
 
           {/* Config Section */}
-          <div className="bg-white rounded-xl shadow-sm border">
-            <div className="p-4 border-b">
+          <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+            <CardHeader>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2">
                   <Settings className="w-5 h-5 text-blue-500" />
-                  <h2 className="text-xl font-semibold text-gray-800">Configuration</h2>
-                </div>
+                  Configuration
+                </CardTitle>
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -815,9 +935,9 @@ const Registry = () => {
                   Load Details
                 </Button>
               </div>
-            </div>
+            </CardHeader>
             
-            <div className="p-4 space-y-3">
+            <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-3 rounded">
                   <div className="font-medium text-gray-700">Config Digest</div>
@@ -931,7 +1051,7 @@ const Registry = () => {
                               )}
                               
                               {/* Command Editor */}
-                              <div className="border rounded overflow-hidden p-4">
+                              <div className="border rounded overflow-hidden">
                                 <Editor
                                   height={calculateEditorHeight(displayCommand)}
                                   defaultLanguage="dockerfile"
@@ -972,8 +1092,8 @@ const Registry = () => {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* File Content Viewer Modal */}
           {viewingFile && fileContents[viewingFile] && (
@@ -1000,14 +1120,13 @@ const Registry = () => {
                 {/* Modal Content */}
                 <div className="flex-1 min-h-0 p-4">
                   {fileContents[viewingFile].is_text && fileContents[viewingFile].content ? (
-                    <div className="h-full border  rounded overflow-hidden">
+                    <div className="h-full border rounded overflow-hidden">
                       <Editor
                         height="720px"
                         defaultLanguage={fileContents[viewingFile].file_path.split('.').pop() || 'text'}
                         theme="vs-light"
                         value={fileContents[viewingFile].content}
                         options={{
-                          
                           readOnly: true,
                           minimap: { enabled: false },
                           scrollBeyondLastLine: false,
@@ -1032,7 +1151,6 @@ const Registry = () => {
                           <Button 
                             variant="outline"
                             onClick={() => {
-                              // In a real app, you'd handle the download here
                               toast.info('Download functionality would be implemented here')
                             }}
                           >
@@ -1062,105 +1180,62 @@ const Registry = () => {
     )
   }
 
-  // Image Tags View
-  if (viewState === 'image-tags' && selectedRepository) {
-    return (
-      <div className="p-6 w-full">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <Button variant="outline" size="sm" onClick={navigateBack}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Repositories
-              </Button>
-              <div className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-blue-500" />
-                <h1 className="text-3xl font-bold text-gray-900">{selectedRepository}</h1>
-              </div>
-            </div>
-            
-            {detailLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-gray-800">Available Tags ({imageTags.length})</h2>
-                <div className="grid gap-4">
-                  {imageTags.map((tag, index) => (
-                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Tag className="w-5 h-5 text-blue-500" />
-                          <span className="font-medium text-gray-900">{tag}</span>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => fetchImageManifest(selectedRepository, tag)}
-                          disabled={detailLoading}
-                        >
-                          {detailLoading ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <Eye className="w-4 h-4 mr-2" />
-                          )}
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Default repositories view
+  const repositoryData = repositories.map(repo => ({
+    name: repo,
+    type: 'Docker Repository',
+    lastModified: 'N/A',
+    rawRepo: repo,
+    showEdit: false,
+    showDelete: false,
+    showViewDetails: true
+  }))
 
-  // Registry has images state (show repositories)
   return (
-    <div className="p-6 w-full">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Docker Registry</h1>
-          <p className="text-gray-600 mb-6">
-            Manage your Docker images and repositories. Found {repositories.length} repositories.
-          </p>
-          
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800">Repositories</h2>
-            <div className="grid gap-4">
-              {repositories.map((repo, index) => (
-                <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-blue-500" />
-                      <span className="font-medium text-gray-900">{repo}</span>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => fetchImageTags(repo)}
-                      disabled={detailLoading}
-                    >
-                      {detailLoading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Eye className="w-4 h-4 mr-2" />
-                      )}
-                      View Tags
-                    </Button>
-                  </div>
-                </div>
-              ))}
+    <div title="Docker Registry">
+      <div className="space-y-6">
+        <RouteDescription
+          title={
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <FileText className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Docker Registry
+                </h2>
+                <p className="text-base text-slate-500">
+                  Manage your Docker images and container registry
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
+          }
+          shortDescription=""
+          description="Browse and manage your Docker repositories and images. View image details, inspect layers, and explore the contents of your container images."
+        />
+        
+        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-500" />
+              Repositories ({repositories.length})
+            </CardTitle>
+            <CardDescription>
+              Browse available repositories in your Docker registry
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ResourceTable
+              columns={repositoryColumns}
+              data={repositoryData}
+              onViewDetails={(row) => fetchImageTags(row.rawRepo)}
+              className="shadow-none"
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
 }
 
-export default Registry
+export default Registry 
