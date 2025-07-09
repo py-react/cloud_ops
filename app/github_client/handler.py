@@ -1,8 +1,11 @@
 import logging
 import time
 import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from io import BytesIO
+import requests
+import urllib3
+import re
 
 from app.docker_client import clientContext
 from .models import GitHubAppConfig
@@ -13,9 +16,101 @@ from .utils import generate_image_name, decode_github_content
 from app.db_client.db import get_session
 from app.db_client.controllers.source_code_build.source_code_build import add_build_log, create_source_code_build, get_source_code_build, update_source_code_build_status, safe_add_build_log
 from app.db_client.models.source_code_build.types import SourceCodeBuildType
+from render_relay.utils import load_settings
+from docker.errors import APIError, ImageNotFound
 
 client = clientContext.client
 logger = logging.getLogger(__name__)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+def clean_image_name(name: str) -> str:
+    """Remove @sha256:<digest> if present"""
+    return re.sub(r'@sha256:[a-f0-9]{64}$', '', name)
+
+
+async def _verify_registry_connectivity(registry_url: str) -> bool:
+    """Test if registry is accessible"""
+    try:
+        registry_api_url = f"http://{registry_url}/v2/_catalog"
+        response = requests.get(registry_api_url, timeout=10, verify=False)
+        return response.status_code == 200
+    except Exception:
+        return False
+
+
+async def _push_image_to_registry(docker_client, registry_url: str, repo_name: str, source_tag: str):
+    """Push image to registry and collect progress"""
+    push_logs = []
+    
+    push_stream = docker_client.images.push(
+        repository=f"{registry_url}/{repo_name}",
+        tag=source_tag,
+        stream=True,
+        decode=True,
+    )
+    
+    for line in push_stream:
+        if 'status' in line:
+            status = line['status']
+            layer_id = line.get('id', '')
+            
+            if layer_id:
+                push_logs.append(f"{layer_id[:12]}: {status}")
+            else:
+                push_logs.append(status)
+        
+        if 'error' in line:
+            raise APIError(line['error'])
+    
+    return push_logs
+
+
+async def _verify_push_success(registry_url: str, repo_name: str, source_tag: str):
+    """Verify image was successfully pushed to registry"""
+    try:
+        # Check repository exists
+        catalog_url = f"http://{registry_url}/v2/_catalog"
+        response = requests.get(catalog_url, timeout=10, verify=False)
+        
+        if response.status_code != 200:
+            return False, "Cannot access registry catalog"
+        
+        repositories = response.json().get('repositories', [])
+        if repo_name not in repositories:
+            return False, f"Repository '{repo_name}' not found in registry"
+        
+        # Check tag exists
+        tags_url = f"http://{registry_url}/v2/{repo_name}/tags/list"
+        tags_response = requests.get(tags_url, timeout=10, verify=False)
+        
+        if tags_response.status_code != 200:
+            return False, "Cannot retrieve tags"
+        
+        available_tags = tags_response.json().get('tags', [])
+        if source_tag not in available_tags:
+            return False, f"Tag '{source_tag}' not found in available tags"
+        
+        return True, "Image successfully verified in registry"
+    
+    except Exception as e:
+        return False, f"Verification failed: {str(e)}"
+
+
+def _update_build_time_and_status(session, build_id: int, start_time: datetime.datetime, status: str):
+    """Update build status and calculate time taken"""
+    try:
+        build_obj = get_source_code_build(session, build_id)
+        if build_obj:
+            end_time = datetime.datetime.utcnow()
+            time_taken_seconds = (end_time - start_time).total_seconds()
+            build_obj.time_taken = int(time_taken_seconds)
+            session.commit()
+        update_source_code_build_status(session, build_id, status)
+    except Exception as e:
+        logger.error(f"Failed to update build time: {e}")
+        # Still update status even if time update fails
+        update_source_code_build_status(session, build_id, status)
 
 
 class PullRequestHandler:
@@ -54,7 +149,7 @@ class PullRequestHandler:
         self.commenter = PRCommenter()
         self.first_pr_detector = Detector()
     
-    def build_and_run_from_branch(self, repo_name: str, branch_name: str, pr_number: int, repo) -> str:
+    async def build_and_run_from_branch(self, repo_name: str, branch_name: str, pr_number: int, repo) -> str:
         """
         Get repository content from branch and build Docker image from Dockerfile.
         
@@ -69,13 +164,19 @@ class PullRequestHandler:
         """
         build_id = None
         status="started"
+        build_start_time = datetime.datetime.utcnow()
         repo_name_full_name=repo_name
         repo_name=repo_name.split('/')[-1] if '/' in repo_name else repo_name
         pull_request_number=str(pr_number)
         user_login=repo.get_pull(pr_number).user.login
 
         try:
-            image_name = generate_image_name(repo_name, branch_name)
+            # Load registry configuration first
+            settings = load_settings()
+            registry_host = settings.get("REGISTRY_HOST")
+            
+            # Generate image name with registry URL if available
+            image_name = generate_image_name(repo_name, branch_name, registry_url=registry_host)
         except Exception as e:
             logger.info(f"failed to generate image image from {repo_name} and {branch_name}")
             raise e
@@ -90,7 +191,9 @@ class PullRequestHandler:
                 repo_name=repo_name.split('/')[-1] if '/' in repo_name else repo_name,
                 pull_request_number=pull_request_number,
                 user_login=user_login,
-                branch_name=branch_name
+                branch_name=branch_name,
+                created_at=build_start_time,
+                time_taken=None  # Will be updated when build completes
             )
             build_obj = create_source_code_build(session, build_data)
             build_id = build_obj.id
@@ -154,10 +257,80 @@ class PullRequestHandler:
             # --- DB: Add build logs from Docker build output ---
             session_gen = get_session()
             session = next(session_gen)
-            safe_add_build_log(session,build_id,message=logs)
-            update_source_code_build_status(session,build_id,"success")
+            safe_add_build_log(session, build_id, message=logs)
             logger.info(f"Successfully built image {image_name} with ID {image.id}")
-            return image_name
+            
+            # --- Push to Registry ---
+            try:
+                if registry_host:
+                    logger.info(f"Starting push to registry {registry_host}")
+                    
+                    # Extract components from the registry image name we already have
+                    source_tag = image_name.split(':')[-1]  # Extract tag
+                    registry_repo_name = image_name.split('/')[1].split(':')[0]  # Extract repo name after registry URL
+                    
+                    # Test registry connectivity
+                    registry_accessible = await _verify_registry_connectivity(registry_host)
+                    if not registry_accessible:
+                        logger.warning(f"Registry at {registry_host} may not be accessible")
+                        safe_add_build_log(session, build_id, f"Warning: Registry connectivity test failed for {registry_host}")
+                    
+                    # Tag image for registry
+                    try:
+                        image.tag(f"{registry_host}/{registry_repo_name}", tag=source_tag)
+                        logger.info(f"Tagged image as {image_name}")
+                        safe_add_build_log(session, build_id, f"Tagged image for registry: {image_name}")
+                    except Exception as e:
+                        raise Exception(f"Failed to tag image for registry: {str(e)}")
+                    
+                    # Push image to registry
+                    try:
+                        push_logs = await _push_image_to_registry(
+                            client, registry_host, registry_repo_name, source_tag
+                        )
+                        logger.info("Image push completed successfully")
+                        safe_add_build_log(session, build_id, f"Push completed: {len(push_logs)} log entries")
+                        
+                        # Verify push success
+                        verified, verification_msg = await _verify_push_success(
+                            registry_host, registry_repo_name, source_tag
+                        )
+                        
+                        if verified:
+                            logger.info(f"Push verified successfully: {image_name}")
+                            safe_add_build_log(session, build_id, f"Push verified: {verification_msg}")
+                            _update_build_time_and_status(session, build_id, build_start_time, "pushed")
+                            return image_name  # Already has registry URL
+                        else:
+                            logger.warning(f"Push completed but verification failed: {verification_msg}")
+                            safe_add_build_log(session, build_id, f"Push verification failed: {verification_msg}")
+                            _update_build_time_and_status(session, build_id, build_start_time, "push_failed")
+                            return image_name
+                    
+                    except APIError as e:
+                        error_msg = str(e)
+                        logger.error(f"Registry push failed: {error_msg}")
+                        safe_add_build_log(session, build_id, f"Push failed: {error_msg}")
+                        _update_build_time_and_status(session, build_id, build_start_time, "push_failed")
+                        return image_name
+                    
+                    except Exception as e:
+                        logger.error(f"Unexpected push error: {str(e)}")
+                        safe_add_build_log(session, build_id, f"Push error: {str(e)}")
+                        _update_build_time_and_status(session, build_id, build_start_time, "push_failed")
+                        return image_name
+                
+                else:
+                    logger.warning("Registry host not configured, image built locally only")
+                    safe_add_build_log(session, build_id, "Registry not configured, image built locally only")
+                    _update_build_time_and_status(session, build_id, build_start_time, "success")
+                    return image_name
+                    
+            except Exception as e:
+                logger.error(f"Registry push process failed: {str(e)}")
+                safe_add_build_log(session, build_id, f"Registry push failed: {str(e)}")
+                _update_build_time_and_status(session, build_id, build_start_time, "push_failed")
+                return image_name
         
         except Exception as e:
             logger.error(f"Failed to build image: {e}")
@@ -165,7 +338,7 @@ class PullRequestHandler:
             try:
                 session_gen = get_session()
                 session = next(session_gen)
-                update_source_code_build_status(session, build_id, "failed")
+                _update_build_time_and_status(session, build_id, build_start_time, "failed")
                 safe_add_build_log(session, build_id, str(e))
             except Exception as inner_e:
                 logger.error(f"Failed to create SourceCodeBuild entry for error logging: {inner_e}")
@@ -201,7 +374,7 @@ class PullRequestHandler:
         except Exception as e:
             logger.error(f"Failed to cleanup old PR resources: {e}")
     
-    def handle_pull_request_event(self, payload: Dict[str, Any]) -> None:
+    async def handle_pull_request_event(self, payload: Dict[str, Any]) -> None:
         """
         Handle pull request event and add appropriate comments.
         
@@ -241,7 +414,7 @@ class PullRequestHandler:
                 # Clean up old resources before building new ones
                 self.cleanup_old_pr_resources()
                 
-                image_name = self.build_and_run_from_branch(repo_name, branch_name, pull_request_number, repo)
+                image_name = await self.build_and_run_from_branch(repo_name, branch_name, pull_request_number, repo)
                 
                 # Create build status comment
                 self.commenter.create_build_started_comment(pr, user_login)
