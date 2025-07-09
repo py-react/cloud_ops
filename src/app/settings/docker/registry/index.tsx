@@ -88,6 +88,30 @@ interface LayerContents {
   }>
 }
 
+interface FileContent {
+  type: string
+  sha256: string
+  file_path: string
+  size: number
+  is_text: boolean
+  content?: string
+  download_url?: string
+}
+
+interface TreeNode {
+  name: string
+  path: string
+  type: 'file' | 'directory' | 'symlink'
+  size: number
+  mode: string
+  mtime: number
+  children?: TreeNode[]
+  linkname?: string
+  is_file: boolean
+  is_dir: boolean
+  is_symlink: boolean
+}
+
 // View states
 type ViewState = 'repositories' | 'image-tags' | 'image-details'
 
@@ -110,6 +134,12 @@ const Registry = () => {
   const [layerContents, setLayerContents] = useState<Record<string, LayerContents>>({})
   const [expandedLayers, setExpandedLayers] = useState<Record<string, boolean>>({})
   const [layerLoading, setLayerLoading] = useState<Record<string, boolean>>({})
+  
+  // File viewing states
+  const [fileContents, setFileContents] = useState<Record<string, FileContent>>({})
+  const [expandedDirectories, setExpandedDirectories] = useState<Record<string, boolean>>({})
+  const [fileLoading, setFileLoading] = useState<Record<string, boolean>>({})
+  const [viewingFile, setViewingFile] = useState<string | null>(null)
   
   // UI states
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -245,6 +275,239 @@ const Registry = () => {
     
     const calculatedHeight = Math.max(minHeight, Math.min(maxHeight, lines * lineHeight + padding))
     return `${calculatedHeight}px`
+  }
+
+  const examineLayer = async (layerDigest: string, repoName: string) => {
+    if (layerContents[layerDigest]) {
+      // If already loaded, just toggle visibility
+      setExpandedLayers(prev => ({
+        ...prev,
+        [layerDigest]: !prev[layerDigest]
+      }))
+      return
+    }
+
+    try {
+      setLayerLoading(prev => ({ ...prev, [layerDigest]: true }))
+      
+      // Extract SHA256 without the "sha256:" prefix
+      const sha256 = layerDigest.replace('sha256:', '')
+      
+      const data = await DefaultService.apiDockerRegistryExamineGet({
+        repo: repoName,
+        sha256: sha256,
+        action: 'list'
+      }) as any
+
+      if (data && data.type === 'layer') {
+        setLayerContents(prev => ({
+          ...prev,
+          [layerDigest]: data as LayerContents
+        }))
+        setExpandedLayers(prev => ({
+          ...prev,
+          [layerDigest]: true
+        }))
+      } else {
+        toast.error('Failed to examine layer - invalid response')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to examine layer'
+      toast.error(errorMessage)
+    } finally {
+      setLayerLoading(prev => ({ ...prev, [layerDigest]: false }))
+    }
+  }
+
+  const toggleLayerContents = (layerDigest: string) => {
+    setExpandedLayers(prev => ({
+      ...prev,
+      [layerDigest]: !prev[layerDigest]
+    }))
+  }
+
+  const formatFileMode = (mode: string) => {
+    // Convert octal mode to readable format
+    return mode
+  }
+
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleString()
+  }
+
+  const buildFileTree = (files: LayerContents['contents']): TreeNode[] => {
+    const tree: TreeNode[] = []
+    const nodeMap = new Map<string, TreeNode>()
+
+    // Sort files to ensure directories come before their contents
+    const sortedFiles = [...files].sort((a, b) => a.name.localeCompare(b.name))
+
+    for (const file of sortedFiles) {
+      const parts = file.name.split('/').filter(part => part !== '')
+      let currentPath = ''
+      
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i]
+        const parentPath = currentPath
+        currentPath = currentPath ? `${currentPath}/${part}` : part
+        
+                  if (!nodeMap.has(currentPath)) {
+            const isLastPart = i === parts.length - 1
+            const nodeType = isLastPart 
+              ? (file.type === 'other' ? 'file' : file.type as 'file' | 'directory' | 'symlink')
+              : 'directory'
+              
+            const node: TreeNode = {
+              name: part,
+              path: currentPath,
+              type: nodeType,
+              size: isLastPart ? file.size : 0,
+              mode: isLastPart ? file.mode : '0755',
+              mtime: isLastPart ? file.mtime : Date.now() / 1000,
+              children: nodeType === 'directory' ? [] : undefined,
+              linkname: isLastPart ? file.linkname : undefined,
+              is_file: isLastPart ? file.is_file : false,
+              is_dir: nodeType === 'directory',
+              is_symlink: isLastPart ? file.is_symlink : false
+            }
+
+            nodeMap.set(currentPath, node)
+
+            if (parentPath) {
+              const parent = nodeMap.get(parentPath)
+              if (parent && parent.children) {
+                parent.children.push(node)
+              }
+            } else {
+              tree.push(node)
+            }
+          }
+      }
+    }
+
+    return tree
+  }
+
+  const viewFileContent = async (filePath: string, layerDigest: string, repoName: string) => {
+    const fileKey = `${layerDigest}:${filePath}`
+    
+    if (fileContents[fileKey]) {
+      setViewingFile(fileKey)
+      return
+    }
+
+    try {
+      setFileLoading(prev => ({ ...prev, [fileKey]: true }))
+      
+      const sha256 = layerDigest.replace('sha256:', '')
+      
+      const data = await DefaultService.apiDockerRegistryExamineGet({
+        repo: repoName,
+        sha256: sha256,
+        action: 'file',
+        filePath: filePath
+      }) as any
+
+      if (data && data.type === 'file') {
+        setFileContents(prev => ({
+          ...prev,
+          [fileKey]: data as FileContent
+        }))
+        setViewingFile(fileKey)
+      } else {
+        toast.error('Failed to load file content')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load file'
+      toast.error(errorMessage)
+    } finally {
+      setFileLoading(prev => ({ ...prev, [fileKey]: false }))
+    }
+  }
+
+  const toggleDirectory = (dirKey: string) => {
+    setExpandedDirectories(prev => ({
+      ...prev,
+      [dirKey]: !prev[dirKey]
+    }))
+  }
+
+  const closeFileViewer = () => {
+    setViewingFile(null)
+  }
+
+  // TreeView Component
+  const TreeView: React.FC<{
+    nodes: TreeNode[]
+    layerDigest: string
+    repoName: string
+    depth: number
+  }> = ({ nodes, layerDigest, repoName, depth }) => {
+    return (
+      <div>
+        {nodes.map((node, index) => {
+          const dirKey = `${layerDigest}:${node.path}`
+          const fileKey = `${layerDigest}:${node.path}`
+          const isExpanded = expandedDirectories[dirKey]
+          
+          return (
+            <div key={index} style={{ marginLeft: `${depth * 16}px` }}>
+              <div className="flex items-center py-1 hover:bg-gray-50 rounded">
+                {/* Expand/Collapse Icon for Directories */}
+                {node.is_dir && (
+                  <button
+                    className="w-4 h-4 mr-1 flex items-center justify-center text-gray-500 hover:text-gray-700"
+                    onClick={() => toggleDirectory(dirKey)}
+                  >
+                    {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                  </button>
+                )}
+                
+                {/* File/Directory Icon and Name */}
+                <div 
+                  className={`flex items-center gap-1 flex-1 ${
+                    node.is_file ? 'cursor-pointer hover:text-blue-600' : ''
+                  }`}
+                  onClick={() => {
+                    if (node.is_file) {
+                      viewFileContent(node.path, layerDigest, repoName)
+                    } else if (node.is_dir) {
+                      toggleDirectory(dirKey)
+                    }
+                  }}
+                >
+                  <span className="text-sm">
+                    {node.is_dir ? '📁' : node.is_symlink ? '🔗' : '📄'}
+                  </span>
+                  <span className="font-mono text-xs text-gray-700">{node.name}</span>
+                  {node.linkname && (
+                    <span className="text-gray-500 text-xs">→ {node.linkname}</span>
+                  )}
+                  {fileLoading[fileKey] && (
+                    <Loader2 className="w-3 h-3 animate-spin text-blue-500 ml-1" />
+                  )}
+                </div>
+                
+                {/* File Size */}
+                <div className="text-xs text-gray-500 min-w-16 text-right">
+                  {node.is_file ? formatBytes(node.size) : ''}
+                </div>
+              </div>
+              
+              {/* Render Children for Expanded Directories */}
+              {node.is_dir && isExpanded && node.children && (
+                <TreeView 
+                  nodes={node.children} 
+                  layerDigest={layerDigest}
+                  repoName={repoName}
+                  depth={depth + 1}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+    )
   }
 
   const parseDockerfileCommand = (createdBy: string): { command: string; isShellCommand: boolean } => {
@@ -450,13 +713,80 @@ const Registry = () => {
             {expandedSections.layers && (
               <div className="p-4 space-y-3">
                 {imageManifest.layers.map((layer, index) => (
-                  <div key={index} className="border rounded-lg p-3 bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-mono text-sm text-gray-700">Layer {index + 1}</span>
-                      <span className="text-sm text-gray-600">{formatBytes(layer.size)}</span>
+                  <div key={index} className="border rounded-lg bg-gray-50">
+                    <div className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-mono text-sm text-gray-700">Layer {index + 1}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">{formatBytes(layer.size)}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => examineLayer(layer.digest, selectedRepository!)}
+                            disabled={layerLoading[layer.digest]}
+                          >
+                            {layerLoading[layer.digest] ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <FolderOpen className="w-4 h-4 mr-1" />
+                                {layerContents[layer.digest] ? 'Toggle' : 'Examine'}
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="text-xs font-mono text-gray-500 break-all">{layer.digest}</div>
+                      <div className="text-xs text-gray-500 mt-1">{layer.mediaType}</div>
                     </div>
-                    <div className="text-xs font-mono text-gray-500 break-all">{layer.digest}</div>
-                    <div className="text-xs text-gray-500 mt-1">{layer.mediaType}</div>
+                    
+                    {/* Layer Contents */}
+                    {layerContents[layer.digest] && expandedLayers[layer.digest] && (
+                      <div className="border-t bg-white">
+                        <div className="p-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-medium text-gray-800">Layer Contents</h4>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleLayerContents(layer.digest)}
+                            >
+                              <ChevronDown className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Summary */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                            <div className="bg-blue-50 p-2 rounded">
+                              <div className="font-medium text-blue-700">Total Entries</div>
+                              <div className="text-blue-600">{layerContents[layer.digest].summary.total_entries}</div>
+                            </div>
+                            <div className="bg-green-50 p-2 rounded">
+                              <div className="font-medium text-green-700">Files</div>
+                              <div className="text-green-600">{layerContents[layer.digest].summary.files}</div>
+                            </div>
+                            <div className="bg-yellow-50 p-2 rounded">
+                              <div className="font-medium text-yellow-700">Directories</div>
+                              <div className="text-yellow-600">{layerContents[layer.digest].summary.directories}</div>
+                            </div>
+                            <div className="bg-purple-50 p-2 rounded">
+                              <div className="font-medium text-purple-700">Uncompressed Size</div>
+                              <div className="text-purple-600">{formatBytes(layerContents[layer.digest].summary.total_uncompressed_size)}</div>
+                            </div>
+                          </div>
+                          
+                          {/* File Tree */}
+                          <div className="max-h-96 overflow-y-auto border rounded p-3 bg-gray-50">
+                            <TreeView
+                              nodes={buildFileTree(layerContents[layer.digest].contents)}
+                              layerDigest={layer.digest}
+                              repoName={selectedRepository!}
+                              depth={0}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -644,6 +974,89 @@ const Registry = () => {
               )}
             </div>
           </div>
+
+          {/* File Content Viewer Modal */}
+          {viewingFile && fileContents[viewingFile] && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-4 border-b">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-500" />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {fileContents[viewingFile].file_path}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm text-gray-600">
+                      {formatBytes(fileContents[viewingFile].size)}
+                    </div>
+                    <Button variant="outline" size="sm" onClick={closeFileViewer}>
+                      ×
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Modal Content */}
+                <div className="flex-1 min-h-0 p-4">
+                  {fileContents[viewingFile].is_text && fileContents[viewingFile].content ? (
+                    <div className="h-full border  rounded overflow-hidden">
+                      <Editor
+                        height="720px"
+                        defaultLanguage={fileContents[viewingFile].file_path.split('.').pop() || 'text'}
+                        theme="vs-light"
+                        value={fileContents[viewingFile].content}
+                        options={{
+                          
+                          readOnly: true,
+                          minimap: { enabled: false },
+                          scrollBeyondLastLine: false,
+                          fontSize: 13,
+                          lineNumbers: 'on',
+                          folding: true,
+                          wordWrap: 'on',
+                          automaticLayout: true,
+                          contextmenu: false
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full flex items-center justify-center bg-gray-50 rounded border">
+                      <div className="text-center">
+                        <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h4 className="text-lg font-medium text-gray-700 mb-2">Binary File</h4>
+                        <p className="text-gray-500 mb-4">
+                          This file contains binary data and cannot be displayed as text.
+                        </p>
+                        {fileContents[viewingFile].download_url && (
+                          <Button 
+                            variant="outline"
+                            onClick={() => {
+                              // In a real app, you'd handle the download here
+                              toast.info('Download functionality would be implemented here')
+                            }}
+                          >
+                            Download File
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span>Type: {fileContents[viewingFile].is_text ? 'Text' : 'Binary'}</span>
+                    <span>SHA256: {fileContents[viewingFile].sha256.substring(0, 16)}...</span>
+                  </div>
+                  <Button onClick={closeFileViewer}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )
