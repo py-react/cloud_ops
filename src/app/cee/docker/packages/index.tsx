@@ -92,19 +92,18 @@ const PackagesPage = () => {
   const handlePush = async (row: PackageTableData) => {
     const pkg = row.package;
     try {
-      await DefaultService.apiDockerRegistryPost({
-        requestBody: {
-          action: 'push',
-          packageId: pkg.id,
-        },
+      const response = await DefaultService.apiDockerRegistryPost({
+        imageName: pkg.tags[0].split(":")[0],
+        sourceTag: pkg.tags[0].split(":")[1],
       });
-      toast.success('Package pushed successfully');
+      toast.success(response.message + " " + response.pull_command);
       const newPackages = await fetchPackages();
       setPackages(newPackages);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to push package');
     }
   };
+
 
   return (
     <div className="w-full">

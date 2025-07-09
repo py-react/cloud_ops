@@ -905,6 +905,209 @@
               "default": 5000,
               "title": "Service Port"
             }
+          },
+          {
+            "name": "image_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Image Name"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tag"
+            }
+          },
+          {
+            "name": "blob",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": false,
+              "title": "Blob"
+            }
+          },
+          {
+            "name": "sha256_digest",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sha256 Digest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Push a Docker image to the private registry",
+        "operationId": "_api_docker_registry_post",
+        "parameters": [
+          {
+            "name": "image_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Image Name"
+            }
+          },
+          {
+            "name": "source_tag",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Tag"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docker/registry/examine": {
+      "get": {
+        "summary": "",
+        "description": "Examine Docker registry blobs (layers and configs)\n\nExamples:\n- List layer contents: GET /examine?repo=github-webhook_test&sha256=9994ea1088e3f1d0eb3dea855f32e7e63742b2644c8611c124ba81bc3453047e&action=list\n- Extract file: GET /examine?repo=github-webhook_test&sha256=9994ea1088e3f1d0eb3dea855f32e7e63742b2644c8611c124ba81bc3453047e&action=file&file_path=etc/passwd\n- View config: GET /examine?repo=github-webhook_test&sha256=69efe5fc06316a533b5c4864d13f90abd41103a06af77ded188c7ba3f25937f4&action=config",
+        "operationId": "_api_docker_registry_examine_get",
+        "parameters": [
+          {
+            "name": "repo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Repository name (e.g., github-webhook_test)",
+              "title": "Repo"
+            },
+            "description": "Repository name (e.g., github-webhook_test)"
+          },
+          {
+            "name": "sha256",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "SHA256 digest of the blob (without sha256: prefix)",
+              "title": "Sha256"
+            },
+            "description": "SHA256 digest of the blob (without sha256: prefix)"
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Action: 'list' to show files, 'file' to extract file, 'config' to view config",
+              "default": "list",
+              "title": "Action"
+            },
+            "description": "Action: 'list' to show files, 'file' to extract file, 'config' to view config"
+          },
+          {
+            "name": "file_path",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Path to file within layer (for action=file)",
+              "title": "File Path"
+            },
+            "description": "Path to file within layer (for action=file)"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Response format: 'json' or 'raw' (for file content)",
+              "default": "json",
+              "title": "Format"
+            },
+            "description": "Response format: 'json' or 'raw' (for file content)"
           }
         ],
         "responses": {

@@ -12,3 +12,4 @@ STATIC_SITE=False
 TYPESCRIPT=True
 TAILWIND=True
 KUBECONFIG="~/.kube/config"
+REGISTRY_HOST="registry.docker.localhome.com"

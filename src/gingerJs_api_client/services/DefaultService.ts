@@ -100,9 +100,39 @@ export type TDataApiDockerPackagesPost = {
                 requestBody: RunImage
             }
 export type TDataApiDockerRegistryGet = {
-                namespace?: string | null
+                blob?: boolean | null
+imageName?: string | null
+namespace?: string | null
 serviceName?: string | null
 servicePort?: number | null
+sha256Digest?: string | null
+tag?: string | null
+            }
+export type TDataApiDockerRegistryPost = {
+                imageName: string
+sourceTag: string
+            }
+export type TDataApiDockerRegistryExamineGet = {
+                /**
+ * Action: 'list' to show files, 'file' to extract file, 'config' to view config
+ */
+action?: string
+/**
+ * Path to file within layer (for action=file)
+ */
+filePath?: string | null
+/**
+ * Response format: 'json' or 'raw' (for file content)
+ */
+format?: string
+/**
+ * Repository name (e.g., github-webhook_test)
+ */
+repo: string
+/**
+ * SHA256 digest of the blob (without sha256: prefix)
+ */
+sha256: string
             }
 export type TDataApiDockerContainersPost = {
                 requestBody: RunContainer
@@ -752,15 +782,71 @@ requestBody,
 	 */
 	public static apiDockerRegistryGet(data: TDataApiDockerRegistryGet = {}): CancelablePromise<unknown> {
 		const {
+blob,
+imageName,
 namespace,
 serviceName,
 servicePort,
+sha256Digest,
+tag,
 } = data;
 		return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/docker/registry',
 			query: {
-				namespace, service_name: serviceName, service_port: servicePort
+				namespace, service_name: serviceName, service_port: servicePort, image_name: imageName, tag, blob, sha256_digest: sha256Digest
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Push a Docker image to the private registry
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerRegistryPost(data: TDataApiDockerRegistryPost): CancelablePromise<unknown> {
+		const {
+imageName,
+sourceTag,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/docker/registry',
+			query: {
+				image_name: imageName, source_tag: sourceTag
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Examine Docker registry blobs (layers and configs)
+ * 
+ * Examples:
+ * - List layer contents: GET /examine?repo=github-webhook_test&sha256=9994ea1088e3f1d0eb3dea855f32e7e63742b2644c8611c124ba81bc3453047e&action=list
+ * - Extract file: GET /examine?repo=github-webhook_test&sha256=9994ea1088e3f1d0eb3dea855f32e7e63742b2644c8611c124ba81bc3453047e&action=file&file_path=etc/passwd
+ * - View config: GET /examine?repo=github-webhook_test&sha256=69efe5fc06316a533b5c4864d13f90abd41103a06af77ded188c7ba3f25937f4&action=config
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerRegistryExamineGet(data: TDataApiDockerRegistryExamineGet): CancelablePromise<unknown> {
+		const {
+action = 'list',
+filePath,
+format = 'json',
+repo,
+sha256,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/docker/registry/examine',
+			query: {
+				repo, sha256, action, file_path: filePath, format
 			},
 			errors: {
 				422: `Validation Error`,
