@@ -69,7 +69,6 @@ def find_workloads_for_service(namespace: str, service: client.V1Service, apps_v
         for key, value in service.spec.selector.items():
             selector_parts.append(f"{key}={value}")
         selector_str = ",".join(selector_parts)
-        
         try:
             # Get Deployments that match the service selector
             selected_deployments = apps_v1_api.list_namespaced_deployment(namespace, label_selector=selector_str)
@@ -81,18 +80,42 @@ def find_workloads_for_service(namespace: str, service: client.V1Service, apps_v
                     "replicas": deployment.spec.replicas or 0,
                     "available_replicas": deployment.status.available_replicas or 0,
                     "ready_replicas": deployment.status.ready_replicas or 0,
-                    "updated_replicas": deployment.status.updated_replicas or 0,
+                    # "updated_replicas": deployment.status.updated_replicas or 0,
                     "labels": dict(deployment.metadata.labels) if deployment.metadata.labels else {},
                     "annotations": dict(deployment.metadata.annotations) if deployment.metadata.annotations else {},
                     "creation_timestamp": str(deployment.metadata.creation_timestamp) if deployment.metadata.creation_timestamp else None,
-                    "strategy": {
-                        "type": deployment.spec.strategy.type,
-                        "rolling_update": {
-                            "max_surge": deployment.spec.strategy.rolling_update.max_surge,
-                            "max_unavailable": deployment.spec.strategy.rolling_update.max_unavailable
-                        } if deployment.spec.strategy.rolling_update else None
-                    },
+                    # "strategy": {
+                    #     "type": deployment.spec.strategy.type,
+                    #     "rolling_update": {
+                    #         "max_surge": deployment.spec.strategy.rolling_update.max_surge,
+                    #         "max_unavailable": deployment.spec.strategy.rolling_update.max_unavailable
+                    #     } if deployment.spec.strategy.rolling_update else None
+                    # },
                     "selector": dict(deployment.spec.selector.match_labels) if deployment.spec.selector and deployment.spec.selector.match_labels else {}
+                }
+                workloads.append(workload_info)
+
+            selected_replicasets = apps_v1_api.list_namespaced_replica_set(namespace, label_selector=selector_str)
+            for replicasets in selected_replicasets.items:
+                workload_info = {
+                    "name": replicasets.metadata.name,
+                    "namespace": replicasets.metadata.namespace,
+                    "type": "ReplicaSet",
+                    "replicas": replicasets.spec.replicas or 0,
+                    "available_replicas": replicasets.status.available_replicas or 0,
+                    "ready_replicas": replicasets.status.ready_replicas or 0,
+                    # "updated_replicas": replicasets.status.updated_replicas or 0,
+                    "labels": dict(replicasets.metadata.labels) if replicasets.metadata.labels else {},
+                    "annotations": dict(replicasets.metadata.annotations) if replicasets.metadata.annotations else {},
+                    "creation_timestamp": str(replicasets.metadata.creation_timestamp) if replicasets.metadata.creation_timestamp else None,
+                    # "strategy": {
+                    #     "type": replicasets.spec.strategy.type,
+                    #     "rolling_update": {
+                    #         "max_surge": replicasets.spec.strategy.rolling_update.max_surge,
+                    #         "max_unavailable": replicasets.spec.strategy.rolling_update.max_unavailable
+                    #     } if replicasets.spec.strategy.rolling_update else None
+                    # },
+                    "selector": dict(replicasets.spec.selector.match_labels) if replicasets.spec.selector and replicasets.spec.selector.match_labels else {}
                 }
                 workloads.append(workload_info)
             
@@ -106,7 +129,7 @@ def find_workloads_for_service(namespace: str, service: client.V1Service, apps_v
                     "replicas": statefulset.spec.replicas or 0,
                     "available_replicas": statefulset.status.available_replicas or 0,
                     "ready_replicas": statefulset.status.ready_replicas or 0,
-                    "updated_replicas": statefulset.status.updated_replicas or 0,
+                    # "updated_replicas": statefulset.status.updated_replicas or 0,
                     "labels": dict(statefulset.metadata.labels) if statefulset.metadata.labels else {},
                     "annotations": dict(statefulset.metadata.annotations) if statefulset.metadata.annotations else {},
                     "creation_timestamp": str(statefulset.metadata.creation_timestamp) if statefulset.metadata.creation_timestamp else None,
