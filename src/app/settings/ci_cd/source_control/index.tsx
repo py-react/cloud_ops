@@ -22,6 +22,7 @@ import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
 import RouteDescription from '@/components/route-description';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import AddRepositoryForm from '@/components/ciCd/sourceControl/github/forms/AddRepositoryForm';
+import ManagePatsDialog from '@/components/ciCd/sourceControl/github/ManagePatsDialog';
 import { DefaultService } from '@/gingerJs_api_client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -55,21 +56,52 @@ const IntegrationsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editingRepo,setEditingRepor] = useState({})
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [repoToDelete, setRepoToDelete] = useState<EnhancedRepository | null>(null);
+  const [repoAccess, setRepoAccess] = useState<Record<string, any>>({});
 
   const fetchWebhookConfig = async () => {
     try {
-      const response = await fetch('/api/integration/github/webhook');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const res = await DefaultService.apiIntegrationGithubPollingGet();
+      const data = res as any;
+      // adapt polling response to previous webhook config shape
+      setWebhookConfig({
+        status: data.status,
+        supported_events: ['pull_request'],
+        allowed_repositories: data.allowed_repositories,
+        allowed_branches: data.allowed_branches,
+        timestamp: data.timestamp,
+      });
+      // kick off access checks for configured repos
+      try {
+        const repoNames = Object.keys(data.allowed_repositories || {});
+        for (const rn of repoNames) {
+          fetchRepoAccess(rn);
+        }
+      } catch (e) {
+        // ignore
       }
-      const data = await response.json();
-      setWebhookConfig(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch webhook configuration');
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchRepoAccess = async (repoName: string) => {
+    try {
+      const r = await fetch(`/api/integration/github/polling/access?name=${encodeURIComponent(repoName)}`);
+      if (!r.ok) {
+        const txt = await r.text();
+        setRepoAccess(prev => ({ ...prev, [repoName]: { error: txt } }));
+        return;
+      }
+      const json = await r.json();
+      setRepoAccess(prev => ({ ...prev, [repoName]: json }));
+    } catch (err: any) {
+      setRepoAccess(prev => ({ ...prev, [repoName]: { error: err?.message || String(err) } }));
+    }
+  }
 
   useEffect(() => {
 
@@ -100,19 +132,35 @@ const IntegrationsPage = () => {
     setAddDialogOpen(true)
   };
 
-  const handleDelete = (repository: EnhancedRepository) => {
-    console.log('Delete repository:', repository.name);
-    DefaultService.apiIntegrationGithubWebhookDelete({name:repository.data.name}).then(res=>{
-      if(res.success){
-        toast.success(res.message)
+  const handleDelete = async (repository: EnhancedRepository) => {
+    // Open confirmation dialog
+    setRepoToDelete(repository);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!repoToDelete) return;
+    const repository = repoToDelete;
+    try {
+      const res = await DefaultService.apiIntegrationGithubPollingDelete({ name: repository.data.name })
+      const body: any = res as any
+      if (body && body.success) {
+        toast.success(`Repository ${repository.data.name} removed from SCM polling.`)
         fetchWebhookConfig()
-      }else{
-        toast.error(res.message)
+      } else {
+        toast.error((body && body.message) || 'Failed to remove repository from SCM polling')
       }
-    }).catch(err=>{
-      toast.error(err.message)
-    })
-    // Implement delete functionality
+    } catch (err: any) {
+      toast.error(err.message || String(err))
+    } finally {
+      setDeleteDialogOpen(false);
+      setRepoToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setRepoToDelete(null);
   };
 
 
@@ -158,6 +206,24 @@ const IntegrationsPage = () => {
       <div className="flex items-center gap-2">
         {getStatusIcon(repository.status)}
         <span className="capitalize">{repository.status}</span>
+        {/* access info */}
+        {repoAccess[repository.name] && (
+          <div className="ml-4 text-xs text-slate-500">
+            {repoAccess[repository.name].error ? (
+              <span className="text-red-600">Access check failed</span>
+            ) : (
+              <>
+                <span className={repoAccess[repository.name].accessible ? 'text-green-600' : 'text-red-600'}>
+                  {repoAccess[repository.name].accessible ? 'Accessible' : 'No Access'}
+                </span>
+                {' • '}
+                <span>{repoAccess[repository.name].can_post_comments ? 'Can comment' : 'Cannot comment'}</span>
+                {' '}
+                <Button size="xs" className="ml-2" onClick={() => fetchRepoAccess(repository.name)}>Refresh</Button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     )
   }));
@@ -165,8 +231,8 @@ const IntegrationsPage = () => {
   if (loading) {
     return (
       <div className="p-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading webhook configuration...</div>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-gray-500">Loading SCM polling configuration...</div>
         </div>
       </div>
     );
@@ -202,7 +268,7 @@ const IntegrationsPage = () => {
             </div>
           }
           shortDescription=""
-          description="Manage repositories and their allowed branches to trigger Continuous Integration (CI) workflows through GitHub webhooks. Only specified repositories and branches will be permitted to initiate build, test, and deployment processes."
+          description="Manage repositories and their allowed branches to trigger Continuous Integration (CI) workflows via SCM polling. Only specified repositories and branches will be permitted to initiate build, test, and deployment processes."
         />
 
         <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
@@ -219,9 +285,12 @@ const IntegrationsPage = () => {
                   <DialogTrigger asChild>
                     <Button className="flex items-center gap-2">
                       <Plug className="h-5 w-5" />
-                      Add Repository
+                        Add Repository
                     </Button>
                   </DialogTrigger>
+                  <div className="ml-2">
+                    <ManagePatsDialog />
+                  </div>
                   <DialogContent className="max-w-none  w-screen h-screen flex flex-col">
                     <DialogHeader className="py-4 px-6 border-b">
                       <DialogTitle className="flex gap-2 items-center">
@@ -244,6 +313,25 @@ const IntegrationsPage = () => {
                         initialValues={editingRepo}
                         isEdit={!!Object.keys(editingRepo).length}
                       />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                {/* Delete confirmation dialog (styled) */}
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Remove repository from SCM polling</DialogTitle>
+                      <DialogDescription>
+                        {repoToDelete ? (
+                          <>This will stop polling PRs for <strong>{repoToDelete.data.name}</strong> on the configured branches.</>
+                        ) : 'Confirm removal from SCM polling.'}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex gap-2 justify-end mt-4">
+                      <DialogClose asChild>
+                        <Button variant="outline" onClick={cancelDelete}>Cancel</Button>
+                      </DialogClose>
+                      <Button variant="destructive" onClick={confirmDelete}>Remove</Button>
                     </div>
                   </DialogContent>
                 </Dialog>

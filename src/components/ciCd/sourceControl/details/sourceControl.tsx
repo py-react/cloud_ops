@@ -117,9 +117,11 @@ export const BuildLogsViewer: React.FC<BuildLogsViewerProps> = ({
     );
   }
 
-  const logLines = logs[0].logs
-    .split("\n")
+  const logLines = logs
+    .flatMap((log) => log.logs.split("\n"))
     .filter((line) => line.trim() !== "");
+
+  console.log({logLines})
 
   return (
     <div className={`border rounded-lg overflow-hidden ${getStatusColor()}`}>

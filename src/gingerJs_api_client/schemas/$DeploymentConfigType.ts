@@ -128,7 +128,7 @@ export const $DeploymentConfigType = {
 	type: 'any-of',
 	contains: [{
 	type: 'string',
-	format: 'date-time',
+	format: 'date',
 }, {
 	type: 'null',
 }],

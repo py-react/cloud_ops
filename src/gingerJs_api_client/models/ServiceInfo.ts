@@ -1,7 +1,7 @@
 import type { CronJobInfo } from './CronJobInfo';
 import type { DaemonSetInfo } from './DaemonSetInfo';
+import type { DeploymentInfo } from './DeploymentInfo';
 import type { JobInfo } from './JobInfo';
-import type { kubernertes__flow__v2__index__DeploymentInfo } from './kubernertes__flow__v2__index__DeploymentInfo';
 import type { StatefulSetInfo } from './StatefulSetInfo';
 
 export type ServiceInfo = {
@@ -12,8 +12,8 @@ export type ServiceInfo = {
 	externalIP: string;
 	age: string;
 	ports: Array<Record<string, unknown>>;
-	replicasets?: Array<kubernertes__flow__v2__index__DeploymentInfo>;
-	deployments?: Array<kubernertes__flow__v2__index__DeploymentInfo>;
+	replicasets?: Array<DeploymentInfo>;
+	deployments?: Array<DeploymentInfo>;
 	daemonsets?: Array<DaemonSetInfo>;
 	statefulsets?: Array<StatefulSetInfo>;
 	jobs?: Array<JobInfo>;

@@ -5,6 +5,44 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/docker/hub/{path}": {
+      "get": {
+        "summary": "Proxy",
+        "description": "Proxy the GET request to Docker Hub registry without modifying the headers or body.",
+        "operationId": "proxy_api_docker_hub__path__get",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/packges": {
       "get": {
         "summary": "",
@@ -2518,18 +2556,18 @@
         }
       }
     },
-    "/api/integration/github/webhook": {
+    "/api/integration/github/polling": {
       "get": {
         "summary": "",
-        "description": "Health check endpoint",
-        "operationId": "_api_integration_github_webhook_get",
+        "description": "Return polling status and allowed repos/branches/builds.",
+        "operationId": "_api_integration_github_polling_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HealthCheckResponse"
+                  "$ref": "#/components/schemas/PollingStatusResponse"
                 }
               }
             }
@@ -2538,28 +2576,7 @@
       },
       "post": {
         "summary": "",
-        "description": "GitHub webhook endpoint",
-        "operationId": "_api_integration_github_webhook_post",
-        "parameters": [
-          {
-            "name": "x-github-event",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "X-Github-Event"
-            }
-          },
-          {
-            "name": "x-hub-signature-256",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "X-Hub-Signature-256"
-            }
-          }
-        ],
+        "operationId": "_api_integration_github_polling_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2568,28 +2585,19 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       },
       "put": {
         "summary": "",
-        "operationId": "_api_integration_github_webhook_put",
+        "description": "Update polling configuration for the running process (in-memory env).\n\nNote: changes are applied to the running process environment only; update your deployment\nconfiguration to persist across restarts.",
+        "operationId": "_api_integration_github_polling_put",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateBranchesRequest"
+                "$ref": "#/components/schemas/PollingConfigRequest"
               }
             }
           }
@@ -2617,7 +2625,8 @@
       },
       "delete": {
         "summary": "",
-        "operationId": "_api_integration_github_webhook_delete",
+        "description": "Proxy delete to allowed-repo utils (keeps same contract as webhook DELETE).",
+        "operationId": "_api_integration_github_polling_delete",
         "parameters": [
           {
             "name": "name",
@@ -2635,6 +2644,50 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/integration/github/polling/access": {
+      "get": {
+        "summary": "",
+        "description": "Access-check route for a configured repo.\n\nUses the active PAT to perform read checks on repository, PRs, comments and\ncollaborator permission for posting comments. Implementation uses the\nPyGithub SDK for repository/pull/comment/permission checks and a single\nshort httpx call to fetch `X-OAuth-Scopes` because PyGithub doesn't expose\nthat header.",
+        "operationId": "_api_integration_github_polling_access_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "full repo name owner/repo",
+              "title": "Name"
+            },
+            "description": "full repo name owner/repo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response  Api Integration Github Polling Access Get"
+                }
               }
             }
           },
@@ -2672,6 +2725,133 @@
             "schema": {
               "type": "string",
               "title": "Branch Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/integration/github/pat": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_integration_github_pat_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PATListItem"
+                  },
+                  "title": "Response  Api Integration Github Pat Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_integration_github_pat_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePATRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "description": "Set PAT as active",
+        "operationId": "_api_integration_github_pat_put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_integration_github_pat_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
             }
           }
         ],
@@ -3356,6 +3536,42 @@
       "get": {
         "summary": "",
         "operationId": "_settings_docker_registry_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/docker/registry/{image}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_docker_registry__image__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/docker/registry/{image}/{tag}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_docker_registry__image___tag__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4916,6 +5132,29 @@
         ],
         "title": "CreateNamespacePayload"
       },
+      "CreatePATRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "token"
+        ],
+        "title": "CreatePATRequest"
+      },
       "CreateQueueJob": {
         "properties": {
           "queueName": {
@@ -5197,7 +5436,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "format": "date-time"
+                "format": "date"
               },
               {
                 "type": "null"
@@ -5222,6 +5461,42 @@
           "containers"
         ],
         "title": "DeploymentConfigType"
+      },
+      "DeploymentInfo": {
+        "properties": {
+          "component_type": {
+            "type": "string",
+            "title": "Component Type"
+          },
+          "deployment_name": {
+            "type": "string",
+            "title": "Deployment Name"
+          },
+          "available_replicas": {
+            "type": "integer",
+            "title": "Available Replicas"
+          },
+          "expected_replicas": {
+            "type": "integer",
+            "title": "Expected Replicas"
+          },
+          "pods": {
+            "items": {
+              "$ref": "#/components/schemas/PodInfo"
+            },
+            "type": "array",
+            "title": "Pods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "component_type",
+          "deployment_name",
+          "available_replicas",
+          "expected_replicas",
+          "pods"
+        ],
+        "title": "DeploymentInfo"
       },
       "DeploymentRunType": {
         "properties": {
@@ -5274,29 +5549,6 @@
           "deployment_config_id"
         ],
         "title": "DeploymentRunType"
-      },
-      "DeploymentStageInfo": {
-        "properties": {
-          "tag": {
-            "type": "string",
-            "title": "Tag"
-          },
-          "pr_url": {
-            "type": "string",
-            "title": "Pr Url"
-          },
-          "jira": {
-            "type": "string",
-            "title": "Jira"
-          }
-        },
-        "type": "object",
-        "required": [
-          "tag",
-          "pr_url",
-          "jira"
-        ],
-        "title": "DeploymentStageInfo"
       },
       "DockerConfig": {
         "properties": {
@@ -5525,90 +5777,6 @@
         },
         "type": "object",
         "title": "HealthCheck"
-      },
-      "HealthCheckResponse": {
-        "properties": {
-          "status": {
-            "type": "string",
-            "title": "Status",
-            "description": "Service status",
-            "default": "healthy"
-          },
-          "supported_events": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Supported Events",
-            "description": "List of supported event types"
-          },
-          "allowed_repositories": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Allowed Repositories",
-            "description": "Mapping of repository names to repository identifiers"
-          },
-          "allowed_branches": {
-            "additionalProperties": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "type": "object",
-            "title": "Allowed Branches",
-            "description": "Mapping of repository names to allowed branch lists"
-          },
-          "deployments": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/integration__github__webhook__index__DeploymentInfo"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Deployments",
-            "description": "Mapping of repository names to deployment info"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp",
-            "description": "Current timestamp"
-          },
-          "builds": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/SourceCodeBuildWithLogsType"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "type": "object"
-            },
-            "type": "object",
-            "title": "Builds"
-          }
-        },
-        "type": "object",
-        "required": [
-          "supported_events",
-          "allowed_repositories",
-          "allowed_branches",
-          "timestamp",
-          "builds"
-        ],
-        "title": "HealthCheckResponse",
-        "description": "Response model for health check endpoint"
       },
       "HostConfig": {
         "properties": {
@@ -6124,26 +6292,6 @@
         ],
         "title": "K8sVolume"
       },
-      "LastAndCurrentDeploymentInfo": {
-        "properties": {
-          "stage": {
-            "$ref": "#/components/schemas/DeploymentStageInfo"
-          },
-          "dev": {
-            "$ref": "#/components/schemas/DeploymentStageInfo"
-          },
-          "prod": {
-            "$ref": "#/components/schemas/DeploymentStageInfo"
-          }
-        },
-        "type": "object",
-        "required": [
-          "stage",
-          "dev",
-          "prod"
-        ],
-        "title": "LastAndCurrentDeploymentInfo"
-      },
       "Lifecycle": {
         "properties": {
           "preStop": {
@@ -6208,7 +6356,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/kubernertes__flow__v2__index__DeploymentInfo"
+                  "$ref": "#/components/schemas/DeploymentInfo"
                 },
                 "type": "array"
               },
@@ -6892,6 +7040,62 @@
         "type": "object",
         "title": "NodeSelectorTerm"
       },
+      "PATListItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "scopes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scopes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "active",
+          "created_at",
+          "last_used_at"
+        ],
+        "title": "PATListItem"
+      },
       "PodAffinity": {
         "properties": {
           "requiredDuringSchedulingIgnoredDuringExecution": {
@@ -7066,6 +7270,104 @@
           "resources"
         ],
         "title": "PodInfo"
+      },
+      "PollingConfigRequest": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Enable or disable SCM polling"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "title": "Interval Seconds",
+            "description": "Poll interval in seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "interval_seconds"
+        ],
+        "title": "PollingConfigRequest"
+      },
+      "PollingStatusResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Service status",
+            "default": "healthy"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether polling is enabled"
+          },
+          "has_pat": {
+            "type": "boolean",
+            "title": "Has Pat",
+            "description": "Whether a GITHUB_PAT is configured"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "title": "Interval Seconds",
+            "description": "Current poll interval seconds"
+          },
+          "allowed_repositories": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Allowed Repositories",
+            "description": "Allowed repositories map"
+          },
+          "allowed_branches": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Allowed Branches",
+            "description": "Allowed branches per repo"
+          },
+          "builds": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SourceCodeBuildWithLogsType"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Builds",
+            "description": "Last builds per repo/branch"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp",
+            "description": "Current timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "has_pat",
+          "interval_seconds",
+          "allowed_repositories",
+          "allowed_branches",
+          "builds",
+          "timestamp"
+        ],
+        "title": "PollingStatusResponse"
       },
       "PreferredSchedulingTerm": {
         "properties": {
@@ -7934,7 +8236,7 @@
           },
           "replicasets": {
             "items": {
-              "$ref": "#/components/schemas/kubernertes__flow__v2__index__DeploymentInfo"
+              "$ref": "#/components/schemas/DeploymentInfo"
             },
             "type": "array",
             "title": "Replicasets",
@@ -7942,7 +8244,7 @@
           },
           "deployments": {
             "items": {
-              "$ref": "#/components/schemas/kubernertes__flow__v2__index__DeploymentInfo"
+              "$ref": "#/components/schemas/DeploymentInfo"
             },
             "type": "array",
             "title": "Deployments",
@@ -8047,6 +8349,17 @@
       },
       "SourceCodeBuildLogType": {
         "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
           "build_id": {
             "type": "integer",
             "title": "Build Id"
@@ -8054,6 +8367,18 @@
           "logs": {
             "type": "string",
             "title": "Logs"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
           }
         },
         "type": "object",
@@ -8081,6 +8406,17 @@
             "type": "string",
             "title": "Pull Request Number"
           },
+          "pr_head_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pr Head Sha"
+          },
           "user_login": {
             "type": "string",
             "title": "User Login"
@@ -8092,6 +8428,10 @@
           "branch_name": {
             "type": "string",
             "title": "Branch Name"
+          },
+          "base_branch_name": {
+            "type": "string",
+            "title": "Base Branch Name"
           },
           "time_taken": {
             "anyOf": [
@@ -8130,9 +8470,11 @@
           "repo_name_full_name",
           "repo_name",
           "pull_request_number",
+          "pr_head_sha",
           "user_login",
           "status",
           "branch_name",
+          "base_branch_name",
           "time_taken",
           "created_at",
           "logs"
@@ -8712,27 +9054,6 @@
         ],
         "title": "SystemInfo"
       },
-      "UpdateBranchesRequest": {
-        "properties": {
-          "repo_name": {
-            "type": "string",
-            "title": "Repo Name"
-          },
-          "branches": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Branches"
-          }
-        },
-        "type": "object",
-        "required": [
-          "repo_name",
-          "branches"
-        ],
-        "title": "UpdateBranchesRequest"
-      },
       "UpdateDockerConfig": {
         "properties": {
           "cpuShares": {
@@ -8866,68 +9187,6 @@
           "podAffinityTerm"
         ],
         "title": "WeightedPodAffinityTerm"
-      },
-      "integration__github__webhook__index__DeploymentInfo": {
-        "properties": {
-          "namespace": {
-            "type": "string",
-            "title": "Namespace"
-          },
-          "deployment_name": {
-            "type": "string",
-            "title": "Deployment Name"
-          },
-          "last_deployment": {
-            "$ref": "#/components/schemas/LastAndCurrentDeploymentInfo"
-          },
-          "current_deployment": {
-            "$ref": "#/components/schemas/LastAndCurrentDeploymentInfo"
-          }
-        },
-        "type": "object",
-        "required": [
-          "namespace",
-          "deployment_name",
-          "last_deployment",
-          "current_deployment"
-        ],
-        "title": "DeploymentInfo"
-      },
-      "kubernertes__flow__v2__index__DeploymentInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "deployment_name": {
-            "type": "string",
-            "title": "Deployment Name"
-          },
-          "available_replicas": {
-            "type": "integer",
-            "title": "Available Replicas"
-          },
-          "expected_replicas": {
-            "type": "integer",
-            "title": "Expected Replicas"
-          },
-          "pods": {
-            "items": {
-              "$ref": "#/components/schemas/PodInfo"
-            },
-            "type": "array",
-            "title": "Pods"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "deployment_name",
-          "available_replicas",
-          "expected_replicas",
-          "pods"
-        ],
-        "title": "DeploymentInfo"
       },
       "nodes___node_id___NodeSpec": {
         "properties": {

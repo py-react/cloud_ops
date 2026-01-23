@@ -11,17 +11,22 @@ POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 DATABASE_URL = (
     f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 )
-engine = create_engine(DATABASE_URL, echo=True)
 
 def get_session():
-    with Session(engine) as session:
+    if "engine" not in globals():
+        engine = create_engine(DATABASE_URL)
+        globals()["engine"] = engine
+    with Session(globals()["engine"]) as session:
         yield session
 
 # --- Import all models to register them with SQLModel ---
 from .models import *
 
 def run_migrations():
-    SQLModel.metadata.create_all(engine)
+    if "engine" not in globals():
+        engine = create_engine(DATABASE_URL)
+        globals()["engine"] = engine
+    SQLModel.metadata.create_all(globals()["engine"])
 
 DEFAULT_STRATEGIES = [
     {"id": 1, "name": "rolling", "description": "Rolling update strategy that gradually replaces old pods with new ones"},

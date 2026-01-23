@@ -1,11 +1,11 @@
 import type { ApplyBody } from '../models/ApplyBody';
 import type { ContextPostData } from '../models/ContextPostData';
 import type { CreateNamespacePayload } from '../models/CreateNamespacePayload';
+import type { CreatePATRequest } from '../models/CreatePATRequest';
 import type { CreateQueueJob } from '../models/CreateQueueJob';
 import type { DeploymentConfigType } from '../models/DeploymentConfigType';
 import type { DeploymentRunType } from '../models/DeploymentRunType';
 import type { GetContainerResponse } from '../models/GetContainerResponse';
-import type { HealthCheckResponse } from '../models/HealthCheckResponse';
 import type { InfraCreateUpdateRequest } from '../models/InfraCreateUpdateRequest';
 import type { InfraDeleteResponse } from '../models/InfraDeleteResponse';
 import type { InfraPostResponse } from '../models/InfraPostResponse';
@@ -18,6 +18,9 @@ import type { NetworkDeleteResponse } from '../models/NetworkDeleteResponse';
 import type { NetworkListResponse } from '../models/NetworkListResponse';
 import type { NetworkUpdateParams } from '../models/NetworkUpdateParams';
 import type { nodes___node_id___NodeSpec } from '../models/nodes___node_id___NodeSpec';
+import type { PATListItem } from '../models/PATListItem';
+import type { PollingConfigRequest } from '../models/PollingConfigRequest';
+import type { PollingStatusResponse } from '../models/PollingStatusResponse';
 import type { ResourceResponse } from '../models/ResourceResponse';
 import type { ResourceScope } from '../models/ResourceScope';
 import type { RunContainer } from '../models/RunContainer';
@@ -29,12 +32,14 @@ import type { SwarmInitParams } from '../models/SwarmInitParams';
 import type { SwarmJoinParams } from '../models/SwarmJoinParams';
 import type { SwarmUpdateSpec } from '../models/SwarmUpdateSpec';
 import type { SystemInfo } from '../models/SystemInfo';
-import type { UpdateBranchesRequest } from '../models/UpdateBranchesRequest';
 import type { VolumeActionRequest } from '../models/VolumeActionRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 
+export type TDataProxyApiDockerHubPathGet = {
+                path: string
+            }
 export type TDataApiPackgesPost = {
                 requestBody: RunImage
             }
@@ -237,19 +242,30 @@ export type TDataApiKubernertesFlowV1Get = {
 export type TDataApiKubernertesFlowV2Get = {
                 namespace: string
             }
-export type TDataApiIntegrationGithubWebhookPost = {
-                xGithubEvent?: string
-xHubSignature256?: string
+export type TDataApiIntegrationGithubPollingPut = {
+                requestBody: PollingConfigRequest
             }
-export type TDataApiIntegrationGithubWebhookPut = {
-                requestBody: UpdateBranchesRequest
-            }
-export type TDataApiIntegrationGithubWebhookDelete = {
+export type TDataApiIntegrationGithubPollingDelete = {
                 name: string
+            }
+export type TDataApiIntegrationGithubPollingAccessGet = {
+                /**
+ * full repo name owner/repo
+ */
+name: string
             }
 export type TDataApiIntegrationGithubBuildsGet = {
                 branchName: string
 repoName: string
+            }
+export type TDataApiIntegrationGithubPatPost = {
+                requestBody: CreatePATRequest
+            }
+export type TDataApiIntegrationGithubPatPut = {
+                id: number
+            }
+export type TDataApiIntegrationGithubPatDelete = {
+                id: number
             }
 export type TDataApiIntegrationKubernetesReleaseGet = {
                 name?: string | null
@@ -297,6 +313,28 @@ export type TDataApiQueueJobPost = {
             }
 
 export class DefaultService {
+
+	/**
+	 * Proxy
+	 * Proxy the GET request to Docker Hub registry without modifying the headers or body.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static proxyApiDockerHubPathGet(data: TDataProxyApiDockerHubPathGet): CancelablePromise<unknown> {
+		const {
+path,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/docker/hub/{path}',
+			path: {
+				path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
 
 	/**
 	 * @returns unknown Successful Response
@@ -1464,50 +1502,43 @@ namespace,
 	}
 
 	/**
-	 * Health check endpoint
-	 * @returns HealthCheckResponse Successful Response
+	 * Return polling status and allowed repos/branches/builds.
+	 * @returns PollingStatusResponse Successful Response
 	 * @throws ApiError
 	 */
-	public static apiIntegrationGithubWebhookGet(): CancelablePromise<HealthCheckResponse> {
+	public static apiIntegrationGithubPollingGet(): CancelablePromise<PollingStatusResponse> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/api/integration/github/webhook',
+			url: '/api/integration/github/polling',
 		});
 	}
 
 	/**
-	 * GitHub webhook endpoint
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiIntegrationGithubWebhookPost(data: TDataApiIntegrationGithubWebhookPost = {}): CancelablePromise<unknown> {
-		const {
-xGithubEvent,
-xHubSignature256,
-} = data;
-		return __request(OpenAPI, {
+	public static apiIntegrationGithubPollingPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'POST',
-			url: '/api/integration/github/webhook',
-			headers: {
-				'x-github-event': xGithubEvent, 'x-hub-signature-256': xHubSignature256
-			},
-			errors: {
-				422: `Validation Error`,
-			},
+			url: '/api/integration/github/polling',
 		});
 	}
 
 	/**
+	 * Update polling configuration for the running process (in-memory env).
+ * 
+ * Note: changes are applied to the running process environment only; update your deployment
+ * configuration to persist across restarts.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiIntegrationGithubWebhookPut(data: TDataApiIntegrationGithubWebhookPut): CancelablePromise<unknown> {
+	public static apiIntegrationGithubPollingPut(data: TDataApiIntegrationGithubPollingPut): CancelablePromise<unknown> {
 		const {
 requestBody,
 } = data;
 		return __request(OpenAPI, {
 			method: 'PUT',
-			url: '/api/integration/github/webhook',
+			url: '/api/integration/github/polling',
 			body: requestBody,
 			mediaType: 'application/json',
 			errors: {
@@ -1517,16 +1548,44 @@ requestBody,
 	}
 
 	/**
+	 * Proxy delete to allowed-repo utils (keeps same contract as webhook DELETE).
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiIntegrationGithubWebhookDelete(data: TDataApiIntegrationGithubWebhookDelete): CancelablePromise<unknown> {
+	public static apiIntegrationGithubPollingDelete(data: TDataApiIntegrationGithubPollingDelete): CancelablePromise<unknown> {
 		const {
 name,
 } = data;
 		return __request(OpenAPI, {
 			method: 'DELETE',
-			url: '/api/integration/github/webhook',
+			url: '/api/integration/github/polling',
+			query: {
+				name
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Access-check route for a configured repo.
+ * 
+ * Uses the active PAT to perform read checks on repository, PRs, comments and
+ * collaborator permission for posting comments. Implementation uses the
+ * PyGithub SDK for repository/pull/comment/permission checks and a single
+ * short httpx call to fetch `X-OAuth-Scopes` because PyGithub doesn't expose
+ * that header.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubPollingAccessGet(data: TDataApiIntegrationGithubPollingAccessGet): CancelablePromise<Record<string, unknown>> {
+		const {
+name,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/github/polling/access',
 			query: {
 				name
 			},
@@ -1550,6 +1609,77 @@ repoName,
 			url: '/api/integration/github/builds',
 			query: {
 				repo_name: repoName, branch_name: branchName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns PATListItem Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubPatGet(): CancelablePromise<Array<PATListItem>> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/github/pat',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubPatPost(data: TDataApiIntegrationGithubPatPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/github/pat',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Set PAT as active
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubPatPut(data: TDataApiIntegrationGithubPatPut): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/github/pat',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationGithubPatDelete(data: TDataApiIntegrationGithubPatDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/github/pat',
+			query: {
+				id
 			},
 			errors: {
 				422: `Validation Error`,
@@ -1918,6 +2048,28 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/settings/docker/registry',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsDockerRegistryImageGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/docker/registry/{image}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsDockerRegistryImageTagGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/docker/registry/{image}/{tag}',
 		});
 	}
 

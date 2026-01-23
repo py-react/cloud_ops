@@ -27,7 +27,7 @@ export const $NamespaceInfo = {
 	contains: [{
 	type: 'array',
 	contains: {
-		type: 'kubernertes__flow__v2__index__DeploymentInfo',
+		type: 'DeploymentInfo',
 	},
 }, {
 	type: 'null',

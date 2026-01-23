@@ -38,13 +38,13 @@ export const $ServiceInfo = {
 		replicasets: {
 	type: 'array',
 	contains: {
-		type: 'kubernertes__flow__v2__index__DeploymentInfo',
+		type: 'DeploymentInfo',
 	},
 },
 		deployments: {
 	type: 'array',
 	contains: {
-		type: 'kubernertes__flow__v2__index__DeploymentInfo',
+		type: 'DeploymentInfo',
 	},
 },
 		daemonsets: {

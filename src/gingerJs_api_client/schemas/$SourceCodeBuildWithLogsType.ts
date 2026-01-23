@@ -16,6 +16,15 @@ export const $SourceCodeBuildWithLogsType = {
 	type: 'string',
 	isRequired: true,
 },
+		pr_head_sha: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+	isRequired: true,
+},
 		user_login: {
 	type: 'string',
 	isRequired: true,
@@ -25,6 +34,10 @@ export const $SourceCodeBuildWithLogsType = {
 	isRequired: true,
 },
 		branch_name: {
+	type: 'string',
+	isRequired: true,
+},
+		base_branch_name: {
 	type: 'string',
 	isRequired: true,
 },

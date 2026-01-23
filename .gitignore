@@ -8,3 +8,4 @@ gingerjs.egg-info
 infra_data
 _gingerjs
 *.pyc
+**/*/gingerJs_api_client

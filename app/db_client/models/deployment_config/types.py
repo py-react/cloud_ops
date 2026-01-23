@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import date
 
 class ServicePortConfig(BaseModel):
     port: int
@@ -159,6 +159,6 @@ class DeploymentConfigType(BaseModel):
     affinity: Optional[K8sAffinity] = None
     volumes: Optional[List[K8sVolume]] = None
     soft_delete: bool = False
-    deleted_at: Optional[datetime] = None
+    deleted_at: Optional[date] = None
     hard_delete: bool = False
     # Add more fields as needed 
