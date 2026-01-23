@@ -2,14 +2,14 @@ import yaml
 from typing import Optional, Dict, List, Any
 from kubernetes import client, config
 from kubernetes.dynamic import DynamicClient
-from kubernetes.dynamic.exceptions import ConflictError,NotFoundError,ApiException
+from kubernetes.dynamic.exceptions import NotFoundError,ApiException
 import json
 import jsonpatch
 
 from .namespace_ops import NamespaceOperations
 from .cluster_ops import ClusterOperations
 from .resource_ops import ResourceOperations
-from ..models.resources import ResourceScope, ClusterInfo, ResourceInfo, ClusterMetric
+from ..models.resources import ResourceScope, ClusterInfo, ResourceInfo
 from ..registry import PatchRegistry, supported_mapping_types
 import inspect
 
@@ -156,7 +156,7 @@ class KubernetesResourceHelper:
             if isinstance(e,NotFoundError):
                 return resource_client.create(body=resource, namespace=namespace)
             elif isinstance(e,ApiException):
-                raise Exception(json.loads(e.body))
+                raise Exception(json.loads(e.body) if e.body  else str(e))
             else:
                 raise e
 
@@ -204,7 +204,7 @@ class KubernetesResourceHelper:
         try:
             return resource_client.delete(name=name, namespace=namespace)
         except ApiException as e:
-            raise Exception(json.loads(e.body))
+            raise Exception(json.loads(e.body) if e.body  else str(e))
         except Exception as e:
             raise e
     
@@ -254,7 +254,7 @@ class KubernetesResourceHelper:
         methods.remove("__init__")
         return methods
     
-    def handle_manifest(self, menifest: str, action: str, **kwargs):
+    def handle_manifest(self, menifest: dict, action: str, **kwargs):
         """
         YAML manifest (parsed into a dictionary) apply/delete/patch each document.
         :menifest Dict: YAML manifest parsed into a dictionary.

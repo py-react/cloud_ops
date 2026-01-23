@@ -46,19 +46,19 @@ const AddRepositoryForm: React.FC<AddRepositoryFormProps> = ({ onSuccess, initia
 
   const handleSubmit = async (data: AddRepositoryFormData) => {
     const allowed_branches = data.branches.map(b => b.value)
-    await DefaultService.apiIntegrationGithubWebhookPut({ requestBody: {
-      repo_name: data.name,
-      branches: allowed_branches
-    } }).then((res: any) => {
-      if (res.success) {
-        toast.success(res.message)
+    try {
+      const res = await DefaultService.apiIntegrationGithubPollingPut({ requestBody: { repo_name: data.name, branches: allowed_branches } })
+      // api returns a generic unknown type; assume it follows { success, message }
+      const body: any = res as any;
+      if (body && body.success) {
+        toast.success(body.message)
         onSuccess()
       } else {
-        toast.error(res.message)
+        toast.error((body && body.message) || 'Failed to update repository')
       }
-    }).catch((err: any) => {
-      toast.error(err.message)
-    })
+    } catch (err: any) {
+      toast.error(err.message || String(err))
+    }
   };
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeTab);

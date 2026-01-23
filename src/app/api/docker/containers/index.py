@@ -91,6 +91,7 @@ class RunContainer(BaseModel):
     updateInstanceConfig: Optional[UpdateDockerConfig] = None
 
 async def GET(request:Request)->GetContainerResponse:
+    print("Getting containers")
     containers = client.containers.list(all=True)  # Get all containers (running or stopped)
     
     container_info = []

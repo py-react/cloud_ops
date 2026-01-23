@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from "@/components/ui/sonner"
 import { AppSidebar } from '@/components/app-sidebar'
@@ -9,6 +9,19 @@ import { NavigationHistoryProvider } from '@/libs/navigationHistory'
 import BackButton from '@/components/BackButton'
 
 function AppLayout() {
+  useEffect(()=>{
+    const mysocket = new WebSocket("ws://127.0.0.1:5001/ws/test");
+    mysocket.onmessage = function(event) {
+        console.log(event.data)
+    };
+    mysocket.onopen = function(event) {
+        mysocket.send("Hello, world!")
+    }
+    // return ()=>{
+    //   mysocket.close()
+    // }
+  },[])
+  
   return (
     <NavigationHistoryProvider>
       <div key="AppLayout" className='p-0 w-full'>

@@ -16,8 +16,8 @@ export function useDockerImages() {
         setLoading(true);
         setError(null);
         const endpoint = searchQuery
-          ? `/api/docker/api/search/v3/catalog/search?query=${encodeURIComponent(searchQuery)}&from=${currentPage===1?0:(currentPage-1)*10}&size=10&open_source=true&source=store`
-          : `/api/docker/api/search/v3/catalog/search?from=${currentPage===1?0:(currentPage-1)*10}&size=10&open_source=true&source=store`;
+          ? `/api/docker/hub/api/search/v3/catalog/search?query=${encodeURIComponent(searchQuery)}&from=${currentPage===1?0:(currentPage-1)*10}&size=10&open_source=true&source=store`
+          : `/api/docker/hub/api/search/v3/catalog/search?from=${currentPage===1?0:(currentPage-1)*10}&size=10&open_source=true&source=store`;
         
         const response = await fetch(endpoint);
         if (!response.ok) {

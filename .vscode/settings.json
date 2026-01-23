@@ -1,0 +1,12 @@
+{
+    "files.exclude": {
+      "**/node_modules": false,
+      "**/env": false,
+      "**/_gingerjs": false,
+      "**/dist": false,
+      "**/*.log": true,
+      "**/temp*": true,
+      "**/__pycache__*": true,
+      "**/__snapshots__": true
+    }
+}

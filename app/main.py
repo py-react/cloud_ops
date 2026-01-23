@@ -3,6 +3,9 @@ import httpx
 from starlette.responses import Response
 from starlette.requests import Request
 from starlette.middleware.cors import CORSMiddleware
+import logging
+logger = logging.getLogger(__name__)
+
 
 # Define the target server for proxying requests
 TARGET_URL = "https://registry.hub.docker.com"
@@ -27,15 +30,19 @@ async def proxy(path: str, request: Request, response: Response):
 
 # Function to extend the app by adding routes (following your exact pattern)
 def extend_app(app: FastAPI):
+    origins = [
+        "http://localhost:5001",  # Example: your client's origin
+    ]
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Replace with your allowed origins
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    app.add_api_route("/api/docker/{path:path}", methods=["GET"], endpoint=proxy)
+    app.add_api_route("/api/docker/hub/{path:path}", methods=["GET"], endpoint=proxy)
 
     @app.on_event("shutdown")
     def shutdown_event():

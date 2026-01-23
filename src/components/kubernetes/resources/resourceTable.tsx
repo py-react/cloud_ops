@@ -122,8 +122,8 @@ export function ResourceTable<T>({
     <Card className={cn("shadow-none", className)}>
       <div className="rounded-[calc(0.5rem-2px)]">
           <Table wrapperClassName={tableClassName}>
-            <TableHeader className="bg-slate-50 p-4 z-10">
-              <TableRow className='sticky top-0'>
+            <TableHeader className="p-4 z-10">
+              <TableRow className='sticky top-0 bg-slate-50 '>
                 {columns.map((column) => (
                   <TableHead key={column.accessor} className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">{column.header}</TableHead>
                 ))}
@@ -318,6 +318,7 @@ function renderCellContent(type: string, value: any) {
       </div>
     );
   }
+
 
   if (type === 'labels' && Array.isArray(value)) {
     return (

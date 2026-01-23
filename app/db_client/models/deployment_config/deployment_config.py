@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field, Column
 from sqlalchemy.dialects.postgresql import JSONB, BOOLEAN, DATE, INTEGER
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import date
 
 class DeploymentConfig(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -21,5 +21,5 @@ class DeploymentConfig(SQLModel, table=True):
     affinity: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSONB))
     volumes: Optional[List[Dict[str, Any]]] = Field(default=None, sa_column=Column(JSONB))
     soft_delete: bool = Field(default=False, sa_column=Column(BOOLEAN))
-    deleted_at: Optional[datetime] = Field(default=None, sa_column=Column(DATE))
+    deleted_at: Optional[date] = Field(default=None, sa_column=Column(DATE))
     hard_delete: bool = Field(default=False, sa_column=Column(BOOLEAN))

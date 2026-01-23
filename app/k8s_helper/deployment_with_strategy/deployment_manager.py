@@ -191,6 +191,7 @@ class DeploymentManager:
             self.update_deployment_run_status(run_obj.id, "deployed")
             return {"run": run_obj, "deployment_result": "; ".join(result_messages)}
         except Exception as e:
+            print(str(e))
             self.update_deployment_run_status(run_obj.id, "failed")
             raise Exception(f"Unexpected error running deployment: {str(e)}")
 
