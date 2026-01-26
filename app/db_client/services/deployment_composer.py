@@ -101,7 +101,12 @@ class DeploymentComposer:
         pod_dynamic_attr = self._parse_json(pod.dynamic_attr)
         if pod_dynamic_attr:
             for key, profile_id in pod_dynamic_attr.items():
+                # Try PodProfile first
                 profile = self.session.get(K8sPodProfile, profile_id)
+                # Fallback to EntityProfile (e.g. for volumes)
+                if not profile:
+                    profile = self.session.get(K8sEntityProfile, profile_id)
+                
                 if profile:
                     profile_config = self._parse_json(profile.config)
                     if profile_config:
