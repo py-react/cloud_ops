@@ -15,6 +15,7 @@ import { BasicConfig as ContainerBasicConfig, AdvancedConfig as ContainerAdvance
 import { DefaultService } from "@/gingerJs_api_client";
 import { useResourceLink } from "@/hooks/useResourceLink";
 import { DeleteDependencyDialog } from "@/components/ciCd/library/podSpec/DeleteDependencyDialog";
+import { ProfileAdvancedConfig } from "@/components/ciCd/library/podSpec/forms/ProfileAdvancedConfig";
 
 const createResourceProfuleSchema = z.object({
     name: z.string().min(1, "Profile name is required"),
@@ -104,6 +105,7 @@ const container_view_steps = [
         longDescription: 'View the details of the selected container.',
         component: ContainerAdvancedConfig,
         props: { canEdit: false },
+        hideSectionHeader: true,
     }
 ]
 
@@ -113,18 +115,18 @@ const container_view_steps = [
 function ContainerSpec() {
     const { selectedNamespace } = useContext(NamespaceContext);
     const [containerViewactiveTab, setContainerViewactiveTab] = useState("view");
-    const [activeTab, setActiveTab] = useState("add-spec");
     const [containerActiveTab, setContainerActiveTab] = useState("basic");
+    const [viewProfileStep, setViewProfileStep] = useState("view");
     const [dialogContainerViewOpen, setDialogContainerViewOpen] = useState(false);
-    const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogContainerOpen, setDialogContainerOpen] = useState(false);
+    const [viewProfileDialogOpen, setViewProfileDialogOpen] = useState(false);
     const [profiles, setProfiles] = useState<any[]>([]);
     const [containersForPod, setContainersForPod] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingContainersForPod, setLoadingContainersForPod] = useState(false);
+    const [viewProfileInitialValues, setViewProfileInitialValues] = useState<any>(null);
 
     const [container_default_values] = useState({ ..._container_default_values, namespace: selectedNamespace })
-    const [default_value] = useState({ ..._default_value, namespace: selectedNamespace })
     const [container_view_initial_values, setContainerViewInitialValues] = useState(container_default_values)
 
     // Conflict/Dependency state
@@ -153,8 +155,15 @@ function ContainerSpec() {
         if (resourceType === "container" && containersForPod.length > 0) {
             const container = containersForPod.find(c => c.id == focusId);
             if (container) handleViewContainer(container);
+        } else if (resourceType === "pod_profile" && profiles.length > 0) {
+            const profile = profiles.find(p => p.id == focusId);
+            if (profile) {
+                setViewProfileInitialValues(profile);
+                setViewProfileStep("view");
+                setViewProfileDialogOpen(true);
+            }
         }
-    }, [autoOpen, focusId, resourceType, containersForPod]);
+    }, [autoOpen, focusId, resourceType, containersForPod, profiles]);
 
     const fetchContainerSpecs = async () => {
         setLoading(true);
@@ -196,22 +205,6 @@ function ContainerSpec() {
         setContainerViewInitialValues(transformedContainer);
     };
 
-    const handleSubmit = async (values: any) => {
-        const payload = {
-            ...values,
-            resource_config: values.config ? JSON.parse(values.config) : {},
-        };
-        try {
-            const response = await fetch("/api/integration/kubernetes/library/profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-            if (response.ok) {
-                toast.success("Profile created");
-                setDialogOpen(false);
-                fetchContainerSpecs();
-            }
-        } catch (error) {
-            toast.error("Error saving profile");
-        }
-    };
 
     const handleContainerSubmit = async (values: any) => {
         const valueProfiles = { ...values.profile }
@@ -238,7 +231,7 @@ function ContainerSpec() {
             });
             if (response.ok) {
                 toast.success("Profile created");
-                setDialogOpen(false);
+                setDialogContainerOpen(false);
                 fetchPodSpecs();
             }
         } catch (error) {
@@ -246,18 +239,6 @@ function ContainerSpec() {
         }
     };
 
-    const handleDeleteProfile = async (row: any, dependents?: any[]) => {
-        if (dependents && dependents.length > 0) {
-            setConflictDialog({
-                isOpen: true,
-                resourceName: row.name,
-                resourceType: "Container Specification",
-                dependents: dependents
-            });
-        } else {
-            fetchContainerSpecs();
-        }
-    };
 
     const handleDeleteContainer = async (row: any) => {
         try {
@@ -279,23 +260,12 @@ function ContainerSpec() {
         }
     };
 
-    const stepsWithContext = steps.map(step => ({
-        ...step,
-        component: (props: any) => {
-            if (step.id === 'view-spec') {
-                return <ViewSpecList
-                    profiles={profiles}
-                    loading={loading}
-                    selectedNamespace={selectedNamespace}
-                    onDelete={handleDeleteProfile}
-                    highlightedId={resourceType === 'pod_profile' ? highlightedId : null}
-                    onRowClick={clearFocus}
-                    {...props}
-                />;
-            }
-            return <step.component {...props} />;
-        }
-    }));
+    const handleViewProfile = (row: any) => {
+        setViewProfileInitialValues(row);
+        setViewProfileStep("view");
+        setViewProfileDialogOpen(true);
+    };
+
 
     return (
         <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
@@ -306,9 +276,9 @@ function ContainerSpec() {
                             <SquareTerminal className="h-5 w-5" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-black text-foreground uppercase tracking-widest">Container Spec</h1>
+                            <h1 className="text-xl font-black text-foreground uppercase tracking-widest">Derived Container</h1>
                             <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                                Define the container spec and container for traceability across deployments in <span className="text-primary font-bold">{selectedNamespace}</span>.
+                                Manage derived containers composed from specifications in <span className="text-primary font-bold">{selectedNamespace}</span>.
                             </p>
                         </div>
                     </div>
@@ -326,17 +296,6 @@ function ContainerSpec() {
                         variant="gradient"
                         size="sm"
                         onClick={() => {
-                            setActiveTab("add-spec");
-                            setDialogOpen(true)
-                        }}
-                    >
-                        <Plus className="w-3.5 h-3.5 mr-1" />
-                        New spec
-                    </Button>
-                    <Button
-                        variant="gradient"
-                        size="sm"
-                        onClick={() => {
                             setDialogContainerOpen(true)
                         }}
                     >
@@ -346,14 +305,6 @@ function ContainerSpec() {
                 </div>
             </div>
             <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
-                <ResourceCard
-                    title="Total Container Specs"
-                    count={profiles.length}
-                    icon={<SquareTerminal className="w-4 h-4" />}
-                    color="bg-primary"
-                    className="border-primary/20 bg-primary/5 shadow-none hover:border-primary/30 transition-all"
-                    isLoading={loading}
-                />
                 <ResourceCard
                     title="Total Derived Containers"
                     count={containersForPod.length}
@@ -372,25 +323,6 @@ function ContainerSpec() {
                 onViewDetails={handleViewContainer}
                 highlightedId={resourceType === 'container' ? highlightedId : null}
                 onRowClick={clearFocus}
-            />
-            <FormWizard
-                name="create-spec"
-                isWizardOpen={dialogOpen}
-                setIsWizardOpen={setDialogOpen}
-                currentStep={activeTab}
-                setCurrentStep={setActiveTab}
-                steps={stepsWithContext}
-                schema={createResourceProfuleSchema as z.ZodSchema<any>}
-                initialValues={default_value}
-                onSubmit={handleSubmit}
-                submitLabel="Create Spec"
-                submitIcon={SquareTerminal}
-                heading={{
-                    primary: "Manage Container Specs",
-                    secondary: "Add new specs, view existing specs, and manage pod specifications",
-                    icon: SquareTerminal,
-                }}
-
             />
 
             <FormWizard
@@ -434,6 +366,35 @@ function ContainerSpec() {
                 hideActions={true}
             />
 
+            <FormWizard
+                name="view-profile-details"
+                isWizardOpen={viewProfileDialogOpen}
+                setIsWizardOpen={setViewProfileDialogOpen}
+                currentStep={viewProfileStep}
+                setCurrentStep={setViewProfileStep}
+                steps={[{
+                    id: 'view',
+                    label: 'View Profile',
+                    description: 'View Profile Details',
+                    longDescription: 'View the details of the selected profile.',
+                    component: (props: any) => viewProfileInitialValues ? (
+                        <ProfileAdvancedConfig profile={viewProfileInitialValues} profileType="profile" />
+                    ) : null,
+                    hideSectionHeader: true,
+                }]}
+                schema={createResourceProfuleSchema}
+                initialValues={viewProfileInitialValues || { name: "", type: "", namespace: selectedNamespace, config: "{}" }}
+                onSubmit={() => { }}
+                submitLabel="View Details"
+                submitIcon={SquareTerminal}
+                heading={{
+                    primary: "Profile Details",
+                    secondary: "View profile configuration and YAML",
+                    icon: SquareTerminal,
+                }}
+                hideActions={true}
+            />
+
             <DeleteDependencyDialog
                 isOpen={conflictDialog.isOpen}
                 onClose={() => setConflictDialog(prev => ({ ...prev, isOpen: false }))}
@@ -441,7 +402,7 @@ function ContainerSpec() {
                 resourceType={conflictDialog.resourceType}
                 dependents={conflictDialog.dependents}
             />
-        </div>
+        </div >
     );
 }
 

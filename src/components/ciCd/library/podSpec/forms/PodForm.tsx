@@ -10,6 +10,8 @@ import { X, Plus, Info, Cpu, Box, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequiredBadge } from "@/components/docker/network/forms/badges";
 import { cn } from "@/libs/utils";
+import { Tabs } from "@/components/ui/tabs";
+import { ResourceDetailView } from "../../ResourceDetailView";
 
 export const PodForm = ({ control, setValue, watch, namespace }: { control: any; setValue: any; watch: any; namespace: string }) => {
     const selectedContainers = watch("containers") || [];
@@ -190,6 +192,7 @@ export const PodForm = ({ control, setValue, watch, namespace }: { control: any;
 };
 
 export const PodAdvancedConfig = ({ control, namespace }: { control: any; namespace: string }) => {
+    const [activeTab, setActiveTab] = useState("overview");
     const [profiles, setProfiles] = useState<any[]>([]);
     const [containers, setContainers] = useState<any[]>([]);
     const [metadataProfiles, setMetadataProfiles] = useState<any[]>([]);
@@ -345,25 +348,68 @@ export const PodAdvancedConfig = ({ control, namespace }: { control: any; namesp
         return yaml.dump(result, { sortKeys: false });
     }, [loading, containers, metadataProfiles, podProfiles, selectedContainerIds, selectedMetadataId, dynamicAttr]);
 
+    const structuredData = useMemo(() => {
+        if (loading) return null;
+        return {
+            name: (formValues.name as string) || "Unnamed Pod",
+            namespace: namespace as string,
+            service_account_name: formValues.service_account_name as string,
+            host_network: formValues.host_network as boolean,
+            dns_policy: formValues.dns_policy as string,
+            metadata_profile: selectedMetadataId ? (metadataProfiles[selectedMetadataId] as any) : undefined,
+            dynamic_attr: Object.entries(dynamicAttr).reduce((acc, [key, id]) => {
+                const profile = podProfiles.find(p => p.id === id);
+                if (profile) acc[key] = profile;
+                return acc;
+            }, {} as any)
+        };
+    }, [loading, formValues, namespace, selectedMetadataId, metadataProfiles, dynamicAttr, podProfiles]);
+
     return (
-        <div className="flex-1 h-[440px]">
-            <Editor
-                height="100%"
-                width="100%"
-                defaultLanguage="yaml"
-                value={composedYaml}
-                theme="vs-dark"
-                options={{
-                    readOnly: true,
-                    minimap: { enabled: false },
-                    fontSize: 13,
-                    wordWrap: 'on',
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    tabSize: 2,
-                    padding: { top: 16, bottom: 16 },
-                }}
-            />
+        <div className="flex-1 h-[440px] flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+                <Tabs
+                    variant="pill"
+                    tabs={[
+                        { id: "overview", label: "Overview" },
+                        { id: "yaml", label: "YAML View" }
+                    ]}
+                    activeTab={activeTab}
+                    onChange={setActiveTab}
+                />
+            </div>
+
+            <div className="flex-1 min-h-0">
+                {activeTab === "overview" ? (
+                    loading ? (
+                        <div className="flex items-center justify-center h-full text-muted-foreground animate-pulse font-bold uppercase tracking-widest text-xs">
+                            Compiling overview...
+                        </div>
+                    ) : structuredData && (
+                        <ResourceDetailView data={structuredData} type="pod" />
+                    )
+                ) : (
+                    <div className="h-full rounded-2xl overflow-hidden border border-border/30">
+                        <Editor
+                            height="100%"
+                            width="100%"
+                            defaultLanguage="yaml"
+                            value={composedYaml}
+                            theme="vs-dark"
+                            options={{
+                                readOnly: true,
+                                minimap: { enabled: false },
+                                fontSize: 13,
+                                wordWrap: 'on',
+                                scrollBeyondLastLine: false,
+                                automaticLayout: true,
+                                tabSize: 2,
+                                padding: { top: 16, bottom: 16 },
+                            }}
+                        />
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

@@ -2578,10 +2578,43 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static settingsCiCdLibraryNamespaceSpecPodProfileGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/pod/profile',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecPodMetadataGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/pod/metadata',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static settingsCiCdLibraryNamespaceSpecContainerGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/settings/ci_cd/library/{namespace}/spec/container',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecContainerProfileGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/container/profile',
 		});
 	}
 

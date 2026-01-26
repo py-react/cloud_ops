@@ -38,7 +38,8 @@ import {
   Container,
   Boxes,
   SquareTerminal,
-  Braces
+  Braces,
+  Layout
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -273,12 +274,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                 url: "/release_config",
                 icon: FileCog,
                 items: [
-                  {
-                    title: "Volumes",
-                    url: "/volumes",
-                    icon: Database,
-                    items: []
-                  }
                 ],
               },
               {
@@ -315,19 +310,36 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
             url: "",
             items: [
               {
-                title: "Container spec",
+                title: "Derived Container",
                 url: `/${selectedNamespace}/spec/container`,
                 icon: SquareTerminal,
-                items: []
+                items: [
+                  {
+                    title: "Specifications",
+                    url: `/profile`,
+                    icon: Braces,
+                  },
+                ]
               },
               {
-                title: "Pop spec",
+                title: "Derived Pods",
                 url: `/${selectedNamespace}/spec/pod`,
                 icon: Box,
-                items: []
+                items: [
+                  {
+                    title: "Specifications",
+                    url: `/profile`,
+                    icon: Settings,
+                  },
+                  {
+                    title: "Metadata",
+                    url: `/metadata`,
+                    icon: Layout,
+                  },
+                ]
               },
               {
-                title: "Deployment pec",
+                title: "Deployment spec",
                 url: `/${selectedNamespace}/spec/deployment`,
                 icon: Layers,
                 items: []
@@ -389,18 +401,18 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                               asChild
                               className="hover:bg-sidebar-accent transition-colors duration-200"
                             >
-                              <div className="flex items-center gap-2 cursor-pointer select-none">
+                              <div className="flex items-center gap-2 cursor-pointer select-none w-full min-w-0">
                                 <CustomLink
                                   key={menuKey}
                                   href={value.url + item.url}
-                                  className="flex items-center gap-2"
+                                  className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden"
                                 >
                                   <span
-                                    className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-primary/10"
+                                    className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-primary/10 flex-shrink-0"
                                   >
                                     <item.icon className="h-4 w-4 text-sidebar-foreground" />
                                   </span>
-                                  <span className="font-medium text-sidebar-foreground">
+                                  <span className="font-medium text-sidebar-foreground truncate">
                                     {item.title}
                                   </span>
                                 </CustomLink>
@@ -421,11 +433,12 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                               <CustomLink
                                 key={menuKey}
                                 href={value.url + item.url}
+                                className="flex items-center gap-2 min-w-0 overflow-hidden"
                               >
-                                <span className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-primary/10">
+                                <span className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-primary/10 flex-shrink-0">
                                   <item.icon className="h-4 w-4 text-sidebar-foreground" />
                                 </span>
-                                <span className="font-medium text-sidebar-foreground">
+                                <span className="font-medium text-sidebar-foreground truncate">
                                   {item.title}
                                 </span>
                               </CustomLink>
@@ -434,35 +447,80 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                           {hasSubItems && (
                             <div
                               className={`overflow-hidden transition-all duration-300 ${expandedMenus[menuKey]
-                                ? "max-h-96 opacity-100 mt-2"
+                                ? "max-h-[1000px] opacity-100 mt-2"
                                 : "max-h-0 opacity-0 pointer-events-none"
                                 }`}
                             >
                               <SidebarMenuSub>
                                 {item.items.map((subItem) => {
                                   if (!subItem) return null;
+                                  const subItemKey = menuKey + subItem.url;
+                                  const hasSubSubItems = (subItem as any).items && (subItem as any).items.length > 0;
+
                                   return (
                                     <SidebarMenuSubItem
-                                      key={value.url + item.url + subItem.url}
+                                      key={subItemKey}
                                     >
                                       <SidebarMenuSubButton
                                         asChild
                                         className="hover:bg-sidebar-accent transition-colors duration-200"
                                       >
-                                        <CustomLink
-                                          key={
-                                            value.url + item.url + subItem.url
-                                          }
-                                          href={
-                                            value.url + item.url + subItem.url
-                                          }
-                                        >
-                                          <span className="bg-sidebar-accent/50 p-1 rounded-md flex items-center justify-center transition-all duration-200 hover:bg-primary/10 mr-2">
-                                            <subItem.icon className="h-4 w-4 text-muted-foreground" />
-                                          </span>
-                                          <span className="text-sm text-sidebar-foreground">{subItem.title}</span>
-                                        </CustomLink>
+                                        <div className="flex items-center gap-2 cursor-pointer select-none w-full min-w-0">
+                                          <CustomLink
+                                            key={subItemKey}
+                                            href={(value.url + item.url + subItem.url).replace(/\/\//g, '/')}
+                                            className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden"
+                                          >
+                                            <span className="bg-sidebar-accent/50 p-1 rounded-md flex items-center justify-center transition-all duration-200 hover:bg-primary/10 flex-shrink-0">
+                                              {subItem.icon && <subItem.icon className="h-4 w-4 text-muted-foreground" />}
+                                            </span>
+                                            <span className="text-sm text-sidebar-foreground truncate">{subItem.title}</span>
+                                          </CustomLink>
+                                          {hasSubSubItems && (
+                                            <span
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleToggleMenu(subItemKey);
+                                              }}
+                                              className="ml-auto p-1 rounded-md hover:bg-sidebar-accent transition-colors"
+                                            >
+                                              {expandedMenus[subItemKey] ? (
+                                                <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                                              ) : (
+                                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                              )}
+                                            </span>
+                                          )}
+                                        </div>
                                       </SidebarMenuSubButton>
+
+                                      {hasSubSubItems && (
+                                        <div
+                                          className={`overflow-hidden transition-all duration-300 ${expandedMenus[subItemKey]
+                                            ? "max-h-96 opacity-100 mt-1 ml-4"
+                                            : "max-h-0 opacity-0 pointer-events-none"
+                                            }`}
+                                        >
+                                          <SidebarMenuSub>
+                                            {((subItem as any).items as any[]).map((subSubItem: any) => {
+                                              const subSubItemKey = subItemKey + subSubItem.url;
+                                              return (
+                                                <SidebarMenuSubItem key={subSubItemKey}>
+                                                  <SidebarMenuSubButton asChild className="hover:bg-sidebar-accent transition-colors duration-200 px-2 py-1.5 h-auto">
+                                                    <CustomLink href={(value.url + item.url + subItem.url + subSubItem.url).replace(/\/\//g, '/')} className="min-w-0 overflow-hidden">
+                                                      <div className="flex items-center gap-2 min-w-0">
+                                                        <div className="w-1 h-1 rounded-full bg-muted-foreground/40 flex-shrink-0" />
+                                                        <span className="text-sm text-sidebar-foreground/90 font-normal truncate">{subSubItem.title}</span>
+                                                      </div>
+                                                    </CustomLink>
+                                                  </SidebarMenuSubButton>
+                                                </SidebarMenuSubItem>
+                                              );
+                                            })}
+                                          </SidebarMenuSub>
+                                        </div>
+                                      )}
                                     </SidebarMenuSubItem>
                                   );
                                 })}
