@@ -11,6 +11,7 @@ interface ContainerSpecListProps {
     loading: boolean;
     selectedNamespace: string;
     onDelete?: (row: any, dependents?: any[]) => void;
+    onViewDetails?: (row: any) => void;
     highlightedId?: string | number | null;
     onRowClick?: (row: any) => void;
 }
@@ -20,6 +21,7 @@ export const ContainerSpecList: React.FC<ContainerSpecListProps> = ({
     loading,
     selectedNamespace,
     onDelete,
+    onViewDetails,
     highlightedId,
     onRowClick
 }) => {
@@ -98,6 +100,7 @@ export const ContainerSpecList: React.FC<ContainerSpecListProps> = ({
                     </div>
                 }
                 onDelete={handleDelete}
+                onViewDetails={onViewDetails}
                 highlightedId={highlightedId}
                 onRowClick={onRowClick}
             />

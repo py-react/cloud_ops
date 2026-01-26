@@ -12,8 +12,10 @@ import { Editor } from '@monaco-editor/react';
 import YAML from 'js-yaml';
 import { toast } from "sonner";
 import { Control, UseFormSetValue, UseFormWatch, UseFormReturn } from "react-hook-form";
+import { Tabs } from "@/components/ui/tabs";
+import { ResourceDetailView } from "../../ResourceDetailView";
 
-function jsonToYaml(obj) {
+function jsonToYaml(obj: any) {
     return YAML.dump(obj, { sortKeys: false });
 }
 
@@ -316,6 +318,7 @@ export const BasicConfig = ({ control, setValue, watch, form }: { control: Contr
 }
 
 export const AdvancedConfig = ({ control, setValue, watch, form, canEdit = true }: { control: Control<typeof defaultValues, any, typeof defaultValues>, setValue: UseFormSetValue<typeof defaultValues>, watch: UseFormWatch<typeof defaultValues>, form: UseFormReturn<typeof defaultValues, any, typeof defaultValues>, canEdit?: boolean }) => {
+    const [activeTab, setActiveTab] = useState("overview");
     // Track if update came from editor to prevent loops
     const isEditorUpdate = useRef(false);
     // Debounce toast warnings to prevent spam
@@ -435,44 +438,78 @@ export const AdvancedConfig = ({ control, setValue, watch, form, canEdit = true 
         }
     }, [setValue, control._formValues, canEdit, profileKeys, originalProfileData, knownEditableFields]);
 
+    const structuredData = useMemo(() => {
+        return {
+            name: (control._formValues.name as string) || "Unnamed Container",
+            description: control._formValues.description as string,
+            namespace: control._formValues.namespace as string,
+            image: control._formValues.image as string,
+            image_pull_policy: control._formValues.image_pull_policy as string,
+            command: Array.from(control._formValues.command || []) as string[],
+            args: Array.from(control._formValues.args || []) as string[],
+            working_dir: control._formValues.working_dir as string,
+            dynamic_attr: control._formValues.profile
+        };
+    }, [control._formValues]);
+
     return (
-        <div className="flex-1 h-[440px] ">
-            <Editor
-                height="100%"
-                width="100%"
-                defaultLanguage="yaml"
-                value={editorValue}
-                theme="vs-dark"
-                onChange={canEdit ? handleEditorChange : undefined}
-                options={{
-                    minimap: { enabled: false },
-                    fontSize: 13,
-                    lineNumbers: 'on',
-                    roundedSelection: true,
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    wordWrap: 'on',
-                    tabSize: 2,
-                    insertSpaces: true,
-                    folding: true,
-                    lineDecorationsWidth: 10,
-                    lineNumbersMinChars: 3,
-                    renderLineHighlight: 'all',
-                    selectOnLineNumbers: true,
-                    smoothScrolling: true,
-                    cursorBlinking: 'smooth',
-                    cursorSmoothCaretAnimation: 'on',
-                    padding: { top: 16, bottom: 16 },
-                    formatOnPaste: true,
-                    formatOnType: true,
-                    readOnly: !canEdit,
-                }}
-                loading={
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                        Loading editor...
+        <div className="flex-1 h-[440px] flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+                <Tabs
+                    variant="pill"
+                    tabs={[
+                        { id: "overview", label: "Overview" },
+                        { id: "yaml", label: "YAML View" }
+                    ]}
+                    activeTab={activeTab}
+                    onChange={setActiveTab}
+                />
+            </div>
+
+            <div className="flex-1 min-h-0">
+                {activeTab === "overview" ? (
+                    <ResourceDetailView data={structuredData} type="container" />
+                ) : (
+                    <div className="h-full rounded-2xl overflow-hidden border border-border/30">
+                        <Editor
+                            height="100%"
+                            width="100%"
+                            defaultLanguage="yaml"
+                            value={editorValue}
+                            theme="vs-dark"
+                            onChange={canEdit ? handleEditorChange : undefined}
+                            options={{
+                                minimap: { enabled: false },
+                                fontSize: 13,
+                                lineNumbers: 'on',
+                                roundedSelection: true,
+                                scrollBeyondLastLine: false,
+                                automaticLayout: true,
+                                wordWrap: 'on',
+                                tabSize: 2,
+                                insertSpaces: true,
+                                folding: true,
+                                lineDecorationsWidth: 10,
+                                lineNumbersMinChars: 3,
+                                renderLineHighlight: 'all',
+                                selectOnLineNumbers: true,
+                                smoothScrolling: true,
+                                cursorBlinking: 'smooth',
+                                cursorSmoothCaretAnimation: 'on',
+                                padding: { top: 16, bottom: 16 },
+                                formatOnPaste: true,
+                                formatOnType: true,
+                                readOnly: !canEdit,
+                            }}
+                            loading={
+                                <div className="flex items-center justify-center h-full text-muted-foreground">
+                                    Loading editor...
+                                </div>
+                            }
+                        />
                     </div>
-                }
-            />
+                )}
+            </div>
         </div>
-    )
-}
+    );
+};

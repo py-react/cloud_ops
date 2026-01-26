@@ -6,6 +6,7 @@ interface ViewSpecListProps {
     loading: boolean;
     selectedNamespace: string;
     onDelete?: (row: any, dependents?: any[]) => void;
+    onViewDetails?: (row: any) => void;
     highlightedId?: string | number | null;
     onRowClick?: (row: any) => void;
     control?: any;
@@ -19,6 +20,7 @@ export const ViewSpecList: React.FC<ViewSpecListProps> = ({
     loading,
     selectedNamespace,
     onDelete,
+    onViewDetails,
     highlightedId,
     onRowClick
 }) => {
@@ -29,6 +31,7 @@ export const ViewSpecList: React.FC<ViewSpecListProps> = ({
                 loading={loading}
                 selectedNamespace={selectedNamespace}
                 onDelete={onDelete}
+                onViewDetails={onViewDetails}
                 highlightedId={highlightedId}
                 onRowClick={onRowClick}
             />

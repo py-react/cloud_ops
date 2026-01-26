@@ -4447,10 +4447,64 @@
         }
       }
     },
+    "/settings/ci_cd/library/{namespace}/spec/pod/profile": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_library__namespace__spec_pod_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/library/{namespace}/spec/pod/metadata": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_library__namespace__spec_pod_metadata_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/settings/ci_cd/library/{namespace}/spec/container": {
       "get": {
         "summary": "",
         "operationId": "_settings_ci_cd_library__namespace__spec_container_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/library/{namespace}/spec/container/profile": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_library__namespace__spec_container_profile_get",
         "responses": {
           "200": {
             "description": "Successful Response",

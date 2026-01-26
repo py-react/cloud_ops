@@ -6,6 +6,7 @@ interface ViewProfileListProps {
     loading: boolean;
     selectedNamespace: string;
     onDelete?: (row: any, dependents?: any[]) => void;
+    onViewDetails?: (row: any) => void;
     type: "pod_profile" | "pod_metadata_profile";
     highlightedId?: string | number | null;
     onRowClick?: (row: any) => void;
@@ -16,6 +17,7 @@ export const ViewProfileList: React.FC<ViewProfileListProps> = ({
     loading,
     selectedNamespace,
     onDelete,
+    onViewDetails,
     type,
     highlightedId,
     onRowClick
@@ -27,6 +29,7 @@ export const ViewProfileList: React.FC<ViewProfileListProps> = ({
                 loading={loading}
                 selectedNamespace={selectedNamespace}
                 onDelete={onDelete}
+                onViewDetails={onViewDetails}
                 type={type}
                 highlightedId={highlightedId}
                 onRowClick={onRowClick}
