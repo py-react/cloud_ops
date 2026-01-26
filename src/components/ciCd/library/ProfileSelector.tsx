@@ -18,7 +18,7 @@ interface Profile {
 }
 
 interface ProfileSelectorProps {
-    profileType: "container" | "volume" | "scheduling" | "env" | "resource" | "probe" | "lifecycle";
+    profileType: "container" | "pod_profile" | "pod_metadata_profile";
     namespace: string;
     selectedIds: number[];
     onChange: (ids: number[]) => void;
@@ -28,12 +28,8 @@ interface ProfileSelectorProps {
 
 const API_ENDPOINTS = {
     container: "/api/integration/kubernetes/library/container",
-    volume: "/api/integration/kubernetes/library/volume",
-    scheduling: "/api/integration/kubernetes/library/scheduling",
-    env: "/api/integration/kubernetes/library/env",
-    resource: "/api/integration/kubernetes/library/resource",
-    probe: "/api/integration/kubernetes/library/probe",
-    lifecycle: "/api/integration/kubernetes/library/lifecycle",
+    pod_profile: "/api/integration/kubernetes/library/pod_profile",
+    pod_metadata_profile: "/api/integration/kubernetes/library/pod_metadata_profile",
 };
 
 export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
