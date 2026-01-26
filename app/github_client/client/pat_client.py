@@ -4,16 +4,19 @@ from typing import Dict, Optional
 from github import Github
 from render_relay.utils.load_settings import load_settings
 from app.db_client.db import get_session
-from app.db_client.controllers.github_pat.github_pat import get_active_pat
+from app.db_client.controllers.github_pat.github_pat import get_active_pat, get_pat
 from app.db_client.controllers.github_pat.github_pat import mark_last_used
 from app.utils.get_fernet import get_fernet
 
 logger = logging.getLogger(__name__)
 
-def _get_pat_from_db() -> Optional[str]:
-    """Retrieve and decrypt the active GitHub PAT from the database."""
+def _get_pat_from_db(pat_id: Optional[int] = None) -> Optional[str]:
+    """Retrieve and decrypt the active GitHub PAT or a specific PAT from the database."""
     with get_session() as session:
-        pat_obj = get_active_pat(session)
+        if pat_id:
+             pat_obj = get_pat(session, pat_id)
+        else:
+             pat_obj = get_active_pat(session)
         if not pat_obj:
             return None
         token_enc = pat_obj.token_encrypted
@@ -64,18 +67,19 @@ def _get_pat_from_db() -> Optional[str]:
             return None
 
 
-def get_github_client_from_pat() -> Github:
+def get_github_client_from_pat(pat_id: Optional[int] = None) -> Github:
     """Return a PyGithub Github client.
 
     Preference order:
-      1. Active PAT stored in DB (encrypted with `GITHUB_PAT_ENCRYPTION_KEY`).
-      2. `GITHUB_PAT` environment variable (legacy).
+      1. Specific PAT if pat_id provided.
+      2. Active PAT stored in DB (encrypted with `GITHUB_PAT_ENCRYPTION_KEY`).
+      3. `GITHUB_PAT` environment variable (legacy).
 
     Raises ValueError if no token is available.
     """
     settings = load_settings()
     # Try DB first
-    token = _get_pat_from_db()
+    token = _get_pat_from_db(pat_id)
     if not token:
         token = settings.get("GITHUB_PAT")
     if not token:

@@ -1,4 +1,5 @@
 from pydantic import BaseModel
 
 class CodeSourceControlType(BaseModel):
-    name: str 
+    name: str
+    pat_id: int = None 

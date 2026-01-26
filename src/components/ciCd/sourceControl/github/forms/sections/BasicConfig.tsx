@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FormControl,
   FormField,
@@ -10,9 +10,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useFieldArray } from 'react-hook-form';
-import { X, Plus, GitBranch } from 'lucide-react';
+import { X, Plus, GitBranch, Key } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/libs/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DefaultService } from '@/gingerJs_api_client';
 
 interface SectionProps {
   control: any;
@@ -35,6 +43,23 @@ const BasicConfig: React.FC<SectionProps> = ({ control }) => {
   });
 
   const [branchInput, setBranchInput] = useState('');
+  const [pats, setPats] = useState<any[]>([]);
+  const [loadingPats, setLoadingPats] = useState(false);
+
+  useEffect(() => {
+    const fetchPats = async () => {
+      setLoadingPats(true);
+      try {
+        const res = await DefaultService.apiIntegrationGithubPatGet();
+        setPats(res || []);
+      } catch (err) {
+        console.error("Failed to fetch PATs", err);
+      } finally {
+        setLoadingPats(false);
+      }
+    };
+    fetchPats();
+  }, []);
 
   const handleAddBranch = () => {
     if (!branchInput.trim()) return;
@@ -77,6 +102,45 @@ const BasicConfig: React.FC<SectionProps> = ({ control }) => {
                 className="h-10 bg-muted/30 border-border/40 focus-visible:ring-primary/20 rounded-xl"
               />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* PAT Selection */}
+      <FormField
+        control={control}
+        name="pat_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-sm font-bold text-foreground">
+              Personal Access Token
+            </FormLabel>
+            <FormDescription className="text-xs text-muted-foreground font-medium">
+              Select the PAT to use for cloning/accessing this repository
+            </FormDescription>
+            <Select
+              onValueChange={(value) => field.onChange(value === "none" ? null : parseInt(value))}
+              defaultValue={field.value ? String(field.value) : undefined}
+            >
+              <FormControl>
+                <SelectTrigger className="h-10 bg-muted/30 border-border/40 focus-visible:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder={loadingPats ? "Loading PATs..." : "Select a PAT (Optional)"} />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="none" className="text-muted-foreground italic">None (Public Repo)</SelectItem>
+                {pats.map((pat) => (
+                  <SelectItem key={pat.id} value={String(pat.id)}>
+                    <div className="flex items-center gap-2">
+                      <Key className="w-3.5 h-3.5 opacity-70" />
+                      <span className="font-medium">{pat.name}</span>
+                      {pat.active && <Badge variant="outline" className="text-[10px] h-5 px-1 py-0 border-emerald-500/30 text-emerald-600 bg-emerald-500/10">Active</Badge>}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}

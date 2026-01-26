@@ -29,7 +29,10 @@ class PATListItem(BaseModel):
     active: bool
     created_at: datetime
     last_used_at: Optional[datetime]
+    last_used_at: Optional[datetime]
     scopes: Optional[List[str]] = None
+    usage_count: int = 0
+    used_repos: List[str] = []
 
 async def validate_pat_token(token: str, required_scopes: Optional[List[str]] = None) -> List[str]:
     """
@@ -103,6 +106,24 @@ async def GET(request: Request) -> List[PATListItem]:
                 except Exception:
                     scopes_list = None
             result.append(PATListItem(id=p.id, name=p.name, active=p.active, created_at=p.created_at, last_used_at=p.last_used_at, scopes=scopes_list))
+        
+        # Enrich with usage data
+        # Fetch all CodeSourceControl entries
+        from app.db_client.controllers.code_source_control import list_code_source_controls
+        repos = list_code_source_controls(session)
+        # usage map: pat_id -> [repo_names]
+        usage_map = {}
+        for r in repos:
+            if r.pat_id:
+                if r.pat_id not in usage_map:
+                    usage_map[r.pat_id] = []
+                usage_map[r.pat_id].append(r.name)
+        
+        for item in result:
+            repos_using = usage_map.get(item.id, [])
+            item.usage_count = len(repos_using)
+            item.used_repos = repos_using
+            
         return result
 
 
@@ -145,10 +166,38 @@ async def DELETE(request: Request, id: int):
         return {"success": True}
 
 
-async def PUT(request: Request, id: int):
-    """Set PAT as active"""
+class UpdatePATRequest(BaseModel):
+    active: Optional[bool] = None
+    verify: Optional[bool] = False
+
+async def PUT(request: Request, id: int, body: Optional[UpdatePATRequest] = None):
+    """Update PAT status or verify token"""
+    
+    from app.db_client.controllers.github_pat.github_pat import update_pat, set_active_pat, get_pat
+    
     with get_session() as session:
-        pat = set_active_pat(session, id)
+        # Verification Logic
+        if body and body.verify:
+            pat = get_pat(session, id)
+            if not pat:
+                 raise HTTPException(status_code=404, detail="PAT not found")
+            f = get_fernet()
+            if not f:
+                 raise HTTPException(status_code=500, detail="Encryption key not configured")
+            try:
+                token = f.decrypt(pat.token_encrypted.encode('utf-8')).decode('utf-8')
+                # Validate
+                await validate_pat_token(token)
+                return {"success": True, "valid": True, "message": "Token is valid"}
+            except Exception as e:
+                return {"success": False, "valid": False, "message": str(e)}
+
+        if body and body.active is not None:
+            pat = update_pat(session, id, active=body.active)
+        else:
+             # Fallback to old behavior: just activate
+            pat = set_active_pat(session, id)
+            
         if not pat:
             raise HTTPException(status_code=404, detail="PAT not found")
         return {"success": True, "id": pat.id}

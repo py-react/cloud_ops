@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import useNavigate from '@/libs/navigate';
-import ManagePatsDialog from '@/components/ciCd/sourceControl/github/ManagePatsDialog';
+import { Key } from 'lucide-react';
 // Final cleanup of index.tsx - removing AddRepositoryForm import
 import { FormWizard } from '@/components/wizard/form-wizard';
 import * as z from 'zod';
@@ -46,6 +46,7 @@ import BasicRepoConfig from '@/components/ciCd/sourceControl/github/forms/sectio
 const repoSchema = z.object({
     name: z.string().min(1, 'Repository name is required'),
     branches: z.array(z.object({ value: z.string() })).min(1, 'At least one branch is required'),
+    pat_id: z.number().nullable().optional(),
 });
 
 type RepoFormData = z.infer<typeof repoSchema>;
@@ -68,7 +69,7 @@ const SourceControlPage = () => {
 
     // Modal states
     const [isAddRepoOpen, setIsAddRepoOpen] = useState(false);
-    const [editingRepo, setEditingRepo] = useState<{ name: string; branches: string[] } | null>(null);
+    const [editingRepo, setEditingRepo] = useState<{ name: string; branches: string[]; pat_id?: number | null } | null>(null);
     const [currentStep, setCurrentStep] = useState('basic');
 
     const repoSteps = [
@@ -84,10 +85,14 @@ const SourceControlPage = () => {
 
     const repoInitialValues: RepoFormData = editingRepo ? {
         name: editingRepo.name,
-        branches: editingRepo.branches.map(b => ({ value: b }))
+        branches: editingRepo.branches.map(b => ({ value: b })),
+        // Use the existing pat_id from editingRepo. 
+        // Note: editingRepo.pat_id might be null/undefined which is fine.
+        pat_id: editingRepo.pat_id
     } : {
         name: '',
         branches: [],
+        pat_id: null,
     };
 
     const handleRepoSubmit = async (data: RepoFormData) => {
@@ -97,10 +102,10 @@ const SourceControlPage = () => {
 
             const res = isEdit
                 ? await DefaultService.apiIntegrationGithubReposPut({
-                    requestBody: { name: data.name, branches: allowed_branches }
+                    requestBody: { name: data.name, branches: allowed_branches, pat_id: data.pat_id ? data.pat_id : undefined }
                 })
                 : await DefaultService.apiIntegrationGithubReposPost({
-                    requestBody: { name: data.name, branches: allowed_branches }
+                    requestBody: { name: data.name, branches: allowed_branches, pat_id: data.pat_id ? data.pat_id : undefined }
                 });
 
             const body: any = res as any;
@@ -144,8 +149,12 @@ const SourceControlPage = () => {
         }
     };
 
+    const [pats, setPats] = useState<any[]>([]);
+
     useEffect(() => {
         fetchData();
+        // Fetch PATs to display status/names
+        DefaultService.apiIntegrationGithubPatGet().then((res: any) => setPats(res)).catch(console.error);
     }, []);
 
     const handleSyncRepo = async (repoName: string) => {
@@ -246,7 +255,8 @@ const SourceControlPage = () => {
     const handleEditRepo = (repoName: string) => {
         // Get all branches for this repository
         const branches = data.allowed_branches[repoName] || [];
-        setEditingRepo({ name: repoName, branches });
+        const currentPatId = data.repo_pats ? data.repo_pats[repoName] : null;
+        setEditingRepo({ name: repoName, branches, pat_id: currentPatId });
         setIsAddRepoOpen(true);
     };
 
@@ -336,6 +346,23 @@ const SourceControlPage = () => {
             cell: (row: FlatMappedRepo) => row.permissionInfo
         },
         {
+            header: 'Credentials',
+            accessor: 'credentials',
+            cell: (row: FlatMappedRepo) => {
+                const patId = data?.repo_pats ? data.repo_pats[row.repository] : null;
+                if (!patId) return <Badge variant="outline" className="text-muted-foreground text-[10px]">Active PAT (Default)</Badge>;
+
+                const pat = pats.find(p => p.id === patId);
+                return (
+                    <div className="flex items-center gap-1.5">
+                        <Key className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-[11px] font-medium text-foreground">{pat ? pat.name : 'Unknown PAT'}</span>
+                        {pat && !pat.active && <Badge variant="destructive" className="h-4 px-1 text-[9px]">Inactive</Badge>}
+                    </div>
+                )
+            }
+        },
+        {
             header: 'Actions',
             accessor: 'actions',
             cell: (row: FlatMappedRepo) => (
@@ -418,7 +445,6 @@ const SourceControlPage = () => {
                         <Plus className="w-3.5 h-3.5 mr-1" />
                         Add Repository
                     </Button>
-                    <ManagePatsDialog />
                 </div>
             </div>
 

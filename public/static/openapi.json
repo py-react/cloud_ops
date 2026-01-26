@@ -2771,7 +2771,7 @@
     "/api/integration/github/polling/access": {
       "get": {
         "summary": "",
-        "description": "Access-check route for a configured repo.\n\nUses the active PAT to perform read checks on repository, PRs, comments and\ncollaborator permission for posting comments. Implementation uses the\nPyGithub SDK for repository/pull/comment/permission checks and a single\nshort httpx call to fetch `X-OAuth-Scopes` because PyGithub doesn't expose\nthat header.",
+        "description": "Access-check route for a configured repo.\nUses the configured PAT for the repo (or active/fallback) to perform checks.",
         "operationId": "_api_integration_github_polling_access_get",
         "parameters": [
           {
@@ -2915,7 +2915,7 @@
       },
       "put": {
         "summary": "",
-        "description": "Set PAT as active",
+        "description": "Update PAT status or verify token",
         "operationId": "_api_integration_github_pat_put",
         "parameters": [
           {
@@ -2928,6 +2928,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdatePATRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -5213,6 +5230,25 @@
       "get": {
         "summary": "",
         "operationId": "_settings_ci_cd_library__namespace__spec_pod_metadata_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/ci_cd/library/{namespace}/spec/pats": {
+      "get": {
+        "summary": "",
+        "description": "Server-side rendering or logic for the Personal Access Tokens management page.",
+        "operationId": "_settings_ci_cd_library__namespace__spec_pats_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -9465,6 +9501,19 @@
               }
             ],
             "title": "Scopes"
+          },
+          "usage_count": {
+            "type": "integer",
+            "title": "Usage Count",
+            "default": 0
+          },
+          "used_repos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Used Repos",
+            "default": []
           }
         },
         "type": "object",
@@ -9714,6 +9763,22 @@
             "title": "Allowed Branches",
             "description": "Allowed branches per repo"
           },
+          "repo_pats": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Repo Pats",
+            "description": "Map of repo name to PAT ID",
+            "default": {}
+          },
           "builds": {
             "additionalProperties": {
               "additionalProperties": {
@@ -9896,6 +9961,18 @@
             "type": "array",
             "title": "Branches",
             "description": "List of branches to monitor"
+          },
+          "pat_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pat Id",
+            "description": "ID of the PAT to use for this repository"
           }
         },
         "type": "object",
@@ -11483,6 +11560,35 @@
         },
         "type": "object",
         "title": "UpdateDockerConfig"
+      },
+      "UpdatePATRequest": {
+        "properties": {
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          },
+          "verify": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verify",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "UpdatePATRequest"
       },
       "ValidationError": {
         "properties": {

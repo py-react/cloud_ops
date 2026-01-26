@@ -8,18 +8,40 @@ from github import GithubException, UnknownObjectException
 logger = get_logger("SCM Polling Access Route")
 
 
+from app.github_client.core import AllowedRepoUtils
+
 async def GET(request: Request, name: str = Query(..., description="full repo name owner/repo")) -> Dict[str, Any]:
     """
     Access-check route for a configured repo.
-
-    Uses the active PAT to perform read checks on repository, PRs, comments and
-    collaborator permission for posting comments. Implementation uses the
-    PyGithub SDK for repository/pull/comment/permission checks and a single
-    short httpx call to fetch `X-OAuth-Scopes` because PyGithub doesn't expose
-    that header.
+    Uses the configured PAT for the repo (or active/fallback) to perform checks.
     """
     try:
-        gh = get_github_client_from_pat()
+        utils = AllowedRepoUtils()
+        # We need to find the pat_id for the given repo "name".
+        # AllowedRepoUtils.get_repository returns dict with repo_id/branches but currently not pat_id, 
+        # or we can use internal session to query.
+        # Let's inspect get_all or query directly.
+        # Since AllowedRepoUtils has a session, let's use a helper or query.
+        # Since we don't want to modify AllowedRepoUtils excessively if not needed,
+        # we can just use `get_all` which now returns REPO_PATS.
+        
+        # Optimization: getting all might be slow if many repos. 
+        # But get_repository logic in AllowedRepoUtils is:
+        # repos = list_code_source_controls(self.session)
+        # repo = next(...)
+        
+        # Let's rely on get_all for consistency with polling endpoint, or modify AllowedRepoUtils.get_repository?
+        # Let's modify the imports and use utils.
+        
+        # For now, let's use get_all as it's cached/fast enough or just query.
+        # Actually `get_repository` in `AllowedRepoUtils` returns a dict. I should update it to return `pat_id` too?
+        # Let's update `AllowedRepoUtils.get_repository` first? No, let's just use what we have or query directly.
+        # Or simpler:
+        
+        _, _, _, repo_pats = utils.get_all()
+        pat_id = repo_pats.get(name)
+        
+        gh = get_github_client_from_pat(pat_id=pat_id)
     except Exception as e:
         logger.error(f"Failed to create PyGithub client: {e}")
         raise HTTPException(status_code=500, detail="Failed to initialize GitHub client")
