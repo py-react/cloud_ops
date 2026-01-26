@@ -129,9 +129,10 @@ class DeploymentManager:
     def list_deployments(self, namespace: Optional[str] = None) -> list:
         """
         List all deployment configs from the DB, optionally filtered by namespace.
+        Excludes hard-deleted items. Frontend handles status/soft_delete filtering.
         """
         try:
-            result = list_deployment_configs(self.session,namespace)
+            result = list_deployment_configs(self.session, namespace)
             return result
         except Exception as e:
             raise Exception(f"Unexpected error listing deployments: {str(e)}")

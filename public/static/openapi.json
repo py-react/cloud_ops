@@ -4351,7 +4351,7 @@
     "/api/integration/kubernetes/release": {
       "get": {
         "summary": "",
-        "description": "Get deployment details.",
+        "description": "Get deployment details. Returns all non-hard-deleted items.\nFrontend handles filtering by status/soft_delete.",
         "operationId": "_api_integration_kubernetes_release_get",
         "parameters": [
           {
@@ -4411,7 +4411,7 @@
       },
       "post": {
         "summary": "",
-        "description": "Create a new deployment with the specified configuration.",
+        "description": "Create a new release configuration.",
         "operationId": "_api_integration_kubernetes_release_post",
         "requestBody": {
           "required": true,
@@ -4446,7 +4446,7 @@
       },
       "put": {
         "summary": "",
-        "description": "Update an existing deployment with new configuration.",
+        "description": "Update an existing release configuration.",
         "operationId": "_api_integration_kubernetes_release_put",
         "requestBody": {
           "required": true,
@@ -7044,16 +7044,69 @@
             "type": "string",
             "title": "Deployment Name"
           },
-          "tag": {
+          "status": {
             "type": "string",
+            "title": "Status",
+            "default": "active"
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Tag"
           },
+          "required_source_control": {
+            "type": "boolean",
+            "title": "Required Source Control",
+            "default": false
+          },
           "code_source_control_name": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Code Source Control Name"
           },
+          "source_control_branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Control Branch"
+          },
+          "derived_deployment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived Deployment Id"
+          },
           "deployment_strategy_id": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Deployment Strategy Id"
           },
           "replicas": {
@@ -7242,10 +7295,7 @@
         "required": [
           "type",
           "namespace",
-          "deployment_name",
-          "tag",
-          "code_source_control_name",
-          "deployment_strategy_id"
+          "deployment_name"
         ],
         "title": "DeploymentConfigType"
       },

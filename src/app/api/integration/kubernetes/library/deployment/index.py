@@ -9,7 +9,10 @@ from fastapi.responses import JSONResponse
 async def GET(request: Request, namespace: str):
     with get_session() as session:
         deployments = list_deployments(session, namespace)
-        return [p.dict() for p in deployments]
+        return {
+            "status": "success",
+            "data": [p.dict() for p in deployments]
+        }
 
 async def POST(request: Request, body: K8sDeployment):
     with get_session() as session:

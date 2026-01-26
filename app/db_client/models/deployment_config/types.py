@@ -147,9 +147,13 @@ class DeploymentConfigType(BaseModel):
     type: str
     namespace: str
     deployment_name: str
-    tag: str
-    code_source_control_name: str
-    deployment_strategy_id: int
+    status: str = "active"  # active or inactive
+    tag: Optional[str] = None  # Optional since it comes from derived deployment
+    required_source_control: bool = False
+    code_source_control_name: Optional[str] = None
+    source_control_branch: Optional[str] = None
+    derived_deployment_id: Optional[int] = None
+    deployment_strategy_id: Optional[int] = None  # Optional, not needed for release configs
     replicas: Optional[int] = 1
     
     # NEW: Reusable Profile IDs (preferred approach)

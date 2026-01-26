@@ -5,102 +5,100 @@ from typing import List, Optional
 from datetime import datetime
 from sqlalchemy import or_
 
-def create_deployment_config(session: Session, data: DeploymentConfigType) -> DeploymentConfigType:
-    # Exclude non-DB fields and relationships
-    return data
-    # exclude_fields = {
-    #     "containers", "volumes", "node_selector", "tolerations", "affinity",
-    #     "container_profile_ids", "volume_profile_ids", "scheduling_profile_id"
-    # }
+def create_deployment_config(session: Session, data: DeploymentConfigType) -> DeploymentConfig:
+    """
+    Create a new release configuration in the database.
+    Release configs now store metadata only (name, type, source control, deployment reference).
+    """
+    # Create the deployment config object with all fields from the type
+    obj = DeploymentConfig(
+        type=data.type,
+        namespace=data.namespace,
+        deployment_name=data.deployment_name,
+        status=data.status or "active",
+        tag=data.tag,  # Optional now
+        required_source_control=data.required_source_control,
+        code_source_control_name=data.code_source_control_name,
+        source_control_branch=data.source_control_branch,
+        derived_deployment_id=data.derived_deployment_id,
+        deployment_strategy_id=data.deployment_strategy_id,  # Optional now
+        replicas=data.replicas or 1,
+        soft_delete=False,
+        hard_delete=False
+    )
     
-    # # Base dict
-    # db_data = data.dict(exclude=exclude_fields)
-    
-    # # Add scalar relationships if present
-    # if data.scheduling_profile_id:
-    #     db_data["scheduling_profile_id"] = data.scheduling_profile_id
-        
-    # obj = DeploymentConfig(**db_data)
-    # session.add(obj)
-    # session.commit()
-    # session.refresh(obj) # Get ID
-    
-    # # Handle Many-to-Many Containers
-    # if data.container_profile_ids:
-    #     for cid in data.container_profile_ids:
-    #         link = DeploymentConfigContainer(deployment_config_id=obj.id, container_profile_id=cid)
-    #         session.add(link)
-            
-    # # Handle Many-to-Many Volumes
-    # if data.volume_profile_ids:
-    #     for vid in data.volume_profile_ids:
-    #         link = DeploymentConfigVolume(deployment_config_id=obj.id, volume_profile_id=vid)
-    #         session.add(link)
-            
-    # session.commit()
-    # session.refresh(obj)
-    # return obj
+    session.add(obj)
+    session.commit()
+    session.refresh(obj)
+    return obj
 
 def list_deployment_configs(
     session: Session,
-    namespace: str = "default",
-    include_hard_deleted: bool = False
+    namespace: str = "default"
 ) -> List[DeploymentConfig]:
-    query = select(DeploymentConfig).where(DeploymentConfig.namespace == namespace)
+    """
+    List all deployment configs, excluding hard-deleted items.
+    Filtering by status/soft_delete is handled on frontend.
+    """
+    query = select(DeploymentConfig).where(
+        DeploymentConfig.namespace == namespace,
+        DeploymentConfig.hard_delete == False  # Only exclude hard-deleted
+    )
     return session.exec(query).all()
 
 def get_deployment_config(session: Session, id: int) -> Optional[DeploymentConfig]:
     return session.get(DeploymentConfig, id)
 
-def update_deployment_config(session: Session, id: int, data: DeploymentConfigType) -> Optional[DeploymentConfigType]:
-    return data
-    # obj = session.get(DeploymentConfig, id)
-    # if not obj:
-    #     return None
-        
-    # # Exclude legacy jsonb fields and new profile id lists
-    # exclude_fields = {
-    #     "containers", "volumes", "node_selector", "tolerations", "affinity",
-    #     "container_profile_ids", "volume_profile_ids", "scheduling_profile_id"
-    # }
-    # update_data = data.dict(exclude=exclude_fields, exclude_unset=True)
+def update_deployment_config(session: Session, id: int, data: DeploymentConfigType) -> Optional[DeploymentConfig]:
+    """
+    Update an existing release configuration.
+    Only updates the fields that exist in the model.
+    """
+    obj = session.get(DeploymentConfig, id)
+    if not obj:
+        return None
     
-    # for key, value in update_data.items():
-    #     setattr(obj, key, value)
-        
-    # # Update Scheduling Profile
-    # if data.scheduling_profile_id is not None:
-    #     obj.scheduling_profile_id = data.scheduling_profile_id
-
-    # session.add(obj)
+    # Update core fields
+    if data.type is not None:
+        obj.type = data.type
+    if data.namespace is not None:
+        obj.namespace = data.namespace
+    if data.deployment_name is not None:
+        obj.deployment_name = data.deployment_name
+    if data.status is not None:
+        obj.status = data.status
     
-    # # Update Containers (Full replacement strategy)
-    # if data.container_profile_ids is not None:
-    #     # Clear existing
-    #     session.exec(delete(DeploymentConfigContainer).where(DeploymentConfigContainer.deployment_config_id == id))
-    #     # Add new
-    #     for cid in data.container_profile_ids:
-    #         link = DeploymentConfigContainer(deployment_config_id=id, container_profile_id=cid)
-    #         session.add(link)
-
-    # # Update Volumes (Full replacement strategy)
-    # if data.volume_profile_ids is not None:
-    #     # Clear existing
-    #     session.exec(delete(DeploymentConfigVolume).where(DeploymentConfigVolume.deployment_config_id == id))
-    #     # Add new
-    #     for vid in data.volume_profile_ids:
-    #         link = DeploymentConfigVolume(deployment_config_id=id, volume_profile_id=vid)
-    #         session.add(link)
-            
-    # session.commit()
-    # session.refresh(obj)
-    # return obj
+    # Update release config specific fields
+    obj.required_source_control = data.required_source_control
+    obj.code_source_control_name = data.code_source_control_name
+    obj.source_control_branch = data.source_control_branch
+    obj.derived_deployment_id = data.derived_deployment_id
+    
+    # Update optional fields
+    if data.deployment_strategy_id is not None:
+        obj.deployment_strategy_id = data.deployment_strategy_id
+    
+    # Handle delete flags if provided (for hard delete via update)
+    if hasattr(data, 'hard_delete') and data.hard_delete is not None:
+        obj.hard_delete = data.hard_delete
+        if data.hard_delete:
+            obj.deleted_at = datetime.utcnow()
+    if hasattr(data, 'soft_delete') and data.soft_delete is not None:
+        obj.soft_delete = data.soft_delete
+        if not data.soft_delete:
+            obj.deleted_at = None  # Reset deleted_at when restoring
+    
+    session.add(obj)
+    session.commit()
+    session.refresh(obj)
+    return obj
 
 def delete_deployment_config(session: Session, id: int) -> bool:
+    """Soft delete a deployment config by setting soft_delete flag."""
     obj = session.get(DeploymentConfig, id)
     if not obj:
         return False
-    obj.hard_delete = True
+    obj.soft_delete = True  # Soft delete instead of hard delete
     obj.deleted_at = datetime.utcnow()
     session.add(obj)
     session.commit()

@@ -4,43 +4,16 @@ from app.k8s_helper.deployment_with_strategy.deployment_manager import Deploymen
 from fastapi.responses import JSONResponse
 from typing import Optional
 
-def validate_deployment_config(config: DeploymentConfigType) -> None:
-    """
-    Validate the deployment configuration.
-    Raises HTTPException if validation fails.
-    """
-    if not config.containers:
-        raise HTTPException(status_code=400, detail="At least one container configuration is required")
-    
-    # Validate container configurations
-    for container in config.containers:
-        if not container.name:
-            raise HTTPException(status_code=400, detail="Container name is required")
-        
-        # Validate ports if specified
-        if container.ports:
-            port_numbers = set()
-            for port in container.ports:
-                if port.containerPort in port_numbers:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Duplicate target port {port.containerPort} in container {container.name}"
-                    )
-                port_numbers.add(port.containerPort)
-
 async def POST(request: Request, body: DeploymentConfigType):
     """
-    Create a new deployment with the specified configuration.
+    Create a new release configuration.
     """
     try:
-        # Validate deployment configuration
-        validate_deployment_config(body)
-        
         manager = DeploymentManager()
         result = manager.create_deployment(body)
         return {
                 "status": "success",
-                "message": "Deployment created successfully",
+                "message": "Release configuration created successfully",
                 "data": result
             }
     except HTTPException as he:
@@ -56,17 +29,14 @@ async def POST(request: Request, body: DeploymentConfigType):
 
 async def PUT(request: Request, body: DeploymentConfigType):
     """
-    Update an existing deployment with new configuration.
+    Update an existing release configuration.
     """
     try:
-        # Validate deployment configuration
-        validate_deployment_config(body)
-        
         manager = DeploymentManager()
         result = manager.update_deployment(body)
         return {
                 "status": "success",
-                "message": "Deployment updated successfully",
+                "message": "Release configuration updated successfully",
                 "data": result
             }
     except HTTPException as he:
@@ -100,7 +70,8 @@ async def DELETE(request: Request, namespace: str, name: str):
 
 async def GET(request: Request, namespace: Optional[str]="default", name: Optional[str]=None):
     """
-    Get deployment details.
+    Get deployment details. Returns all non-hard-deleted items.
+    Frontend handles filtering by status/soft_delete.
     """
     try:
         manager = DeploymentManager()
@@ -109,9 +80,9 @@ async def GET(request: Request, namespace: Optional[str]="default", name: Option
         else:
             result = manager.get_deployment(name=name, namespace=namespace)
         return {
-                "status": "success",
-                "data": result
-            }
+            "status": "success",
+            "data": result
+        }
     except Exception as e:
         return JSONResponse(
             content={"status": "error", "message": str(e)},

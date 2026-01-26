@@ -15,41 +15,33 @@ export interface DeploymentFormData extends Omit<DeploymentConfigType, 'node_sel
 }
 
 export const releaseFormSchema = z.object({
+  deployment_name: z.string().min(1, 'Release config name is required'),
   type: z.string().min(1, 'Type is required'),
+  required_source_control: z.boolean().default(false),
+  code_source_control_name: z.string().optional().nullable(),
+  source_control_branch: z.string().optional().nullable(),
+  derived_deployment_id: z.number().nullable().optional(),
   namespace: z.string().min(1, 'Namespace is required'),
-  deployment_name: z.string().min(1, 'Deployment name is required'),
-  tag: z.string().min(1, 'Tag is required'),
-  code_source_control_name: z.string().min(1, 'Source control name is required'),
-  deployment_strategy_id: z.number(),
-  replicas: z.number().min(0).default(1),
-
-  // NEW: Reusable Profile IDs
-  container_profile_ids: z.array(z.number()).optional().nullable(),
-  volume_profile_ids: z.array(z.number()).optional().nullable(),
-  scheduling_profile_id: z.number().optional().nullable(),
-
-  // Legacy: Direct embedded config (now optional)
-  containers: z.array(z.object({
-    name: z.string().min(1, 'Container name is required'),
-    image: z.string().optional(),
-    env: z.array(z.any()).optional().nullable(),
-    ports: z.array(z.any()).optional().nullable(),
-    resources: z.object({
-      requests: z.record(z.string()).optional(),
-      limits: z.record(z.string()).optional(),
-    }).optional().nullable(),
-  })).optional().nullable(),
-  service_ports: z.array(z.object({
-    port: z.number(),
-    target_port: z.number(),
-    protocol: z.enum(["TCP", "UDP", "SCTP"]),
-  })).optional().nullable(),
-  labels: z.record(z.string()).optional().nullable(),
-  annotations: z.record(z.string()).optional().nullable(),
-  node_selector: z.record(z.string()).optional().nullable(),
-  tolerations: z.array(z.any()).optional().nullable(),
-  affinity: z.any().optional().nullable(),
-  volumes: z.array(z.any()).optional().nullable(),
+}).refine((data) => {
+  // Ensure derived_deployment_id is selected
+  if (!data.derived_deployment_id || data.derived_deployment_id === 0) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Derived deployment is required',
+  path: ['derived_deployment_id'],
+}).refine((data) => {
+  // If required_source_control is true, then code_source_control_name and branch must be provided
+  if (data.required_source_control) {
+    const hasRepo = !!data.code_source_control_name && data.code_source_control_name.length > 0;
+    const hasBranch = !!data.source_control_branch && data.source_control_branch.length > 0;
+    return hasRepo && hasBranch;
+  }
+  return true;
+}, {
+  message: 'Source control and branch are required when "Required Source Control" is enabled',
+  path: ['code_source_control_name'],
 });
 
 // Type guards for affinity components
