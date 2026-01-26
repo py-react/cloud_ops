@@ -5,8 +5,10 @@ interface ViewProfileListProps {
     profiles: any[];
     loading: boolean;
     selectedNamespace: string;
-    onDelete?: () => void;
+    onDelete?: (row: any, dependents?: any[]) => void;
     type: "pod_profile" | "pod_metadata_profile";
+    highlightedId?: string | number | null;
+    onRowClick?: (row: any) => void;
 }
 
 export const ViewProfileList: React.FC<ViewProfileListProps> = ({
@@ -14,7 +16,9 @@ export const ViewProfileList: React.FC<ViewProfileListProps> = ({
     loading,
     selectedNamespace,
     onDelete,
-    type
+    type,
+    highlightedId,
+    onRowClick
 }) => {
     return (
         <div className="h-full">
@@ -24,6 +28,8 @@ export const ViewProfileList: React.FC<ViewProfileListProps> = ({
                 selectedNamespace={selectedNamespace}
                 onDelete={onDelete}
                 type={type}
+                highlightedId={highlightedId}
+                onRowClick={onRowClick}
             />
         </div>
     );

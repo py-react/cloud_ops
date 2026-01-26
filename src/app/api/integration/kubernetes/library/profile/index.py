@@ -17,6 +17,27 @@ async def POST(request: Request):
         return profile.dict()
 
 
-async def DELETE(request:Request,id:int):
+from sqlmodel import select
+from app.db_client.models.kubernetes_profiles.container import K8sContainerProfile
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+async def DELETE(request: Request, id: int):
     with get_session() as session:
-        return delete_profile(session,id)
+        # Check for dependencies in K8sContainerProfile
+        # Container Specs are used in Derived Containers. 
+        # But wait, looking at pod.py earlier, containers were IDs of K8sContainerProfile.
+        # So we check if anyone uses this entity profile.
+        
+        # Check against K8sContainerProfile.dynamic_attr (JSONB)
+        # and K8sContainerProfile itself if linked.
+        # Actually, ContainerSpecs are the "Profiles" used by Derived Containers.
+        
+        all_derived = session.exec(select(K8sContainerProfile)).all()
+        dependents = [c for c in all_derived if any(val == id for val in (c.dynamic_attr or {}).values())]
+        
+        if dependents:
+            dependent_data = [{"id": c.id, "name": c.name, "type": "container"} for c in dependents]
+            return JSONResponse(status_code=409, content={"detail": {"dependents": dependent_data}})
+            
+        return delete_profile(session, id)

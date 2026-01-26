@@ -52,6 +52,8 @@ interface ResourceTableProps<T> {
   icon?: React.ReactNode;
   extraHeaderContent?: React.ReactNode;
   loading?: boolean;
+  highlightedId?: string | number | null;
+  onRowClick?: (row: T) => void;
 }
 
 // Default all ResourceTableActionProps to true if not provided
@@ -66,7 +68,7 @@ function withDefaultActionProps<T>(row: T & ResourceTableActionProps): T & Requi
     showEdit: row.showEdit !== undefined ? row.showEdit : true,
     showDelete: row.showDelete !== undefined ? row.showDelete : true,
     showClone: row.showClone !== undefined ? row.showClone : true,
-    showUndo: row.showClone !== undefined ? row.showClone : true,
+    showUndo: row.showUndo !== undefined ? row.showUndo : true,
     showPush: row.showPush !== undefined ? row.showPush : true,
     ...row,
   };
@@ -97,6 +99,8 @@ export function ResourceTable<T>({
   icon,
   extraHeaderContent,
   loading,
+  highlightedId,
+  onRowClick,
 }: ResourceTableProps<T>) {
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -293,12 +297,16 @@ export function ResourceTable<T>({
               data.map((row, index) => {
                 const rowWithDefaults = withDefaultActionProps(row);
                 const isSelected = selectedIds.has(index);
+                const isHighlighted = highlightedId !== undefined && highlightedId !== null && (row as any).id == highlightedId;
+
                 return (
                   <TableRow
                     className={cn(
                       'group transition-all duration-300 animate-slide-in-up border-border/20',
-                      isSelected ? 'bg-primary/5' : 'hover:bg-muted/30'
+                      isSelected ? 'bg-primary/5' : 'hover:bg-muted/30',
+                      isHighlighted && 'animate-row-highlight'
                     )}
+                    onClick={() => onRowClick && onRowClick(row)}
                     style={{ animationDelay: `${index * 40}ms` }}
                     key={index}
                   >

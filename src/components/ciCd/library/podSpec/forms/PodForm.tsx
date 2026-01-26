@@ -6,7 +6,7 @@ import { ProfileSelector } from "@/components/ciCd/library/ProfileSelector";
 import { DefaultService } from "@/gingerJs_api_client";
 import Editor from "@monaco-editor/react";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Info, Cpu, Box } from "lucide-react";
+import { X, Plus, Info, Cpu, Box, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequiredBadge } from "@/components/docker/network/forms/badges";
 import { cn } from "@/libs/utils";
@@ -116,7 +116,17 @@ export const PodForm = ({ control, setValue, watch, namespace }: { control: any;
                                         "font-mono text-xs font-semibold"
                                     )}
                                 >
-                                    <span>{key}: {getProfileName(dynamicAttr[key])}</span>
+                                    <span
+                                        className="cursor-pointer hover:underline flex items-center gap-1"
+                                        onClick={() => {
+                                            const url = `${window.location.pathname}?focusId=${dynamicAttr[key]}&resourceType=pod_profile&autoOpen=true`;
+                                            window.open(url, "_blank");
+                                        }}
+                                    >
+                                        {key}: {getProfileName(dynamicAttr[key])}
+                                        <ExternalLink className="h-3 w-3 opacity-60" />
+                                    </span>
+                                    <div className="w-px h-3 bg-primary/20 mx-0.5" />
                                     <button
                                         type="button"
                                         onClick={() => {

@@ -8,7 +8,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, ExternalLink } from "lucide-react";
 
 interface Profile {
     id: number;
@@ -91,10 +91,20 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
             {selectedProfiles.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-2">
                     {selectedProfiles.map((profile) => (
-                        <Badge key={profile.id} variant="secondary" className="gap-1">
-                            {profile.name}
+                        <Badge key={profile.id} variant="secondary" className="gap-1.5 pl-2 pr-1 h-7">
+                            <span
+                                className="cursor-pointer hover:text-primary transition-colors flex items-center gap-1"
+                                onClick={() => {
+                                    const url = `${window.location.pathname}?focusId=${profile.id}&resourceType=${profileType}&autoOpen=true`;
+                                    window.open(url, "_blank");
+                                }}
+                            >
+                                {profile.name}
+                                <ExternalLink className="h-3 w-3 opacity-60" />
+                            </span>
+                            <div className="w-px h-3 bg-border/50 mx-0.5" />
                             <X
-                                className="h-3 w-3 cursor-pointer"
+                                className="h-3.5 w-3.5 cursor-pointer hover:text-destructive transition-colors"
                                 onClick={() => handleRemove(profile.id)}
                             />
                         </Badge>

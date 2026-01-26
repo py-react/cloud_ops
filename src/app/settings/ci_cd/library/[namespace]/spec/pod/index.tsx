@@ -13,6 +13,8 @@ import { PodForm, PodAdvancedConfig } from "@/components/ciCd/library/podSpec/fo
 import { PodSettingsForm } from "@/components/ciCd/library/podSpec/forms/PodSettingsForm";
 import { ViewProfileList } from "@/components/ciCd/library/podSpec/forms/ViewProfileList";
 import { DefaultService } from "@/gingerJs_api_client";
+import { useResourceLink } from "@/hooks/useResourceLink";
+import { DeleteDependencyDialog } from "@/components/ciCd/library/podSpec/DeleteDependencyDialog";
 
 const profileSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -97,11 +99,48 @@ function PodLibrary() {
         share_process_namespace: undefined
     });
 
+    // Conflict/Dependency state
+    const [conflictDialog, setConflictDialog] = useState<{
+        isOpen: boolean;
+        resourceName: string;
+        resourceType: string;
+        dependents: any[];
+    }>({
+        isOpen: false,
+        resourceName: "",
+        resourceType: "",
+        dependents: []
+    });
+
+    const { highlightedId, resourceType, focusId, autoOpen, clearFocus } = useResourceLink();
+
     useEffect(() => {
         fetchPods();
         fetchPodProfiles();
         fetchMetadataProfiles();
     }, [selectedNamespace]);
+
+    // Handle Deep Linking / Auto-open
+    useEffect(() => {
+        if (!autoOpen || !focusId || !resourceType) return;
+
+        if (resourceType === "pod" && pods.length > 0) {
+            const pod = pods.find(p => p.id == focusId);
+            if (pod) handleViewDetails(pod);
+        } else if (resourceType === "pod_profile" && podProfiles.length > 0) {
+            const profile = podProfiles.find(p => p.id == focusId);
+            if (profile) {
+                setProfileStep("config");
+                setProfileDialogOpen(true);
+            }
+        } else if (resourceType === "pod_metadata_profile" && metadataProfiles.length > 0) {
+            const profile = metadataProfiles.find(p => p.id == focusId);
+            if (profile) {
+                setMetadataStep("config");
+                setMetadataDialogOpen(true);
+            }
+        }
+    }, [autoOpen, focusId, resourceType, pods, podProfiles, metadataProfiles]);
 
     const fetchPods = async () => {
         setLoading(true);
@@ -175,9 +214,34 @@ function PodLibrary() {
             await DefaultService.apiIntegrationKubernetesLibraryPodDelete({ id: row.id });
             toast.success(`Deleted ${row.name}`);
             fetchPods();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error deleting pod:", error);
-            toast.error("Error deleting pod");
+            if (error.status === 409) {
+                const dependents = error.body?.detail?.dependents || error.body?.dependents || [];
+                setConflictDialog({
+                    isOpen: true,
+                    resourceName: row.name,
+                    resourceType: "Pod Specification",
+                    dependents: dependents
+                });
+            } else {
+                toast.error("Error deleting pod");
+            }
+        }
+    };
+
+    const handleDeleteProfile = (type: string) => (row: any, dependents?: any[]) => {
+        if (dependents && dependents.length > 0) {
+            setConflictDialog({
+                isOpen: true,
+                resourceName: row.name,
+                resourceType: type === "pod_profile" ? "Pod Profile" : "Metadata Profile",
+                dependents: dependents
+            });
+        } else {
+            // If No dependents, the ProfileList already handled successful delete
+            if (type === "pod_profile") fetchPodProfiles();
+            else fetchMetadataProfiles();
         }
     };
 
@@ -235,8 +299,10 @@ function PodLibrary() {
                     profiles={podProfiles}
                     loading={loadingProfiles}
                     selectedNamespace={selectedNamespace}
-                    onDelete={fetchPodProfiles}
+                    onDelete={handleDeleteProfile("pod_profile")}
                     type="pod_profile"
+                    highlightedId={resourceType === 'pod_profile' ? highlightedId : null}
+                    onRowClick={clearFocus}
                     {...props}
                 />;
             }
@@ -252,8 +318,10 @@ function PodLibrary() {
                     profiles={metadataProfiles}
                     loading={loadingMetadata}
                     selectedNamespace={selectedNamespace}
-                    onDelete={fetchMetadataProfiles}
+                    onDelete={handleDeleteProfile("pod_metadata_profile")}
                     type="pod_metadata_profile"
+                    highlightedId={resourceType === 'pod_metadata_profile' ? highlightedId : null}
+                    onRowClick={clearFocus}
                     {...props}
                 />;
             }
@@ -346,6 +414,8 @@ function PodLibrary() {
                 selectedNamespace={selectedNamespace}
                 onDelete={handleDeletePod}
                 onViewDetails={handleViewDetails}
+                highlightedId={resourceType === 'pod' ? highlightedId : null}
+                onRowClick={clearFocus}
             />
 
             <FormWizard
@@ -443,6 +513,14 @@ function PodLibrary() {
                     icon: Box,
                 }}
                 hideActions={true}
+            />
+
+            <DeleteDependencyDialog
+                isOpen={conflictDialog.isOpen}
+                onClose={() => setConflictDialog(prev => ({ ...prev, isOpen: false }))}
+                resourceName={conflictDialog.resourceName}
+                resourceType={conflictDialog.resourceType}
+                dependents={conflictDialog.dependents}
             />
         </div>
     );

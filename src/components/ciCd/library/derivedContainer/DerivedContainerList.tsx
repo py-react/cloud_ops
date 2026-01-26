@@ -6,8 +6,10 @@ interface DerivedContainerListProps {
     profiles: any[];
     loading: boolean;
     selectedNamespace: string;
-    onDelete?: (row: any) => void;
+    onDelete?: (row: any, dependents?: any[]) => void;
     onViewDetails?: (row: any) => void;
+    highlightedId?: string | number | null;
+    onRowClick?: (row: any) => void;
 }
 
 export const DerivedContainerList: React.FC<DerivedContainerListProps> = ({
@@ -15,7 +17,9 @@ export const DerivedContainerList: React.FC<DerivedContainerListProps> = ({
     loading,
     selectedNamespace,
     onDelete,
-    onViewDetails
+    onViewDetails,
+    highlightedId,
+    onRowClick
 }) => {
     return (
         <div className="flex-1 min-h-0 mt-10">
@@ -37,6 +41,8 @@ export const DerivedContainerList: React.FC<DerivedContainerListProps> = ({
                     command: <Chips list={Array.isArray(profile.command) ? profile.command : []} />,
                 }))}
                 onViewDetails={onViewDetails}
+                highlightedId={highlightedId}
+                onRowClick={onRowClick}
             />
         </div>
     );

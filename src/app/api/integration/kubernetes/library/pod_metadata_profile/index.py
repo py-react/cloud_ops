@@ -16,6 +16,19 @@ async def POST(request: Request, body: K8sPodMetaDataProfile):
         profile = create_profile(session, body.dict())
         return profile.dict()
 
+from sqlmodel import select
+from app.db_client.models.kubernetes_profiles.pod import K8sPod
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
 async def DELETE(request: Request, id: int):
     with get_session() as session:
+        # Check for dependencies in K8sPod
+        stmt = select(K8sPod).where(K8sPod.metadata_profile_id == id)
+        dependents = session.exec(stmt).all()
+        
+        if dependents:
+            dependent_data = [{"id": p.id, "name": p.name, "type": "pod"} for p in dependents]
+            return JSONResponse(status_code=409, content={"detail": {"dependents": dependent_data}})
+            
         return delete_profile(session, id)
