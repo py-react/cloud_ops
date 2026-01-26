@@ -6,14 +6,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  FileCog, 
-  SlidersHorizontal, 
-  RefreshCw, 
-  Plus, 
-  FileText, 
-  CheckCircle, 
-  XCircle, 
+import {
+  FileCog,
+  SlidersHorizontal,
+  RefreshCw,
+  Plus,
+  FileText,
+  CheckCircle,
+  XCircle,
   Trash2,
   Layers,
   Container,
@@ -51,7 +51,7 @@ interface ComposableDeploymentFormData {
   code_source_control_name: string;
   deployment_strategy_id: number;
   replicas: number;
-  
+
   // Composable modules
   container_profile_ids: string[];
   volume_profile_ids: string[];
@@ -60,7 +60,7 @@ interface ComposableDeploymentFormData {
   probe_profile_ids: string[];
   env_profile_ids: string[];
   lifecycle_profile_ids: string[];
-  
+
   // Legacy fields for compatibility
   labels: Record<string, string>;
   annotations: Record<string, string>;
@@ -95,7 +95,7 @@ const EnhancedReleaseConfigPage = () => {
     code_source_control_name: '',
     deployment_strategy_id: 1,
     replicas: 1,
-    
+
     // Composable modules
     container_profile_ids: [],
     volume_profile_ids: [],
@@ -104,7 +104,7 @@ const EnhancedReleaseConfigPage = () => {
     probe_profile_ids: [],
     env_profile_ids: [],
     lifecycle_profile_ids: [],
-    
+
     // Legacy compatibility
     labels: {},
     annotations: {},
@@ -171,7 +171,7 @@ const EnhancedReleaseConfigPage = () => {
   const handleWizardSubmit = async (data: ComposableDeploymentFormData) => {
     try {
       const isEdit = !!editingConfig?.deployment_name;
-      
+
       // Calculate module count for display
       const moduleCount = [
         data.container_profile_ids,
@@ -192,7 +192,7 @@ const EnhancedReleaseConfigPage = () => {
       const response: any = isEdit
         ? await DefaultService.apiIntegrationKubernetesReleasePut({ requestBody: enhancedData })
         : await DefaultService.apiIntegrationKubernetesReleasePost({ requestBody: enhancedData });
-      
+
       if (response.success) {
         toast.success(isEdit ? "Release configuration updated!" : "Release configuration created!");
         setAddDialogOpen(false);
@@ -231,7 +231,7 @@ const EnhancedReleaseConfigPage = () => {
           // image: "specific-image:tag", // Example runtime override
         }
       });
-      
+
       if (response.success) {
         toast.success("Deployment initiated successfully!");
         navigate(`/${selectedNamespace}/deployments`);
@@ -291,13 +291,12 @@ const EnhancedReleaseConfigPage = () => {
         </div>
         <div className="flex items-center gap-2 mb-1">
           <NamespaceSelector />
-          <Button variant="outline" size="sm" onClick={fetchDeployments}>
+          <Button variant="outline" onClick={fetchDeployments}>
             <RefreshCw className="w-3.5 h-3.5 mr-2" />
             Refresh
           </Button>
           <Button
             variant="gradient"
-            size="sm"
             onClick={() => setAddDialogOpen(true)}
           >
             <Plus className="w-3.5 h-3.5 mr-1" />
@@ -314,7 +313,7 @@ const EnhancedReleaseConfigPage = () => {
           <TabsTrigger value="modules">All Modules</TabsTrigger>
           <TabsTrigger value="compose">Compose</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="list" className="flex-1 mt-0">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -327,14 +326,14 @@ const EnhancedReleaseConfigPage = () => {
                   <Badge variant="destructive">{moduleStats.deleted} deleted</Badge>
                 </div>
               </div>
-              <ReleaseConfigFilters 
-                search={search} 
+              <ReleaseConfigFilters
+                search={search}
                 setSearch={setSearch}
                 deleteFilter={deleteFilter}
                 setDeleteFilter={setDeleteFilter}
               />
             </div>
-            
+
             <ResourceTable
               columns={columns}
               data={filteredDeployments}
@@ -352,7 +351,7 @@ const EnhancedReleaseConfigPage = () => {
             />
           </div>
         </TabsContent>
-        
+
         <TabsContent value="containers" className="flex-1 mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card>
@@ -365,7 +364,7 @@ const EnhancedReleaseConfigPage = () => {
                 <p className="text-xs text-muted-foreground">Available profiles</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">In Use</CardTitle>
@@ -376,7 +375,7 @@ const EnhancedReleaseConfigPage = () => {
                 <p className="text-xs text-muted-foreground">Deployed configurations</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Recent Updates</CardTitle>
@@ -389,7 +388,7 @@ const EnhancedReleaseConfigPage = () => {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="volumes" className="flex-1 mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card>
@@ -402,7 +401,7 @@ const EnhancedReleaseConfigPage = () => {
                 <p className="text-xs text-muted-foreground">Persistent volumes</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">ConfigMaps</CardTitle>
@@ -413,7 +412,7 @@ const EnhancedReleaseConfigPage = () => {
                 <p className="text-xs text-muted-foreground">Configuration files</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
@@ -426,7 +425,7 @@ const EnhancedReleaseConfigPage = () => {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="modules" className="flex-1 mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
@@ -439,7 +438,7 @@ const EnhancedReleaseConfigPage = () => {
                 <p className="text-xs text-muted-foreground">Resource profiles</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Probes</CardTitle>
@@ -450,7 +449,7 @@ const EnhancedReleaseConfigPage = () => {
                 <p className="text-xs text-muted-foreground">Health checks</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Scheduling</CardTitle>
@@ -461,7 +460,7 @@ const EnhancedReleaseConfigPage = () => {
                 <p className="text-xs text-muted-foreground">Node affinity rules</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Environment</CardTitle>
@@ -474,14 +473,14 @@ const EnhancedReleaseConfigPage = () => {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="compose" className="flex-1 mt-0">
           <div className="flex items-center justify-center h-full">
             <div className="text-center space-y-4">
               <Layers className="h-12 w-12 mx-auto text-muted-foreground" />
               <h3 className="text-lg font-semibold">Visual Composer</h3>
               <p className="text-muted-foreground max-w-md">
-                Drag and drop interface for visual composition of Kubernetes modules. 
+                Drag and drop interface for visual composition of Kubernetes modules.
                 Coming soon in the next release.
               </p>
               <Button variant="outline" onClick={() => setAddDialogOpen(true)}>
@@ -500,7 +499,7 @@ const EnhancedReleaseConfigPage = () => {
               {editingConfig?.deployment_name ? "Edit Enhanced Release Config" : "Create Enhanced Release Config"}
             </DialogTitle>
           </DialogHeader>
-          
+
           <FormWizard
             name="enhanced-release-config"
             isWizardOpen={addDialogOpen}

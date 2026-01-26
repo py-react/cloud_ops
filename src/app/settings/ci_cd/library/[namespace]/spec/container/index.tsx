@@ -213,8 +213,8 @@ function ContainerSpec() {
         setEditingId(row.id);
         const transformedContainer = {
             ...row,
-            args: row.args || [],
-            command: row.command || [],
+            args: new Set(row.args || []),
+            command: new Set(row.command || []),
             profile: Object.keys(row.dynamic_attr || {}).reduce((acc, key) => {
                 acc[key] = profiles.find(p => p.id === row.dynamic_attr[key]);
                 return acc;
@@ -305,14 +305,14 @@ function ContainerSpec() {
                 </div>
                 <div className="flex items-center gap-2 mb-1">
                     <NamespaceSelector />
-                    <Button variant="outline" size="sm" onClick={() => {
+                    <Button variant="outline" onClick={() => {
                         fetchContainerSpecs();
                         fetchPodSpecs();
                     }}>
                         <RefreshCw className="w-3.5 h-3.5 mr-2" />
                         Refresh
                     </Button>
-                    <Button variant="gradient" size="sm" onClick={() => {
+                    <Button variant="gradient" onClick={() => {
                         setEditMode(false);
                         setEditingId(null);
                         setContainerViewInitialValues({

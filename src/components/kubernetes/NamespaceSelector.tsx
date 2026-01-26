@@ -2,11 +2,12 @@ import React, { useEffect, useContext, useState } from "react";
 import { NamespaceContext } from "./contextProvider/NamespaceContext";
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
-import { 
-  Check, 
+import {
+  Check,
   ChevronsUpDown,
   Folder,
 } from 'lucide-react';
+import { cn } from "src/libs/utils";
 
 import {
   Command,
@@ -24,7 +25,13 @@ interface Namespace {
   };
 }
 
-export function NamespaceSelector() {
+interface NamespaceSelectorProps {
+  size?: "default" | "sm" | "lg" | "xl" | "icon" | "icon-sm" | "icon-lg";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "gradient" | "glow" | "subtle";
+  className?: string;
+}
+
+export function NamespaceSelector({ size = "default", variant = "outline", className }: NamespaceSelectorProps) {
   const {
     isLoading,
     namespaces,
@@ -45,7 +52,7 @@ export function NamespaceSelector() {
   // Filter namespaces based on search term
   const filteredNamespaces = ([{ metadata: { name: "All" } }] as Namespace[])
     .concat(namespaces || [])
-    .filter(namespace => 
+    .filter(namespace =>
       namespace.metadata.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -66,9 +73,10 @@ export function NamespaceSelector() {
     >
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant={variant}
           role="combobox"
-          className="w-[260px] justify-between rounded-[0.5rem]"
+          size={size}
+          className={cn("w-[260px] justify-between rounded-[0.5rem]", className)}
         >
           <div className="flex items-center gap-2 truncate">
             <Folder className="h-4 w-4 shrink-0" />

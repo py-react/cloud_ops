@@ -408,13 +408,12 @@ const ReleaseConfigDetailedInfo = () => {
           </div>
         </div>
         <div className="flex items-center gap-2 mb-1">
-          <Button variant="outline" size="sm" onClick={fetchConfigData}>
+          <Button variant="outline" onClick={fetchConfigData}>
             <RefreshCw className="w-3.5 h-3.5 mr-2" />
             Sync Config
           </Button>
           <Button
             variant="gradient"
-            size="sm"
             onClick={() => setCreateRun(true)}
           >
             <Play className="w-3.5 h-3.5 mr-1" />

@@ -89,9 +89,7 @@ async def validate_pat_token(token: str, required_scopes: Optional[List[str]] = 
 
 
 async def GET(request: Request) -> List[PATListItem]:
-    session_gen = get_session()
-    session = next(session_gen)
-    try:
+    with get_session() as session:
         pats = list_pats(session)
         result = []
         for p in pats:
@@ -106,8 +104,6 @@ async def GET(request: Request) -> List[PATListItem]:
                     scopes_list = None
             result.append(PATListItem(id=p.id, name=p.name, active=p.active, created_at=p.created_at, last_used_at=p.last_used_at, scopes=scopes_list))
         return result
-    finally:
-        session_gen.close()
 
 
 async def POST(request: Request, body: CreatePATRequest):
@@ -124,9 +120,7 @@ async def POST(request: Request, body: CreatePATRequest):
         logger.error(f"Failed to encrypt token: {e}")
         raise HTTPException(status_code=500, detail="Encryption failed")
 
-    session_gen = get_session()
-    session = next(session_gen)
-    try:
+    with get_session() as session:
         # store scopes as comma-separated string for now
         scopes_str = None
         try:
@@ -141,30 +135,20 @@ async def POST(request: Request, body: CreatePATRequest):
         if body.active:
             set_active_pat(session, pat.id)
         return {"success": True, "id": pat.id}
-    finally:
-        session_gen.close()
 
 
 async def DELETE(request: Request, id: int):
-    session_gen = get_session()
-    session = next(session_gen)
-    try:
+    with get_session() as session:
         ok = delete_pat(session, id)
         if not ok:
             raise HTTPException(status_code=404, detail="PAT not found")
         return {"success": True}
-    finally:
-        session_gen.close()
 
 
 async def PUT(request: Request, id: int):
     """Set PAT as active"""
-    session_gen = get_session()
-    session = next(session_gen)
-    try:
+    with get_session() as session:
         pat = set_active_pat(session, id)
         if not pat:
             raise HTTPException(status_code=404, detail="PAT not found")
         return {"success": True, "id": pat.id}
-    finally:
-        session_gen.close()

@@ -155,7 +155,7 @@ const ManagePatsDialog: React.FC = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 text-xs font-medium">
+        <Button variant="outline" className="text-xs font-medium">
           <Settings2 className="w-3.5 h-3.5 mr-2" />
           Manage PATs
         </Button>

@@ -339,10 +339,21 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                 ]
               },
               {
-                title: "Deployment spec",
+                title: "Derived Deployment",
                 url: `/${selectedNamespace}/spec/deployment`,
                 icon: Layers,
-                items: []
+                items: [
+                  {
+                    title: "Specifications",
+                    url: `/profile`,
+                    icon: Settings,
+                  },
+                  {
+                    title: "Selectors",
+                    url: `/selector`,
+                    icon: Layout,
+                  },
+                ]
               },
             ]
           },

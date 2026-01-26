@@ -20,14 +20,14 @@ class DeploymentManager:
     def __init__(self, session: Optional[Session] = None):
         if session is None:
             self.session_ctx = get_session()
-            self.session = next(self.session_ctx)
+            self.session = self.session_ctx.__enter__()
         else:
             self.session = session
             self.session_ctx = None
 
     def __del__(self):
         if hasattr(self, 'session_ctx') and self.session_ctx:
-            self.session_ctx.close()
+            self.session_ctx.__exit__(None, None, None)
 
     @staticmethod
     def validate_and_sanitize_name(name: str) -> str:

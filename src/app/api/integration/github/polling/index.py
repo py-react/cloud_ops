@@ -44,25 +44,24 @@ async def GET(request: Request) -> PollingStatusResponse:
     """Return polling status and allowed repos/branches/builds."""
     utils = AllowedRepoUtils()
     settings = load_settings()
-    session_gen = get_session()
-    session = next(session_gen)
-
-    ALLOWED_REPOSITORIES, ALLOWED_BRANCHES, DEPLOYMENTS = utils.get_all()
-    builds = utils.get_last_builds_for_all_repo_branches()
-    enabled = settings.get('SCM_POLLING_ENABLED', 'false').lower() in ('1', 'true', 'yes')
-    interval = int(settings.get('SCM_POLL_INTERVAL_SECONDS', '300'))
-    pats = list_pats(session)
-    has_pat = any(p.active for p in pats)
-    return PollingStatusResponse(
-        status="healthy",
-        enabled=enabled,
-        has_pat=has_pat,
-        interval_seconds=interval,
-        allowed_repositories=ALLOWED_REPOSITORIES,
-        allowed_branches=ALLOWED_BRANCHES,
-        builds=builds,
-        timestamp=datetime.now().isoformat()
-    )
+    
+    with get_session() as session:
+        ALLOWED_REPOSITORIES, ALLOWED_BRANCHES, DEPLOYMENTS = utils.get_all()
+        builds = utils.get_last_builds_for_all_repo_branches()
+        enabled = settings.get('SCM_POLLING_ENABLED', 'false').lower() in ('1', 'true', 'yes')
+        interval = int(settings.get('SCM_POLL_INTERVAL_SECONDS', '300'))
+        pats = list_pats(session)
+        has_pat = any(p.active for p in pats)
+        return PollingStatusResponse(
+            status="healthy",
+            enabled=enabled,
+            has_pat=has_pat,
+            interval_seconds=interval,
+            allowed_repositories=ALLOWED_REPOSITORIES,
+            allowed_branches=ALLOWED_BRANCHES,
+            builds=builds,
+            timestamp=datetime.now().isoformat()
+        )
 
 
 async def PUT(request: Request, body: PollingConfigRequest,background_tasks: BackgroundTasks):

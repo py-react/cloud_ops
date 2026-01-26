@@ -57,30 +57,28 @@ class RepoPoller:
         cleanup_service = ImageCleanupService(docker_client)
         
         
-        session_gen = get_session()
-        session = next(session_gen)
-        
-        build_repository = BuildRepository(session)
-        pr_repository = PRRepository(session)
-        
-        commenter = PRCommenter()
-        detector = Detector()
+        with get_session() as session:
+            build_repository = BuildRepository(session)
+            pr_repository = PRRepository(session)
+            
+            commenter = PRCommenter()
+            detector = Detector()
 
-        image_lifecycle_service = ImageLifecycleService(
-            builder=builder,
-            registry_manager=registry_manager,
-            cleanup_service=cleanup_service,
-            session=session
-        )
-        
-        
-        return PRService(
-            image_lifecycle_service=image_lifecycle_service,
-            build_repository=build_repository,
-            pr_repository=pr_repository,
-            commenter=commenter,
-            detector=detector
-        )
+            image_lifecycle_service = ImageLifecycleService(
+                builder=builder,
+                registry_manager=registry_manager,
+                cleanup_service=cleanup_service,
+                session=session
+            )
+            
+            
+            return PRService(
+                image_lifecycle_service=image_lifecycle_service,
+                build_repository=build_repository,
+                pr_repository=pr_repository,
+                commenter=commenter,
+                detector=detector
+            )
     
     async def run_once(self) -> None:
         """Run a single iteration: iterate allowed repos and process open PRs."""

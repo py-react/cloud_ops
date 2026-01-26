@@ -183,13 +183,12 @@ const ReleaseConfigPage = () => {
         </div>
         <div className="flex items-center gap-2 mb-1">
           <NamespaceSelector />
-          <Button variant="outline" size="sm" onClick={fetchDeployments}>
+          <Button variant="outline" onClick={fetchDeployments}>
             <RefreshCw className="w-3.5 h-3.5 mr-2" />
             Refresh
           </Button>
           <Button
             variant="gradient"
-            size="sm"
             onClick={() => {
               setEditingConfig({});
               setAddDialogOpen(true);

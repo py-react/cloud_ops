@@ -137,11 +137,11 @@ export default function NetworkPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 mb-1">
-            <Button variant="outline" size="sm" onClick={getNetworks}>
+            <Button variant="outline" onClick={getNetworks}>
               <RefreshCw className="w-3.5 h-3.5 mr-2" />
               Refresh
             </Button>
-            <Button variant="gradient" size="sm" onClick={() => setShowCreate(true)}>
+            <Button variant="gradient" onClick={() => setShowCreate(true)}>
               <Plus className="w-3.5 h-3.5 mr-1" />
               Create
             </Button>
