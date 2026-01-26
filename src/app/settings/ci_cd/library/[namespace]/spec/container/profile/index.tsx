@@ -72,7 +72,7 @@ function ContainerSpecifications() {
 
     useEffect(() => {
         if (!autoOpen || !focusId || !resourceType) return;
-        if (resourceType === "pod_profile" && profiles.length > 0) {
+        if (resourceType === "profile" && profiles.length > 0) {
             const profile = profiles.find(p => p.id == focusId);
             if (profile) {
                 setViewProfileInitialValues(profile);
@@ -182,7 +182,7 @@ function ContainerSpecifications() {
                 selectedNamespace={selectedNamespace}
                 onDelete={handleDeleteProfile}
                 onViewDetails={handleViewProfile}
-                highlightedId={resourceType === 'pod_profile' ? highlightedId : null}
+                highlightedId={resourceType === 'profile' ? highlightedId : null}
                 onRowClick={clearFocus}
             />
 

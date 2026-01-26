@@ -37,6 +37,7 @@ interface ResourceDetailViewProps {
         service_account_name?: string;
         host_network?: boolean;
         dns_policy?: string;
+        containers?: Array<{ id: number; name: string; image?: string; type?: string }>;
         // Container Specific
         image?: string;
         image_pull_policy?: string;
@@ -49,7 +50,34 @@ interface ResourceDetailViewProps {
 
 export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, type }) => {
     const handleOpenProfile = (id: number, resourceType: ResourceType) => {
-        const url = `${window.location.pathname}?focusId=${id}&resourceType=${resourceType}&autoOpen=true`;
+        // Extract namespace from current path
+        const pathParts = window.location.pathname.split('/');
+        const namespaceIndex = pathParts.findIndex(part => part === 'library') + 1;
+        const namespace = pathParts[namespaceIndex] || 'default';
+
+        // Build the correct path based on resource type
+        let targetPath = '';
+        switch (resourceType) {
+            case 'pod_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/pod/profile`;
+                break;
+            case 'pod_metadata_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/pod/metadata`;
+                break;
+            case 'profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/container/profile`;
+                break;
+            case 'container':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/container`;
+                break;
+            case 'pod':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/pod`;
+                break;
+            default:
+                targetPath = window.location.pathname;
+        }
+
+        const url = `${targetPath}?focusId=${id}&resourceType=${resourceType}&autoOpen=true`;
         window.open(url, "_blank");
     };
 
@@ -90,7 +118,7 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                         {data.metadata_profile && (
                             <>
                                 <SectionHeader icon={Layout} title="Metadata Profile" />
-                                <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/20 flex items-center justify-between">
+                                <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/20 flex items-center justify-between group">
                                     <div className="flex flex-col">
                                         <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-tight">Active Metadata Profile</span>
                                         <span className="text-xs font-bold text-foreground mt-0.5">{data.metadata_profile.name}</span>
@@ -98,12 +126,43 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-500/10"
+                                        className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
                                         onClick={() => handleOpenProfile(data.metadata_profile!.id, "pod_metadata_profile")}
                                     >
                                         <ExternalLink className="h-3.5 w-3.5 mr-1" />
                                         <span className="text-[10px] font-bold uppercase">Inspect</span>
                                     </Button>
+                                </div>
+                            </>
+                        )}
+                        {data.containers && data.containers.length > 0 && (
+                            <>
+                                <SectionHeader icon={Container} title="Derived Containers" />
+                                <div className="grid grid-cols-1 gap-3">
+                                    {data.containers.map((container) => (
+                                        <div key={container.id} className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20 flex items-center justify-between group">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-xs font-bold text-foreground">{container.name}</span>
+                                                {container.image && (
+                                                    <span className="text-[10px] text-muted-foreground font-mono">{container.image}</span>
+                                                )}
+                                                {container.type && (
+                                                    <Badge variant="outline" className="w-fit h-5 text-[9px] font-bold uppercase border-blue-500/30 tracking-widest text-blue-600">
+                                                        {container.type}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => handleOpenProfile(container.id, "container")}
+                                            >
+                                                <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                                <span className="text-[10px] font-bold uppercase">Inspect</span>
+                                            </Button>
+                                        </div>
+                                    ))}
                                 </div>
                             </>
                         )}
@@ -151,7 +210,7 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                 {/* Dynamic Attributes / Profiles */}
                 {data.dynamic_attr && Object.keys(data.dynamic_attr).length > 0 && (
                     <>
-                        <SectionHeader icon={Cpu} title="Linked Profiles" />
+                        <SectionHeader icon={Cpu} title="Dynamic Attributes" />
                         <div className="grid grid-cols-1 gap-3">
                             {Object.entries(data.dynamic_attr).map(([key, profile]) => (
                                 <div key={key} className="p-3 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between group">

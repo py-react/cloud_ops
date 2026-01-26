@@ -130,6 +130,10 @@ module.exports = {
           from: { opacity: "0", transform: "scale(0.95)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
+        "row-highlight": {
+          "0%": { backgroundColor: "hsl(48, 100%, 90%)" },
+          "100%": { backgroundColor: "transparent" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -142,6 +146,7 @@ module.exports = {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "shimmer": "shimmer 2s infinite",
         "scale-in": "scale-in 0.2s ease-out",
+        "row-highlight": "row-highlight 5s ease-out forwards",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",

@@ -350,6 +350,18 @@ export const PodAdvancedConfig = ({ control, namespace }: { control: any; namesp
 
     const structuredData = useMemo(() => {
         if (loading) return null;
+
+        // Build containers array with their details
+        const containersData = selectedContainerIds.map((id: number) => {
+            const container = containers[id];
+            return container ? {
+                id,
+                name: container.name,
+                image: container.image,
+                type: container.type
+            } : null;
+        }).filter(Boolean);
+
         return {
             name: (formValues.name as string) || "Unnamed Pod",
             namespace: namespace as string,
@@ -361,9 +373,10 @@ export const PodAdvancedConfig = ({ control, namespace }: { control: any; namesp
                 const profile = podProfiles.find(p => p.id === id);
                 if (profile) acc[key] = profile;
                 return acc;
-            }, {} as any)
+            }, {} as any),
+            containers: containersData
         };
-    }, [loading, formValues, namespace, selectedMetadataId, metadataProfiles, dynamicAttr, podProfiles]);
+    }, [loading, formValues, namespace, selectedMetadataId, metadataProfiles, dynamicAttr, podProfiles, selectedContainerIds, containers]);
 
     return (
         <div className="flex-1 h-[440px] flex flex-col">
