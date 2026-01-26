@@ -54,6 +54,12 @@ interface ResourceTableProps<T> {
   loading?: boolean;
   highlightedId?: string | number | null;
   onRowClick?: (row: T) => void;
+  customActions?: {
+    label: string;
+    icon: any;
+    onClick: (resource: T) => void;
+    show?: (resource: T) => boolean;
+  }[];
 }
 
 // Default all ResourceTableActionProps to true if not provided
@@ -101,6 +107,7 @@ export function ResourceTable<T>({
   loading,
   highlightedId,
   onRowClick,
+  customActions,
 }: ResourceTableProps<T>) {
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -159,7 +166,7 @@ export function ResourceTable<T>({
     if (onPush) onPush(resource);
   };
 
-  const showActions = onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay || onStop || onPause || onEdit || onUndo || onClone
+  const showActions = onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay || onStop || onPause || onEdit || onUndo || onClone || (customActions && customActions.length > 0)
 
   return (
     <Card className={cn("relative p-0 py-2 overflow-hidden border-none bg-transparent shadow-none", className)}>
@@ -375,6 +382,16 @@ export function ResourceTable<T>({
                                 Edit Config
                               </DropdownMenuItem>
                             )}
+                            {customActions?.map((action, i) => {
+                              if (action.show && !action.show(row)) return null;
+                              const Icon = action.icon;
+                              return (
+                                <DropdownMenuItem key={i} onSelect={() => action.onClick(row)} className="gap-2 text-sm">
+                                  <Icon className="h-4 w-4" />
+                                  {action.label}
+                                </DropdownMenuItem>
+                              );
+                            })}
                             <div className="h-px bg-border/50 my-1" />
                             {onDelete && rowWithDefaults.showDelete && (
                               <DropdownMenuItem

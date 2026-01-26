@@ -39,9 +39,11 @@ import {
   Boxes,
   SquareTerminal,
   Braces,
-  Layout
+  Layout,
+  Key,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+
 
 import {
   Sidebar,
@@ -56,35 +58,44 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import CustomLink from "@/libs/Link";
 import { ShuffleIcon } from "@radix-ui/react-icons";
 import { NamespaceContext } from "./kubernetes/contextProvider/NamespaceContext";
+import { getMenuItems } from "@/config/menu-items";
 
 export type MenuItem = string;
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> { }
 
-function SidebarToggle() {
-  const { state, toggleSidebar } = useSidebar();
-  return (
-    <SidebarTrigger
-      onClick={toggleSidebar}
-      className="absolute right-[-12px] top-6 z-20 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm"
-    >
-      {state === "expanded" ? (
-        <ChevronLeft className="h-4 w-4" />
-      ) : (
-        <ChevronRight className="h-4 w-4" />
-      )}
-    </SidebarTrigger>
-  );
-}
 
 
 export function AppSidebar({ ...props }: AppSidebarProps) {
   const { selectedNamespace } = React.useContext(NamespaceContext)
+  const { state, setOpen } = useSidebar();
+  const isHoverOpen = React.useRef(false);
+  const hoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (state === "collapsed") {
+      hoverTimeoutRef.current = setTimeout(() => {
+        setOpen(true);
+        // isHoverOpen.current = true; // No longer needed as we don't auto-close
+      }, 300); // 300ms delay
+    }
+  };
+
+  // Sticky hover: No auto-minimize on leave
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    // if (isHoverOpen.current) {
+    //   setOpen(false);
+    //   isHoverOpen.current = false;
+    // }
+  };
 
   // Track expanded state for sidebar children
   const [expandedMenus, setExpandedMenus] = React.useState<{ [key: string]: boolean }>({});
@@ -98,297 +109,25 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   };
 
   // Menu items.
-  const items = {
-    header: {
-      title: "Dashboard",
-      url: "/",
-      icon: LayoutDashboard,
-    },
-    items: {
-      // message_queue: {
-      //   title: "Message Queues",
-      //   url: "/queues",
-      //   childs: [
-      //     {
-      //       title: "BullMQ Queues",
-      //       url: "/",
-      //       // icon: MessageSquare,
-      //       items: [],
-      //     },
-      //   ],
-      // },
-      docker: {
-        title: "CEE", // container excecution engine
-        url: "/cee",
-        color: "blue",
-        childs: [
-          {
-            title: "Docker",
-            url: "/docker",
-            icon: Docker,
-            items: [
-              {
-                title: "Conatiner",
-                url: "/container",
-                icon: Server,
-              },
-              {
-                title: "Packages",
-                url: "/packages",
-                icon: Box,
-              },
-              {
-                title: "Storages",
-                url: "/storages",
-                icon: Database,
-              },
-              {
-                title: "Network",
-                url: "/network",
-                icon: NetworkIcon,
-              },
-              {
-                title: "Hub",
-                url: "/hub",
-                icon: Computer,
-              },
-            ],
-          },
-        ],
-      },
-      orchestration: {
-        title: "Orchestration",
-        url: "/orchestration",
-        color: "green",
-        childs: [
-          {
-            title: "Docker Swarms",
-            url: "/swarms",
-            icon: Network,
-            items: [],
-          },
-          {
-            title: "Kubernetes",
-            url: "/kubernetes",
-            icon: Cpu,
-            items: [
-              {
-                title: "Resources",
-                url: `/${selectedNamespace}/resources`,
-                icon: ListIcon,
-              },
-              // {
-              //   title: "Flow",
-              //   url: `/${selectedNamespace}/flow`,
-              //   icon: Share2Icon,
-              // },
-              {
-                title: "Deployment",
-                url: `/${selectedNamespace}/deployments`,
-                icon: RocketIcon,
-              },
-              {
-                title: "Config Map",
-                url: `/${selectedNamespace}/configmaps`,
-                icon: ShieldIcon,
-              },
-              {
-                title: "Pods",
-                url: `/${selectedNamespace}/pods`,
-                icon: BoxIcon,
-              },
-              {
-                title: "Secrets",
-                url: `/${selectedNamespace}/secrets`,
-                icon: FileKeyIcon,
-              },
-              {
-                title: "Services",
-                url: `/${selectedNamespace}/services`,
-                icon: NetworkIcon,
-              },
-              {
-                title: "Ingress",
-                url: `/${selectedNamespace}/ingresses`,
-                icon: Globe,
-              },
-              // {
-              //   title: "certificate",
-              //   url: `/${selectedNamespace}/certificates`,
-              //   icon: Certificate,
-              // },
-              // {
-              //   title: "issuer",
-              //   url: `/${selectedNamespace}/issuers`,
-              //   icon: HandCoinsIcon,
-              // },
-            ],
-          },
-        ],
-      },
-      settings: {
-        title: "Control Center",
-        url: "/settings",
-        color: "yellow",
-        childs: [
-          {
-            title: "Kubernetes",
-            url: "/kubernetes",
-            icon: Cpu,
-            items: [
-              {
-                title: "Contexts",
-                url: "/contexts",
-                icon: Layers,
-              },
-              {
-                title: "Namespaces",
-                url: "/namespaces",
-                icon: Folder,
-              },
-              {
-                title: "Resource Quota",
-                url: "/resource-quota",
-                icon: Settings,
-              },
-              {
-                title: "Users and RBAC",
-                url: "/rbac",
-                icon: Users,
-              },
-            ],
-          },
-          {
-            title: "CI/CD",
-            url: "/ci_cd",
-            icon: Cog,
-            items: [
-              {
-                title: "Source Control",
-                url: "/source_control",
-                icon: Unplug,
-                items: [],
-              },
-              {
-                title: "Release Config",
-                url: "/release_config",
-                icon: FileCog,
-                items: [
-                ],
-              },
-              {
-                title: "Strategies",
-                url: "/release_strategies",
-                icon: Orbit,
-                items: [],
-              },
-            ],
-          },
-          {
-            title: "Docker",
-            url: "/docker",
-            icon: Docker,
-            items: [
-              {
-                title: "Registry",
-                url: "/registry",
-                icon: Computer,
-                items: [],
-              },
-            ],
-          },
-        ]
-      },
-      library: {
-        title: "CI/CD Library",
-        url: "/settings/ci_cd/library",
-        color: "blue",
-        childs: [
-          {
-            title: "Spec",
-            icon: Braces,
-            url: "",
-            items: [
-              {
-                title: "Derived Container",
-                url: `/${selectedNamespace}/spec/container`,
-                icon: SquareTerminal,
-                items: [
-                  {
-                    title: "Specifications",
-                    url: `/profile`,
-                    icon: Braces,
-                  },
-                ]
-              },
-              {
-                title: "Derived Pods",
-                url: `/${selectedNamespace}/spec/pod`,
-                icon: Box,
-                items: [
-                  {
-                    title: "Specifications",
-                    url: `/profile`,
-                    icon: Settings,
-                  },
-                  {
-                    title: "Metadata",
-                    url: `/metadata`,
-                    icon: Layout,
-                  },
-                ]
-              },
-              {
-                title: "Derived Deployment",
-                url: `/${selectedNamespace}/spec/deployment`,
-                icon: Layers,
-                items: [
-                  {
-                    title: "Specifications",
-                    url: `/profile`,
-                    icon: Settings,
-                  },
-                  {
-                    title: "Selectors",
-                    url: `/selector`,
-                    icon: Layout,
-                  },
-                ]
-              },
-            ]
-          },
-
-        ]
-      },
-
-      infraManager: {
-        title: "Infra",
-        url: "/infra",
-        color: "purple",
-        childs: [
-          {
-            title: "Manager",
-            url: "/manager",
-            icon: WaypointsIcon,
-            items: [],
-          },
-        ],
-      },
-    },
-  };
+  const items = React.useMemo(() => getMenuItems(selectedNamespace), [selectedNamespace]);
 
   return (
     <>
-      <Sidebar {...props}>
+      <Sidebar
+        collapsible="icon"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        {...props}
+      >
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className="hover:bg-sidebar-accent transition-colors duration-200">
+              <SidebarMenuButton size="lg" asChild className="hover:bg-sidebar-accent transition-colors duration-200 group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!w-full">
                 <CustomLink href={items.header.url}>
-                  <span className="bg-gradient-to-br from-primary to-purple-600 p-2 rounded-lg flex items-center justify-center shadow-md">
+                  <span className="bg-gradient-to-br from-primary to-purple-600 p-1 rounded-lg flex items-center justify-center shadow-md">
                     <items.header.icon className="h-5 w-5 text-white" />
                   </span>
-                  <span className="font-semibold text-sidebar-foreground">{items.header.title}</span>
+                  <span className="font-semibold text-sidebar-foreground group-data-[collapsible=icon]:opacity-0 transition-opacity">{items.header.title}</span>
                 </CustomLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -399,7 +138,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
             if (!value) return null;
             return (
               <SidebarGroup key={value.url}>
-                <SidebarGroupLabel>{value.title}</SidebarGroupLabel>
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:!mt-0 transition-opacity">{value.title}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu >
                     {value.childs.map((item) => {
@@ -410,7 +149,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                           {hasSubItems ? (
                             <SidebarMenuButton
                               asChild
-                              className="hover:bg-sidebar-accent transition-colors duration-200"
+                              className="hover:bg-sidebar-accent transition-colors duration-200 group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!w-full"
                             >
                               <div className="flex items-center gap-1 cursor-pointer select-none w-full min-w-0">
                                 <span
@@ -419,7 +158,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                                     e.stopPropagation();
                                     handleToggleMenu(menuKey);
                                   }}
-                                  className="p-1 rounded-md hover:bg-sidebar-accent transition-colors"
+                                  className="p-1 rounded-md hover:bg-sidebar-accent transition-colors group-data-[collapsible=icon]:hidden"
                                 >
                                   {expandedMenus[menuKey] ? (
                                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -435,9 +174,9 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                                   <span
                                     className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-primary/10 flex-shrink-0"
                                   >
-                                    <item.icon className="h-4 w-4 text-sidebar-foreground" />
+                                    <item.icon className="h-5 w-5 text-sidebar-foreground" />
                                   </span>
-                                  <span className="font-medium text-sidebar-foreground truncate">
+                                  <span className="font-medium text-sidebar-foreground truncate group-data-[collapsible=icon]:opacity-0 transition-opacity">
                                     {item.title}
                                   </span>
                                 </CustomLink>
@@ -446,19 +185,19 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                           ) : (
                             <SidebarMenuButton
                               asChild
-                              className="hover:bg-sidebar-accent transition-colors duration-200"
+                              className="hover:bg-sidebar-accent transition-colors duration-200 group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!w-full"
                             >
                               <div className="flex items-center gap-1 w-full min-w-0">
-                                <div className="w-6 h-6 shrink-0" /> {/* Placeholder for alignment */}
+                                <div className="w-6 h-6 shrink-0 group-data-[collapsible=icon]:hidden" /> {/* Placeholder for alignment */}
                                 <CustomLink
                                   key={menuKey}
                                   href={value.url + item.url}
                                   className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden"
                                 >
                                   <span className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-primary/10 flex-shrink-0">
-                                    <item.icon className="h-4 w-4 text-sidebar-foreground" />
+                                    <item.icon className="h-5 w-5 text-sidebar-foreground" />
                                   </span>
-                                  <span className="font-medium text-sidebar-foreground truncate">
+                                  <span className="font-medium text-sidebar-foreground truncate group-data-[collapsible=icon]:opacity-0 transition-opacity">
                                     {item.title}
                                   </span>
                                 </CustomLink>
@@ -559,7 +298,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
             );
           })}
         </SidebarContent>
-        <SidebarToggle />
       </Sidebar>
     </>
   );

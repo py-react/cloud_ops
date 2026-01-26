@@ -4,7 +4,7 @@ from app.db_client.models.code_source_control.types import CodeSourceControlType
 from typing import List, Optional
 
 def create_code_source_control(session: Session, data: CodeSourceControlType) -> CodeSourceControl:
-    obj = CodeSourceControl(name=data.name)
+    obj = CodeSourceControl(name=data.name, pat_id=data.pat_id)
     session.add(obj)
     session.commit()
     session.refresh(obj)

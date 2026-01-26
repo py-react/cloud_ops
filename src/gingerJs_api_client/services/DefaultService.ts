@@ -41,6 +41,7 @@ import type { SwarmInitParams } from '../models/SwarmInitParams';
 import type { SwarmJoinParams } from '../models/SwarmJoinParams';
 import type { SwarmUpdateSpec } from '../models/SwarmUpdateSpec';
 import type { SystemInfo } from '../models/SystemInfo';
+import type { UpdatePATRequest } from '../models/UpdatePATRequest';
 import type { VolumeActionRequest } from '../models/VolumeActionRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -281,6 +282,7 @@ export type TDataApiIntegrationGithubPatPost = {
             }
 export type TDataApiIntegrationGithubPatPut = {
                 id: number
+requestBody?: UpdatePATRequest | null
             }
 export type TDataApiIntegrationGithubPatDelete = {
                 id: number
@@ -1762,12 +1764,7 @@ name,
 
 	/**
 	 * Access-check route for a configured repo.
- * 
- * Uses the active PAT to perform read checks on repository, PRs, comments and
- * collaborator permission for posting comments. Implementation uses the
- * PyGithub SDK for repository/pull/comment/permission checks and a single
- * short httpx call to fetch `X-OAuth-Scopes` because PyGithub doesn't expose
- * that header.
+ * Uses the configured PAT for the repo (or active/fallback) to perform checks.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
@@ -1839,13 +1836,14 @@ requestBody,
 	}
 
 	/**
-	 * Set PAT as active
+	 * Update PAT status or verify token
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
 	public static apiIntegrationGithubPatPut(data: TDataApiIntegrationGithubPatPut): CancelablePromise<unknown> {
 		const {
 id,
+requestBody,
 } = data;
 		return __request(OpenAPI, {
 			method: 'PUT',
@@ -1853,6 +1851,8 @@ id,
 			query: {
 				id
 			},
+			body: requestBody,
+			mediaType: 'application/json',
 			errors: {
 				422: `Validation Error`,
 			},
@@ -3032,6 +3032,18 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/settings/ci_cd/library/{namespace}/spec/pod/metadata',
+		});
+	}
+
+	/**
+	 * Server-side rendering or logic for the Personal Access Tokens management page.
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecPatsGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/pats',
 		});
 	}
 
