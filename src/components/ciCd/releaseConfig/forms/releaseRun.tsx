@@ -45,6 +45,7 @@ export interface ReleaseConfigData {
   labels: Record<string, string>;
   soft_delete: boolean;
   hard_delete: boolean;
+  status: string;
 }
 
 export interface ReleaseRunData {
@@ -90,6 +91,14 @@ export const ReleaseRun = ({
   }), [deployment_config]);
 
   const onSubmit = async (values: ReleaseRunFormValues) => {
+    if (deployment_config.status !== "active") {
+      window.alert(`CRITICAL: This configuration is currently ${deployment_config.status}. 
+
+You can only run releases for 'active' configurations. Please activate it first.`);
+      onClose(false);
+      return;
+    }
+
     try {
       const payload: DeploymentRunType = {
         ...values,
@@ -102,7 +111,9 @@ export const ReleaseRun = ({
       onSuccess()
       onClose(false);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to trigger release run.")
+      const errorMsg = e?.message || "Failed to trigger release run.";
+      window.alert(`Release Failed: ${errorMsg}`);
+      toast.error(errorMsg);
     }
   };
 
