@@ -33,6 +33,7 @@ import {
   Image,
   RefreshCw,
   Plug,
+  ExternalLink,
 } from "lucide-react";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
@@ -737,10 +738,18 @@ const ReleaseConfigDetailedInfo = () => {
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
+                        <a
+                          href={`/orchestration/kubernetes/${configData.namespace}/deployments/deployments/${configData.deployment_name}`}
+                          className="flex items-center gap-2 group/status hover:opacity-80 transition-all"
+                        >
                           {getStatusIcon(run.status)}
-                          <StatusBadge status={run.status} />
-                        </div>
+                          <div className="flex flex-col">
+                            <StatusBadge status={run.status} />
+                            <span className="text-[9px] font-medium text-primary/60 group-hover/status:underline flex items-center gap-1 mt-0.5">
+                              View Deployment <ExternalLink className="w-2.5 h-2.5" />
+                            </span>
+                          </div>
+                        </a>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
