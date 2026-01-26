@@ -168,12 +168,25 @@ function PodLibrary() {
 
 
 
+    const parseJson = (data: any, defaultValue: any = {}) => {
+        if (!data) return defaultValue;
+        if (typeof data === 'string') {
+            try {
+                return JSON.parse(data);
+            } catch (e) {
+                console.error("Failed to parse JSON:", e);
+                return defaultValue;
+            }
+        }
+        return data;
+    };
+
     const handleViewDetails = (row: any) => {
         setViewPodInitialValues({
             name: row.name,
             namespace: row.namespace,
-            containers: row.containers || [],
-            dynamic_attr: row.dynamic_attr || {},
+            containers: parseJson(row.containers, []),
+            dynamic_attr: parseJson(row.dynamic_attr, {}),
             metadata_profile_id: row.metadata_profile_id
         });
         setViewPodStep("view");
@@ -186,13 +199,13 @@ function PodLibrary() {
         const transformedPod = {
             name: row.name,
             namespace: row.namespace,
-            containers: row.containers || [],
-            dynamic_attr: row.dynamic_attr || {},
+            containers: parseJson(row.containers, []),
+            dynamic_attr: parseJson(row.dynamic_attr, {}),
             metadata_profile_id: row.metadata_profile_id,
             service_account_name: row.service_account_name,
-            image_pull_secrets: row.image_pull_secrets || [],
-            node_selector: row.node_selector || {},
-            tolerations: row.tolerations || []
+            image_pull_secrets: parseJson(row.image_pull_secrets, []),
+            node_selector: parseJson(row.node_selector, {}),
+            tolerations: parseJson(row.tolerations, [])
         };
         setViewPodInitialValues(transformedPod);
         setPodStep("setup");

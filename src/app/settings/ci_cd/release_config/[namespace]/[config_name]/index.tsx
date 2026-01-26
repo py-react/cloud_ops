@@ -40,6 +40,7 @@ import { useParams } from "react-router-dom";
 
 import { ReleaseRun, type ReleaseRunData } from "@/components/ciCd/releaseConfig/forms/releaseRun";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { K8sContainer } from "@/components/ciCd/releaseConfig/forms/type";
 import Copier from "@/components/tooltip/copier";
 
@@ -291,17 +292,21 @@ const ContainerDetails: React.FC<{ container: K8sContainer }> = ({ container }) 
               </h6>
               <div className="space-y-3">
                 {container.command && (
-                  <div className="bg-black/20 rounded-md p-3 border border-border/40">
-                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">Command Override</div>
-                    <code className="text-[11px] font-mono text-emerald-400 break-all leading-relaxed">
+                  <div className="bg-slate-950/90 rounded-lg p-4 border border-white/5 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/50" />
+                    <div className="text-[10px] font-black text-emerald-500/70 uppercase tracking-[0.2em] mb-2 px-1">Command Override</div>
+                    <code className="text-xs font-mono text-emerald-400 break-all leading-relaxed block bg-black/30 p-2 rounded border border-emerald-500/10">
+                      <span className="text-emerald-500/50 mr-2 select-none">$</span>
                       {Array.isArray(container.command) ? container.command.join(" ") : container.command}
                     </code>
                   </div>
                 )}
                 {container.args && (
-                  <div className="bg-black/20 rounded-md p-3 border border-border/40">
-                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">Argument Chain</div>
-                    <code className="text-[11px] font-mono text-blue-400 break-all leading-relaxed">
+                  <div className="bg-slate-950/90 rounded-lg p-4 border border-white/5 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50" />
+                    <div className="text-[10px] font-black text-blue-500/70 uppercase tracking-[0.2em] mb-2 px-1">Argument Chain</div>
+                    <code className="text-xs font-mono text-blue-400 break-all leading-relaxed block bg-black/30 p-2 rounded border border-blue-500/10">
+                      <span className="text-blue-500/50 mr-2 select-none">#</span>
                       {Array.isArray(container.args) ? container.args.join(" ") : container.args}
                     </code>
                   </div>
@@ -446,13 +451,20 @@ const ReleaseConfigDetailedInfo = () => {
                   <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Namespace</p>
                   <p className="text-sm font-medium text-foreground">{configData?.namespace}</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Repo Binding</p>
-                  <p className="text-sm font-medium text-primary flex items-center gap-1.5">
-                    <Plug className="w-3.5 h-3.5" />
-                    {configData?.code_source_control_name}
-                  </p>
-                </div>
+                {configData?.required_source_control && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Repo Binding</p>
+                    <p className="text-sm font-medium text-primary flex items-center gap-1.5">
+                      <Plug className="w-3.5 h-3.5" />
+                      {configData?.code_source_control_name}
+                      {configData?.source_control_branch && (
+                        <span className="text-muted-foreground font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded ml-1 border border-border/40">
+                          {configData.source_control_branch}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Replicas</p>
                   <div className="flex items-center gap-2">
@@ -488,6 +500,46 @@ const ReleaseConfigDetailedInfo = () => {
             </>
           )}
         </div>
+
+        {/* Network & Connectivity (Service Ports) */}
+        {(configData?.service || (configData?.service_ports && configData.service_ports.length > 0)) && (
+          <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
+            <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
+              <div className="p-2 rounded-md bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20">
+                <Globe className="h-4 w-4" />
+              </div>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Network & Connectivity</h2>
+              {configData?.service?.type && (
+                <span className="ml-auto bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-500/20 uppercase tracking-widest">
+                  {configData.service.type}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(configData?.service?.ports || configData?.service_ports || []).map((port: any, idx: number) => (
+                <div key={idx} className="bg-muted/20 rounded-lg border border-border/40 p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+                      <Plug className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold text-foreground">
+                        {port.name || `Port ${idx + 1}`}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground font-mono">
+                        {port.port} {port.targetPort ? `→ ${port.targetPort}` : ""}
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter opacity-70">
+                    {port.protocol || "TCP"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Containers Section */}
         <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">

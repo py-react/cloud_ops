@@ -190,14 +190,28 @@ function ContainerSpec() {
         }
     };
 
+    const parseDynamicAttr = (attr: any) => {
+        if (!attr) return {};
+        if (typeof attr === 'string') {
+            try {
+                return JSON.parse(attr);
+            } catch (e) {
+                console.error("Failed to parse dynamic_attr:", e);
+                return {};
+            }
+        }
+        return attr;
+    };
+
     const handleViewContainer = (row: any) => {
         setDialogContainerViewOpen(true);
+        const dynamic_attr = parseDynamicAttr(row.dynamic_attr);
         const transformedContainer = {
             ...row,
-            args: row.args || [],
-            command: row.command || [],
-            profile: Object.keys(row.dynamic_attr || {}).reduce((acc, key) => {
-                acc[key] = profiles.find(p => p.id === row.dynamic_attr[key]);
+            args: Array.isArray(row.args) ? row.args : [],
+            command: Array.isArray(row.command) ? row.command : [],
+            profile: Object.keys(dynamic_attr).reduce((acc, key) => {
+                acc[key] = profiles.find(p => p.id === dynamic_attr[key]);
                 return acc;
             }, {} as any)
         }
@@ -211,12 +225,13 @@ function ContainerSpec() {
     const handleEditContainer = (row: any) => {
         setEditMode(true);
         setEditingId(row.id);
+        const dynamic_attr = parseDynamicAttr(row.dynamic_attr);
         const transformedContainer = {
             ...row,
-            args: new Set(row.args || []),
-            command: new Set(row.command || []),
-            profile: Object.keys(row.dynamic_attr || {}).reduce((acc, key) => {
-                acc[key] = profiles.find(p => p.id === row.dynamic_attr[key]);
+            args: new Set(Array.isArray(row.args) ? row.args : []),
+            command: new Set(Array.isArray(row.command) ? row.command : []),
+            profile: Object.keys(dynamic_attr).reduce((acc, key) => {
+                acc[key] = profiles.find(p => p.id === dynamic_attr[key]);
                 return acc;
             }, {} as any)
         }

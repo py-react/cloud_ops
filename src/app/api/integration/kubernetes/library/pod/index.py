@@ -3,11 +3,12 @@ from sqlmodel import Session
 from fastapi import Request
 from app.db_client.controllers.kubernetes_profiles.pod import list_pods, create_pod, delete_pod, update_pod
 from app.db_client.models.kubernetes_profiles.pod import K8sPod
+from app.utils.json_utils import clean_pod_profile
 
 async def GET(request: Request, namespace: str):
     with get_session() as session:
         pods = list_pods(session, namespace)
-        return [p.dict() for p in pods]
+        return [clean_pod_profile(p.dict()) for p in pods]
 
 async def POST(request: Request, body: K8sPod):
     with get_session() as session:

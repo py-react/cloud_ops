@@ -4,15 +4,13 @@ from sqlmodel import Session
 from app.db_client.controllers.kubernetes_profiles.deployment import list_deployments, create_deployment, delete_deployment, update_deployment
 from app.db_client.models.kubernetes_profiles.deployment import K8sDeployment
 from typing import Optional, List
+from app.utils.json_utils import clean_deployment_profile
 from fastapi.responses import JSONResponse
 
 async def GET(request: Request, namespace: str):
     with get_session() as session:
         deployments = list_deployments(session, namespace)
-        return {
-            "status": "success",
-            "data": [p.dict() for p in deployments]
-        }
+        return [clean_deployment_profile(p.dict()) for p in deployments]
 
 async def POST(request: Request, body: K8sDeployment):
     with get_session() as session:
