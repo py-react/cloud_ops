@@ -5,26 +5,32 @@ interface ViewSpecListProps {
     profiles: any[];
     loading: boolean;
     selectedNamespace: string;
-    onDelete?: () => void;
+    onDelete?: (row: any, dependents?: any[]) => void;
+    highlightedId?: string | number | null;
+    onRowClick?: (row: any) => void;
     control?: any;
     setValue?: any;
     watch?: any;
     form?: any;
 }
 
-export const ViewSpecList: React.FC<ViewSpecListProps> = ({ 
-    profiles, 
-    loading, 
+export const ViewSpecList: React.FC<ViewSpecListProps> = ({
+    profiles,
+    loading,
     selectedNamespace,
-    onDelete
+    onDelete,
+    highlightedId,
+    onRowClick
 }) => {
     return (
         <div className="h-full">
-            <ContainerSpecList 
+            <ContainerSpecList
                 profiles={profiles}
                 loading={loading}
                 selectedNamespace={selectedNamespace}
                 onDelete={onDelete}
+                highlightedId={highlightedId}
+                onRowClick={onRowClick}
             />
         </div>
     );

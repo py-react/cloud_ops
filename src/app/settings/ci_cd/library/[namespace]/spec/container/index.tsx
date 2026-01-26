@@ -13,8 +13,8 @@ import { ViewDerivedContainerList } from "@/components/ciCd/library/derivedConta
 import { DerivedContainerList } from "@/components/ciCd/library/derivedContainer/DerivedContainerList";
 import { BasicConfig as ContainerBasicConfig, AdvancedConfig as ContainerAdvancedConfig } from "@/components/ciCd/library/derivedContainer/forms/DerivedContainerForm";
 import { DefaultService } from "@/gingerJs_api_client";
-
-
+import { useResourceLink } from "@/hooks/useResourceLink";
+import { DeleteDependencyDialog } from "@/components/ciCd/library/podSpec/DeleteDependencyDialog";
 
 const createResourceProfuleSchema = z.object({
     name: z.string().min(1, "Profile name is required"),
@@ -127,10 +127,34 @@ function ContainerSpec() {
     const [default_value] = useState({ ..._default_value, namespace: selectedNamespace })
     const [container_view_initial_values, setContainerViewInitialValues] = useState(container_default_values)
 
+    // Conflict/Dependency state
+    const [conflictDialog, setConflictDialog] = useState<{
+        isOpen: boolean;
+        resourceName: string;
+        resourceType: string;
+        dependents: any[];
+    }>({
+        isOpen: false,
+        resourceName: "",
+        resourceType: "",
+        dependents: []
+    });
+
+    const { highlightedId, resourceType, focusId, autoOpen, clearFocus } = useResourceLink();
+
+    // Unified Fetch Effect
     useEffect(() => {
         fetchContainerSpecs();
         fetchPodSpecs();
     }, [selectedNamespace]);
+
+    useEffect(() => {
+        if (!autoOpen || !focusId || !resourceType) return;
+        if (resourceType === "container" && containersForPod.length > 0) {
+            const container = containersForPod.find(c => c.id == focusId);
+            if (container) handleViewContainer(container);
+        }
+    }, [autoOpen, focusId, resourceType, containersForPod]);
 
     const fetchContainerSpecs = async () => {
         setLoading(true);
@@ -154,6 +178,24 @@ function ContainerSpec() {
         }
     };
 
+    const handleViewContainer = (row: any) => {
+        setDialogContainerViewOpen(true);
+        const transformedContainer = {
+            ...row,
+            args: row.args || [],
+            command: row.command || [],
+            profile: Object.keys(row.dynamic_attr || {}).reduce((acc, key) => {
+                acc[key] = profiles.find(p => p.id === row.dynamic_attr[key]);
+                return acc;
+            }, {} as any)
+        }
+        delete transformedContainer.dynamic_attr;
+        delete transformedContainer.id;
+        delete transformedContainer.description;
+        transformedContainer.image = "<IMAGE_NAME_FILLED_AT_RUNTIME>";
+        setContainerViewInitialValues(transformedContainer);
+    };
+
     const handleSubmit = async (values: any) => {
         const payload = {
             ...values,
@@ -170,22 +212,6 @@ function ContainerSpec() {
             toast.error("Error saving profile");
         }
     };
-
-    const stepsWithContext = steps.map(step => ({
-        ...step,
-        component: (props: any) => {
-            if (step.id === 'view-spec') {
-                return <ViewSpecList
-                    profiles={profiles}
-                    loading={loading}
-                    selectedNamespace={selectedNamespace}
-                    onDelete={fetchContainerSpecs}
-                    {...props}
-                />;
-            }
-            return <step.component {...props} />;
-        }
-    }));
 
     const handleContainerSubmit = async (values: any) => {
         const valueProfiles = { ...values.profile }
@@ -219,6 +245,57 @@ function ContainerSpec() {
             toast.error("Error saving profile");
         }
     };
+
+    const handleDeleteProfile = async (row: any, dependents?: any[]) => {
+        if (dependents && dependents.length > 0) {
+            setConflictDialog({
+                isOpen: true,
+                resourceName: row.name,
+                resourceType: "Container Specification",
+                dependents: dependents
+            });
+        } else {
+            fetchContainerSpecs();
+        }
+    };
+
+    const handleDeleteContainer = async (row: any) => {
+        try {
+            await DefaultService.apiIntegrationKubernetesLibraryContainerDelete({ id: row.id });
+            toast.success(`Deleted ${row.name}`);
+            fetchPodSpecs();
+        } catch (error: any) {
+            if (error.status === 409) {
+                const dependents = error.body?.detail?.dependents || error.body?.dependents || [];
+                setConflictDialog({
+                    isOpen: true,
+                    resourceName: row.name,
+                    resourceType: "Container Profile",
+                    dependents: dependents
+                });
+            } else {
+                toast.error(`Error deleting container ${row.name}`);
+            }
+        }
+    };
+
+    const stepsWithContext = steps.map(step => ({
+        ...step,
+        component: (props: any) => {
+            if (step.id === 'view-spec') {
+                return <ViewSpecList
+                    profiles={profiles}
+                    loading={loading}
+                    selectedNamespace={selectedNamespace}
+                    onDelete={handleDeleteProfile}
+                    highlightedId={resourceType === 'pod_profile' ? highlightedId : null}
+                    onRowClick={clearFocus}
+                    {...props}
+                />;
+            }
+            return <step.component {...props} />;
+        }
+    }));
 
     return (
         <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
@@ -291,25 +368,10 @@ function ContainerSpec() {
                 profiles={containersForPod}
                 loading={loadingContainersForPod}
                 selectedNamespace={selectedNamespace}
-                onDelete={fetchContainerSpecs}
-                onViewDetails={(row) => {
-                    setDialogContainerViewOpen(true);
-                    const transformedContainer = {
-                        ...row,
-                        args: containersForPod.find(p => p.id === row.id)?.args || [],
-                        command: containersForPod.find(p => p.id === row.id)?.command || [],
-                        profile: Object.keys(row.dynamic_attr).reduce((acc, key) => {
-                            acc[key] = profiles.find(p => p.id === row.dynamic_attr[key]);
-                            return acc;
-                        }, {} as any)
-                    }
-                    console.log("transformedContainer", transformedContainer);
-                    delete transformedContainer.dynamic_attr
-                    delete transformedContainer.id
-                    delete transformedContainer.description
-                    transformedContainer.image = "<IMAGE_NAME_FILLED_AT_RUNTIME>"
-                    setContainerViewInitialValues(transformedContainer);
-                }}
+                onDelete={handleDeleteContainer}
+                onViewDetails={handleViewContainer}
+                highlightedId={resourceType === 'container' ? highlightedId : null}
+                onRowClick={clearFocus}
             />
             <FormWizard
                 name="create-spec"
@@ -372,6 +434,13 @@ function ContainerSpec() {
                 hideActions={true}
             />
 
+            <DeleteDependencyDialog
+                isOpen={conflictDialog.isOpen}
+                onClose={() => setConflictDialog(prev => ({ ...prev, isOpen: false }))}
+                resourceName={conflictDialog.resourceName}
+                resourceType={conflictDialog.resourceType}
+                dependents={conflictDialog.dependents}
+            />
         </div>
     );
 }

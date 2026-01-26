@@ -10,14 +10,18 @@ interface ContainerSpecListProps {
     profiles: any[];
     loading: boolean;
     selectedNamespace: string;
-    onDelete?: (row: any) => void;
+    onDelete?: (row: any, dependents?: any[]) => void;
+    highlightedId?: string | number | null;
+    onRowClick?: (row: any) => void;
 }
 
-export const ContainerSpecList: React.FC<ContainerSpecListProps> = ({ 
-    profiles, 
-    loading, 
+export const ContainerSpecList: React.FC<ContainerSpecListProps> = ({
+    profiles,
+    loading,
     selectedNamespace,
-    onDelete 
+    onDelete,
+    highlightedId,
+    onRowClick
 }) => {
     const [filteredProfiles, setFilteredProfiles] = useState<any[]>([]);
     const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -34,22 +38,27 @@ export const ContainerSpecList: React.FC<ContainerSpecListProps> = ({
     useEffect(() => {
         const query = searchQuery.toLowerCase();
         let filtered = selectedType ? profiles.filter(p => p.type === selectedType) : profiles;
-        filtered = filtered.filter(profile => 
-            profile.name.toLowerCase().includes(query) || 
+        filtered = filtered.filter(profile =>
+            profile.name.toLowerCase().includes(query) ||
             profile.type.toLowerCase().includes(query)
         );
         setFilteredProfiles(filtered);
     }, [searchQuery, selectedType, profiles]);
 
     const handleDelete = (row: any) => {
-        DefaultService.apiIntegrationKubernetesLibraryProfileDelete({ id: row.id }).then(res => {
-            if(res){
+        DefaultService.apiIntegrationKubernetesLibraryProfileDelete({ id: row.id })
+            .then(res => {
                 toast.success(`deleted ${row.name} (${row.type})`)
                 onDelete?.(row);
-            }else{
-                toast.error(`Unable to delete`)
-            }
-        })
+            })
+            .catch(error => {
+                if (error.status === 409) {
+                    const dependents = error.body?.detail?.dependents || error.body?.dependents || [];
+                    onDelete?.(row, dependents);
+                } else {
+                    toast.error(`Unable to delete ${row.name}`);
+                }
+            });
     };
 
     return (
@@ -89,6 +98,8 @@ export const ContainerSpecList: React.FC<ContainerSpecListProps> = ({
                     </div>
                 }
                 onDelete={handleDelete}
+                highlightedId={highlightedId}
+                onRowClick={onRowClick}
             />
         </div>
     );

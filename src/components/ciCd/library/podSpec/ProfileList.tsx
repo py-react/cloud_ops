@@ -4,13 +4,16 @@ import { Layout, Settings, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DefaultService } from "@/gingerJs_api_client";
 
 interface ProfileListProps {
     profiles: any[];
     loading: boolean;
     selectedNamespace: string;
-    onDelete?: (row: any) => void;
+    onDelete?: (row: any, dependents?: any[]) => void;
     type: "pod_profile" | "pod_metadata_profile";
+    highlightedId?: string | number | null;
+    onRowClick?: (row: any) => void;
 }
 
 export const ProfileList: React.FC<ProfileListProps> = ({
@@ -18,7 +21,9 @@ export const ProfileList: React.FC<ProfileListProps> = ({
     loading,
     selectedNamespace,
     onDelete,
-    type
+    type,
+    highlightedId,
+    onRowClick
 }) => {
     const [filteredProfiles, setFilteredProfiles] = useState<any[]>([]);
     const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -36,18 +41,21 @@ export const ProfileList: React.FC<ProfileListProps> = ({
 
     const handleDelete = async (row: any) => {
         try {
-            const apiPath = type === "pod_profile" ? "pod_profile" : "pod_metadata_profile";
-            const response = await fetch(`/api/integration/kubernetes/library/${apiPath}?id=${row.id}`, {
-                method: "DELETE"
-            });
-            if (response.ok) {
-                toast.success(`Deleted ${row.name}`);
-                onDelete?.(row);
+            if (type === "pod_profile") {
+                await DefaultService.apiIntegrationKubernetesLibraryPodProfileDelete({ id: row.id });
             } else {
-                toast.error("Unable to delete");
+                await DefaultService.apiIntegrationKubernetesLibraryPodMetadataProfileDelete({ id: row.id });
             }
-        } catch (error) {
-            toast.error("Error deleting profile");
+            toast.success(`Deleted ${row.name}`);
+            onDelete?.(row);
+        } catch (error: any) {
+            if (error.status === 409) {
+                // Robust parsing of the error body
+                const dependents = error.body?.detail?.dependents || error.body?.dependents || [];
+                onDelete?.(row, dependents);
+            } else {
+                toast.error("Error deleting profile");
+            }
         }
     };
 
@@ -94,6 +102,8 @@ export const ProfileList: React.FC<ProfileListProps> = ({
                     </div>
                 }
                 onDelete={handleDelete}
+                highlightedId={highlightedId}
+                onRowClick={onRowClick}
             />
         </div>
     );
