@@ -7141,6 +7141,30 @@
             ],
             "title": "Working Dir"
           },
+          "tty": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tty",
+            "default": false
+          },
+          "stdin": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stdin",
+            "default": false
+          },
           "dynamic_attr": {
             "additionalProperties": {
               "type": "integer"

@@ -100,9 +100,9 @@ const ViewContainer = ({ control }: { control: any }) => {
 const container_view_steps = [
     {
         id: 'view',
-        label: 'View Container',
-        description: 'View Container Details',
-        longDescription: 'View the details of the selected container.',
+        label: 'View Derived Container',
+        description: 'View Derived Container Details',
+        longDescription: 'View the details of the selected derived container.',
         component: ContainerAdvancedConfig,
         props: { canEdit: false },
         hideSectionHeader: true,
@@ -338,8 +338,8 @@ function ContainerSpec() {
                 submitLabel="Create Container"
                 submitIcon={Container}
                 heading={{
-                    primary: "Create Container Profile",
-                    secondary: "Configure a new container profile for your deployments",
+                    primary: "Create Derived Container",
+                    secondary: "Configure a new derived container for your deployments",
                     icon: Container,
                 }}
 
@@ -359,8 +359,8 @@ function ContainerSpec() {
                 submitLabel="View Container"
                 submitIcon={Container}
                 heading={{
-                    primary: "Container Details",
-                    secondary: "View container details",
+                    primary: "Derived Container Details",
+                    secondary: "View derived container details",
                     icon: Container,
                 }}
                 hideActions={true}

@@ -17,4 +17,8 @@ class K8sContainerProfile(SQLModel, table=True):
     args: Optional[List[str]] = Field(default=None, sa_column=Column(JSONB))
     working_dir: Optional[str] = Field(default=None)
     
+    # Interactive Options
+    tty: Optional[bool] = Field(default=False)
+    stdin: Optional[bool] = Field(default=False)
+
     dynamic_attr: Dict[str, int] = Field(sa_column=Column(JSONB))

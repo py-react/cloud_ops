@@ -24,12 +24,12 @@ export const DerivedContainerList: React.FC<DerivedContainerListProps> = ({
     return (
         <div className="flex-1 min-h-0 mt-10">
             <ResourceTable
-                title="Dervied Containers"
-                description={`Defined dervied container configurations for deployments in ${selectedNamespace}.`}
+                title="Derived Containers"
+                description={`Defined derived container configurations for deployments in ${selectedNamespace}.`}
                 icon={<Container className="h-5 w-5" />}
                 columns={[
                     { accessor: "name", header: "Name" },
-                    { accessor: "description", header: "Descriptiond" },
+                    { accessor: "description", header: "Description" },
                     { accessor: "namespace", header: "Namespace" },
                     { accessor: "command", header: "Command" },
                     { accessor: "args", header: "Args" },

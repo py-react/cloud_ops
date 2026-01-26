@@ -5,6 +5,7 @@ import { Plus, Container, Cpu, X, Info, Command, Terminal, FileTerminal } from "
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { RequiredBadge } from "@/components/docker/network/forms/badges";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/libs/utils";
 import { ProfileSelector } from "@/components/select-profile";
@@ -28,7 +29,9 @@ const defaultValues = {
     args: new Set(),
     working_dir: "",
     profile: {},
-}
+    tty: false,
+    stdin: false,
+};
 
 export const BasicConfig = ({ control, setValue, watch, form }: { control: Control<typeof defaultValues, any, typeof defaultValues>, setValue: UseFormSetValue<typeof defaultValues>, watch: UseFormWatch<typeof defaultValues>, form: UseFormReturn<typeof defaultValues, any, typeof defaultValues> }) => {
 
@@ -62,11 +65,11 @@ export const BasicConfig = ({ control, setValue, watch, form }: { control: Contr
     }
 
     const handleAddBranch = () => {
-        const oldVal = form.getValues("profile")
-        oldVal[attributeInput] = selectedProfile
-        setValue("profile", oldVal)
-        setAttributeInput("")
-        setSelctedProfile({})
+        const oldVal = form.getValues("profile") as Record<string, any>;
+        oldVal[attributeInput] = selectedProfile;
+        setValue("profile", oldVal);
+        setAttributeInput("");
+        setSelctedProfile({});
     };
 
     return (
@@ -231,6 +234,49 @@ export const BasicConfig = ({ control, setValue, watch, form }: { control: Contr
                 />
             </div>
 
+            <div className="grid grid-cols-2 gap-6 p-4 rounded-xl border border-border/40 bg-muted/10">
+                <FormField
+                    control={control}
+                    name="tty"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-3 bg-background/50">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-sm font-bold">TTY</FormLabel>
+                                <FormDescription className="text-[10px]">
+                                    Allocate a pseudo-TTY
+                                </FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={control}
+                    name="stdin"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-3 bg-background/50">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-sm font-bold">Interactive (Stdin)</FormLabel>
+                                <FormDescription className="text-[10px]">
+                                    Keep stdin open
+                                </FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+            </div>
+
             <div className="space-y-4">
                 <div>
                     <FormLabel className="text-sm font-bold text-foreground">
@@ -250,29 +296,32 @@ export const BasicConfig = ({ control, setValue, watch, form }: { control: Contr
                             </span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {Object.keys(profileWatch).map((field: any) => (
-                                <Badge
-                                    key={profileWatch[field].id}
-                                    variant="outline"
-                                    className={cn(
-                                        "pl-3 pr-2 py-1.5 gap-2 bg-primary/5 border-primary/20 text-primary hover:bg-primary/10 transition-all group",
-                                        "font-mono text-xs font-semibold"
-                                    )}
-                                >
-                                    <span>{field}: {`${profileWatch[field].name} (${profileWatch[field].type})`}</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const oldVal = form.getValues("profile")
-                                            delete oldVal[field]
-                                            setValue("profile", oldVal)
-                                        }}
-                                        className="rounded-full p-0.5 hover:bg-destructive/20 transition-colors"
+                            {Object.keys(profileWatch).map((field: any) => {
+                                const pw = profileWatch as Record<string, any>;
+                                return (
+                                    <Badge
+                                        key={pw[field].id}
+                                        variant="outline"
+                                        className={cn(
+                                            "pl-3 pr-2 py-1.5 gap-2 bg-primary/5 border-primary/20 text-primary hover:bg-primary/10 transition-all group",
+                                            "font-mono text-xs font-semibold"
+                                        )}
                                     >
-                                        <X className="h-3 w-3 text-destructive" />
-                                    </button>
-                                </Badge>
-                            ))}
+                                        <span>{field}: {`${pw[field].name} (${pw[field].type})`}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const oldVal = form.getValues("profile") as Record<string, any>;
+                                                delete oldVal[field]
+                                                setValue("profile", oldVal)
+                                            }}
+                                            className="rounded-full p-0.5 hover:bg-destructive/20 transition-colors"
+                                        >
+                                            <X className="h-3 w-3 text-destructive" />
+                                        </button>
+                                    </Badge>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -333,7 +382,7 @@ export const AdvancedConfig = ({ control, setValue, watch, form, canEdit = true 
     // Derive the YAML representation from form values and store original profile data
     const { formValues, originalProfileData } = useMemo(() => {
         const objectFromFormValue = { ...control._formValues }
-        const profiles = { ...objectFromFormValue.profile }
+        const profiles = { ...objectFromFormValue.profile } as Record<string, any>;
         const profileData: Record<string, any> = {};
 
         objectFromFormValue.command = Array.from(control._formValues.command || [])
@@ -367,7 +416,7 @@ export const AdvancedConfig = ({ control, setValue, watch, form, canEdit = true 
 
     // Known editable fields - only these will be synced back to form
     const knownEditableFields = useMemo(() =>
-        new Set(['name', 'image_pull_policy', 'working_dir', 'command', 'args', 'image', 'namespace']),
+        new Set(['name', 'image_pull_policy', 'working_dir', 'command', 'args', 'image', 'namespace', 'tty', 'stdin']),
         []);
 
     // Handle editor changes - parse YAML and update form fields
@@ -402,7 +451,7 @@ export const AdvancedConfig = ({ control, setValue, watch, form, canEdit = true 
                     else if (!knownEditableFields.has(key) && now - lastWarningTime.current > 3000) {
                         lastWarningTime.current = now;
                         toast.warning("Unknown attribute will not be saved", {
-                            description: `"${key}" is not a recognized field. Only name, command, args, image_pull_policy, and working_dir can be edited here.`,
+                            description: `"${key}" is not a recognized field. Only name, command, args, image_pull_policy, working_dir, tty, and stdin can be edited here.`,
                         });
                         break;
                     }
@@ -417,6 +466,12 @@ export const AdvancedConfig = ({ control, setValue, watch, form, canEdit = true 
                 }
                 if (parsed.working_dir !== undefined && parsed.working_dir !== control._formValues.working_dir) {
                     setValue('working_dir', parsed.working_dir);
+                }
+                if (parsed.tty !== undefined && parsed.tty !== control._formValues.tty) {
+                    setValue('tty', parsed.tty);
+                }
+                if (parsed.stdin !== undefined && parsed.stdin !== control._formValues.stdin) {
+                    setValue('stdin', parsed.stdin);
                 }
                 // Update command (convert array to Set)
                 if (Array.isArray(parsed.command)) {
@@ -448,6 +503,8 @@ export const AdvancedConfig = ({ control, setValue, watch, form, canEdit = true 
             command: Array.from(control._formValues.command || []) as string[],
             args: Array.from(control._formValues.args || []) as string[],
             working_dir: control._formValues.working_dir as string,
+            tty: control._formValues.tty as boolean,
+            stdin: control._formValues.stdin as boolean,
             dynamic_attr: control._formValues.profile
         };
     }, [control._formValues]);
