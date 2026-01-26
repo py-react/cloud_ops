@@ -24,8 +24,8 @@ export const PodList: React.FC<PodListProps> = ({
     return (
         <div className="flex-1 min-h-0 mt-10">
             <ResourceTable
-                title="Pod Specifications"
-                description={`Defined pod configurations for deployments in ${selectedNamespace}.`}
+                title="Derived Pods"
+                description={`Defined derived pod configurations for deployments in ${selectedNamespace}.`}
                 icon={<Box className="h-5 w-5" />}
                 columns={[
                     { accessor: "name", header: "Name" },

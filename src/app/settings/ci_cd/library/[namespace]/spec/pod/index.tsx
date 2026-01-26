@@ -217,9 +217,9 @@ function PodLibrary() {
     const podViewSteps = useMemo(() => [
         {
             id: 'view',
-            label: 'View Pod spec',
-            description: 'View Pod Details',
-            longDescription: 'View the details of the selected pod specification.',
+            label: 'View Derived Pod',
+            description: 'View Derived Pod Details',
+            longDescription: 'View the details of the selected derived pod.',
             component: (props: any) => <PodAdvancedConfig {...props} namespace={selectedNamespace} />,
             hideSectionHeader: true,
         }
@@ -254,7 +254,7 @@ function PodLibrary() {
                         setPodDialogOpen(true);
                     }}>
                         <Plus className="w-3.5 h-3.5 mr-1" />
-                        New Pod
+                        Derived Pod
                     </Button>
                 </div>
             </div>
@@ -290,11 +290,11 @@ function PodLibrary() {
                 schema={podSchema}
                 initialValues={viewPodInitialValues}
                 onSubmit={handleCreatePod}
-                submitLabel="Create Pod Spec"
+                submitLabel="Create Pod"
                 submitIcon={Box}
                 heading={{
-                    primary: "Create Pod Specification",
-                    secondary: "Define a new pod by linking containers and selecting profiles",
+                    primary: "Create Derived Pod",
+                    secondary: "Define a new derived pod by linking containers and selecting profiles",
                     icon: Box,
                 }}
             />
@@ -313,7 +313,7 @@ function PodLibrary() {
                 submitLabel="View Details"
                 submitIcon={Box}
                 heading={{
-                    primary: "Pod Specification Details",
+                    primary: "Derived Pod Details",
                     secondary: "View generated YAML and configuration",
                     icon: Box,
                 }}

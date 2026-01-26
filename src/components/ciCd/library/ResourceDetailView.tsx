@@ -110,6 +110,11 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                 {/* Pod Specific Config */}
                 {type === "pod" && (
                     <>
+                        <SectionHeader icon={Box} title="Derived Pod Settings" />
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <InfoItem label="Name" value={data.name} icon={FileText} />
+                        </div>
+
                         <SectionHeader icon={Shield} title="Security & Network" />
                         <div className="grid grid-cols-2 gap-3">
                             <InfoItem label="Service Account" value={data.service_account_name} icon={User} />

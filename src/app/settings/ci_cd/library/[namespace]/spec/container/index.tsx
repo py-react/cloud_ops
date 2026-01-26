@@ -82,10 +82,11 @@ const container_steps = [
     },
     {
         id: 'advanced',
-        label: 'Advanced Config',
+        label: 'View Config',
         description: 'Advanced Configuration',
         longDescription: 'Fine-tune your container configuration in YAML format. Profile attributes are read-only.',
         component: ContainerAdvancedConfig,
+        props: { canEdit: false },
     },
 ]
 
