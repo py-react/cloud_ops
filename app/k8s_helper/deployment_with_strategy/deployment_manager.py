@@ -12,6 +12,7 @@ from ...db_client.controllers.deployment_run.deployment_run import (
 from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
 from app.k8s_helper.deployment_with_strategy.strategy_handler import StrategyHandler
 from app.db_client.services.deployment_generator import DeploymentGenerator
+from app.db_client.services.deployment_composer import DeploymentComposer
 
 
 class DeploymentManager:
@@ -108,6 +109,7 @@ class DeploymentManager:
     def get_deployment(self, name: str, namespace: str) -> Dict[str, Any]:
         """
         Get the deployment config from the DB by name and namespace.
+        Enriched with composed library data if derived.
         """
         try:
             config_obj = self.session.exec(select(DeploymentConfig).where(
@@ -117,12 +119,8 @@ class DeploymentManager:
             if not config_obj:
                 raise Exception(f"Deployment config not found for name={name}, namespace={namespace}")
             
-            result = config_obj.dict()
-            # Enrich with profile IDs for frontend forms
-            result["container_profile_ids"] = [c.id for c in config_obj.containers]
-            result["volume_profile_ids"] = [v.id for v in config_obj.volumes]
-            
-            return result
+            composer = DeploymentComposer(self.session)
+            return composer.compose(config_obj)
         except Exception as e:
             raise Exception(f"Unexpected error getting deployment from DB: {str(e)}")
 

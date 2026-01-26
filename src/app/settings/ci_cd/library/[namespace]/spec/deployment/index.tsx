@@ -26,6 +26,19 @@ const deploymentSchema = z.object({
     dynamic_attr: z.any().optional(),
 });
 
+const parseJson = (data: any, defaultValue: any = {}) => {
+    if (!data) return defaultValue;
+    if (typeof data === 'string') {
+        try {
+            return JSON.parse(data);
+        } catch (e) {
+            console.error("Failed to parse JSON:", e);
+            return defaultValue;
+        }
+    }
+    return data;
+};
+
 const transformDeployment = (row: any) => ({
     name: row.name,
     namespace: row.namespace,
@@ -36,7 +49,7 @@ const transformDeployment = (row: any) => ({
     revision_history_limit: row.revision_history_limit ?? undefined,
     progress_deadline_seconds: row.progress_deadline_seconds ?? undefined,
     paused: row.paused ?? false,
-    dynamic_attr: row.dynamic_attr || {},
+    dynamic_attr: parseJson(row.dynamic_attr, {}),
 });
 
 

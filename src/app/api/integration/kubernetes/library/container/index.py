@@ -4,17 +4,18 @@ from sqlmodel import Session
 from app.db_client.controllers.kubernetes_profiles.container import list_profiles, create_profile, delete_profile, update_profile
 from app.db_client.models.kubernetes_profiles.container import K8sContainerProfile
 from typing import Optional, List
+from app.utils.json_utils import clean_container_profile
 
 async def GET(request: Request, namespace: Optional[str] = None, ids: Optional[str] = None):
     ids_list = [int(i) for i in ids.split(",")] if ids else None
     with get_session() as session:
         profiles = list_profiles(session, namespace, ids=ids_list)
-        return [p.dict() for p in profiles]
+        return [clean_container_profile(p.dict()) for p in profiles]
 
 async def POST(request: Request, body: K8sContainerProfile):
     with get_session() as session:
         profile = create_profile(session, body.dict())
-        return profile.dict()
+        return clean_container_profile(profile.dict())
 
 async def PUT(request: Request, id: int, body: K8sContainerProfile):
     with get_session() as session:
@@ -22,7 +23,7 @@ async def PUT(request: Request, id: int, body: K8sContainerProfile):
         profile = update_profile(session, id, data)
         if not profile:
             return JSONResponse(status_code=404, content={"detail": "Container not found"})
-        return profile.dict()
+        return clean_container_profile(profile.dict())
 
 
 from sqlmodel import select
