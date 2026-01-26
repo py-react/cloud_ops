@@ -12,6 +12,7 @@ interface ProfileListProps {
     selectedNamespace: string;
     onDelete?: (row: any, dependents?: any[]) => void;
     onViewDetails?: (row: any) => void;
+    onEdit?: (row: any) => void;
     type: "pod_profile" | "pod_metadata_profile";
     highlightedId?: string | number | null;
     onRowClick?: (row: any) => void;
@@ -23,6 +24,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
     selectedNamespace,
     onDelete,
     onViewDetails,
+    onEdit,
     type,
     highlightedId,
     onRowClick
@@ -105,6 +107,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
                 }
                 onDelete={handleDelete}
                 onViewDetails={onViewDetails}
+                onEdit={onEdit}
                 highlightedId={highlightedId}
                 onRowClick={onRowClick}
             />

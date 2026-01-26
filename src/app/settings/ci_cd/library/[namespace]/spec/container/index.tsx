@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
-import { Container, Plus, RefreshCw, SquareTerminal } from "lucide-react";
+import { Box, Braces, Plus, RefreshCw, Container, SquareTerminal } from "lucide-react";
 import { toast } from "sonner";
 import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
@@ -126,6 +126,8 @@ function ContainerSpec() {
     const [loading, setLoading] = useState(false);
     const [loadingContainersForPod, setLoadingContainersForPod] = useState(false);
     const [viewProfileInitialValues, setViewProfileInitialValues] = useState<any>(null);
+    const [editMode, setEditMode] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     const [container_default_values] = useState({ ..._container_default_values, namespace: selectedNamespace })
     const [container_view_initial_values, setContainerViewInitialValues] = useState(container_default_values)
@@ -206,13 +208,29 @@ function ContainerSpec() {
         setContainerViewInitialValues(transformedContainer);
     };
 
+    const handleEditContainer = (row: any) => {
+        setEditMode(true);
+        setEditingId(row.id);
+        const transformedContainer = {
+            ...row,
+            args: row.args || [],
+            command: row.command || [],
+            profile: Object.keys(row.dynamic_attr || {}).reduce((acc, key) => {
+                acc[key] = profiles.find(p => p.id === row.dynamic_attr[key]);
+                return acc;
+            }, {} as any)
+        }
+        setContainerViewInitialValues(transformedContainer);
+        setDialogContainerOpen(true);
+    };
+
 
     const handleContainerSubmit = async (values: any) => {
         const valueProfiles = { ...values.profile }
         const transformedProfile: any = {}
 
         Object.keys(valueProfiles).map(key => {
-            transformedProfile[key] = valueProfiles[key].id
+            transformedProfile[key] = valueProfiles[key]?.id
         })
 
         const payload = {
@@ -225,18 +243,19 @@ function ContainerSpec() {
         delete payload.profile
 
         try {
-            const response = await fetch("/api/integration/kubernetes/library/container", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (response.ok) {
-                toast.success("Profile created");
+            if (editMode && editingId) {
+                await DefaultService.apiIntegrationKubernetesLibraryContainerPut({ id: editingId, requestBody: payload } as any);
+                toast.success("Container updated");
+                setDialogContainerOpen(false);
+                fetchPodSpecs();
+            } else {
+                await DefaultService.apiIntegrationKubernetesLibraryContainerPost({ requestBody: payload });
+                toast.success("Container created");
                 setDialogContainerOpen(false);
                 fetchPodSpecs();
             }
         } catch (error) {
-            toast.error("Error saving profile");
+            toast.error(editMode ? "Error updating container" : "Error saving container");
         }
     };
 
@@ -293,13 +312,17 @@ function ContainerSpec() {
                         <RefreshCw className="w-3.5 h-3.5 mr-2" />
                         Refresh
                     </Button>
-                    <Button
-                        variant="gradient"
-                        size="sm"
-                        onClick={() => {
-                            setDialogContainerOpen(true)
-                        }}
-                    >
+                    <Button variant="gradient" size="sm" onClick={() => {
+                        setEditMode(false);
+                        setEditingId(null);
+                        setContainerViewInitialValues({
+                            name: "",
+                            namespace: selectedNamespace,
+                            image_name: "",
+                            profile: {}
+                        } as any);
+                        setDialogContainerOpen(true);
+                    }}>
                         <Plus className="w-3.5 h-3.5 mr-1" />
                         Derived Container
                     </Button>
@@ -322,6 +345,7 @@ function ContainerSpec() {
                 selectedNamespace={selectedNamespace}
                 onDelete={handleDeleteContainer}
                 onViewDetails={handleViewContainer}
+                onEdit={handleEditContainer}
                 highlightedId={resourceType === 'container' ? highlightedId : null}
                 onRowClick={clearFocus}
             />
@@ -334,13 +358,13 @@ function ContainerSpec() {
                 setCurrentStep={setContainerActiveTab}
                 steps={container_steps}
                 schema={createContainerProfileSchema as z.ZodSchema<any>}
-                initialValues={container_default_values}
+                initialValues={container_view_initial_values}
                 onSubmit={handleContainerSubmit}
-                submitLabel="Create Container"
-                submitIcon={Container}
+                submitLabel={editMode ? "Update Container" : "Create Container"}
+                submitIcon={Box}
                 heading={{
-                    primary: "Create Derived Container",
-                    secondary: "Configure a new derived container for your deployments",
+                    primary: editMode ? "Edit Derived Container" : "Create Derived Container",
+                    secondary: editMode ? "Update derived container configuration" : "Configure a new derived container for your deployments",
                     icon: Container,
                 }}
 

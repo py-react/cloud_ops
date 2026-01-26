@@ -8,6 +8,7 @@ interface DerivedContainerListProps {
     selectedNamespace: string;
     onDelete?: (row: any, dependents?: any[]) => void;
     onViewDetails?: (row: any) => void;
+    onEdit?: (row: any) => void;
     highlightedId?: string | number | null;
     onRowClick?: (row: any) => void;
 }
@@ -18,6 +19,7 @@ export const DerivedContainerList: React.FC<DerivedContainerListProps> = ({
     selectedNamespace,
     onDelete,
     onViewDetails,
+    onEdit,
     highlightedId,
     onRowClick
 }) => {
@@ -41,6 +43,8 @@ export const DerivedContainerList: React.FC<DerivedContainerListProps> = ({
                     command: <Chips list={Array.isArray(profile.command) ? profile.command : []} />,
                 }))}
                 onViewDetails={onViewDetails}
+                onEdit={onEdit}
+                onDelete={onDelete}
                 highlightedId={highlightedId}
                 onRowClick={onRowClick}
             />

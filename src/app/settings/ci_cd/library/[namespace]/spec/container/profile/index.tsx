@@ -47,6 +47,8 @@ function ContainerSpecifications() {
     const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [viewProfileInitialValues, setViewProfileInitialValues] = useState<any>(null);
+    const [editMode, setEditMode] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     const [default_value] = useState({ ..._default_value, namespace: selectedNamespace })
 
@@ -98,14 +100,19 @@ function ContainerSpecifications() {
             resource_config: values.config ? JSON.parse(values.config) : {},
         };
         try {
-            const response = await fetch("/api/integration/kubernetes/library/profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-            if (response.ok) {
+            if (editMode && editingId) {
+                await DefaultService.apiIntegrationKubernetesLibraryProfilePut({ id: editingId, requestBody: payload } as any);
+                toast.success("Profile updated");
+                setDialogOpen(false);
+                fetchContainerSpecs();
+            } else {
+                await DefaultService.apiIntegrationKubernetesLibraryProfilePost({ requestBody: payload } as any);
                 toast.success("Profile created");
                 setDialogOpen(false);
                 fetchContainerSpecs();
             }
         } catch (error) {
-            toast.error("Error saving profile");
+            toast.error(editMode ? "Error updating profile" : "Error saving profile");
         }
     };
 
@@ -126,6 +133,19 @@ function ContainerSpecifications() {
         setViewProfileInitialValues(row);
         setViewProfileStep("view");
         setViewProfileDialogOpen(true);
+    };
+
+    const handleEditProfile = (row: any) => {
+        setEditMode(true);
+        setEditingId(row.id);
+        setActiveTab("add-spec");
+        // Ensure config is stringified for the editor
+        const profileToEdit = { ...row };
+        if (typeof profileToEdit.config !== 'string') {
+            profileToEdit.config = JSON.stringify(profileToEdit.config, null, 2);
+        }
+        setViewProfileInitialValues(profileToEdit);
+        setDialogOpen(true);
     };
 
     return (
@@ -156,7 +176,10 @@ function ContainerSpecifications() {
                         variant="gradient"
                         size="sm"
                         onClick={() => {
+                            setEditMode(false);
+                            setEditingId(null);
                             setActiveTab("add-spec");
+                            setViewProfileInitialValues(default_value);
                             setDialogOpen(true)
                         }}
                     >
@@ -182,6 +205,7 @@ function ContainerSpecifications() {
                 selectedNamespace={selectedNamespace}
                 onDelete={handleDeleteProfile}
                 onViewDetails={handleViewProfile}
+                onEdit={handleEditProfile}
                 highlightedId={resourceType === 'profile' ? highlightedId : null}
                 onRowClick={clearFocus}
             />
@@ -194,13 +218,13 @@ function ContainerSpecifications() {
                 setCurrentStep={setActiveTab}
                 steps={steps}
                 schema={createResourceProfileSchema as z.ZodSchema<any>}
-                initialValues={default_value}
+                initialValues={viewProfileInitialValues || default_value}
                 onSubmit={handleSubmit}
-                submitLabel="Create Spec"
+                submitLabel={editMode ? "Update Spec" : "Create Spec"}
                 submitIcon={Braces}
                 heading={{
-                    primary: "Manage Container Specs",
-                    secondary: "Add new specs, view existing specs, and manage specifications",
+                    primary: editMode ? "Edit Container Spec" : "Manage Container Specs",
+                    secondary: editMode ? "Update reusable container specification" : "Add new specs, view existing specs, and manage specifications",
                     icon: Braces,
                 }}
             />
