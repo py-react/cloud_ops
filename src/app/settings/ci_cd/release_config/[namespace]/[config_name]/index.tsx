@@ -708,6 +708,7 @@ const ReleaseConfigDetailedInfo = () => {
                     <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Lifecycle State</th>
                     <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Resources</th>
                     <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Timeline</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/20">
@@ -738,18 +739,10 @@ const ReleaseConfigDetailedInfo = () => {
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <a
-                          href={`/orchestration/kubernetes/${configData.namespace}/deployments/deployments/${configData.deployment_name}`}
-                          className="flex items-center gap-2 group/status hover:opacity-80 transition-all"
-                        >
+                        <div className="flex items-center gap-2">
                           {getStatusIcon(run.status)}
-                          <div className="flex flex-col">
-                            <StatusBadge status={run.status} />
-                            <span className="text-[9px] font-medium text-primary/60 group-hover/status:underline flex items-center gap-1 mt-0.5">
-                              View Deployment <ExternalLink className="w-2.5 h-2.5" />
-                            </span>
-                          </div>
-                        </a>
+                          <StatusBadge status={run.status} />
+                        </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
@@ -770,6 +763,14 @@ const ReleaseConfigDetailedInfo = () => {
                           <span className="font-bold text-foreground/80">{run.created_at}</span>
                           <span className="text-muted-foreground opacity-60">Initiated By System</span>
                         </div>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <a
+                          href={`/orchestration/kubernetes/${configData.namespace}/deployments/deployments/${configData.deployment_name}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/5 text-primary text-[10px] font-bold hover:bg-primary/10 transition-all border border-primary/20"
+                        >
+                          View Deployment <ExternalLink className="w-3 h-3" />
+                        </a>
                       </td>
                     </tr>
                   ))}
