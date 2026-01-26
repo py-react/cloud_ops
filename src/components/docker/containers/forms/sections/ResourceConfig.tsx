@@ -18,12 +18,6 @@ interface ResourceConfigProps {
 }
 
 export function ResourceConfig({ control, errors, watch }: ResourceConfigProps) {
-  // Helper to indicate optional fields
-  const OptionalBadge = () => (
-    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-gray-50 px-1 py-0.5 text-xs font-medium text-gray-600">
-      Optional
-    </span>
-  );
 
   return (
     <div className="space-y-6">
@@ -33,8 +27,8 @@ export function ResourceConfig({ control, errors, watch }: ResourceConfigProps) 
           name="memory"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Memory Limit <OptionalBadge />
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Memory Limit
               </FormLabel>
               <FormDescription>
                 Maximum amount of memory the container can use (e.g., 512m, 2g)
@@ -52,15 +46,15 @@ export function ResourceConfig({ control, errors, watch }: ResourceConfigProps) 
           name="cpuShares"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                CPU Shares <OptionalBadge />
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                CPU Shares
               </FormLabel>
               <FormDescription>
                 CPU shares (relative weight) for the container
               </FormDescription>
               <FormControl>
-                <Input 
-                  placeholder="e.g., 1024" 
+                <Input
+                  placeholder="e.g., 1024"
                   {...field}
                   onChange={e => field.onChange(e.target.value)}
                 />
@@ -75,8 +69,8 @@ export function ResourceConfig({ control, errors, watch }: ResourceConfigProps) 
           name="memoryReservation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Memory Reservation <OptionalBadge />
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Memory Reservation
               </FormLabel>
               <FormDescription>
                 Memory soft limit for the container (e.g., 256m, 1g)
@@ -94,8 +88,8 @@ export function ResourceConfig({ control, errors, watch }: ResourceConfigProps) 
           name="memorySwap"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Memory Swap <OptionalBadge />
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Memory Swap
               </FormLabel>
               <FormDescription>
                 Total memory limit (memory + swap) for the container (e.g., 1g, 2g)

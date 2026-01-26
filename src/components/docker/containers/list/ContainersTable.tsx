@@ -16,8 +16,16 @@ interface ContainersTableProps {
   onDelete: (container: ContainerInfo) => void;
   onRerun: (container: ContainerInfo) => void;
   onPause: (container: ContainerInfo) => void;
+  onBulkRerun?: (containers: ContainerInfo[]) => void;
+  onBulkPause?: (containers: ContainerInfo[]) => void;
+  onBulkStop?: (containers: ContainerInfo[]) => void;
+  onBulkDelete?: (containers: ContainerInfo[]) => void;
   loading?: boolean;
   onRefresh?: () => void;
+  title?: string;
+  description?: string;
+  icon?: React.ReactNode;
+  extraHeaderContent?: React.ReactNode;
 }
 
 export function ContainersTable({
@@ -29,8 +37,16 @@ export function ContainersTable({
   onDelete,
   onRerun,
   onPause,
+  onBulkRerun,
+  onBulkPause,
+  onBulkStop,
+  onBulkDelete,
   loading,
   onRefresh,
+  title,
+  description,
+  icon,
+  extraHeaderContent,
 }: ContainersTableProps) {
   const {
     search,
@@ -42,16 +58,14 @@ export function ContainersTable({
 
   const columns = [
     { header: 'Name', accessor: 'name' },
-    { header: 'ID', accessor: 'id' },
-    { header: 'Created At', accessor: 'created' },
-    { header: 'Started', accessor: 'started' },
-    { header: 'Last Stopped', accessor: 'lastStopped' },
+    { header: 'Status', accessor: 'containerStatus' },
+    { header: 'Image', accessor: 'image' },
+    { header: 'Short ID', accessor: 'id' },
+    { header: 'Created', accessor: 'created' },
     { header: 'Port Mappings', accessor: 'ports' },
-    // { header: 'Env', accessor: 'env' },
-    { header: 'Container Status', accessor: 'containerStatus' },
   ];
 
-  const data = filteredContainers.map((container) => {
+  const data = filteredContainers.map((container, index) => {
     // Determine which actions are available for this container
     const canRerun = !["running"].includes(container.status);
     const canPause = !["exited", "paused", "created"].includes(container.status);
@@ -59,121 +73,108 @@ export function ContainersTable({
 
     // Port mapping logic (show only first, +N more)
     const portEntries = container.ports ? Object.entries(container.ports) : [];
-    let portMapping = 'Not bound';
+    let portMapping: React.ReactNode = (
+      <span className="text-muted-foreground italic text-sm">Not bound</span>
+    );
+
     if (portEntries.length > 0) {
       const [firstPort, bindings] = portEntries[0];
-      let mapping;
+      let mappingText;
       if (Array.isArray(bindings) && bindings.length > 0) {
-        mapping = bindings
-          .map(b => {
-            const isLocal =
-              !b.HostIp ||
-              b.HostIp === "0.0.0.0" ||
-              b.HostIp === "127.0.0.1" ||
-              b.HostIp === "localhost";
-            return isLocal
-              ? `${b.HostPort} → ${firstPort}`
-              : `${b.HostIp}:${b.HostPort} → ${firstPort}`;
-          })
+        mappingText = bindings
+          .map(b => b.HostPort)
           .join(", ");
-      } else {
-        mapping = `Not bound → ${firstPort}`;
-      }
-      portMapping = mapping;
-      if (portEntries.length > 1) {
-        portMapping += `  +${portEntries.length - 1} more`;
+        portMapping = (
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">
+              {mappingText}
+            </span>
+            <span className="text-xs text-muted-foreground">→ {firstPort}</span>
+            {portEntries.length > 1 && (
+              <span className="text-xs bg-muted px-1 rounded text-muted-foreground">
+                +{portEntries.length - 1}
+              </span>
+            )}
+          </div>
+        );
       }
     }
 
     return {
       name: (
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{container.name}</span>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-foreground tracking-tight">{container.name}</span>
         </div>
       ),
       containerStatus: container.status,
-      id: container.id.substring(0, 12),
+      id: (
+        <code className="text-xs font-mono bg-muted/50 px-1.5 py-0.5 rounded border border-border/50 text-muted-foreground">
+          {container.id.substring(0, 12)}
+        </code>
+      ),
       image: (
-        <span className="flex items-center gap-1">
-          <ContainerIcon className="w-4 h-4" />
-          {container.image}
+        <div className="flex items-center gap-2 max-w-[180px]">
+          <div className="p-1 rounded bg-muted/50">
+            <ContainerIcon className="w-3 h-3 text-muted-foreground" />
+          </div>
+          <span className="text-sm truncate text-muted-foreground font-medium" title={container.image}>
+            {container.image.split('@')[0]}
+          </span>
+        </div>
+      ),
+      created: (
+        <span className="text-sm text-muted-foreground">
+          {formatDistanceToNow(new Date(container.created), { addSuffix: true })}
         </span>
       ),
-      created: formatDistanceToNow(new Date(container.created), {
-        addSuffix: true,
-      }),
-      started:
-        container.state?.StartedAt &&
-        typeof container.state.StartedAt === "string" &&
-        container.state.StartedAt !== "0001-01-01T00:00:00Z"
-          ? formatDistanceToNow(new Date(container.state.StartedAt), {
-              addSuffix: true,
-            })
-          : "-",
-      lastStopped:
-        container.state?.FinishedAt &&
-        typeof container.state.FinishedAt === "string" &&
-        container.state.FinishedAt !== "0001-01-01T00:00:00Z"
-          ? formatDistanceToNow(new Date(container.state.FinishedAt), {
-              addSuffix: true,
-            })
-          : "-",
       ports: portMapping,
-      env: container.env_vars ? (
-        <div className="max-w-[200px] truncate">
-          {container.env_vars.slice(0, 3).map((env, i) => (
-            <div key={i} className="truncate">
-              {env}
-            </div>
-          ))}
-          {container.env_vars.length > 3 && (
-            <span className="text-xs text-gray-400">
-              +{container.env_vars.length - 3} more
-            </span>
-          )}
-        </div>
-      ) : (
-        "-"
-      ),
       container,
-      showPlay:canRerun,
-      showPause:canPause,
-      showStop:canStop,
+      showPlay: canRerun,
+      showPause: canPause,
+      showStop: canStop,
     };
   });
 
-  return (
-    <div className="space-y-4">
-      <ContainerFilters
-        search={search}
-        onSearchChange={onSearchChange}
-        statusFilter={statusFilter}
-        onStatusFilterChange={onStatusFilterChange}
-      />
-      <ResourceTable
-        columns={columns}
-        data={data}
-        onPlay={row => {
-          onRerun(row.container)
-        }}
-        onPause={row => {
-          onPause(row.container)
-        }}
-        onStop={row => {
-          onStop(row.container)
-        }}
-        onDelete={row => {
-          onDelete(row.container)
-        }}
-        onViewDetails={row => {
-          onView(row.container)
-        }}
-        onEdit={row => {
-          onEdit(row.container)
-        }}
-        // onViewLogs={row => row.onViewLogs && row.onViewLogs()}
-        tableClassName="max-h-[490px]"
-      />
-    </div>
+  const filtersElement = (
+    <ContainerFilters
+      search={search}
+      onSearchChange={onSearchChange}
+      statusFilter={statusFilter}
+      onStatusFilterChange={onStatusFilterChange}
+    />
   );
-} 
+
+  return (
+    <ResourceTable
+      columns={columns}
+      data={data}
+      onPlay={row => {
+        onRerun(row.container)
+      }}
+      onPause={row => {
+        onPause(row.container)
+      }}
+      onStop={row => {
+        onStop(row.container)
+      }}
+      onDelete={row => {
+        onDelete(row.container)
+      }}
+      onViewDetails={row => {
+        onView(row.container)
+      }}
+      onEdit={row => {
+        onEdit(row.container)
+      }}
+      onBulkPlay={rows => onBulkRerun?.(rows.map(r => r.container))}
+      onBulkPause={rows => onBulkPause?.(rows.map(r => r.container))}
+      onBulkStop={rows => onBulkStop?.(rows.map(r => r.container))}
+      onBulkDelete={rows => onBulkDelete?.(rows.map(r => r.container))}
+      tableClassName="max-h-[550px]"
+      title={title}
+      description={description}
+      icon={icon}
+      extraHeaderContent={filtersElement}
+    />
+  );
+}

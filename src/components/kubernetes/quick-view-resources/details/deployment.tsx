@@ -60,9 +60,9 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${status?getStatusColor(
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${status ? getStatusColor(
         status
-      ):status} ${className}`}
+      ) : status} ${className}`}
     >
       {status}
     </span>
@@ -167,7 +167,7 @@ const PodRow: React.FC<{ pod: any }> = ({ pod }) => {
               {pod.containers.length}
             </span>
             <div className="flex space-x-1">
-              {pod.containers.map((container: any, idx: number) => (
+              {pod.containers?.map((container: any, idx: number) => (
                 <div
                   key={idx}
                   className="w-2 h-2 rounded-full"
@@ -176,8 +176,8 @@ const PodRow: React.FC<{ pod: any }> = ({ pod }) => {
                       container.status === "Running" && container.ready
                         ? "#10b981"
                         : container.status === "Running"
-                        ? "#f59e0b"
-                        : "#6b7280",
+                          ? "#f59e0b"
+                          : "#6b7280",
                   }}
                 />
               ))}
@@ -197,7 +197,7 @@ const PodRow: React.FC<{ pod: any }> = ({ pod }) => {
                   <span>Containers ({pod.containers.length})</span>
                 </h4>
                 <div className="space-y-4">
-                  {pod.containers.map((container: any, idx: number) => (
+                  {pod.containers?.map((container: any, idx: number) => (
                     <div
                       key={idx}
                       className="bg-white rounded-lg border border-slate-200 overflow-hidden"
@@ -578,9 +578,8 @@ function DeploymentDetailedInfo({ kubernetesData }) {
               <div
                 className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full transition-all duration-700"
                 style={{
-                  width: `${
-                    (deployment.available_replicas / deployment.replicas) * 100
-                  }%`,
+                  width: `${(deployment.available_replicas / deployment.replicas) * 100
+                    }%`,
                 }}
               ></div>
             </div>

@@ -37,6 +37,7 @@ export type K8sProbe = (ExecProbe | HttpGetProbe | TcpSocketProbe) & ProbeCommon
 
 export interface K8sContainer {
   name: string;
+  image: string;
   imagePullPolicy?: "Always" | "IfNotPresent" | "Never";
   command?: string[];
   args?: string[];
@@ -220,7 +221,7 @@ export type K8sAffinity = {
       };
     }>;
   };
-  podAntiAffinity?:K8sAffinity["podAffinity"];
+  podAntiAffinity?: K8sAffinity["podAffinity"];
   nodeAffinity?: {
     requiredDuringSchedulingIgnoredDuringExecution?: {
       nodeSelectorTerms: Array<{

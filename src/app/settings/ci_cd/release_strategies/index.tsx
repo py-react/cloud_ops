@@ -64,77 +64,60 @@ interface DeploymentStrategyPageProps {
   strategies: string[];
 }
 
-const DeploymentStrategyPage = ({strategies}: DeploymentStrategyPageProps) => {
+const DeploymentStrategyPage = ({ strategies }: DeploymentStrategyPageProps) => {
   const [deploymentStrategies] = useState<TransformedDeploymentStrategy[]>(() => {
-    return (strategies||[]).map((item: string) => {
+    return (strategies || []).map((item: string) => {
       const strategy: DeploymentStrategy = JSON.parse(item);
       return {
         id: strategy.id,
         type: strategy.type,
         description: (
-            <TooltipWrapper
-              content={
-                <div className="space-y-2">
-                  <ul className="list-disc list-inside text-xs">
-                    {getStrategyDetails(strategy.type).map((detail, index) => (
-                      <li key={index}>{detail}</li>
-                    ))}
-                  </ul>
-                </div>
-              }
-            >
-              <span className="cursor-help">{strategy.description}</span>
-            </TooltipWrapper>
-          )
+          <TooltipWrapper
+            content={
+              <div className="space-y-2">
+                <ul className="list-disc list-inside text-xs">
+                  {getStrategyDetails(strategy.type).map((detail, index) => (
+                    <li key={index}>{detail}</li>
+                  ))}
+                </ul>
+              </div>
+            }
+          >
+            <span className="cursor-help">{strategy.description}</span>
+          </TooltipWrapper>
+        )
       };
     });
   });
 
   return (
-    <div title="Deployment Strategies">
-      <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center space-x-4">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <Orbit className="h-6 w-6 text-blue-600" />
+    <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
+      {/* Page Header */}
+      <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
+        <div>
+          <div className="flex items-center gap-4 mb-1 p-1">
+            <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
+              <Orbit className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">
-              Deployment Strategies
-              </h2>
-              <p className="text-base text-slate-500">
-              Browse supported Kubernetes deployment strategies for managing application rollouts.
+              <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Release Strategies</h1>
+              <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
+                Kubernetes offers multiple deployment strategies to control how updates are rolled out.
               </p>
             </div>
           </div>
-        }
-          shortDescription=""
-          description="Kubernetes offers multiple deployment strategies to control how updates are rolled out across pods in a cluster. This page lists the strategies supported by our platform—such as Recreate, RollingUpdate, Blue/Green, and Canary—helping you choose the right approach based on your application's reliability, availability, and rollout preferences. Use this list to understand each strategy's purpose and when to apply it in your deployment workflows."
+        </div>
+      </div>
+
+      <div className="flex-1 min-h-0 mt-10">
+        <ResourceTable
+          title="Available Strategies"
+          description="Reference these strategy IDs when configuring your deployments. Hover over strategy description to see more details."
+          icon={<ListTree className="h-4 w-4" />}
+          columns={columns}
+          data={deploymentStrategies}
+          className="mt-4"
         />
-        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
-          <CardHeader>
-            <CardTitle className="">
-              <div className="flex items-center space-x-3">
-                <ListTree className="h-5 w-5 text-blue-500" />
-                <h2 className='text-xl font-semibold text-slate-900'>Available Strategies</h2>
-              </div>
-            </CardTitle>
-            <CardDescription>
-              Reference these strategy IDs when configuring your deployments. Hover over strategy description to see more details.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="shadow-none p-0">
-            <ResourceTable
-              columns={columns}
-              data={deploymentStrategies}
-              onEdit={undefined}
-              onDelete={undefined}
-              onViewDetails={undefined}
-              className="mt-4"
-            />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

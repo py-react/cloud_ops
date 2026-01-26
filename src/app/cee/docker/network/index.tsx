@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { NetworkList } from '@/components/docker/network/NetworkList';
-import { CreateNetworkForm } from '@/components/docker/network/forms/CreateNetworkForm';
-import { Network as NetworkIcon, Search } from 'lucide-react';
-import { DefaultService, NetworkListResponse } from '@/gingerJs_api_client';
-import RouteDescription from '@/components/route-description';
+import React, { useEffect, useState } from "react";
+import { NetworkList } from "@/components/docker/network/NetworkList";
+import { CreateNetworkForm } from "@/components/docker/network/forms/CreateNetworkForm";
+import { Network as NetworkIcon, Search, RefreshCw, Plus, ShieldCheck, Globe } from "lucide-react";
+import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
+import RouteDescription from "@/components/route-description";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,9 +13,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from 'sonner';
-import { EditNetworkForm } from '@/components/docker/network/forms/EditNetworkForm';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { DefaultService, NetworkInfo } from '@/gingerJs_api_client';
 
 const fetchNetworks = async () => {
   const response = await DefaultService.apiDockerNetworksGet();
@@ -23,20 +29,12 @@ const fetchNetworks = async () => {
 };
 
 const deleteNetwork = async (id: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    DefaultService.apiDockerNetworksDelete({ requestBody: { network_id: id } })
-      .then(() => {
-        resolve();
-      })
-      .catch((err: Error) => {
-        reject(err);
-      });
-  });
+  await DefaultService.apiDockerNetworksDelete({ requestBody: { network_id: id } });
 };
 
 const createNetwork = async (data: any): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    DefaultService.apiDockerNetworksPost({ requestBody: {
+  await DefaultService.apiDockerNetworksPost({
+    requestBody: {
       name: data.name,
       driver: data.driver,
       scope: data.scope,
@@ -48,55 +46,31 @@ const createNetwork = async (data: any): Promise<void> => {
       enable_ipv6: data.enable_ipv6,
       attachable: data.attachable,
       ingress: data.ingress
-    }})
-      .then(() => {
-        resolve();
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
-};
-
-const patchNetwork = async (data: any): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    DefaultService.apiDockerNetworksPut({ requestBody: {
-      network_id:data.network_id,
-      name: data.name,
-      driver: data.driver,
-      scope: data.scope,
-      options: data.options,
-      ipam: data.ipam,
-      internal: data.internal,
-      labels: data.labels,
-      enable_ipv6: data.enable_ipv6,
-      attachable: data.attachable,
-      ingress: data.ingress
-    }})
-      .then(() => {
-        resolve();
-      })
-      .catch((err) => {
-        reject(err);
-      });
+    }
   });
 };
 
 export default function NetworkPage() {
-  const [networks, setNetworks] = useState<NetworkListResponse["items"]>([]);
-  const [currentNetworkToEdit,setCurrentNetworkToEdit] = useState(undefined)
+  const [networks, setNetworks] = useState<NetworkInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [showEdit,setShowEdit] = useState(false)
+  const [loading, setLoading] = useState(true);
 
-  const getnetworks = async() => {
-    const items = await fetchNetworks()
-    setNetworks(items);
-  }
+  const getNetworks = async () => {
+    setLoading(true);
+    try {
+      const items = await fetchNetworks();
+      setNetworks(items);
+    } catch (error) {
+      toast.error("Failed to fetch networks");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    getnetworks()
-  }, [])
+    getNetworks();
+  }, []);
 
   const filteredNetworks = networks.filter(
     (network) =>
@@ -106,26 +80,12 @@ export default function NetworkPage() {
   const handleDelete = async (id: string) => {
     try {
       await deleteNetwork(id);
-      await getnetworks();
+      await getNetworks();
+      toast.success('Network deleted successfully');
       return true;
     } catch (error) {
-      console.error('Failed to delete network:', error);
+      toast.error('Failed to delete network');
       return false;
-    }
-  };
-
-  const handlePatchNetwork = async (data: any) => {
-    try {
-      await patchNetwork({
-        network_id: currentNetworkToEdit?.network?.Id,
-        ...data,
-      });
-      toast.success('Network created successfully');
-      await getnetworks();
-      setShowEdit(false);
-    } catch (error) {
-      console.error('Failed to create network:', error);
-      toast.error('Failed to create network');
     }
   };
 
@@ -133,98 +93,116 @@ export default function NetworkPage() {
     try {
       await createNetwork(data);
       toast.success('Network created successfully');
-      await getnetworks();
+      await getNetworks();
       setShowCreate(false);
     } catch (error) {
-      console.error('Failed to create network:', error);
       toast.error('Failed to create network');
     }
   };
 
-  return (
-    <div className='w-full'>
-      <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center gap-2">
-              <NetworkIcon className='h-4 w-4'/>
-              <h2>Networks</h2>
-            </div>
-          }
-          shortDescription='Manage Docker networks—create, inspect, or remove networks used for container communication.'
-          description='Docker networks enable isolated and structured communication between containers, both on the same host and across multiple hosts. They abstract away low-level networking, allowing containers to discover and connect to each other using network names. Docker supports several built-in network drivers like bridge, host, and overlay, each serving different use cases.'
-        />
-        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Your Networks</CardTitle>
-              <CardDescription>
-                {networks.length} networks found
-              </CardDescription>
-            </div>
-            <Button onClick={() => setShowCreate(true)}>
-              <NetworkIcon className="mr-2 h-4 w-4" />
-              Create Network
-            </Button>
-          </CardHeader>
-          <CardContent className="p-0 shadow-none">
-            <div className="relative px-6">
-              <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search networks..."
-                className="w-full pl-9 bg-background"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <NetworkList networks={filteredNetworks} onDelete={handleDelete} onEdit={(data)=>{
-              setCurrentNetworkToEdit(data)
-              setShowEdit(true)
-            }} />
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-none w-screen h-screen p-0">
-          <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
-            <DialogTitle className="flex items-center gap-2 w-full px-6">
-              <NetworkIcon className="h-5 w-5" />
-              Create Network
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 h-[calc(100vh-8rem)] px-6">
-            <CreateNetworkForm
-              onSubmit={handleCreateNetwork}
-              onCancel={() => {
-                setShowCreate(false)
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+  const handleBulkDelete = async (selected: any[]) => {
+    try {
+      const promises = selected.map(s => deleteNetwork(s.network.Id));
+      await Promise.all(promises);
+      toast.success(`${selected.length} networks deleted successfully`);
+      await getNetworks();
+    } catch (err: any) {
+      toast.error('Failed to delete some networks');
+    }
+  };
 
-        <Dialog open={showEdit} onOpenChange={setShowEdit}>
-          <DialogContent className="max-w-none w-screen h-screen p-0">
-            <DialogHeader className="py-4 px-6 border-b flex !flex-row items-center">
-              <DialogTitle className="flex items-center gap-2 w-full px-6">
+  const stats = {
+    total: networks.length,
+    bridge: networks.filter(n => n.Driver === 'bridge').length,
+    overlay: networks.filter(n => n.Driver === 'overlay').length,
+    other: networks.filter(n => n.Driver !== 'bridge' && n.Driver !== 'overlay').length,
+  };
+
+  return (
+    <>
+      <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
+        {/* Page Header */}
+        <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-b border-border/100 pb-2 mb-2">
+          <div>
+            <div className="flex items-center gap-4 mb-1 p-1">
+              <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
                 <NetworkIcon className="h-5 w-5" />
-                Patch Network
-              </DialogTitle>
-            </DialogHeader>
-            <div className="flex-1 h-[calc(100vh-8rem)] px-6">
-              <EditNetworkForm
-                network={currentNetworkToEdit?.network}
-                onSubmit={handlePatchNetwork}
-                onCancel={() => {
-                  setShowEdit(false);
-                  setCurrentNetworkToEdit(undefined);
-                }}
-              />
+              </div>
+              <div>
+                <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Networks</h1>
+                <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-0 mt-2">
+                  Configure Docker virtual networks.
+                </p>
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
-    </div>
+          </div>
+          <div className="flex items-center gap-2 mb-1">
+            <Button variant="outline" size="sm" onClick={getNetworks}>
+              <RefreshCw className="w-3.5 h-3.5 mr-2" />
+              Refresh
+            </Button>
+            <Button variant="gradient" size="sm" onClick={() => setShowCreate(true)}>
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Create
+            </Button>
+          </div>
+        </div>
+
+        {/* Hero Stats Section */}
+        <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
+          <ResourceCard
+            title="Total"
+            count={stats.total}
+            icon={<NetworkIcon className="w-4 h-4" />}
+            color="bg-primary"
+            className="border-primary/20 bg-primary/5 shadow-none hover:border-primary/30 transition-all"
+          />
+          <ResourceCard
+            title="Bridge"
+            count={stats.bridge}
+            icon={<ShieldCheck className="w-4 h-4" />}
+            color="bg-emerald-500"
+            className="border-emerald-500/20 bg-emerald-500/5 shadow-none hover:border-emerald-500/30 transition-all"
+          />
+          <ResourceCard
+            title="Overlay"
+            count={stats.overlay}
+            icon={<Globe className="w-4 h-4" />}
+            color="bg-blue-500"
+            className="border-blue-500/20 bg-blue-500/5 shadow-none hover:border-blue-500/30 transition-all"
+          />
+        </div>
+
+
+        <div className="flex-1 min-h-0 mt-10">
+          <NetworkList
+            networks={filteredNetworks}
+            onDelete={handleDelete}
+            onBulkDelete={handleBulkDelete}
+            title="Network Registry"
+            description="Virtual network segment configuration and driver management"
+            icon={<NetworkIcon className="h-4 w-4" />}
+            extraHeaderContent={
+              <div className="relative w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search networks..."
+                  className="pl-9 h-9 bg-background/50 border-border/50 rounded-xl"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            }
+          />
+        </div>
+      </div>
+      <CreateNetworkForm
+        isWizardOpen={showCreate}
+        setIsWizardOpen={setShowCreate}
+        onSubmit={handleCreateNetwork}
+        onCancel={() => setShowCreate(false)}
+      />
+    </>
   );
 }

@@ -1,7 +1,6 @@
 import React from "react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { OptionalBadge, RequiredBadge } from "@/components/docker/network/forms/badges";
 
 export function BasicConfig({ control, errors }: { control: any; errors: any }) {
   return (
@@ -11,8 +10,8 @@ export function BasicConfig({ control, errors }: { control: any; errors: any }) 
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              Network Name <RequiredBadge />
+            <FormLabel className="text-sm font-medium text-foreground/80">
+              Network Name <span className="text-red-500">*</span>
             </FormLabel>
             <FormDescription>
               A unique name to identify this Docker network
@@ -30,8 +29,8 @@ export function BasicConfig({ control, errors }: { control: any; errors: any }) 
         name="driver"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              Driver <OptionalBadge />
+            <FormLabel className="text-sm font-medium text-foreground/80">
+              Driver
             </FormLabel>
             <FormDescription>
               Network driver to use (default: bridge)
@@ -49,8 +48,8 @@ export function BasicConfig({ control, errors }: { control: any; errors: any }) 
         name="scope"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              Scope <OptionalBadge />
+            <FormLabel className="text-sm font-medium text-foreground/80">
+              Scope
             </FormLabel>
             <FormDescription>
               Network scope (default: local)

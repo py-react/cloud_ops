@@ -34,9 +34,18 @@ import {
 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { K8sAffinity } from "../type";
+import {
+  DeploymentFormData,
+  hasNodeAffinity,
+  hasPodAffinity,
+  hasPodAntiAffinity,
+  updateNodeAffinityTerm,
+  updatePodAffinityTerm,
+  updatePodAntiAffinityTerm
+} from "./formUtils";
 
 interface AffinityProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<DeploymentFormData>;
 }
 
 // Reusable components for match expressions and fields
@@ -46,10 +55,10 @@ interface MatchExpressionProps {
   operators?: string[];
 }
 
-const MatchExpressions: React.FC<MatchExpressionProps> = ({ 
-  expressions, 
-  onUpdate, 
-  operators = ["In", "NotIn", "Exists", "DoesNotExist", "Gt", "Lt"] 
+const MatchExpressions: React.FC<MatchExpressionProps> = ({
+  expressions,
+  onUpdate,
+  operators = ["In", "NotIn", "Exists", "DoesNotExist", "Gt", "Lt"]
 }) => {
   const addExpression = () => {
     onUpdate([...expressions, { key: '', operator: 'In', values: [] }]);
@@ -195,10 +204,10 @@ interface LabelSelectorProps {
   operators?: string[];
 }
 
-const LabelSelector: React.FC<LabelSelectorProps> = ({ 
-  labelSelector, 
-  onUpdate, 
-  operators = ["In", "NotIn", "Exists", "DoesNotExist"] 
+const LabelSelector: React.FC<LabelSelectorProps> = ({
+  labelSelector,
+  onUpdate,
+  operators = ["In", "NotIn", "Exists", "DoesNotExist"]
 }) => {
   const updateMatchLabels = (matchLabels: { [key: string]: string }) => {
     onUpdate({ ...labelSelector, matchLabels });
@@ -211,14 +220,14 @@ const LabelSelector: React.FC<LabelSelectorProps> = ({
   return (
     <div className="space-y-2">
       <Label className="text-base font-medium text-slate-600">Label Selector</Label>
-      
-      <MatchLabels 
-        labels={labelSelector?.matchLabels || {}} 
-        onUpdate={updateMatchLabels} 
+
+      <MatchLabels
+        labels={labelSelector?.matchLabels || {}}
+        onUpdate={updateMatchLabels}
       />
 
-      <MatchExpressions 
-        expressions={labelSelector?.matchExpressions || []} 
+      <MatchExpressions
+        expressions={labelSelector?.matchExpressions || []}
         onUpdate={updateMatchExpressions}
         operators={operators}
       />
@@ -255,15 +264,15 @@ const NodeSelectorTerm: React.FC<NodeSelectorTermProps> = ({ term, onUpdate, onR
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <div className="space-y-4">
-        <MatchExpressions 
-          expressions={term.matchExpressions || []} 
+        <MatchExpressions
+          expressions={term.matchExpressions || []}
           onUpdate={updateMatchExpressions}
         />
 
-        <MatchExpressions 
-          expressions={term.matchFields || []} 
+        <MatchExpressions
+          expressions={term.matchFields || []}
           onUpdate={updateMatchFields}
         />
       </div>
@@ -280,12 +289,12 @@ interface PodAffinityTermProps {
   isAntiAffinity?: boolean;
 }
 
-const PodAffinityTerm: React.FC<PodAffinityTermProps> = ({ 
-  term, 
-  onUpdate, 
-  onRemove, 
-  termIndex, 
-  isAntiAffinity = false 
+const PodAffinityTerm: React.FC<PodAffinityTermProps> = ({
+  term,
+  onUpdate,
+  onRemove,
+  termIndex,
+  isAntiAffinity = false
 }) => {
   const updateLabelSelector = (labelSelector: any) => {
     onUpdate({ ...term, labelSelector });
@@ -305,7 +314,7 @@ const PodAffinityTerm: React.FC<PodAffinityTermProps> = ({
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <div className="space-y-2">
         <Input
           placeholder="Topology Key"
@@ -315,15 +324,15 @@ const PodAffinityTerm: React.FC<PodAffinityTermProps> = ({
         <Input
           placeholder="Namespaces (comma-separated)"
           value={term.namespaces?.join(', ') || ''}
-          onChange={(e) => onUpdate({ 
-            ...term, 
-            namespaces: e.target.value.split(',').map(v => v.trim()).filter(v => v) 
+          onChange={(e) => onUpdate({
+            ...term,
+            namespaces: e.target.value.split(',').map(v => v.trim()).filter(v => v)
           })}
         />
-        
-        <LabelSelector 
-          labelSelector={term.labelSelector || {}} 
-          onUpdate={updateLabelSelector} 
+
+        <LabelSelector
+          labelSelector={term.labelSelector || {}}
+          onUpdate={updateLabelSelector}
         />
       </div>
     </Card>
@@ -340,13 +349,13 @@ interface PreferredTermProps {
   isAntiAffinity?: boolean;
 }
 
-const PreferredTerm: React.FC<PreferredTermProps> = ({ 
-  pref, 
-  onUpdate, 
-  onRemove, 
-  prefIndex, 
+const PreferredTerm: React.FC<PreferredTermProps> = ({
+  pref,
+  onUpdate,
+  onRemove,
+  prefIndex,
   isNodeAffinity = false,
-  isAntiAffinity = false 
+  isAntiAffinity = false
 }) => {
   const updatePreference = (preference: any) => {
     onUpdate({ ...pref, preference });
@@ -378,7 +387,7 @@ const PreferredTerm: React.FC<PreferredTermProps> = ({
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <div className="space-y-2">
         <Input
           type="number"
@@ -387,43 +396,43 @@ const PreferredTerm: React.FC<PreferredTermProps> = ({
           onChange={(e) => onUpdate({ ...pref, weight: parseInt(e.target.value) })}
           className="w-24"
         />
-        
+
         {!isNodeAffinity && (
           <>
             <Input
               placeholder="Topology Key"
               value={pref.podAffinityTerm.topologyKey}
-              onChange={(e) => updatePodAffinityTerm({ 
-                ...pref.podAffinityTerm, 
-                topologyKey: e.target.value 
+              onChange={(e) => updatePodAffinityTerm({
+                ...pref.podAffinityTerm,
+                topologyKey: e.target.value
               })}
             />
             <Input
               placeholder="Namespaces (comma-separated)"
               value={pref.podAffinityTerm.namespaces?.join(', ') || ''}
-              onChange={(e) => updatePodAffinityTerm({ 
-                ...pref.podAffinityTerm, 
-                namespaces: e.target.value.split(',').map(v => v.trim()).filter(v => v) 
+              onChange={(e) => updatePodAffinityTerm({
+                ...pref.podAffinityTerm,
+                namespaces: e.target.value.split(',').map(v => v.trim()).filter(v => v)
               })}
             />
           </>
         )}
-        
+
         {isNodeAffinity ? (
           <div className="space-y-4">
-            <MatchExpressions 
-              expressions={pref.preference?.matchExpressions || []} 
+            <MatchExpressions
+              expressions={pref.preference?.matchExpressions || []}
               onUpdate={(expressions) => updatePreference({ ...pref.preference, matchExpressions: expressions })}
             />
-            <MatchExpressions 
-              expressions={pref.preference?.matchFields || []} 
+            <MatchExpressions
+              expressions={pref.preference?.matchFields || []}
               onUpdate={(fields) => updatePreference({ ...pref.preference, matchFields: fields })}
             />
           </div>
         ) : (
-          <LabelSelector 
-            labelSelector={pref.podAffinityTerm?.labelSelector || {}} 
-            onUpdate={updateLabelSelector} 
+          <LabelSelector
+            labelSelector={pref.podAffinityTerm?.labelSelector || {}}
+            onUpdate={updateLabelSelector}
           />
         )}
       </div>
@@ -434,48 +443,10 @@ const PreferredTerm: React.FC<PreferredTermProps> = ({
 const Affinity: React.FC<AffinityProps> = ({ form }) => {
   const formData = form.watch();
 
-  // Type guards for Affinity
-  const isNodeAffinity = (affinity: K8sAffinity | undefined): affinity is Extract<K8sAffinity, { nodeAffinity: any }> =>
-    !!affinity && "nodeAffinity" in affinity;
-  const isPodAffinity = (affinity: K8sAffinity | undefined): affinity is Extract<K8sAffinity, { podAffinity: any }> =>
-    !!affinity && "podAffinity" in affinity;
-  const isPodAntiAffinity = (affinity: K8sAffinity | undefined): affinity is Extract<K8sAffinity, { podAntiAffinity: any }> =>
-    !!affinity && "podAntiAffinity" in affinity;
-
-  function updateNodeAffinityTerm(
-    updater: (nodeAffinity: NonNullable<K8sAffinity & { nodeAffinity: any }>['nodeAffinity']) => void
-  ) {
-    if (isNodeAffinity(formData.affinity)) {
-      const newAffinity = { ...formData.affinity } as K8sAffinity;
-      updater(newAffinity.nodeAffinity);
-      form.setValue("affinity", newAffinity);
-    }
-  }
-
-  function updatePodAffinityTerm(
-    updater: (podAffinity: NonNullable<K8sAffinity & { podAffinity: any }>['podAffinity']) => void
-  ) {
-    if (isPodAffinity(formData.affinity)) {
-      const newAffinity = { ...formData.affinity } as K8sAffinity;
-      updater(newAffinity.podAffinity);
-      form.setValue("affinity", newAffinity);
-    }
-  }
-
-  function updatePodAntiAffinityTerm(
-    updater: (podAntiAffinity: NonNullable<K8sAffinity & { podAntiAffinity: any }>['podAntiAffinity']) => void
-  ) {
-    if (isPodAntiAffinity(formData.affinity)) {
-      const newAffinity = { ...formData.affinity } as K8sAffinity;
-      updater(newAffinity.podAntiAffinity);
-      form.setValue("affinity", newAffinity);
-    }
-  }
-
   const addAffinityType = (type: 'nodeAffinity' | 'podAffinity' | 'podAntiAffinity') => {
     const currentAffinity = formData.affinity || {} as K8sAffinity;
     let newAffinitySection;
-    
+
     switch (type) {
       case 'nodeAffinity':
         newAffinitySection = {
@@ -498,7 +469,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
         };
         break;
     }
-    
+
     form.setValue("affinity", {
       ...currentAffinity,
       [type]: newAffinitySection
@@ -509,7 +480,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
     const currentAffinity = formData.affinity || {} as K8sAffinity;
     const newAffinity = { ...currentAffinity };
     delete (newAffinity as any)[type];
-    
+
     // If no affinity types remain, set to undefined
     const hasAnyAffinity = Object.keys(newAffinity).length > 0;
     form.setValue("affinity", hasAnyAffinity ? newAffinity : undefined);
@@ -587,7 +558,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                 Remove
               </Button>
             </div>
-            
+
             {/* Required During Scheduling */}
             <div className="space-y-2">
               <Label className="text-base font-medium text-slate-700">
@@ -599,17 +570,17 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                     key={termIndex}
                     term={term}
                     termIndex={termIndex}
-                    onUpdate={(updatedTerm) => {
-                      updateNodeAffinityTerm((nodeAffinity) => {
+                    onUpdate={(updatedTerm: any) => {
+                      updateNodeAffinityTerm(form, (nodeAffinity: any) => {
                         if (nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution) {
                           nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[termIndex] = updatedTerm;
                         }
                       });
                     }}
                     onRemove={() => {
-                      updateNodeAffinityTerm((nodeAffinity) => {
+                      updateNodeAffinityTerm(form, (nodeAffinity: any) => {
                         if (nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution) {
-                          nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms = 
+                          nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms =
                             nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms.filter((_: any, i: number) => i !== termIndex);
                         }
                       });
@@ -621,7 +592,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                   variant="outline"
                   className="w-full border-dashed mt-2"
                   onClick={() => {
-                    updateNodeAffinityTerm((nodeAffinity) => {
+                    updateNodeAffinityTerm(form, (nodeAffinity) => {
                       if (!nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution) {
                         nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution = { nodeSelectorTerms: [] };
                       }
@@ -649,17 +620,17 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                     pref={pref}
                     prefIndex={prefIndex}
                     isNodeAffinity={true}
-                    onUpdate={(updatedPref) => {
-                      updateNodeAffinityTerm((nodeAffinity) => {
+                    onUpdate={(updatedPref: any) => {
+                      updateNodeAffinityTerm(form, (nodeAffinity: any) => {
                         if (nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution) {
                           nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[prefIndex] = updatedPref;
                         }
                       });
                     }}
                     onRemove={() => {
-                      updateNodeAffinityTerm((nodeAffinity) => {
+                      updateNodeAffinityTerm(form, (nodeAffinity: any) => {
                         if (nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution) {
-                          nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution = 
+                          nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution =
                             nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution.filter((_: any, i: number) => i !== prefIndex);
                         }
                       });
@@ -671,7 +642,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                   className="w-full border-dashed mt-2"
                   variant="outline"
                   onClick={() => {
-                    updateNodeAffinityTerm((nodeAffinity) => {
+                    updateNodeAffinityTerm(form, (nodeAffinity) => {
                       if (!nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution) {
                         nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution = [];
                       }
@@ -706,7 +677,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                 Remove
               </Button>
             </div>
-            
+
             {/* Required During Scheduling */}
             <div className="space-y-2">
               <Label className="text-base font-medium text-slate-700">
@@ -718,17 +689,17 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                     key={termIndex}
                     term={term}
                     termIndex={termIndex}
-                    onUpdate={(updatedTerm) => {
-                      updatePodAffinityTerm((podAffinity) => {
+                    onUpdate={(updatedTerm: any) => {
+                      updatePodAffinityTerm(form, (podAffinity: any) => {
                         if (podAffinity.requiredDuringSchedulingIgnoredDuringExecution) {
                           podAffinity.requiredDuringSchedulingIgnoredDuringExecution[termIndex] = updatedTerm;
                         }
                       });
                     }}
                     onRemove={() => {
-                      updatePodAffinityTerm((podAffinity) => {
+                      updatePodAffinityTerm(form, (podAffinity: any) => {
                         if (podAffinity.requiredDuringSchedulingIgnoredDuringExecution) {
-                          podAffinity.requiredDuringSchedulingIgnoredDuringExecution = 
+                          podAffinity.requiredDuringSchedulingIgnoredDuringExecution =
                             podAffinity.requiredDuringSchedulingIgnoredDuringExecution.filter((_: any, i: number) => i !== termIndex);
                         }
                       });
@@ -740,7 +711,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                   variant="outline"
                   className="w-full border-dashed mt-2"
                   onClick={() => {
-                    updatePodAffinityTerm((podAffinity) => {
+                    updatePodAffinityTerm(form, (podAffinity: any) => {
                       if (!podAffinity.requiredDuringSchedulingIgnoredDuringExecution) {
                         podAffinity.requiredDuringSchedulingIgnoredDuringExecution = [];
                       }
@@ -768,17 +739,17 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                     key={prefIndex}
                     pref={pref}
                     prefIndex={prefIndex}
-                    onUpdate={(updatedPref) => {
-                      updatePodAffinityTerm((podAffinity) => {
+                    onUpdate={(updatedPref: any) => {
+                      updatePodAffinityTerm(form, (podAffinity: any) => {
                         if (podAffinity.preferredDuringSchedulingIgnoredDuringExecution) {
                           podAffinity.preferredDuringSchedulingIgnoredDuringExecution[prefIndex] = updatedPref;
                         }
                       });
                     }}
                     onRemove={() => {
-                      updatePodAffinityTerm((podAffinity) => {
+                      updatePodAffinityTerm(form, (podAffinity: any) => {
                         if (podAffinity.preferredDuringSchedulingIgnoredDuringExecution) {
-                          podAffinity.preferredDuringSchedulingIgnoredDuringExecution = 
+                          podAffinity.preferredDuringSchedulingIgnoredDuringExecution =
                             podAffinity.preferredDuringSchedulingIgnoredDuringExecution.filter((_: any, i: number) => i !== prefIndex);
                         }
                       });
@@ -790,7 +761,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                   variant="outline"
                   className="w-full border-dashed mt-2"
                   onClick={() => {
-                    updatePodAffinityTerm((podAffinity) => {
+                    updatePodAffinityTerm(form, (podAffinity: any) => {
                       if (!podAffinity.preferredDuringSchedulingIgnoredDuringExecution) {
                         podAffinity.preferredDuringSchedulingIgnoredDuringExecution = [];
                       }
@@ -826,7 +797,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                 Remove
               </Button>
             </div>
-            
+
             {/* Required During Scheduling */}
             <div className="space-y-2">
               <Label className="text-base font-medium text-slate-700">
@@ -839,17 +810,17 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                     term={term}
                     termIndex={termIndex}
                     isAntiAffinity={true}
-                    onUpdate={(updatedTerm) => {
-                      updatePodAntiAffinityTerm((podAntiAffinity) => {
+                    onUpdate={(updatedTerm: any) => {
+                      updatePodAntiAffinityTerm(form, (podAntiAffinity: any) => {
                         if (podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution) {
                           podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[termIndex] = updatedTerm;
                         }
                       });
                     }}
                     onRemove={() => {
-                      updatePodAntiAffinityTerm((podAntiAffinity) => {
+                      updatePodAntiAffinityTerm(form, (podAntiAffinity: any) => {
                         if (podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution) {
-                          podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution = 
+                          podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution =
                             podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.filter((_: any, i: number) => i !== termIndex);
                         }
                       });
@@ -861,7 +832,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                   className="w-full border-dashed mt-2"
                   variant="outline"
                   onClick={() => {
-                    updatePodAntiAffinityTerm((podAntiAffinity) => {
+                    updatePodAntiAffinityTerm(form, (podAntiAffinity: any) => {
                       if (!podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution) {
                         podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution = [];
                       }
@@ -890,17 +861,17 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                     pref={pref}
                     prefIndex={prefIndex}
                     isAntiAffinity={true}
-                    onUpdate={(updatedPref) => {
-                      updatePodAntiAffinityTerm((podAntiAffinity) => {
+                    onUpdate={(updatedPref: any) => {
+                      updatePodAntiAffinityTerm(form, (podAntiAffinity: any) => {
                         if (podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution) {
                           podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[prefIndex] = updatedPref;
                         }
                       });
                     }}
                     onRemove={() => {
-                      updatePodAntiAffinityTerm((podAntiAffinity) => {
+                      updatePodAntiAffinityTerm(form, (podAntiAffinity: any) => {
                         if (podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution) {
-                          podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution = 
+                          podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution =
                             podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution.filter((_: any, i: number) => i !== prefIndex);
                         }
                       });
@@ -912,7 +883,7 @@ const Affinity: React.FC<AffinityProps> = ({ form }) => {
                   className="w-full border-dashed mt-2"
                   variant="outline"
                   onClick={() => {
-                    updatePodAntiAffinityTerm((podAntiAffinity) => {
+                    updatePodAntiAffinityTerm(form, (podAntiAffinity: any) => {
                       if (!podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution) {
                         podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution = [];
                       }

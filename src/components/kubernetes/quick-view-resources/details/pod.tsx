@@ -73,10 +73,10 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = "" }) => 
 };
 
 // AI Insights Component for Pods
-const PodAIInsights: React.FC<{ loading: boolean; podName?: string; podStatus?: string }> = ({ 
-  loading, 
-  podName, 
-  podStatus 
+const PodAIInsights: React.FC<{ loading: boolean; podName?: string; podStatus?: string }> = ({
+  loading,
+  podName,
+  podStatus
 }) => (
   <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 mb-8 rounded-xl">
     <div className="flex items-center justify-between mb-4">
@@ -93,7 +93,7 @@ const PodAIInsights: React.FC<{ loading: boolean; podName?: string; podStatus?: 
         <Sparkles className="h-5 w-5 animate-pulse" />
       )}
     </div>
-    
+
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {loading ? (
         Array.from({ length: 3 }).map((_, index) => (
@@ -115,13 +115,13 @@ const PodAIInsights: React.FC<{ loading: boolean; podName?: string; podStatus?: 
               <span className="text-sm font-medium">Health Status</span>
             </div>
             <p className="text-xs text-indigo-100">
-              {podStatus === 'Running' ? 
-                `${podName} is healthy and running optimally` : 
+              {podStatus === 'Running' ?
+                `${podName} is healthy and running optimally` :
                 `${podName} requires attention - ${podStatus?.toLowerCase()}`
               }
             </p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="h-4 w-4 text-blue-300" />
@@ -131,7 +131,7 @@ const PodAIInsights: React.FC<{ loading: boolean; podName?: string; podStatus?: 
               Consider setting resource limits for better scheduling
             </p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
             <div className="flex items-center space-x-2 mb-2">
               <Zap className="h-4 w-4 text-yellow-300" />
@@ -159,9 +159,9 @@ const getContainerStatusIcon = (state: string, ready: boolean) => {
 };
 
 // Container Details Component
-const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({ 
-  container, 
-  containerStatus 
+const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
+  container,
+  containerStatus
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -170,7 +170,7 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
       <div className="px-4 py-3 bg-white border-b border-slate-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            {containerStatus ? 
+            {containerStatus ?
               getContainerStatusIcon(containerStatus?.state?.state, containerStatus?.ready) :
               <RotateCcw className="h-4 w-4 text-slate-400" />
             }
@@ -195,7 +195,7 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
           </div>
         </div>
       </div>
-      
+
       {expanded && (
         <div className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -223,7 +223,7 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
                 )}
               </div>
             </div>
-            
+
             {/* Volume Mounts */}
             <div>
               <h6 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 flex items-center">
@@ -244,10 +244,10 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
                 ) : (
                   <span className="text-xs text-slate-400">No volume mounts</span>
                 )}
-                
+
               </div>
             </div>
-            
+
             {/* Environment Variables */}
             <div>
               <h6 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 flex items-center">
@@ -264,11 +264,11 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
                 ) : (
                   <span className="text-xs text-slate-400">No environment variables</span>
                 )}
-                
+
               </div>
             </div>
           </div>
-          
+
           {/* Resource Information */}
           {container.resources && (Object.keys(container.resources).length > 0) && (
             <div className="mt-4 pt-4 border-t border-slate-200">
@@ -293,7 +293,7 @@ const ContainerDetails: React.FC<{ container: any; containerStatus: any }> = ({
                     </div>
                   </div>
                 )}
-                
+
                 {container.resources.limits && (
                   <div>
                     <p className="text-xs text-slate-500 mb-1">Limits</p>
@@ -352,7 +352,7 @@ const PVCRow: React.FC<{ pvc: any }> = ({ pvc }) => {
           {pvc.storage_class || 'default'}
         </td>
       </tr>
-      
+
       {expanded && (
         <tr>
           <td colSpan={5} className="px-6 py-6 bg-slate-50">
@@ -370,12 +370,12 @@ const PVCRow: React.FC<{ pvc: any }> = ({ pvc }) => {
                   </div>
                 </div>
               </div>
-              
+
               {Object.keys(pvc.labels || {}).length > 0 && (
                 <div>
                   <h5 className="text-sm font-semibold text-slate-700 mb-3">Labels</h5>
                   <div className="flex flex-wrap gap-1">
-                    {Object.entries(pvc.labels).map(([key, value]) => (
+                    {Object.entries(pvc.labels || {}).map(([key, value]) => (
                       <span key={key} className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-mono bg-slate-100 text-slate-700">
                         {key}={value}
                       </span>
@@ -432,8 +432,8 @@ const EventRow: React.FC<{ event: any; source?: string }> = ({ event, source }) 
           {event.count || 1}
         </td>
         <td className="px-6 py-4 text-sm text-slate-600">
-          {event.lastTimestamp ? 
-            new Date(event.lastTimestamp).toLocaleString() : 
+          {event.lastTimestamp ?
+            new Date(event.lastTimestamp).toLocaleString() :
             'Unknown'
           }
         </td>
@@ -441,7 +441,7 @@ const EventRow: React.FC<{ event: any; source?: string }> = ({ event, source }) 
           {event.message}
         </td>
       </tr>
-      
+
       {expanded && (
         <tr>
           <td colSpan={5} className="px-6 py-6 bg-slate-50">
@@ -473,13 +473,13 @@ const EventRow: React.FC<{ event: any; source?: string }> = ({ event, source }) 
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h5 className="text-sm font-semibold text-slate-700 mb-3">Message</h5>
                 <div className="bg-white rounded-lg border border-slate-200 p-3">
                   <p className="text-sm text-slate-700 whitespace-pre-wrap">{event.message}</p>
                 </div>
-                
+
                 {event.involvedObject && (
                   <div className="mt-4">
                     <h6 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Involved Object</h6>
@@ -504,12 +504,12 @@ const EventRow: React.FC<{ event: any; source?: string }> = ({ event, source }) 
   );
 };
 
-export const PodDetailedInfo = ({data, loading, error}: {
+export const PodDetailedInfo = ({ data, loading, error }: {
   data?: any;
   loading?: any;
   error?: string;
 }) => {
-  
+
   // Accordion states for affinity sections
   const [nodeAffinityExpanded, setNodeAffinityExpanded] = useState(false);
   const [podAffinityExpanded, setPodAffinityExpanded] = useState(false);
@@ -536,735 +536,735 @@ export const PodDetailedInfo = ({data, loading, error}: {
   return (
     <div className="min-h-screen">
 
-        {/* AI Insights */}
-        <PodAIInsights 
-          loading={loading} 
-          podName={data?.pod.pod_name}
-          podStatus={data?.pod.status}
-        />
+      {/* AI Insights */}
+      <PodAIInsights
+        loading={loading}
+        podName={data?.pod.pod_name}
+        podStatus={data?.pod.status}
+      />
 
-        {/* Pod Overview */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
-          {loading ? (
-            <div className="animate-pulse">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-slate-200 rounded-xl"></div>
-                  <div>
-                    <div className="h-6 w-32 bg-slate-200 rounded mb-2"></div>
-                    <div className="h-4 w-20 bg-slate-200 rounded"></div>
-                  </div>
+      {/* Pod Overview */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
+        {loading ? (
+          <div className="animate-pulse">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-slate-200 rounded-xl"></div>
+                <div>
+                  <div className="h-6 w-32 bg-slate-200 rounded mb-2"></div>
+                  <div className="h-4 w-20 bg-slate-200 rounded"></div>
                 </div>
-                <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
               </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <MetricSkeletonLoader key={index} />
-                ))}
-              </div>
+              <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
             </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-indigo-100 rounded-xl">
-                    <Server className="h-6 w-6 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900">{data?.pod.pod_name}</h2>
-                    <p className="text-sm text-slate-500">Pod Resource</p>
-                  </div>
-                </div>
-                <StatusBadge status={data?.pod.status || 'Unknown'} />
-              </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-4 pb-4">
-                <div className="text-center">
-                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mx-auto mb-2">
-                    <Container className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900">
-                    {data?.pod.containers.length || 0}
-                  </p>
-                  <p className="text-sm text-slate-500 font-medium">Containers</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mx-auto mb-2">
-                    <HardDrive className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900">
-                    {data?.pod.related_pvcs.length || 0}
-                  </p>
-                  <p className="text-sm text-slate-500 font-medium">PVCs</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-xl mx-auto mb-2">
-                    <Clock className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900">
-                    {data?.pod.age ? data.pod.age.split(':')[0] + 'h' : '0h'}
-                  </p>
-                  <p className="text-sm text-slate-500 font-medium">Age</p>
-                </div>
-
-                <div className="text-center">
-                  <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-xl mx-auto mb-2">
-                    <Tag className="h-6 w-6 text-amber-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900">
-                    {Object.keys(data?.pod.labels || {}).length}
-                  </p>
-                  <p className="text-sm text-slate-500 font-medium">Labels</p>
-                </div>
-              </div>
-
-              {/* Pod Labels - Integrated into overview */}
-              {data?.pod.labels && Object.keys(data.pod.labels).length > 0 && (
-                <div className="border-t border-slate-100 p-6">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Tag className="h-4 w-4 text-amber-500" />
-                    <h3 className="text-sm font-semibold text-slate-700">Pod Labels</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(data.pod.labels).map(([key, value]) => (
-                      <div key={key} className="inline-flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                        <span className="text-xs font-mono text-amber-700">{key}</span>
-                        <span className="mx-2 text-amber-400">=</span>
-                        <span className="text-xs font-mono text-amber-900 font-medium">{value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Pod Details Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
-          <div className="flex items-center space-x-3 px-6 mb-6">
-            <Info className="h-5 w-5 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-900">Pod Details</h2>
-          </div>
-
-          {loading.pod ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 px-6 pb-6 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
               {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="h-4 w-16 bg-slate-200 rounded mb-2"></div>
-                  <div className="h-6 w-24 bg-slate-200 rounded"></div>
-                </div>
+                <MetricSkeletonLoader key={index} />
               ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 px-6 pb-6 gap-6">
-              {/* Node Information */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Server className="h-4 w-4 text-slate-400" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Node</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-indigo-100 rounded-xl">
+                  <Server className="h-6 w-6 text-indigo-600" />
                 </div>
-                <p className="text-sm font-bold text-slate-900">
-                  {data?.pod.node_name || <span className="text-amber-600">Not assigned</span>}
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">{data?.pod.pod_name}</h2>
+                  <p className="text-sm text-slate-500">Pod Resource</p>
+                </div>
+              </div>
+              <StatusBadge status={data?.pod.status || 'Unknown'} />
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-4 pb-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mx-auto mb-2">
+                  <Container className="h-6 w-6 text-blue-600" />
+                </div>
+                <p className="text-2xl font-bold text-slate-900">
+                  {data?.pod.containers.length || 0}
                 </p>
+                <p className="text-sm text-slate-500 font-medium">Containers</p>
               </div>
 
-              {/* IP Address */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Network className="h-4 w-4 text-slate-400" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">IP Address</p>
+              <div className="text-center">
+                <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mx-auto mb-2">
+                  <HardDrive className="h-6 w-6 text-purple-600" />
                 </div>
-                <p className="text-sm font-mono text-slate-900">
-                  {data?.pod.ip || <span className="text-slate-400">Not assigned</span>}
+                <p className="text-2xl font-bold text-slate-900">
+                  {data?.pod.related_pvcs.length || 0}
                 </p>
+                <p className="text-sm text-slate-500 font-medium">PVCs</p>
               </div>
 
-              {/* Host IP */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Globe className="h-4 w-4 text-slate-400" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Host IP</p>
+              <div className="text-center">
+                <div className="flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-xl mx-auto mb-2">
+                  <Clock className="h-6 w-6 text-emerald-600" />
                 </div>
-                <p className="text-sm font-mono text-slate-900">
-                  {data?.pod.host_ip || <span className="text-slate-400">Not available</span>}
+                <p className="text-2xl font-bold text-slate-900">
+                  {data?.pod.age ? data.pod.age.split(':')[0] + 'h' : '0h'}
                 </p>
+                <p className="text-sm text-slate-500 font-medium">Age</p>
               </div>
 
-              {/* QoS Class */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Shield className="h-4 w-4 text-slate-400" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">QoS Class</p>
+              <div className="text-center">
+                <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-xl mx-auto mb-2">
+                  <Tag className="h-6 w-6 text-amber-600" />
                 </div>
-                <p className="text-sm font-bold text-slate-900">
-                  {data?.pod.qos_class || 'BestEffort'}
+                <p className="text-2xl font-bold text-slate-900">
+                  {Object.keys(data?.pod.labels || {}).length}
                 </p>
-              </div>
-
-              {/* Service Account */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Shield className="h-4 w-4 text-slate-400" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Service Account</p>
-                </div>
-                <p className="text-sm font-mono text-slate-900">
-                  {data?.pod.service_account || 'default'}
-                </p>
-              </div>
-
-              {/* Restart Policy */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <RotateCcw className="h-4 w-4 text-slate-400" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Restart Policy</p>
-                </div>
-                <p className="text-sm font-bold text-slate-900">
-                  {data?.pod.restart_policy || 'Always'}
-                </p>
-              </div>
-
-              {/* DNS Policy */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Globe className="h-4 w-4 text-slate-400" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">DNS Policy</p>
-                </div>
-                <p className="text-sm font-bold text-slate-900">
-                  {data?.pod.dns_policy || 'ClusterFirst'}
-                </p>
-              </div>
-
-              {/* Priority Class */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Tag className="h-4 w-4 text-slate-400" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Priority Class</p>
-                </div>
-                <p className="text-sm font-bold text-slate-900">
-                  {data?.pod.priority_class || <span className="text-slate-400">None</span>}
-                </p>
+                <p className="text-sm text-slate-500 font-medium">Labels</p>
               </div>
             </div>
-          )}
+
+            {/* Pod Labels - Integrated into overview */}
+            {data?.pod.labels && Object.keys(data.pod.labels).length > 0 && (
+              <div className="border-t border-slate-100 p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Tag className="h-4 w-4 text-amber-500" />
+                  <h3 className="text-sm font-semibold text-slate-700">Pod Labels</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(data.pod.labels || {}).map(([key, value]) => (
+                    <div key={key} className="inline-flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      <span className="text-xs font-mono text-amber-700">{key}</span>
+                      <span className="mx-2 text-amber-400">=</span>
+                      <span className="text-xs font-mono text-amber-900 font-medium">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Pod Details Section */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
+        <div className="flex items-center space-x-3 px-6 mb-6">
+          <Info className="h-5 w-5 text-slate-500" />
+          <h2 className="text-lg font-semibold text-slate-900">Pod Details</h2>
         </div>
 
-        {/* Affinity Section */}
-        {data?.pod.affinity && (
-          <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
-            <div className="flex items-center space-x-3 px-6 mb-6">
-              <Network className="h-5 w-5 text-indigo-500" />
-              <h2 className="text-lg font-semibold text-slate-900">Pod Affinity & Anti-Affinity</h2>
+        {loading.pod ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 px-6 pb-6 gap-6">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="h-4 w-16 bg-slate-200 rounded mb-2"></div>
+                <div className="h-6 w-24 bg-slate-200 rounded"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 px-6 pb-6 gap-6">
+            {/* Node Information */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Server className="h-4 w-4 text-slate-400" />
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Node</p>
+              </div>
+              <p className="text-sm font-bold text-slate-900">
+                {data?.pod.node_name || <span className="text-amber-600">Not assigned</span>}
+              </p>
             </div>
 
-            <div className="px-6 pb-6 space-y-6">
-              {/* Node Affinity */}
-              {data.pod.affinity.node_affinity && (
-                <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
-                  <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setNodeAffinityExpanded(!nodeAffinityExpanded)}>
-                    <div className="flex items-center space-x-2">
-                      <Server className="h-4 w-4 text-blue-600" />
-                      <h3 className="font-semibold text-blue-900">Node Affinity</h3>
-                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-                        Required
-                      </span>
-                    </div>
-                    {nodeAffinityExpanded ? <ChevronDown className="h-4 w-4 text-blue-600" /> : <ChevronRight className="h-4 w-4 text-blue-600" />}
-                  </div>
-                  
-                  {nodeAffinityExpanded && (
-                    <>
-                  
-                  {/* Required Node Affinity */}
-                  {data.pod.affinity.node_affinity.required_during_scheduling_ignored_during_execution && (
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-blue-800">Required During Scheduling</h4>
-                      {data.pod.affinity.node_affinity.required_during_scheduling_ignored_during_execution.node_selector_terms.map((term: any, termIdx: number) => (
-                        <div key={termIdx} className="bg-white rounded-md border border-blue-200 p-3">
-                          <div className="text-xs font-medium text-blue-700 mb-2">Node Selector Term {termIdx + 1}</div>
-                          {term.match_expressions && term.match_expressions.length > 0 && (
-                            <div className="space-y-2">
-                              <div className="text-xs font-medium text-slate-600">Match Expressions:</div>
-                              {term.match_expressions.map((expr: any, exprIdx: number) => (
-                                <div key={exprIdx} className="bg-slate-50 rounded px-3 py-2 text-xs">
-                                  <div className="font-mono text-slate-800">
-                                    <span className="font-medium">{expr.key}</span>
-                                    <span className="text-blue-600 mx-2">{expr.operator}</span>
-                                    {expr.values && expr.values.length > 0 && (
-                                      <span className="text-slate-600">[{expr.values.join(', ')}]</span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {term.match_fields && term.match_fields.length > 0 && (
-                            <div className="space-y-2 mt-2">
-                              <div className="text-xs font-medium text-slate-600">Match Fields:</div>
-                              {term.match_fields.map((field: any, fieldIdx: number) => (
-                                <div key={fieldIdx} className="bg-slate-50 rounded px-3 py-2 text-xs">
-                                  <div className="font-mono text-slate-800">
-                                    <span className="font-medium">{field.key}</span>
-                                    <span className="text-blue-600 mx-2">{field.operator}</span>
-                                    {field.values && field.values.length > 0 && (
-                                      <span className="text-slate-600">[{field.values.join(', ')}]</span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Preferred Node Affinity */}
-                  {data.pod.affinity.node_affinity.preferred_during_scheduling_ignored_during_execution && (
-                    <div className="space-y-3 mt-4">
-                      <h4 className="text-sm font-medium text-blue-800">Preferred During Scheduling</h4>
-                      {data.pod.affinity.node_affinity.preferred_during_scheduling_ignored_during_execution.map((pref: any, prefIdx: number) => (
-                        <div key={prefIdx} className="bg-white rounded-md border border-blue-200 p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-xs font-medium text-blue-700">Preference {prefIdx + 1}</div>
-                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-medium">
-                              Weight: {pref.weight}
-                            </span>
-                          </div>
-                          {pref.preference.match_expressions && pref.preference.match_expressions.length > 0 && (
-                            <div className="space-y-2">
-                              {pref.preference.match_expressions.map((expr: any, exprIdx: number) => (
-                                <div key={exprIdx} className="bg-slate-50 rounded px-3 py-2 text-xs">
-                                  <div className="font-mono text-slate-800">
-                                    <span className="font-medium">{expr.key}</span>
-                                    <span className="text-blue-600 mx-2">{expr.operator}</span>
-                                    {expr.values && expr.values.length > 0 && (
-                                      <span className="text-slate-600">[{expr.values.join(', ')}]</span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                    </>
-                  )}
-                </div>
-              )}
+            {/* IP Address */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Network className="h-4 w-4 text-slate-400" />
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">IP Address</p>
+              </div>
+              <p className="text-sm font-mono text-slate-900">
+                {data?.pod.ip || <span className="text-slate-400">Not assigned</span>}
+              </p>
+            </div>
 
-              {/* Pod Affinity */}
-              {data.pod.affinity.pod_affinity && (
-                <div className="bg-green-50 rounded-lg border border-green-200 p-4">
-                  <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setPodAffinityExpanded(!podAffinityExpanded)}>
-                    <div className="flex items-center space-x-2">
-                      <Container className="h-4 w-4 text-green-600" />
-                      <h3 className="font-semibold text-green-900">Pod Affinity</h3>
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                        Attract
-                      </span>
-                    </div>
-                    {podAffinityExpanded ? <ChevronDown className="h-4 w-4 text-green-600" /> : <ChevronRight className="h-4 w-4 text-green-600" />}
-                  </div>
-                  
-                  {podAffinityExpanded && (
-                    <>
-                  
-                  {/* Required Pod Affinity */}
-                  {data.pod.affinity.pod_affinity.required_during_scheduling_ignored_during_execution && (
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-green-800">Required During Scheduling</h4>
-                      {data.pod.affinity.pod_affinity.required_during_scheduling_ignored_during_execution.map((term: any, termIdx: number) => (
-                        <div key={termIdx} className="bg-white rounded-md border border-green-200 p-3">
-                          <div className="text-xs font-medium text-green-700 mb-2">Pod Affinity Term {termIdx + 1}</div>
-                          <div className="space-y-2">
-                            <div className="bg-slate-50 rounded px-3 py-2 text-xs">
-                              <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
-                              <div className="font-mono text-slate-900">{term.topology_key}</div>
-                            </div>
-                            {term.namespaces && term.namespaces.length > 0 && (
-                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
-                                <div className="font-medium text-slate-700 mb-1">Namespaces:</div>
-                                <div className="font-mono text-slate-900">{term.namespaces.join(', ')}</div>
-                              </div>
-                            )}
-                            {term.label_selector && (
-                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
-                                <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
-                                {term.label_selector.match_labels && Object.keys(term.label_selector.match_labels).length > 0 && (
-                                  <div className="space-y-1">
-                                    <div className="text-xs text-slate-600">Match Labels:</div>
-                                    {Object.entries(term.label_selector.match_labels).map(([key, value]: [string, any]) => (
-                                      <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
-                                    ))}
-                                  </div>
-                                )}
-                                {term.label_selector.match_expressions && term.label_selector.match_expressions.length > 0 && (
-                                  <div className="space-y-1 mt-2">
-                                    <div className="text-xs text-slate-600">Match Expressions:</div>
-                                    {term.label_selector.match_expressions.map((expr: any, exprIdx: number) => (
-                                      <div key={exprIdx} className="font-mono text-slate-900">
-                                        {expr.key} {expr.operator} {expr.values ? `[${expr.values.join(', ')}]` : ''}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Preferred Pod Affinity */}
-                  {data.pod.affinity.pod_affinity.preferred_during_scheduling_ignored_during_execution && (
-                    <div className="space-y-3 mt-4">
-                      <h4 className="text-sm font-medium text-green-800">Preferred During Scheduling</h4>
-                      {data.pod.affinity.pod_affinity.preferred_during_scheduling_ignored_during_execution.map((pref: any, prefIdx: number) => (
-                        <div key={prefIdx} className="bg-white rounded-md border border-green-200 p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-xs font-medium text-green-700">Preference {prefIdx + 1}</div>
-                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">
-                              Weight: {pref.weight}
-                            </span>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="bg-slate-50 rounded px-3 py-2 text-xs">
-                              <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
-                              <div className="font-mono text-slate-900">{pref.pod_affinity_term.topology_key}</div>
-                            </div>
-                            {pref.pod_affinity_term.label_selector && (
-                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
-                                <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
-                                {pref.pod_affinity_term.label_selector.match_labels && Object.keys(pref.pod_affinity_term.label_selector.match_labels).length > 0 && (
-                                  <div className="space-y-1">
-                                    {Object.entries(pref.pod_affinity_term.label_selector.match_labels).map(([key, value]: [string, any]) => (
-                                      <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                    </>
-                  )}
-                </div>
-              )}
+            {/* Host IP */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Globe className="h-4 w-4 text-slate-400" />
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Host IP</p>
+              </div>
+              <p className="text-sm font-mono text-slate-900">
+                {data?.pod.host_ip || <span className="text-slate-400">Not available</span>}
+              </p>
+            </div>
 
-              {/* Pod Anti-Affinity */}
-              {data.pod.affinity.pod_anti_affinity && (
-                <div className="bg-red-50 rounded-lg border border-red-200 p-4">
-                  <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setPodAntiAffinityExpanded(!podAntiAffinityExpanded)}>
-                    <div className="flex items-center space-x-2">
-                      <Shield className="h-4 w-4 text-red-600" />
-                      <h3 className="font-semibold text-red-900">Pod Anti-Affinity</h3>
-                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
-                        Repel
-                      </span>
-                    </div>
-                    {podAntiAffinityExpanded ? <ChevronDown className="h-4 w-4 text-red-600" /> : <ChevronRight className="h-4 w-4 text-red-600" />}
-                  </div>
-                  
-                  {podAntiAffinityExpanded && (
-                    <>
-                  
-                  {/* Required Pod Anti-Affinity */}
-                  {data.pod.affinity.pod_anti_affinity.required_during_scheduling_ignored_during_execution && (
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-red-800">Required During Scheduling</h4>
-                      {data.pod.affinity.pod_anti_affinity.required_during_scheduling_ignored_during_execution.map((term: any, termIdx: number) => (
-                        <div key={termIdx} className="bg-white rounded-md border border-red-200 p-3">
-                          <div className="text-xs font-medium text-red-700 mb-2">Pod Anti-Affinity Term {termIdx + 1}</div>
-                          <div className="space-y-2">
-                            <div className="bg-slate-50 rounded px-3 py-2 text-xs">
-                              <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
-                              <div className="font-mono text-slate-900">{term.topology_key}</div>
-                            </div>
-                            {term.label_selector && (
-                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
-                                <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
-                                {term.label_selector.match_labels && Object.keys(term.label_selector.match_labels).length > 0 && (
-                                  <div className="space-y-1">
-                                    {Object.entries(term.label_selector.match_labels).map(([key, value]: [string, any]) => (
-                                      <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Preferred Pod Anti-Affinity */}
-                  {data.pod.affinity.pod_anti_affinity.preferred_during_scheduling_ignored_during_execution && (
-                    <div className="space-y-3 mt-4">
-                      <h4 className="text-sm font-medium text-red-800">Preferred During Scheduling</h4>
-                      {data.pod.affinity.pod_anti_affinity.preferred_during_scheduling_ignored_during_execution.map((pref: any, prefIdx: number) => (
-                        <div key={prefIdx} className="bg-white rounded-md border border-red-200 p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-xs font-medium text-red-700">Preference {prefIdx + 1}</div>
-                            <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-medium">
-                              Weight: {pref.weight}
-                            </span>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="bg-slate-50 rounded px-3 py-2 text-xs">
-                              <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
-                              <div className="font-mono text-slate-900">{pref.pod_affinity_term.topology_key}</div>
-                            </div>
-                            {pref.pod_affinity_term.label_selector && (
-                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
-                                <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
-                                {pref.pod_affinity_term.label_selector.match_labels && Object.keys(pref.pod_affinity_term.label_selector.match_labels).length > 0 && (
-                                  <div className="space-y-1">
-                                    {Object.entries(pref.pod_affinity_term.label_selector.match_labels).map(([key, value]: [string, any]) => (
-                                      <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                    </>
-                  )}
-                </div>
-              )}
+            {/* QoS Class */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-4 w-4 text-slate-400" />
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">QoS Class</p>
+              </div>
+              <p className="text-sm font-bold text-slate-900">
+                {data?.pod.qos_class || 'BestEffort'}
+              </p>
+            </div>
+
+            {/* Service Account */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-4 w-4 text-slate-400" />
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Service Account</p>
+              </div>
+              <p className="text-sm font-mono text-slate-900">
+                {data?.pod.service_account || 'default'}
+              </p>
+            </div>
+
+            {/* Restart Policy */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <RotateCcw className="h-4 w-4 text-slate-400" />
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Restart Policy</p>
+              </div>
+              <p className="text-sm font-bold text-slate-900">
+                {data?.pod.restart_policy || 'Always'}
+              </p>
+            </div>
+
+            {/* DNS Policy */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Globe className="h-4 w-4 text-slate-400" />
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">DNS Policy</p>
+              </div>
+              <p className="text-sm font-bold text-slate-900">
+                {data?.pod.dns_policy || 'ClusterFirst'}
+              </p>
+            </div>
+
+            {/* Priority Class */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Tag className="h-4 w-4 text-slate-400" />
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Priority Class</p>
+              </div>
+              <p className="text-sm font-bold text-slate-900">
+                {data?.pod.priority_class || <span className="text-slate-400">None</span>}
+              </p>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Containers Section */}
+      {/* Affinity Section */}
+      {data?.pod.affinity && (
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
+          <div className="flex items-center space-x-3 px-6 mb-6">
+            <Network className="h-5 w-5 text-indigo-500" />
+            <h2 className="text-lg font-semibold text-slate-900">Pod Affinity & Anti-Affinity</h2>
+          </div>
+
+          <div className="px-6 pb-6 space-y-6">
+            {/* Node Affinity */}
+            {data.pod.affinity.node_affinity && (
+              <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
+                <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setNodeAffinityExpanded(!nodeAffinityExpanded)}>
+                  <div className="flex items-center space-x-2">
+                    <Server className="h-4 w-4 text-blue-600" />
+                    <h3 className="font-semibold text-blue-900">Node Affinity</h3>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                      Required
+                    </span>
+                  </div>
+                  {nodeAffinityExpanded ? <ChevronDown className="h-4 w-4 text-blue-600" /> : <ChevronRight className="h-4 w-4 text-blue-600" />}
+                </div>
+
+                {nodeAffinityExpanded && (
+                  <>
+
+                    {/* Required Node Affinity */}
+                    {data.pod.affinity.node_affinity.required_during_scheduling_ignored_during_execution && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-blue-800">Required During Scheduling</h4>
+                        {data.pod.affinity.node_affinity.required_during_scheduling_ignored_during_execution.node_selector_terms.map((term: any, termIdx: number) => (
+                          <div key={termIdx} className="bg-white rounded-md border border-blue-200 p-3">
+                            <div className="text-xs font-medium text-blue-700 mb-2">Node Selector Term {termIdx + 1}</div>
+                            {term.match_expressions && term.match_expressions.length > 0 && (
+                              <div className="space-y-2">
+                                <div className="text-xs font-medium text-slate-600">Match Expressions:</div>
+                                {term.match_expressions.map((expr: any, exprIdx: number) => (
+                                  <div key={exprIdx} className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                    <div className="font-mono text-slate-800">
+                                      <span className="font-medium">{expr.key}</span>
+                                      <span className="text-blue-600 mx-2">{expr.operator}</span>
+                                      {expr.values && expr.values.length > 0 && (
+                                        <span className="text-slate-600">[{expr.values.join(', ')}]</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {term.match_fields && term.match_fields.length > 0 && (
+                              <div className="space-y-2 mt-2">
+                                <div className="text-xs font-medium text-slate-600">Match Fields:</div>
+                                {term.match_fields.map((field: any, fieldIdx: number) => (
+                                  <div key={fieldIdx} className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                    <div className="font-mono text-slate-800">
+                                      <span className="font-medium">{field.key}</span>
+                                      <span className="text-blue-600 mx-2">{field.operator}</span>
+                                      {field.values && field.values.length > 0 && (
+                                        <span className="text-slate-600">[{field.values.join(', ')}]</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Preferred Node Affinity */}
+                    {data.pod.affinity.node_affinity.preferred_during_scheduling_ignored_during_execution && (
+                      <div className="space-y-3 mt-4">
+                        <h4 className="text-sm font-medium text-blue-800">Preferred During Scheduling</h4>
+                        {data.pod.affinity.node_affinity.preferred_during_scheduling_ignored_during_execution.map((pref: any, prefIdx: number) => (
+                          <div key={prefIdx} className="bg-white rounded-md border border-blue-200 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="text-xs font-medium text-blue-700">Preference {prefIdx + 1}</div>
+                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-medium">
+                                Weight: {pref.weight}
+                              </span>
+                            </div>
+                            {pref.preference.match_expressions && pref.preference.match_expressions.length > 0 && (
+                              <div className="space-y-2">
+                                {pref.preference.match_expressions.map((expr: any, exprIdx: number) => (
+                                  <div key={exprIdx} className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                    <div className="font-mono text-slate-800">
+                                      <span className="font-medium">{expr.key}</span>
+                                      <span className="text-blue-600 mx-2">{expr.operator}</span>
+                                      {expr.values && expr.values.length > 0 && (
+                                        <span className="text-slate-600">[{expr.values.join(', ')}]</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Pod Affinity */}
+            {data.pod.affinity.pod_affinity && (
+              <div className="bg-green-50 rounded-lg border border-green-200 p-4">
+                <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setPodAffinityExpanded(!podAffinityExpanded)}>
+                  <div className="flex items-center space-x-2">
+                    <Container className="h-4 w-4 text-green-600" />
+                    <h3 className="font-semibold text-green-900">Pod Affinity</h3>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                      Attract
+                    </span>
+                  </div>
+                  {podAffinityExpanded ? <ChevronDown className="h-4 w-4 text-green-600" /> : <ChevronRight className="h-4 w-4 text-green-600" />}
+                </div>
+
+                {podAffinityExpanded && (
+                  <>
+
+                    {/* Required Pod Affinity */}
+                    {data.pod.affinity.pod_affinity.required_during_scheduling_ignored_during_execution && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-green-800">Required During Scheduling</h4>
+                        {data.pod.affinity.pod_affinity.required_during_scheduling_ignored_during_execution.map((term: any, termIdx: number) => (
+                          <div key={termIdx} className="bg-white rounded-md border border-green-200 p-3">
+                            <div className="text-xs font-medium text-green-700 mb-2">Pod Affinity Term {termIdx + 1}</div>
+                            <div className="space-y-2">
+                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
+                                <div className="font-mono text-slate-900">{term.topology_key}</div>
+                              </div>
+                              {term.namespaces && term.namespaces.length > 0 && (
+                                <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                  <div className="font-medium text-slate-700 mb-1">Namespaces:</div>
+                                  <div className="font-mono text-slate-900">{term.namespaces.join(', ')}</div>
+                                </div>
+                              )}
+                              {term.label_selector && (
+                                <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                  <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
+                                  {term.label_selector.match_labels && Object.keys(term.label_selector.match_labels).length > 0 && (
+                                    <div className="space-y-1">
+                                      <div className="text-xs text-slate-600">Match Labels:</div>
+                                      {Object.entries(term.label_selector.match_labels).map(([key, value]: [string, any]) => (
+                                        <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {term.label_selector.match_expressions && term.label_selector.match_expressions.length > 0 && (
+                                    <div className="space-y-1 mt-2">
+                                      <div className="text-xs text-slate-600">Match Expressions:</div>
+                                      {term.label_selector.match_expressions.map((expr: any, exprIdx: number) => (
+                                        <div key={exprIdx} className="font-mono text-slate-900">
+                                          {expr.key} {expr.operator} {expr.values ? `[${expr.values.join(', ')}]` : ''}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Preferred Pod Affinity */}
+                    {data.pod.affinity.pod_affinity.preferred_during_scheduling_ignored_during_execution && (
+                      <div className="space-y-3 mt-4">
+                        <h4 className="text-sm font-medium text-green-800">Preferred During Scheduling</h4>
+                        {data.pod.affinity.pod_affinity.preferred_during_scheduling_ignored_during_execution.map((pref: any, prefIdx: number) => (
+                          <div key={prefIdx} className="bg-white rounded-md border border-green-200 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="text-xs font-medium text-green-700">Preference {prefIdx + 1}</div>
+                              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">
+                                Weight: {pref.weight}
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
+                                <div className="font-mono text-slate-900">{pref.pod_affinity_term.topology_key}</div>
+                              </div>
+                              {pref.pod_affinity_term.label_selector && (
+                                <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                  <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
+                                  {pref.pod_affinity_term.label_selector.match_labels && Object.keys(pref.pod_affinity_term.label_selector.match_labels).length > 0 && (
+                                    <div className="space-y-1">
+                                      {Object.entries(pref.pod_affinity_term.label_selector.match_labels).map(([key, value]: [string, any]) => (
+                                        <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Pod Anti-Affinity */}
+            {data.pod.affinity.pod_anti_affinity && (
+              <div className="bg-red-50 rounded-lg border border-red-200 p-4">
+                <div className="flex items-center justify-between mb-4 cursor-pointer" onClick={() => setPodAntiAffinityExpanded(!podAntiAffinityExpanded)}>
+                  <div className="flex items-center space-x-2">
+                    <Shield className="h-4 w-4 text-red-600" />
+                    <h3 className="font-semibold text-red-900">Pod Anti-Affinity</h3>
+                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
+                      Repel
+                    </span>
+                  </div>
+                  {podAntiAffinityExpanded ? <ChevronDown className="h-4 w-4 text-red-600" /> : <ChevronRight className="h-4 w-4 text-red-600" />}
+                </div>
+
+                {podAntiAffinityExpanded && (
+                  <>
+
+                    {/* Required Pod Anti-Affinity */}
+                    {data.pod.affinity.pod_anti_affinity.required_during_scheduling_ignored_during_execution && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-red-800">Required During Scheduling</h4>
+                        {data.pod.affinity.pod_anti_affinity.required_during_scheduling_ignored_during_execution.map((term: any, termIdx: number) => (
+                          <div key={termIdx} className="bg-white rounded-md border border-red-200 p-3">
+                            <div className="text-xs font-medium text-red-700 mb-2">Pod Anti-Affinity Term {termIdx + 1}</div>
+                            <div className="space-y-2">
+                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
+                                <div className="font-mono text-slate-900">{term.topology_key}</div>
+                              </div>
+                              {term.label_selector && (
+                                <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                  <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
+                                  {term.label_selector.match_labels && Object.keys(term.label_selector.match_labels).length > 0 && (
+                                    <div className="space-y-1">
+                                      {Object.entries(term.label_selector.match_labels).map(([key, value]: [string, any]) => (
+                                        <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Preferred Pod Anti-Affinity */}
+                    {data.pod.affinity.pod_anti_affinity.preferred_during_scheduling_ignored_during_execution && (
+                      <div className="space-y-3 mt-4">
+                        <h4 className="text-sm font-medium text-red-800">Preferred During Scheduling</h4>
+                        {data.pod.affinity.pod_anti_affinity.preferred_during_scheduling_ignored_during_execution.map((pref: any, prefIdx: number) => (
+                          <div key={prefIdx} className="bg-white rounded-md border border-red-200 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="text-xs font-medium text-red-700">Preference {prefIdx + 1}</div>
+                              <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-medium">
+                                Weight: {pref.weight}
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                <div className="font-medium text-slate-700 mb-1">Topology Key:</div>
+                                <div className="font-mono text-slate-900">{pref.pod_affinity_term.topology_key}</div>
+                              </div>
+                              {pref.pod_affinity_term.label_selector && (
+                                <div className="bg-slate-50 rounded px-3 py-2 text-xs">
+                                  <div className="font-medium text-slate-700 mb-1">Label Selector:</div>
+                                  {pref.pod_affinity_term.label_selector.match_labels && Object.keys(pref.pod_affinity_term.label_selector.match_labels).length > 0 && (
+                                    <div className="space-y-1">
+                                      {Object.entries(pref.pod_affinity_term.label_selector.match_labels).map(([key, value]: [string, any]) => (
+                                        <div key={key} className="font-mono text-slate-900">{key}={String(value)}</div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Containers Section */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <div className="flex items-center space-x-3">
+            <Container className="h-5 w-5 text-blue-500" />
+            <h2 className="text-lg font-semibold text-slate-900">Containers</h2>
+            {loading.containers ? (
+              <SkeletonLoader className="w-8" />
+            ) : (
+              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
+                {data?.pod.containers.length || 0}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {loading.containers ? (
+          <div className="p-6">
+            <SkeletonLoader rows={3} height="h-20" />
+          </div>
+        ) : data?.pod.containers && data.pod.containers.length > 0 ? (
+          <div className="p-6 space-y-4">
+            {data.pod.containers?.map((container: any, idx: number) => {
+              const containerStatus = data.pod.container_statuses.find(
+                (status: any) => status.name === container.name
+              );
+              return (
+                <ContainerDetails
+                  key={idx}
+                  container={container}
+                  containerStatus={containerStatus}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-12 text-center text-slate-500">
+            <Container className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">No Containers</p>
+            <p className="text-sm">This pod doesn't have any containers defined.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Persistent Volume Claims Table */}
+      {data?.pod.related_pvcs && data.pod.related_pvcs.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200">
             <div className="flex items-center space-x-3">
-              <Container className="h-5 w-5 text-blue-500" />
-              <h2 className="text-lg font-semibold text-slate-900">Containers</h2>
-              {loading.containers ? (
+              <HardDrive className="h-5 w-5 text-purple-500" />
+              <h2 className="text-lg font-semibold text-slate-900">Persistent Volume Claims</h2>
+              {loading.pvcs ? (
                 <SkeletonLoader className="w-8" />
               ) : (
                 <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
-                  {data?.pod.containers.length || 0}
+                  {data.pod.related_pvcs.length}
                 </span>
               )}
             </div>
           </div>
 
-          {loading.containers ? (
-            <div className="p-6">
-              <SkeletonLoader rows={3} height="h-20" />
-            </div>
-          ) : data?.pod.containers && data.pod.containers.length > 0 ? (
-            <div className="p-6 space-y-4">
-              {data.pod.containers.map((container: any, idx: number) => {
-                const containerStatus = data.pod.container_statuses.find(
-                  (status: any) => status.name === container.name
-                );
-                return (
-                  <ContainerDetails
-                    key={idx}
-                    container={container}
-                    containerStatus={containerStatus}
-                  />
-                );
-              })}
-            </div>
+          {loading.pvcs ? (
+            <TableSkeletonLoader />
           ) : (
-            <div className="p-12 text-center text-slate-500">
-              <Container className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">No Containers</p>
-              <p className="text-sm">This pod doesn't have any containers defined.</p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      Capacity
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      Access Mode
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      Storage Class
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-200">
+                  {data.pod.related_pvcs.map((pvc: any, index: number) => (
+                    <PVCRow key={index} pvc={pvc} />
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
+      )}
 
-        {/* Persistent Volume Claims Table */}
-        {data?.pod.related_pvcs && data.pod.related_pvcs.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200">
-              <div className="flex items-center space-x-3">
-                <HardDrive className="h-5 w-5 text-purple-500" />
-                <h2 className="text-lg font-semibold text-slate-900">Persistent Volume Claims</h2>
-                {loading.pvcs ? (
-                  <SkeletonLoader className="w-8" />
-                ) : (
-                  <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
-                    {data.pod.related_pvcs.length}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {loading.pvcs ? (
-              <TableSkeletonLoader />
+      {/* Volumes Section */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <div className="flex items-center space-x-3">
+            <Database className="h-5 w-5 text-green-500" />
+            <h2 className="text-lg font-semibold text-slate-900">Volumes</h2>
+            {loading.volumes ? (
+              <SkeletonLoader className="w-8" />
             ) : (
+              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
+                {data?.pod.volumes.length || 0}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {loading.volumes ? (
+          <div className="p-6">
+            <SkeletonLoader rows={2} height="h-16" />
+          </div>
+        ) : data?.pod.volumes && data.pod.volumes.length > 0 ? (
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {data.pod.volumes.map((volume: any, idx: number) => (
+                <div key={idx} className="bg-slate-50 rounded-lg border border-slate-200 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-slate-900">{volume.name}</span>
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-md font-medium">
+                      {volume.type.replace('_', ' ')}
+                    </span>
+                  </div>
+                  {volume.claim_name && (
+                    <p className="text-xs text-slate-600">
+                      Claim: <span className="font-mono">{volume.claim_name}</span>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="p-12 text-center text-slate-500">
+            <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">No Volumes</p>
+            <p className="text-sm">This pod doesn't have any volumes mounted.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Events Section */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <div className="flex items-center space-x-3">
+            <AlertCircle className="h-5 w-5 text-orange-500" />
+            <h2 className="text-lg font-semibold text-slate-900">Events</h2>
+            {loading.events ? (
+              <SkeletonLoader className="w-8" />
+            ) : (
+              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
+                {((data?.events || []).length +
+                  (data?.pod.related_pvcs || []).reduce((acc: number, pvc: any) => acc + (pvc.events || []).length, 0)) || 0}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {loading.events ? (
+          <TableSkeletonLoader />
+        ) : (
+          <>
+            {/* Check if we have any events */}
+            {((data?.events || []).length > 0 ||
+              (data?.pod.related_pvcs || []).some((pvc: any) => (pvc.events || []).length > 0)) ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead className="bg-slate-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                        Name
+                        Event
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                        Status
+                        Type
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                        Capacity
+                        Count
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                        Access Mode
+                        Last Seen
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                        Storage Class
+                        Message
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-slate-200">
-                    {data.pod.related_pvcs.map((pvc: any, index: number) => (
-                      <PVCRow key={index} pvc={pvc} />
+                    {/* Pod Events */}
+                    {(data?.events || []).map((event: any, index: number) => (
+                      <EventRow key={`pod-${index}`} event={event} source="Pod" />
                     ))}
+
+                    {/* PVC Events */}
+                    {(data?.pod.related_pvcs || []).map((pvc: any) =>
+                      (pvc.events || []).map((event: any, index: number) => (
+                        <EventRow key={`pvc-${pvc.name}-${index}`} event={event} source={`PVC: ${pvc.name}`} />
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Volumes Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200">
-            <div className="flex items-center space-x-3">
-              <Database className="h-5 w-5 text-green-500" />
-              <h2 className="text-lg font-semibold text-slate-900">Volumes</h2>
-              {loading.volumes ? (
-                <SkeletonLoader className="w-8" />
-              ) : (
-                <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
-                  {data?.pod.volumes.length || 0}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {loading.volumes ? (
-            <div className="p-6">
-              <SkeletonLoader rows={2} height="h-16" />
-            </div>
-          ) : data?.pod.volumes && data.pod.volumes.length > 0 ? (
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data.pod.volumes.map((volume: any, idx: number) => (
-                  <div key={idx} className="bg-slate-50 rounded-lg border border-slate-200 p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-slate-900">{volume.name}</span>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-md font-medium">
-                        {volume.type.replace('_', ' ')}
-                      </span>
-                    </div>
-                    {volume.claim_name && (
-                      <p className="text-xs text-slate-600">
-                        Claim: <span className="font-mono">{volume.claim_name}</span>
-                      </p>
-                    )}
-                  </div>
-                ))}
+            ) : (
+              <div className="p-12 text-center text-slate-500">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">No Events</p>
+                <p className="text-sm">No events have been recorded for this pod or its resources.</p>
               </div>
-            </div>
-          ) : (
-            <div className="p-12 text-center text-slate-500">
-              <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">No Volumes</p>
-              <p className="text-sm">This pod doesn't have any volumes mounted.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Events Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200">
-            <div className="flex items-center space-x-3">
-              <AlertCircle className="h-5 w-5 text-orange-500" />
-              <h2 className="text-lg font-semibold text-slate-900">Events</h2>
-              {loading.events ? (
-                <SkeletonLoader className="w-8" />
-              ) : (
-                <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
-                  {((data?.events || []).length + 
-                    (data?.pod.related_pvcs || []).reduce((acc: number, pvc: any) => acc + (pvc.events || []).length, 0)) || 0}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {loading.events ? (
-            <TableSkeletonLoader />
-          ) : (
-            <>
-              {/* Check if we have any events */}
-              {((data?.events || []).length > 0 || 
-                (data?.pod.related_pvcs || []).some((pvc: any) => (pvc.events || []).length > 0)) ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                          Event
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                          Type
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                          Count
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                          Last Seen
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                          Message
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-slate-200">
-                      {/* Pod Events */}
-                      {(data?.events || []).map((event: any, index: number) => (
-                        <EventRow key={`pod-${index}`} event={event} source="Pod" />
-                      ))}
-                      
-                      {/* PVC Events */}
-                      {(data?.pod.related_pvcs || []).map((pvc: any) =>
-                        (pvc.events || []).map((event: any, index: number) => (
-                          <EventRow key={`pvc-${pvc.name}-${index}`} event={event} source={`PVC: ${pvc.name}`} />
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="p-12 text-center text-slate-500">
-                  <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No Events</p>
-                  <p className="text-sm">No events have been recorded for this pod or its resources.</p>
-                </div>
-              )}
-            </>
-          )}
-        </div> 
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };

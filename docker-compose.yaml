@@ -8,17 +8,25 @@ services:
   #     - pgdata:/var/lib/postgresql/data 
   #   ports:
   #     - 5432:5432
-  pg_admin:
-    image: dpage/pgadmin4
-    container_name: pgadmin4_container
-    restart: always
+  # pg_admin:
+  #   image: dpage/pgadmin4
+  #   container_name: pgadmin4_container
+  #   restart: always
+  #   ports:
+  #     - "8888:80"
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
+  #     PGADMIN_DEFAULT_PASSWORD: strong-password
+  #   volumes:
+  #     - pgadmin-data:/var/lib/pgadmin
+  docker:
+    image: registry:latest
+    container_name: registry_container
     ports:
-      - "8888:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
-      PGADMIN_DEFAULT_PASSWORD: strong-password
+      - "8001:5000"
     volumes:
-      - pgadmin-data:/var/lib/pgadmin
+      - registry_data:/var/lib/registry
 volumes:
   pgdata:
   pgadmin-data:
+  registry_data:

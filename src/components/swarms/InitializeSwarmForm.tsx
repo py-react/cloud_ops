@@ -1,6 +1,6 @@
 'use client'
 
-import React,{ useState } from 'react'
+import React, { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -182,7 +182,7 @@ export function InitializeSwarmForm({ onSubmit, onClose }: InitializeSwarmFormPr
               />
             </div>
           ))}
-          <Button type="button" onClick={addLabel} variant="outline" className="mt-2">Add Label</Button>
+          <Button type="button" onClick={addLabel} variant="outline">Add Label</Button>
         </div>
       </div>
 

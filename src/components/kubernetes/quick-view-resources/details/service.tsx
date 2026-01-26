@@ -30,7 +30,7 @@ import {
   Hash,
   MapPin
 } from 'lucide-react';
-import { SkeletonLoader, TableSkeletonLoader, MetricSkeletonLoader,LoadingSpinner } from './loader';
+import { SkeletonLoader, TableSkeletonLoader, MetricSkeletonLoader, LoadingSpinner } from './loader';
 
 interface StatusBadgeProps {
   status: string;
@@ -89,10 +89,10 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = "" }) => 
 };
 
 // AI Insights Component for Services
-const ServiceAIInsights: React.FC<{ loading: boolean; serviceName?: string; serviceType?: string }> = ({ 
-  loading, 
-  serviceName, 
-  serviceType 
+const ServiceAIInsights: React.FC<{ loading: boolean; serviceName?: string; serviceType?: string }> = ({
+  loading,
+  serviceName,
+  serviceType
 }) => (
   <div className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-6 mb-8 rounded-xl">
     <div className="flex items-center justify-between mb-4">
@@ -109,7 +109,7 @@ const ServiceAIInsights: React.FC<{ loading: boolean; serviceName?: string; serv
         <Sparkles className="h-5 w-5 animate-pulse" />
       )}
     </div>
-    
+
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {loading ? (
         Array.from({ length: 3 }).map((_, index) => (
@@ -131,13 +131,13 @@ const ServiceAIInsights: React.FC<{ loading: boolean; serviceName?: string; serv
               <span className="text-sm font-medium">Network Health</span>
             </div>
             <p className="text-xs text-cyan-100">
-              {serviceType === 'ClusterIP' ? 
-                `${serviceName} provides internal cluster connectivity` : 
+              {serviceType === 'ClusterIP' ?
+                `${serviceName} provides internal cluster connectivity` :
                 `${serviceName} exposes services externally`
               }
             </p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="h-4 w-4 text-blue-300" />
@@ -147,7 +147,7 @@ const ServiceAIInsights: React.FC<{ loading: boolean; serviceName?: string; serv
               Active workload targeting - traffic routing optimized
             </p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
             <div className="flex items-center space-x-2 mb-2">
               <Zap className="h-4 w-4 text-yellow-300" />
@@ -238,11 +238,11 @@ const WorkloadRow: React.FC<{ workload: any }> = ({ workload }) => {
           )}
         </td>
         <td className="px-6 py-4 text-sm text-slate-600">
-          {workload.creation_timestamp ? 
+          {workload.creation_timestamp ?
             new Date(workload.creation_timestamp).toLocaleDateString() : 'Unknown'}
         </td>
       </tr>
-      
+
       {expanded && (
         <tr>
           <td colSpan={5} className="px-6 py-6 bg-slate-50">
@@ -272,7 +272,7 @@ const WorkloadRow: React.FC<{ workload: any }> = ({ workload }) => {
                   )}
                 </div>
               </div>
-              
+
               <div>
                 <h5 className="text-sm font-semibold text-slate-700 mb-3">Selector</h5>
                 <div className="flex flex-wrap gap-1">
@@ -282,7 +282,7 @@ const WorkloadRow: React.FC<{ workload: any }> = ({ workload }) => {
                     </span>
                   ))}
                 </div>
-                
+
                 {Object.keys(workload.labels || {}).length > 0 && (
                   <div className="mt-4">
                     <h6 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Labels</h6>
@@ -350,8 +350,8 @@ const EventRow: React.FC<{ event: any; source?: string }> = ({ event, source }) 
           {event.count || 1}
         </td>
         <td className="px-6 py-4 text-sm text-slate-600">
-          {event.lastTimestamp ? 
-            new Date(event.lastTimestamp).toLocaleString() : 
+          {event.lastTimestamp ?
+            new Date(event.lastTimestamp).toLocaleString() :
             'Unknown'
           }
         </td>
@@ -359,7 +359,7 @@ const EventRow: React.FC<{ event: any; source?: string }> = ({ event, source }) 
           {event.message}
         </td>
       </tr>
-      
+
       {expanded && (
         <tr>
           <td colSpan={5} className="px-6 py-6 bg-slate-50">
@@ -391,13 +391,13 @@ const EventRow: React.FC<{ event: any; source?: string }> = ({ event, source }) 
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h5 className="text-sm font-semibold text-slate-700 mb-3">Message</h5>
                 <div className="bg-white rounded-lg border border-slate-200 p-3">
                   <p className="text-sm text-slate-700 whitespace-pre-wrap">{event.message}</p>
                 </div>
-                
+
                 {event.involvedObject && (
                   <div className="mt-4">
                     <h6 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Involved Object</h6>
@@ -422,7 +422,7 @@ const EventRow: React.FC<{ event: any; source?: string }> = ({ event, source }) 
   );
 };
 
-export const ServiceDetailedInfo = ({data, loading, error,}) => {
+export const ServiceDetailedInfo = ({ data, loading, error, }) => {
 
   if (error) {
     return (
@@ -446,8 +446,8 @@ export const ServiceDetailedInfo = ({data, loading, error,}) => {
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
         {/* AI Insights */}
-        <ServiceAIInsights 
-          loading={loading.aiInsights} 
+        <ServiceAIInsights
+          loading={loading.aiInsights}
           serviceName={data?.service.name}
           serviceType={data?.service.type}
         />
@@ -466,7 +466,7 @@ export const ServiceDetailedInfo = ({data, loading, error,}) => {
                 </div>
                 <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
               </div>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <MetricSkeletonLoader key={index} />
@@ -488,7 +488,7 @@ export const ServiceDetailedInfo = ({data, loading, error,}) => {
                 <div className="flex items-center space-x-2">
                   <StatusBadge status={data?.service.cluster_ip === 'None' ? 'Headless' : data?.service.type || 'ClusterIP'} />
                   <span className="text-xs text-slate-500">
-                    Created: {data?.service.creation_timestamp ? 
+                    Created: {data?.service.creation_timestamp ?
                       new Date(data.service.creation_timestamp).toLocaleDateString() : 'Unknown'}
                   </span>
                 </div>
@@ -544,7 +544,7 @@ export const ServiceDetailedInfo = ({data, loading, error,}) => {
                     <h3 className="text-sm font-semibold text-slate-700">Service Labels</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(data.service.labels).map(([key, value]) => (
+                    {Object.entries(data.service.labels || {}).map(([key, value]) => (
                       <div key={key} className="inline-flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                         <span className="text-xs font-mono text-amber-700">{key}</span>
                         <span className="mx-2 text-amber-400">=</span>
@@ -620,8 +620,8 @@ export const ServiceDetailedInfo = ({data, loading, error,}) => {
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">External IPs</p>
                 </div>
                 <p className="text-sm font-mono text-slate-900">
-                  {data?.service.external_ips && data.service.external_ips.length > 0 ? 
-                    data.service.external_ips.join(', ') : 
+                  {data?.service.external_ips && data.service.external_ips.length > 0 ?
+                    data.service.external_ips.join(', ') :
                     <span className="text-slate-400">None</span>
                   }
                 </p>

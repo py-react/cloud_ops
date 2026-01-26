@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { DatabaseIcon, Info } from "lucide-react";
+import { DatabaseIcon, Info, Activity, Layers, Trash2 } from "lucide-react";
 import Wizard from "@/components/wizard/wizard";
 import ResourceQuotaOverview from "./sections/overview";
 import ResourceQuotaStats from "./sections/stats";
@@ -15,7 +15,7 @@ export const ResourceQuotaDetailsModel = ({
   open: boolean;
   onClose: React.Dispatch<React.SetStateAction<boolean>>
   quota: Record<string, any>;
-  onDelete: (data:any) => void;
+  onDelete: (data: any) => void;
 }) => {
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -23,6 +23,7 @@ export const ResourceQuotaDetailsModel = ({
     {
       id: "overview",
       label: "Overview",
+      icon: Info,
       description: "General information about the resource quota.",
       longDescription: "View essential details such as namespace, creation time, and quota name.",
       props: { quota },
@@ -31,6 +32,7 @@ export const ResourceQuotaDetailsModel = ({
     {
       id: "stats",
       label: "Stats",
+      icon: Activity,
       description: (
         <>
           Resource quotas can track usage for CPU, memory, pods, object counts, and more.{' '}
@@ -51,6 +53,7 @@ export const ResourceQuotaDetailsModel = ({
     {
       id: "scopes",
       label: "Scopes",
+      icon: Layers,
       description: (
         <>
           Resource Quotas can be limited by scopes and scope selectors.{' '}
@@ -71,9 +74,10 @@ export const ResourceQuotaDetailsModel = ({
     {
       id: "advance",
       label: "Advance",
+      icon: Trash2,
       description: "Delete Quota from cluster",
-      longDescription: "",
-      props: { quotaName:quota.name,handleDelete:()=>onDelete(quota) },
+      longDescription: "Perform advanced operations like deleting this resource quota from the cluster. Use with caution as this action is irreversible.",
+      props: { quotaName: quota.name, handleDelete: () => onDelete(quota) },
       component: AdvancedTab,
     },
   ];

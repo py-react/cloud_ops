@@ -1,7 +1,6 @@
 import React from "react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Editor } from "@monaco-editor/react";
-import { OptionalBadge } from "@/components/docker/network/forms/badges";
 
 export function IPAMConfig({ control, errors }: { control: any; errors: any }) {
   return (
@@ -11,8 +10,8 @@ export function IPAMConfig({ control, errors }: { control: any; errors: any }) {
         name="ipam.config"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              IPAM Config <OptionalBadge />
+            <FormLabel className="text-sm font-medium text-foreground/80">
+              IPAM Config
             </FormLabel>
             <FormDescription>
               IPAM configuration in JSON format

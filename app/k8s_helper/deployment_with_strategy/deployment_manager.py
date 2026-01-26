@@ -11,6 +11,7 @@ from ...db_client.controllers.deployment_run.deployment_run import (
 )
 from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
 from app.k8s_helper.deployment_with_strategy.strategy_handler import StrategyHandler
+from app.db_client.services.deployment_generator import DeploymentGenerator
 
 
 class DeploymentManager:
@@ -115,7 +116,13 @@ class DeploymentManager:
             )).first()
             if not config_obj:
                 raise Exception(f"Deployment config not found for name={name}, namespace={namespace}")
-            return config_obj.dict()
+            
+            result = config_obj.dict()
+            # Enrich with profile IDs for frontend forms
+            result["container_profile_ids"] = [c.id for c in config_obj.containers]
+            result["volume_profile_ids"] = [v.id for v in config_obj.volumes]
+            
+            return result
         except Exception as e:
             raise Exception(f"Unexpected error getting deployment from DB: {str(e)}")
 
@@ -156,27 +163,47 @@ class DeploymentManager:
             config_obj = self.session.get(DeploymentConfig, run_data.deployment_config_id)
             if not config_obj:
                 raise Exception(f"DeploymentConfig with id={run_data.deployment_config_id} not found")
-            config_dict = config_obj.dict()
-            # 3. Merge run fields into config_dict
+            
+            # 3. Generate deployment spec using DeploymentGenerator
+            generator = {}
+            deployment_spec = generator.generate(config_obj.id)
+            
+            # 4. Apply run-time overrides (pr_url, jira, environment, image)
             if getattr(run_data, "pr_url", None):
-                config_dict["pr_url"] = run_data.pr_url
+                deployment_spec.setdefault("metadata", {}).setdefault("annotations", {})["pr_url"] = run_data.pr_url
             if getattr(run_data, "jira", None):
-                config_dict["jira"] = run_data.jira
+                deployment_spec.setdefault("metadata", {}).setdefault("annotations", {})["jira"] = run_data.jira
             if getattr(run_data, "environment", None):
-                config_dict["labels"] = config_dict.get("labels", {}) or {}
-                config_dict["labels"]["environment"] = run_data.environment
-            # Override image in containers
-            if getattr(run_data, "image_name", None) and config_dict.get("containers"):
-                for c in config_dict["containers"]:
-                    c["image"] = run_data.image_name
-            # 4. Build K8s deployment spec from dict
-            print(config_dict,"config_dict")
-            deployment_spec = self._build_k8s_deployment_spec(config_dict)
+                deployment_spec.setdefault("metadata", {}).setdefault("labels", {})["environment"] = run_data.environment
+                deployment_spec.get("spec", {}).get("template", {}).setdefault("metadata", {}).setdefault("labels", {})["environment"] = run_data.environment
             
-            # 5. Build K8s service spec from dict (if service_ports are defined)
-            service_spec = self._build_k8s_service_spec(config_dict)
+            # Override image in all containers if image_name is provided
+            if getattr(run_data, "image_name", None):
+                containers = deployment_spec.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [])
+                for container in containers:
+                    container["image"] = run_data.image_name
             
-            # 6. Create the deployment and service in Kubernetes
+            # 5. Apply deployment strategy
+            deployment_spec = StrategyHandler.apply_strategy(
+                deployment_spec,
+                config_obj.deployment_strategy_id
+            )
+            
+            # 6. Build K8s service spec (if service_ports are defined)
+            service_spec = None
+            if config_obj.service_ports:
+                service_spec = self._build_k8s_service_spec({
+                    "deployment_name": config_obj.deployment_name,
+                    "namespace": config_obj.namespace,
+                    "service_ports": config_obj.service_ports,
+                    "labels": deployment_spec.get("metadata", {}).get("labels", {}),
+                    "annotations": deployment_spec.get("metadata", {}).get("annotations", {}),
+                    "tag": config_obj.tag,
+                    "pr_url": getattr(run_data, "pr_url", None),
+                    "jira": getattr(run_data, "jira", None)
+                })
+            
+            # 7. Create the deployment and service in Kubernetes
             k8s_helper = KubernetesResourceHelper()
             k8s_helper.apply_resource(deployment_spec)
             
@@ -187,7 +214,7 @@ class DeploymentManager:
                 k8s_helper.apply_resource(service_spec)
                 result_messages.append("Service created in Kubernetes")
             
-            # 7. Optionally update run status
+            # 8. Update run status
             self.update_deployment_run_status(run_obj.id, "deployed")
             return {"run": run_obj, "deployment_result": "; ".join(result_messages)}
         except Exception as e:
@@ -195,166 +222,7 @@ class DeploymentManager:
             self.update_deployment_run_status(run_obj.id, "failed")
             raise Exception(f"Unexpected error running deployment: {str(e)}")
 
-    def _build_k8s_deployment_spec(self, config_dict) -> dict:
-        """
-        Build a Kubernetes deployment spec (dict) from a config dict.
-        """
-        # Convert deployment name to lowercase for RFC 1123 compliance
-        deployment_name = self.validate_and_sanitize_name(config_dict["deployment_name"])
-        
-        containers = []
-        for container in config_dict["containers"]:
-            container_spec = {
-                "name": container["name"],
-                "image": container["image"],
-            }
-            
-            # Add optional container fields
-            if container.get("workingDir"):
-                container_spec["workingDir"] = container["workingDir"]
-                
-            if container.get("imagePullPolicy"):
-                container_spec["imagePullPolicy"] = container["imagePullPolicy"]
-            
-            ports = container.get("ports")
-            if ports:
-                container_spec["ports"] = [
-                    {"containerPort": p["containerPort"], "protocol": p.get("protocol", "TCP")}
-                    for p in ports
-                ]
-                
-            resources = container.get("resources")
-            if resources:
-                container_spec["resources"] = {
-                    "requests": resources.get("requests"),
-                    "limits": resources.get("limits")
-                }
-                
-            env = container.get("env")
-            if env:
-                env_vars = []
-                for e in env:
-                    env_var = {"name": e["name"]}
-                    # Environment variables can have either value OR valueFrom, not both
-                    value_from = e.get("valueFrom") or e.get("value_from")
-                    if value_from:
-                        env_var["valueFrom"] = value_from
-                    elif e.get("value") is not None:
-                        env_var["value"] = e.get("value")
-                    else:
-                        continue  # Skip env vars with no value or valueFrom
-                    env_vars.append(env_var)
-                container_spec["env"] = env_vars
-                
-            # Add envFrom support
-            if container.get("envFrom"):
-                container_spec["envFrom"] = container["envFrom"]
-                
-            # Add volume mounts
-            if container.get("volumeMounts"):
-                container_spec["volumeMounts"] = container["volumeMounts"]
-                
-            # Add probes
-            for probe_type in ["livenessProbe", "readinessProbe", "startupProbe"]:
-                if container.get(probe_type):
-                    container_spec[probe_type] = container[probe_type]
-                    
-            # Add lifecycle hooks
-            if container.get("lifecycle"):
-                container_spec["lifecycle"] = container["lifecycle"]
-                
-            # Add security context
-            if container.get("securityContext"):
-                container_spec["securityContext"] = container["securityContext"]
-                
-            # Add termination message settings
-            if container.get("terminationMessagePath"):
-                container_spec["terminationMessagePath"] = container["terminationMessagePath"]
-            if container.get("terminationMessagePolicy"):
-                container_spec["terminationMessagePolicy"] = container["terminationMessagePolicy"]
-                
-            # Add stdin/tty settings
-            for field in ["stdin", "stdinOnce", "tty"]:
-                if container.get(field) is not None:
-                    container_spec[field] = container[field]
-            
-            command = container.get("command")
-            if command:
-                container_spec["command"] = command
-            args = container.get("args")
-            if args:
-                container_spec["args"] = args
-            containers.append(container_spec)
-        
-        # Build metadata labels including all configured labels
-        # Start with config labels, then ensure app label uses sanitized name
-        metadata_labels = config_dict.get("labels", {}).copy()
-        metadata_labels["app"] = deployment_name  # Always use sanitized deployment name
-        
-        # Add tag only if it's not empty
-        if config_dict.get("tag"):
-            metadata_labels["tag"] = config_dict["tag"]
-        
-        # Selector labels must match template labels (use subset of template labels)
-        selector_labels = {
-            "app": deployment_name
-        }
-        
-        deployment_spec = {
-            "apiVersion": "apps/v1",
-            "kind": "Deployment",
-            "metadata": {
-                "name": deployment_name,
-                "namespace": config_dict["namespace"],
-                "labels": metadata_labels,
-                "annotations": {
-                    "pr_url": config_dict["pr_url"],
-                    **(config_dict.get("annotations") or {})
-                }
-            },
-            "spec": {
-                "replicas": config_dict.get("replicas", 1),
-                "selector": {
-                    "matchLabels": selector_labels
-                },
-                "template": {
-                    "metadata": {
-                        "labels": metadata_labels
-                    },
-                    "spec": {
-                        "containers": containers
-                    }
-                }
-            }
-        }
-        if config_dict.get("jira"):
-            deployment_spec["metadata"]["annotations"]["jira"] = config_dict["jira"]
-        # Apply strategy if needed
-        deployment_spec = StrategyHandler.apply_strategy(
-            deployment_spec,
-            config_dict["deployment_strategy_id"]
-        )
-        
-        # Add pod-level configurations to the template spec
-        pod_spec = deployment_spec["spec"]["template"]["spec"]
-        
-        # Add volumes
-        if config_dict.get("volumes"):
-            pod_spec["volumes"] = config_dict["volumes"]
-            
-        # Add node selector
-        if config_dict.get("node_selector"):
-            pod_spec["nodeSelector"] = config_dict["node_selector"]
-            
-        # Add tolerations
-        if config_dict.get("tolerations"):
-            pod_spec["tolerations"] = config_dict["tolerations"]
-            
-        # Add affinity
-        if config_dict.get("affinity"):
-            pod_spec["affinity"] = config_dict["affinity"]
-        
-        return deployment_spec 
+ 
 
     def _build_k8s_service_spec(self, config_dict) -> dict:
         """
@@ -394,7 +262,7 @@ class DeploymentManager:
         
         # Build metadata labels
         # Start with config labels, then ensure app label uses sanitized name
-        metadata_labels = config_dict.get("labels", {}).copy()
+        metadata_labels = (config_dict.get("labels") or {}).copy()
         metadata_labels["app"] = deployment_name  # Always use sanitized deployment name
         
         # Add tag only if it's not empty

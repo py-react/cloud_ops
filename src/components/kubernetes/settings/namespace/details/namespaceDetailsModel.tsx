@@ -210,8 +210,8 @@ export const NamespaceDetailsModel = ({
                 <p className="text-xs">
                   {viewNamespaceData?.metadata.creation_timestamp
                     ? new Date(
-                        viewNamespaceData.metadata.creation_timestamp
-                      ).toLocaleString()
+                      viewNamespaceData.metadata.creation_timestamp
+                    ).toLocaleString()
                     : "Unknown"}
                 </p>
               </div>
@@ -219,7 +219,7 @@ export const NamespaceDetailsModel = ({
                 <h3 className="font-semibold text-sm mb-2">Labels</h3>
                 <div className="flex flex-wrap gap-2">
                   {Object.keys(viewNamespaceData?.labels || {}).length > 0 ? (
-                    Object.entries(viewNamespaceData.labels).map(
+                    Object.entries(viewNamespaceData.labels || {}).map(
                       ([key, value]) => (
                         <Badge
                           key={key}
@@ -250,8 +250,8 @@ export const NamespaceDetailsModel = ({
                         <span className="text-xs">
                           {quota.creation_timestamp
                             ? new Date(
-                                quota.creation_timestamp
-                              ).toLocaleString()
+                              quota.creation_timestamp
+                            ).toLocaleString()
                             : "Unknown"}
                         </span>
                       </CardTitle>
@@ -324,13 +324,13 @@ export const NamespaceDetailsModel = ({
                 );
               })}
             </div>
-            {!filteredQuotas.length?(
-                <p className="font-semibold text-center text-sm">No Resource Quota found for this namespace</p>
-            ):null}
+            {!filteredQuotas.length ? (
+              <p className="font-semibold text-center text-sm">No Resource Quota found for this namespace</p>
+            ) : null}
           </TabsContent>
           <TabsContent value="limitRange" className="mt-0 overflow-y-auto max-h-[376px]">
             <div className="space-y-6">
-              {!!filteredLimitRange.length?filteredLimitRange.map((limitRange: LimitRange) => {
+              {!!filteredLimitRange.length ? filteredLimitRange.map((limitRange: LimitRange) => {
                 const newLimitRange = transformLimitRange(limitRange);
                 return (
                   <Card className="p-0 shadow-none bg-white border border-gray-200 w-full">
@@ -342,8 +342,8 @@ export const NamespaceDetailsModel = ({
                         <span className="text-xs">
                           {newLimitRange.creationTimestamp
                             ? new Date(
-                                newLimitRange.creationTimestamp
-                              ).toLocaleString()
+                              newLimitRange.creationTimestamp
+                            ).toLocaleString()
                             : "Unknown"}
                         </span>
                       </CardTitle>
@@ -392,7 +392,7 @@ export const NamespaceDetailsModel = ({
                     </CardContent>
                   </Card>
                 );
-              }):(
+              }) : (
                 <p className="font-semibold text-center text-sm">No Limit range found for this namespace</p>
               )}
             </div>

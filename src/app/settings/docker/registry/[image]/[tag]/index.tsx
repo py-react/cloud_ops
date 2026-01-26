@@ -10,123 +10,123 @@ import { toast } from "sonner";
 
 
 interface ImageConfig {
-    created: string
-    architecture: string
-    os: string
-    config: {
-      ExposedPorts?: Record<string, any>
-      Env?: string[]
-      Entrypoint?: string[]
-      Cmd?: string[]
-      WorkingDir?: string
-      Labels?: Record<string, string>
-      StopSignal?: string
-    }
-    rootfs: {
-      type: string
-      diff_ids: string[]
-    }
-    history: Array<{
-      created: string
-      created_by: string
-      comment?: string
-      empty_layer?: boolean
-    }>
+  created: string
+  architecture: string
+  os: string
+  config: {
+    ExposedPorts?: Record<string, any>
+    Env?: string[]
+    Entrypoint?: string[]
+    Cmd?: string[]
+    WorkingDir?: string
+    Labels?: Record<string, string>
+    StopSignal?: string
   }
+  rootfs: {
+    type: string
+    diff_ids: string[]
+  }
+  history: Array<{
+    created: string
+    created_by: string
+    comment?: string
+    empty_layer?: boolean
+  }>
+}
 
 
 interface ImageManifest {
+  mediaType: string
+  schemaVersion: number
+  config: {
     mediaType: string
-    schemaVersion: number
-    config: {
-      mediaType: string
-      digest: string
-      size: number
-    }
-    layers: Array<{
-      mediaType: string
-      digest: string
-      size: number
-    }>
+    digest: string
+    size: number
   }
+  layers: Array<{
+    mediaType: string
+    digest: string
+    size: number
+  }>
+}
 
 
 interface FileContent {
-    type: string
-    sha256: string
-    file_path: string
-    size: number
-    is_text: boolean
-    content?: string
-    download_url?: string
-  }
+  type: string
+  sha256: string
+  file_path: string
+  size: number
+  is_text: boolean
+  content?: string
+  download_url?: string
+}
 
-  interface LayerContents {
-    type: string
-    sha256: string
-    compressed_size: number
-    summary: {
-      total_entries: number
-      files: number
-      directories: number
-      total_uncompressed_size: number
-    }
-    contents: Array<{
-      name: string
-      type: 'file' | 'directory' | 'symlink' | 'other'
-      size: number
-      mode: string
-      uid: number
-      gid: number
-      mtime: number
-      is_file: boolean
-      is_dir: boolean
-      is_symlink: boolean
-      linkname?: string
-    }>
+interface LayerContents {
+  type: string
+  sha256: string
+  compressed_size: number
+  summary: {
+    total_entries: number
+    files: number
+    directories: number
+    total_uncompressed_size: number
   }
-
-interface TreeNode {
+  contents: Array<{
     name: string
-    path: string
-    type: 'file' | 'directory' | 'symlink'
+    type: 'file' | 'directory' | 'symlink' | 'other'
     size: number
     mode: string
+    uid: number
+    gid: number
     mtime: number
-    children?: TreeNode[]
-    linkname?: string
     is_file: boolean
     is_dir: boolean
     is_symlink: boolean
-  }
+    linkname?: string
+  }>
+}
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
+interface TreeNode {
+  name: string
+  path: string
+  type: 'file' | 'directory' | 'symlink'
+  size: number
+  mode: string
+  mtime: number
+  children?: TreeNode[]
+  linkname?: string
+  is_file: boolean
+  is_dir: boolean
+  is_symlink: boolean
+}
+
+const formatBytes = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
 
 const Tag = () => {
-    const {tag,image} = useParams()
-    // Detail view states
-    const [imageManifest, setImageManifest] = useState<ImageManifest | null>(null)
-    const [imageConfig, setImageConfig] = useState<ImageConfig | null>(null)
-    const [detailLoading, setDetailLoading] = useState(false)
+  const { tag, image } = useParams()
+  // Detail view states
+  const [imageManifest, setImageManifest] = useState<ImageManifest | null>(null)
+  const [imageConfig, setImageConfig] = useState<ImageConfig | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
-    // File viewing states
-    const [fileContents, setFileContents] = useState<Record<string, FileContent>>({})
-    const [expandedDirectories, setExpandedDirectories] = useState<Record<string, boolean>>({})
-    const [fileLoading, setFileLoading] = useState<Record<string, boolean>>({})
-    const [viewingFile, setViewingFile] = useState<string | null>(null)
-    
+  // File viewing states
+  const [fileContents, setFileContents] = useState<Record<string, FileContent>>({})
+  const [expandedDirectories, setExpandedDirectories] = useState<Record<string, boolean>>({})
+  const [fileLoading, setFileLoading] = useState<Record<string, boolean>>({})
+  const [viewingFile, setViewingFile] = useState<string | null>(null)
 
-    // Layer examination states
-    const [layerContents, setLayerContents] = useState<Record<string, LayerContents>>({})
-    const [expandedLayers, setExpandedLayers] = useState<Record<string, boolean>>({})
-    const [layerLoading, setLayerLoading] = useState<Record<string, boolean>>({})
-    
+
+  // Layer examination states
+  const [layerContents, setLayerContents] = useState<Record<string, LayerContents>>({})
+  const [expandedLayers, setExpandedLayers] = useState<Record<string, boolean>>({})
+  const [layerLoading, setLayerLoading] = useState<Record<string, boolean>>({})
+
 
 
   // UI states
@@ -158,10 +158,10 @@ const Tag = () => {
 
     try {
       setLayerLoading(prev => ({ ...prev, [layerDigest]: true }))
-      
+
       // Extract SHA256 without the "sha256:" prefix
       const sha256 = layerDigest.replace('sha256:', '')
-      
+
       const data = await DefaultService.apiDockerRegistryExamineGet({
         repo: repoName,
         sha256: sha256,
@@ -195,7 +195,7 @@ const Tag = () => {
         imageName: image,
         tag: tag
       })
-      
+
       setImageManifest(manifest as ImageManifest)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch image manifest'
@@ -211,7 +211,7 @@ const Tag = () => {
     const padding = 16 // Top and bottom padding
     const minHeight = 40
     const maxHeight = 720
-    
+
     const calculatedHeight = Math.max(minHeight, Math.min(maxHeight, lines * lineHeight + padding))
     return `${calculatedHeight}px`
   }
@@ -226,7 +226,7 @@ const Tag = () => {
           blob: true,
           sha256Digest: configDigest
         }) as any
-        
+
         setImageConfig(config as ImageConfig)
       }
     } catch (err) {
@@ -239,7 +239,7 @@ const Tag = () => {
 
   const viewFileContent = async (filePath: string, layerDigest: string, repoName: string) => {
     const fileKey = `${layerDigest}:${filePath}`
-    
+
     if (fileContents[fileKey]) {
       setViewingFile(fileKey)
       return
@@ -247,9 +247,9 @@ const Tag = () => {
 
     try {
       setFileLoading(prev => ({ ...prev, [fileKey]: true }))
-      
+
       const sha256 = layerDigest.replace('sha256:', '')
-      
+
       const data = await DefaultService.apiDockerRegistryExamineGet({
         repo: repoName,
         sha256: sha256,
@@ -296,8 +296,8 @@ const Tag = () => {
 
     // Check if it's a shell command (starts with RUN and contains complex shell operations)
     const isShellCommand = command.startsWith('RUN ') && (
-      command.includes('&&') || 
-      command.includes('||') || 
+      command.includes('&&') ||
+      command.includes('||') ||
       command.includes('|') ||
       command.includes(';') ||
       command.length > 100
@@ -308,10 +308,10 @@ const Tag = () => {
 
   const formatShellCommand = (command: string): string => {
     if (!command.startsWith('RUN ')) return command
-    
+
     // Extract the shell part after RUN
     const shellPart = command.substring(4)
-    
+
     // Split on && and add proper indentation
     const formatted = shellPart
       .split(' && ')
@@ -320,7 +320,7 @@ const Tag = () => {
         return `    && ${part.trim()}`
       })
       .join(' \\\n')
-    
+
     return formatted
   }
 
@@ -343,18 +343,18 @@ const Tag = () => {
     for (const file of sortedFiles) {
       const parts = file.name.split('/').filter(part => part !== '')
       let currentPath = ''
-      
+
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i]
         const parentPath = currentPath
         currentPath = currentPath ? `${currentPath}/${part}` : part
-        
+
         if (!nodeMap.has(currentPath)) {
           const isLastPart = i === parts.length - 1
-          const nodeType = isLastPart 
+          const nodeType = isLastPart
             ? (file.type === 'other' ? 'file' : file.type as 'file' | 'directory' | 'symlink')
             : 'directory'
-            
+
           const node: TreeNode = {
             name: part,
             path: currentPath,
@@ -422,9 +422,8 @@ const Tag = () => {
 
                 {/* File/Directory Icon and Name */}
                 <div
-                  className={`flex items-center gap-1 flex-1 ${
-                    node.is_file ? "cursor-pointer hover:text-blue-600" : ""
-                  }`}
+                  className={`flex items-center gap-1 flex-1 ${node.is_file ? "cursor-pointer hover:text-blue-600" : ""
+                    }`}
                   onClick={() => {
                     if (node.is_file) {
                       viewFileContent(node.path, layerDigest, repoName);
@@ -472,419 +471,419 @@ const Tag = () => {
   };
 
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchImageManifest()
-  },[image,tag])
+  }, [image, tag])
 
 
   return (
     <div title="Docker Registry - Image Details">
-        <div className="space-y-6">
-          <RouteDescription
-            title={
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <Package className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    {image}:{tag}
-                  </h2>
-                  <p className="text-base text-slate-500">
-                    Detailed image inspection and layer analysis
-                  </p>
-                </div>
+      <div className="space-y-6">
+        <RouteDescription
+          title={
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <Package className="h-6 w-6 text-blue-600" />
               </div>
-            }
-            shortDescription=""
-            description="Examine the structure, configuration, and build history of your Docker image. Explore individual layers and their contents to understand how your image was constructed."
-          />
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {image}:{tag}
+                </h2>
+                <p className="text-base text-slate-500">
+                  Detailed image inspection and layer analysis
+                </p>
+              </div>
+            </div>
+          }
+          shortDescription=""
+          description="Examine the structure, configuration, and build history of your Docker image. Explore individual layers and their contents to understand how your image was constructed."
+        />
 
-          {/* Image Overview */}
-          <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
-            <CardHeader>
-              <CardTitle>Image Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="font-medium text-gray-700">Media Type</div>
-                  <div className="text-gray-600">{imageManifest?.mediaType}</div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="font-medium text-gray-700">Schema Version</div>
-                  <div className="text-gray-600">{imageManifest?.schemaVersion}</div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="font-medium text-gray-700">Layers</div>
-                  <div className="text-gray-600">{imageManifest?.layers.length}</div>
-                </div>
+        {/* Image Overview */}
+        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+          <CardHeader>
+            <CardTitle>Image Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="bg-gray-50 p-3 rounded">
+                <div className="font-medium text-gray-700">Media Type</div>
+                <div className="text-gray-600">{imageManifest?.mediaType}</div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="bg-gray-50 p-3 rounded">
+                <div className="font-medium text-gray-700">Schema Version</div>
+                <div className="text-gray-600">{imageManifest?.schemaVersion}</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded">
+                <div className="font-medium text-gray-700">Layers</div>
+                <div className="text-gray-600">{imageManifest?.layers.length}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Layers Section */}
-          <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle 
-                  className="flex items-center gap-2 cursor-pointer"
-                  onClick={() => toggleSection('layers')}
-                >
-                  <Layers className="w-5 h-5 text-blue-500" />
-                  Layers ({imageManifest?.layers.length})
-                  {expandedSections.layers ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                </CardTitle>
-              </div>
-            </CardHeader>
-            
-            {expandedSections.layers && (
-              <CardContent className="space-y-3">
-                {imageManifest?.layers.map((layer, index) => (
-                  <div key={index} className="border rounded-lg bg-gray-50">
-                    <div className="p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono text-sm text-gray-700">Layer {index + 1}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">{formatBytes(layer.size)}</span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => examineLayer(layer.digest, image!)}
-                            disabled={layerLoading[layer.digest]}
-                          >
-                            {layerLoading[layer.digest] ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <>
-                                <FolderOpen className="w-4 h-4 mr-1" />
-                                {layerContents[layer.digest] ? 'Toggle' : 'Examine'}
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="text-xs font-mono text-gray-500 break-all">{layer.digest}</div>
-                      <div className="text-xs text-gray-500 mt-1">{layer.mediaType}</div>
-                    </div>
-                    
-                    {/* Layer Contents */}
-                    {layerContents[layer.digest] && expandedLayers[layer.digest] && (
-                      <div className="border-t bg-white">
-                        <div className="p-3">
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-medium text-gray-800">Layer Contents</h4>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleLayerContents(layer.digest)}
-                            >
-                              <ChevronDown className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          
-                          {/* Summary */}
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
-                            <div className="bg-blue-50 p-2 rounded">
-                              <div className="font-medium text-blue-700">Total Entries</div>
-                              <div className="text-blue-600">{layerContents[layer.digest].summary.total_entries}</div>
-                            </div>
-                            <div className="bg-green-50 p-2 rounded">
-                              <div className="font-medium text-green-700">Files</div>
-                              <div className="text-green-600">{layerContents[layer.digest].summary.files}</div>
-                            </div>
-                            <div className="bg-yellow-50 p-2 rounded">
-                              <div className="font-medium text-yellow-700">Directories</div>
-                              <div className="text-yellow-600">{layerContents[layer.digest].summary.directories}</div>
-                            </div>
-                            <div className="bg-purple-50 p-2 rounded">
-                              <div className="font-medium text-purple-700">Uncompressed Size</div>
-                              <div className="text-purple-600">{formatBytes(layerContents[layer.digest].summary.total_uncompressed_size)}</div>
-                            </div>
-                          </div>
-                          
-                          {/* File Tree */}
-                          <div className="max-h-96 overflow-y-auto border rounded p-3 bg-gray-50">
-                            <TreeView
-                              nodes={buildFileTree(layerContents[layer.digest].contents)}
-                              layerDigest={layer.digest}
-                              repoName={image!}
-                              depth={0}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            )}
-          </Card>
+        {/* Layers Section */}
+        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={() => toggleSection('layers')}
+              >
+                <Layers className="w-5 h-5 text-blue-500" />
+                Layers ({imageManifest?.layers.length})
+                {expandedSections.layers ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+              </CardTitle>
+            </div>
+          </CardHeader>
 
-          {/* Config Section */}
-          <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-blue-500" />
-                  Configuration
-                </CardTitle>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => fetchImageConfig(imageManifest?.config.digest!)}
-                  disabled={detailLoading}
-                >
-                  {detailLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Eye className="w-4 h-4 mr-2" />
-                  )}
-                  Load Details
-                </Button>
-              </div>
-            </CardHeader>
-            
+          {expandedSections.layers && (
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="font-medium text-gray-700">Config Digest</div>
-                  <div className="text-xs font-mono text-gray-600 break-all">{imageManifest?.config.digest}</div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <div className="font-medium text-gray-700">Config Size</div>
-                  <div className="text-gray-600">{formatBytes(imageManifest?.config?.size!)}</div>
-                </div>
-              </div>
-              
-              {imageConfig && (
-                <div className="mt-6 space-y-4">
-                  {/* Basic Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-blue-50 p-3 rounded">
-                      <div className="font-medium text-blue-700">Architecture</div>
-                      <div className="text-blue-600">{imageConfig?.architecture}</div>
+              {imageManifest?.layers.map((layer, index) => (
+                <div key={index} className="border rounded-lg bg-gray-50">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono text-sm text-gray-700">Layer {index + 1}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">{formatBytes(layer.size)}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => examineLayer(layer.digest, image!)}
+                          disabled={layerLoading[layer.digest]}
+                        >
+                          {layerLoading[layer.digest] ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <FolderOpen className="w-4 h-4 mr-1" />
+                              {layerContents[layer.digest] ? 'Toggle' : 'Examine'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                    <div className="bg-blue-50 p-3 rounded">
-                      <div className="font-medium text-blue-700">OS</div>
-                      <div className="text-blue-600">{imageConfig?.os}</div>
-                    </div>
-                    <div className="bg-blue-50 p-3 rounded">
-                      <div className="font-medium text-blue-700">Created</div>
-                      <div className="text-blue-600 text-sm">{formatDate(imageConfig?.created!)}</div>
-                    </div>
+                    <div className="text-xs font-mono text-gray-500 break-all">{layer.digest}</div>
+                    <div className="text-xs text-gray-500 mt-1">{layer.mediaType}</div>
                   </div>
 
-                  {/* Environment Variables */}
-                  {imageConfig.config.Env && (
-                    <div className="border rounded-lg">
-                      <div 
-                        className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between"
-                        onClick={() => toggleSection('environment')}
-                      >
-                        <span className="font-medium text-gray-700">Environment Variables ({imageConfig.config.Env.length})</span>
-                        {expandedSections.environment ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                      </div>
-                      {expandedSections.environment && (
-                        <div className="p-3 space-y-2">
-                          {imageConfig.config.Env.map((env, index) => (
-                            <div key={index} className="bg-gray-50 p-2 rounded font-mono text-sm">
-                              {env}
-                            </div>
-                          ))}
+                  {/* Layer Contents */}
+                  {layerContents[layer.digest] && expandedLayers[layer.digest] && (
+                    <div className="border-t bg-white">
+                      <div className="p-3">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium text-gray-800">Layer Contents</h4>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleLayerContents(layer.digest)}
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </Button>
                         </div>
-                      )}
+
+                        {/* Summary */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                          <div className="bg-blue-50 p-2 rounded">
+                            <div className="font-medium text-blue-700">Total Entries</div>
+                            <div className="text-blue-600">{layerContents[layer.digest].summary.total_entries}</div>
+                          </div>
+                          <div className="bg-green-50 p-2 rounded">
+                            <div className="font-medium text-green-700">Files</div>
+                            <div className="text-green-600">{layerContents[layer.digest].summary.files}</div>
+                          </div>
+                          <div className="bg-yellow-50 p-2 rounded">
+                            <div className="font-medium text-yellow-700">Directories</div>
+                            <div className="text-yellow-600">{layerContents[layer.digest].summary.directories}</div>
+                          </div>
+                          <div className="bg-purple-50 p-2 rounded">
+                            <div className="font-medium text-purple-700">Uncompressed Size</div>
+                            <div className="text-purple-600">{formatBytes(layerContents[layer.digest].summary.total_uncompressed_size)}</div>
+                          </div>
+                        </div>
+
+                        {/* File Tree */}
+                        <div className="max-h-96 overflow-y-auto border rounded p-3 bg-gray-50">
+                          <TreeView
+                            nodes={buildFileTree(layerContents[layer.digest].contents)}
+                            layerDigest={layer.digest}
+                            repoName={image!}
+                            depth={0}
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
+                </div>
+              ))}
+            </CardContent>
+          )}
+        </Card>
 
-                  {/* Labels */}
-                  {imageConfig.config.Labels && Object.keys(imageConfig.config.Labels).length > 0 && (
-                    <div className="border rounded-lg">
-                      <div 
-                        className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between"
-                        onClick={() => toggleSection('labels')}
-                      >
-                        <span className="font-medium text-gray-700">Labels ({Object.keys(imageConfig.config.Labels).length})</span>
-                        {expandedSections.labels ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                      </div>
-                      {expandedSections.labels && (
-                        <div className="p-3 space-y-2">
-                          {Object.entries(imageConfig.config.Labels).map(([key, value], index) => (
-                            <div key={index} className="bg-gray-50 p-2 rounded">
-                              <div className="font-mono text-sm text-gray-700">{key}</div>
-                              <div className="font-mono text-sm text-gray-600">{value}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+        {/* Config Section */}
+        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-blue-500" />
+                Configuration
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchImageConfig(imageManifest?.config.digest!)}
+                disabled={detailLoading}
+              >
+                {detailLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Eye className="w-4 h-4 mr-2" />
+                )}
+                Load Details
+              </Button>
+            </div>
+          </CardHeader>
 
-                  {/* History */}
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-3 rounded">
+                <div className="font-medium text-gray-700">Config Digest</div>
+                <div className="text-xs font-mono text-gray-600 break-all">{imageManifest?.config.digest}</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded">
+                <div className="font-medium text-gray-700">Config Size</div>
+                <div className="text-gray-600">{formatBytes(imageManifest?.config?.size!)}</div>
+              </div>
+            </div>
+
+            {imageConfig && (
+              <div className="mt-6 space-y-4">
+                {/* Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-50 p-3 rounded">
+                    <div className="font-medium text-blue-700">Architecture</div>
+                    <div className="text-blue-600">{imageConfig?.architecture}</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded">
+                    <div className="font-medium text-blue-700">OS</div>
+                    <div className="text-blue-600">{imageConfig?.os}</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded">
+                    <div className="font-medium text-blue-700">Created</div>
+                    <div className="text-blue-600 text-sm">{formatDate(imageConfig?.created!)}</div>
+                  </div>
+                </div>
+
+                {/* Environment Variables */}
+                {imageConfig.config.Env && (
                   <div className="border rounded-lg">
-                    <div 
+                    <div
                       className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between"
-                      onClick={() => toggleSection('history')}
+                      onClick={() => toggleSection('environment')}
                     >
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span className="font-medium text-gray-700">Build History ({imageConfig.history.length})</span>
-                      </div>
-                      {expandedSections.history ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                      <span className="font-medium text-gray-700">Environment Variables ({imageConfig.config.Env.length})</span>
+                      {expandedSections.environment ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                     </div>
-                    {expandedSections.history && (
-                      <div className="p-3 space-y-3">
-                        {imageConfig.history.map((step, index) => {
-                          const { command, isShellCommand } = parseDockerfileCommand(step.created_by)
-                          const displayCommand = isShellCommand ? formatShellCommand(command) : command
-                          
-                          return (
-                            <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
-                              {/* Step Header */}
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-gray-700">Step {index + 1}</span>
-                                  {step.empty_layer && (
-                                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Empty Layer</span>
-                                  )}
-                                </div>
-                                <div className="text-xs text-gray-500">{formatDate(step.created)}</div>
-                              </div>
-                              
-                              {/* Comment */}
-                              {step.comment && (
-                                <div className="text-xs text-gray-500 italic mb-2">
-                                  {step.comment}
-                                </div>
-                              )}
-                              
-                              {/* Command Editor */}
-                              <div className="border rounded overflow-hidden">
-                                <Editor
-                                  height={calculateEditorHeight(displayCommand)}
-                                  defaultLanguage="dockerfile"
-                                  theme="vs-light"
-                                  value={displayCommand}
-                                  options={{
-                                    readOnly: true,
-                                    minimap: { enabled: false },
-                                    scrollBeyondLastLine: false,
-                                    fontSize: 13,
-                                    lineNumbers: 'off',
-                                    folding: false,
-                                    lineDecorationsWidth: 0,
-                                    lineNumbersMinChars: 0,
-                                    glyphMargin: false,
-                                    contextmenu: false,
-                                    scrollbar: {
-                                      vertical: 'hidden',
-                                      horizontal: 'hidden'
-                                    },
-                                    wrappingIndent: 'indent',
-                                    automaticLayout: true,
-                                    padding: { top: 8, bottom: 8 },
-                                    renderLineHighlight: 'none',
-                                    occurrencesHighlight: 'off',
-                                    cursorStyle: 'line',
-                                    hideCursorInOverviewRuler: true,
-                                    overviewRulerBorder: false,
-                                    overviewRulerLanes: 0
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )
-                        })}
+                    {expandedSections.environment && (
+                      <div className="p-3 space-y-2">
+                        {imageConfig.config.Env.map((env, index) => (
+                          <div key={index} className="bg-gray-50 p-2 rounded font-mono text-sm">
+                            {env}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
 
-          {/* File Content Viewer Modal */}
-          {viewingFile && fileContents[viewingFile] && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
-                {/* Modal Header */}
-                <div className="flex items-center justify-between p-4 border-b">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-blue-500" />
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {fileContents[viewingFile].file_path}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm text-gray-600">
-                      {formatBytes(fileContents[viewingFile].size)}
+                {/* Labels */}
+                {imageConfig.config.Labels && Object.keys(imageConfig.config.Labels).length > 0 && (
+                  <div className="border rounded-lg">
+                    <div
+                      className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between"
+                      onClick={() => toggleSection('labels')}
+                    >
+                      <span className="font-medium text-gray-700">Labels ({Object.keys(imageConfig.config.Labels).length})</span>
+                      {expandedSections.labels ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                     </div>
-                    <Button variant="outline" size="sm" onClick={closeFileViewer}>
-                      ×
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Modal Content */}
-                <div className="flex-1 min-h-0 p-4">
-                  {fileContents[viewingFile].is_text && fileContents[viewingFile].content ? (
-                    <div className="h-full border rounded overflow-hidden">
-                      <Editor
-                        height="720px"
-                        defaultLanguage={fileContents[viewingFile].file_path.split('.').pop() || 'text'}
-                        theme="vs-light"
-                        value={fileContents[viewingFile].content}
-                        options={{
-                          readOnly: true,
-                          minimap: { enabled: false },
-                          scrollBeyondLastLine: false,
-                          fontSize: 13,
-                          lineNumbers: 'on',
-                          folding: true,
-                          wordWrap: 'on',
-                          automaticLayout: true,
-                          contextmenu: false
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center bg-gray-50 rounded border">
-                      <div className="text-center">
-                        <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h4 className="text-lg font-medium text-gray-700 mb-2">Binary File</h4>
-                        <p className="text-gray-500 mb-4">
-                          This file contains binary data and cannot be displayed as text.
-                        </p>
-                        {fileContents[viewingFile].download_url && (
-                          <Button 
-                            variant="outline"
-                            onClick={() => {
-                              toast.info('Download functionality would be implemented here')
-                            }}
-                          >
-                            Download File
-                          </Button>
-                        )}
+                    {expandedSections.labels && (
+                      <div className="p-3 space-y-2">
+                        {Object.entries(imageConfig.config.Labels || {}).map(([key, value], index) => (
+                          <div key={index} className="bg-gray-50 p-2 rounded">
+                            <div className="font-mono text-sm text-gray-700">{key}</div>
+                            <div className="font-mono text-sm text-gray-600">{value}</div>
+                          </div>
+                        ))}
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {/* History */}
+                <div className="border rounded-lg">
+                  <div
+                    className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between"
+                    onClick={() => toggleSection('history')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span className="font-medium text-gray-700">Build History ({imageConfig.history.length})</span>
+                    </div>
+                    {expandedSections.history ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                  </div>
+                  {expandedSections.history && (
+                    <div className="p-3 space-y-3">
+                      {imageConfig.history.map((step, index) => {
+                        const { command, isShellCommand } = parseDockerfileCommand(step.created_by)
+                        const displayCommand = isShellCommand ? formatShellCommand(command) : command
+
+                        return (
+                          <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
+                            {/* Step Header */}
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-700">Step {index + 1}</span>
+                                {step.empty_layer && (
+                                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Empty Layer</span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500">{formatDate(step.created)}</div>
+                            </div>
+
+                            {/* Comment */}
+                            {step.comment && (
+                              <div className="text-xs text-gray-500 italic mb-2">
+                                {step.comment}
+                              </div>
+                            )}
+
+                            {/* Command Editor */}
+                            <div className="border rounded overflow-hidden">
+                              <Editor
+                                height={calculateEditorHeight(displayCommand)}
+                                defaultLanguage="dockerfile"
+                                theme="vs-light"
+                                value={displayCommand}
+                                options={{
+                                  readOnly: true,
+                                  minimap: { enabled: false },
+                                  scrollBeyondLastLine: false,
+                                  fontSize: 13,
+                                  lineNumbers: 'off',
+                                  folding: false,
+                                  lineDecorationsWidth: 0,
+                                  lineNumbersMinChars: 0,
+                                  glyphMargin: false,
+                                  contextmenu: false,
+                                  scrollbar: {
+                                    vertical: 'hidden',
+                                    horizontal: 'hidden'
+                                  },
+                                  wrappingIndent: 'indent',
+                                  automaticLayout: true,
+                                  padding: { top: 8, bottom: 8 },
+                                  renderLineHighlight: 'none',
+                                  occurrencesHighlight: 'off',
+                                  cursorStyle: 'line',
+                                  hideCursorInOverviewRuler: true,
+                                  overviewRulerBorder: false,
+                                  overviewRulerLanes: 0
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-                {/* Modal Footer */}
-                <div className="flex items-center justify-between p-4 border-t bg-gray-50">
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span>Type: {fileContents[viewingFile].is_text ? 'Text' : 'Binary'}</span>
-                    <span>SHA256: {fileContents[viewingFile].sha256.substring(0, 16)}...</span>
+        {/* File Content Viewer Modal */}
+        {viewingFile && fileContents[viewingFile] && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-500" />
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {fileContents[viewingFile].file_path}
+                  </h3>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-sm text-gray-600">
+                    {formatBytes(fileContents[viewingFile].size)}
                   </div>
-                  <Button onClick={closeFileViewer}>
-                    Close
+                  <Button variant="outline" size="sm" onClick={closeFileViewer}>
+                    ×
                   </Button>
                 </div>
               </div>
+
+              {/* Modal Content */}
+              <div className="flex-1 min-h-0 p-4">
+                {fileContents[viewingFile].is_text && fileContents[viewingFile].content ? (
+                  <div className="h-full border rounded overflow-hidden">
+                    <Editor
+                      height="720px"
+                      defaultLanguage={fileContents[viewingFile].file_path.split('.').pop() || 'text'}
+                      theme="vs-light"
+                      value={fileContents[viewingFile].content}
+                      options={{
+                        readOnly: true,
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        fontSize: 13,
+                        lineNumbers: 'on',
+                        folding: true,
+                        wordWrap: 'on',
+                        automaticLayout: true,
+                        contextmenu: false
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-full flex items-center justify-center bg-gray-50 rounded border">
+                    <div className="text-center">
+                      <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <h4 className="text-lg font-medium text-gray-700 mb-2">Binary File</h4>
+                      <p className="text-gray-500 mb-4">
+                        This file contains binary data and cannot be displayed as text.
+                      </p>
+                      {fileContents[viewingFile].download_url && (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            toast.info('Download functionality would be implemented here')
+                          }}
+                        >
+                          Download File
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span>Type: {fileContents[viewingFile].is_text ? 'Text' : 'Binary'}</span>
+                  <span>SHA256: {fileContents[viewingFile].sha256.substring(0, 16)}...</span>
+                </div>
+                <Button onClick={closeFileViewer}>
+                  Close
+                </Button>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+    </div>
   )
 };
 

@@ -72,7 +72,7 @@ const ConfigMapAIInsights: React.FC<{ loading: boolean; configMapName?: string }
         <Sparkles className="h-5 w-5 animate-pulse" />
       )}
     </div>
-    
+
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {loading ? (
         Array.from({ length: 3 }).map((_, index) => (
@@ -97,7 +97,7 @@ const ConfigMapAIInsights: React.FC<{ loading: boolean; configMapName?: string }
               {configMapName ? `${configMapName} has optimal key structure` : 'ConfigMap structure looks good'}
             </p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="h-4 w-4 text-emerald-300" />
@@ -107,7 +107,7 @@ const ConfigMapAIInsights: React.FC<{ loading: boolean; configMapName?: string }
               Referenced by running pods - active configuration
             </p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
             <div className="flex items-center space-x-2 mb-2">
               <Zap className="h-4 w-4 text-yellow-300" />
@@ -124,10 +124,10 @@ const ConfigMapAIInsights: React.FC<{ loading: boolean; configMapName?: string }
 );
 
 // Data Key Display Component
-const DataKeyDisplay: React.FC<{ 
-  dataKey: string; 
-  value: string; 
-  isExpanded: boolean; 
+const DataKeyDisplay: React.FC<{
+  dataKey: string;
+  value: string;
+  isExpanded: boolean;
   onToggle: () => void;
 }> = ({ dataKey, value, isExpanded, onToggle }) => {
   const [copied, setCopied] = useState(false);
@@ -168,7 +168,7 @@ const DataKeyDisplay: React.FC<{
           </div>
         </div>
       </div>
-      
+
       {isExpanded && (
         <div className="p-4">
           <pre className="text-xs font-mono text-slate-700 whitespace-pre-wrap break-all bg-white p-3 rounded border">
@@ -221,7 +221,7 @@ const ReferencedPodRow: React.FC<{ pod: any }> = ({ pod }) => {
           </div>
         </td>
       </tr>
-      
+
       {expanded && (
         <tr>
           <td colSpan={5} className="px-6 py-6 bg-slate-50">
@@ -247,7 +247,7 @@ const ReferencedPodRow: React.FC<{ pod: any }> = ({ pod }) => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h5 className="text-sm font-semibold text-slate-700 mb-3">Containers</h5>
                 <div className="space-y-2">
@@ -266,7 +266,7 @@ const ReferencedPodRow: React.FC<{ pod: any }> = ({ pod }) => {
   );
 };
 
-export const ConfigDetailedInfo = ({data, loading, error}) => {
+export const ConfigDetailedInfo = ({ data, loading, error }) => {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
   const toggleKeyExpansion = (key: string) => {
@@ -341,17 +341,16 @@ export const ConfigDetailedInfo = ({data, loading, error}) => {
                   Created:{" "}
                   {data?.configmap.creation_timestamp
                     ? new Date(
-                        data.configmap.creation_timestamp
-                      ).toLocaleDateString()
+                      data.configmap.creation_timestamp
+                    ).toLocaleDateString()
                     : "Unknown"}
                 </span>
               </div>
             </div>
 
             <div
-              className={`grid grid-cols-2 md:grid-cols-3 gap-6 px-4 ${
-                !Object.keys(data?.configmap?.labels || {}).length ? "mb-6" : ""
-              }`}
+              className={`grid grid-cols-2 md:grid-cols-3 gap-6 px-4 ${!Object.keys(data?.configmap?.labels || {}).length ? "mb-6" : ""
+                }`}
             >
               <div className="text-center">
                 <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mx-auto mb-2">
@@ -397,7 +396,7 @@ export const ConfigDetailedInfo = ({data, loading, error}) => {
                     </h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(data.configmap.labels).map(
+                    {Object.entries(data.configmap.labels || {}).map(
                       ([key, value]) => (
                         <div
                           key={key}

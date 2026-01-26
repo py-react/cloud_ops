@@ -48,6 +48,7 @@ class SecurityContext(BaseModel):
 
 class ContainerConfig(BaseModel):
     name: str
+    image: Optional[str] = None
     command: Optional[List[str]] = None
     args: Optional[List[str]] = None
     workingDir: Optional[str] = None
@@ -150,7 +151,14 @@ class DeploymentConfigType(BaseModel):
     code_source_control_name: str
     deployment_strategy_id: int
     replicas: Optional[int] = 1
-    containers: List[ContainerConfig]
+    
+    # NEW: Reusable Profile IDs (preferred approach)
+    scheduling_profile_id: Optional[int] = None
+    container_profile_ids: Optional[List[int]] = None
+    volume_profile_ids: Optional[List[int]] = None
+    
+    # Legacy: Direct embedded config (optional for backward compatibility)
+    containers: Optional[List[ContainerConfig]] = None
     service_ports: Optional[List[ServicePortConfig]] = None
     labels: Optional[Dict[str, str]] = None
     annotations: Optional[Dict[str, str]] = None
@@ -161,4 +169,3 @@ class DeploymentConfigType(BaseModel):
     soft_delete: bool = False
     deleted_at: Optional[date] = None
     hard_delete: bool = False
-    # Add more fields as needed 

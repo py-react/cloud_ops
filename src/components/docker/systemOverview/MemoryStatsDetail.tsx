@@ -1,5 +1,5 @@
 import * as React from "react"
-import { TrendingUp ,MemoryStickIcon as Memory} from "lucide-react"
+import { TrendingUp, MemoryStickIcon as Memory } from "lucide-react"
 import { Label, Pie, PieChart } from "recharts"
 import { ISystemInfo } from "./types";
 
@@ -17,57 +17,84 @@ import {
 } from "@/components/ui/chart"
 
 const formatBytes = (bytes: number) => {
-    const gb = bytes / (1024 * 1024 * 1024)
-    return `${gb.toFixed(2)} GB`
-  }
+  const gb = bytes / (1024 * 1024 * 1024)
+  return `${gb.toFixed(2)} GB`
+}
 
 const chartConfig = {
-    Used: {
-      label: '',
-      color: 'hsl(var(--chart-1))',
-    },
-    Free: {
-      label: '',
-      color: 'hsl(var(--chart-2))',
-    },
-   
-  }
+  Used: {
+    label: '',
+    color: 'hsl(var(--chart-1))',
+  },
+  Free: {
+    label: '',
+    color: 'hsl(var(--chart-2))',
+  },
 
-export function MemroryStatsDetail({data}:{data:ISystemInfo["system_stats"]["memory"]}) {
-    const chartData = [
-        {
-          name: "Used",
-          value:data.total_memory_usage,
-          fill:'hsl(var(--color-used))'
-        },
-        {
-          name: "Free",
-          value: data.total_memory_allocated_docker - data.total_memory_usage,
-          fill:'hsl(var(--color-free))',
-        },
-        
-      ]
-      const totalMemoryAllocated = data.total_memory_allocated
+}
+
+const LoadingOverlay = () => (
+  <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl transition-all duration-200">
+    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+  </div>
+);
+
+export function MemroryStatsDetail({ data, isLoading }: { data: ISystemInfo["system_stats"]["memory"], isLoading?: boolean }) {
+
+  if (!data) return (
+    <Card className="flex flex-col relative">
+      {isLoading && <LoadingOverlay />}
+      <CardHeader>
+        <CardTitle className="text-base font-medium flex items-center gap-2">
+          <Memory className="w-4 h-4" />
+          System Memory Monitor
+        </CardTitle>
+        <CardDescription></CardDescription>
+      </CardHeader>
+      <CardContent className="flex items-center justify-center min-h-[200px]">
+        <div className="text-muted-foreground text-sm">Waiting for stats...</div>
+      </CardContent>
+    </Card>
+  );
+
+  const chartData = [
+    {
+      name: "Used",
+      value: data.total_memory_usage,
+      fill: 'hsl(var(--color-used))'
+    },
+    {
+      name: "Free",
+      value: data.total_memory_allocated_docker - data.total_memory_usage,
+      fill: 'hsl(var(--color-free))',
+    },
+
+  ]
+  const totalMemoryAllocated = data.total_memory_allocated
 
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-full relative">
+      {isLoading && <LoadingOverlay />}
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-            <Memory className="w-6 h-6" />
-            System Memory Monitor
+        <CardTitle className="text-base font-medium flex items-center">
+          <div className="bg-primary/10 p-2 rounded-lg mr-3">
+            <Memory className="w-4 h-4 text-primary" />
+          </div>
+          System Memory Monitor
         </CardTitle>
         <CardDescription>Allocation({formatBytes(totalMemoryAllocated)}) and Usage({formatBytes(data.total_memory_usage)})</CardDescription>
+
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+          className="mx-auto aspect-square max-h-[180px]"
         >
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent labelFormatter={(value,payload)=>{
+              content={<ChartTooltipContent labelFormatter={(value, payload) => {
                 return `${payload[0].name} ${formatBytes(payload[0].value)}`
               }} />}
             />
@@ -75,7 +102,7 @@ export function MemroryStatsDetail({data}:{data:ISystemInfo["system_stats"]["mem
               data={chartData}
               dataKey="value"
               nameKey="name"
-              innerRadius={60}
+              innerRadius={55}
               strokeWidth={5}
             >
               <Label

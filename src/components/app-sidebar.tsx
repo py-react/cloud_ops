@@ -30,7 +30,15 @@ import {
   Unplug,
   Orbit,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Book,
+  Activity,
+  Zap,
+  Calendar,
+  Container,
+  Boxes,
+  SquareTerminal,
+  Braces
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -55,7 +63,7 @@ import { NamespaceContext } from "./kubernetes/contextProvider/NamespaceContext"
 
 export type MenuItem = string;
 
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {}
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> { }
 
 function SidebarToggle() {
   const { state, toggleSidebar } = useSidebar();
@@ -75,7 +83,7 @@ function SidebarToggle() {
 
 
 export function AppSidebar({ ...props }: AppSidebarProps) {
-  const {selectedNamespace} = React.useContext(NamespaceContext)
+  const { selectedNamespace } = React.useContext(NamespaceContext)
 
   // Track expanded state for sidebar children
   const [expandedMenus, setExpandedMenus] = React.useState<{ [key: string]: boolean }>({});
@@ -89,221 +97,262 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   };
 
   // Menu items.
-const items = {
-  header: {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-  },
-  items: {
-    // message_queue: {
-    //   title: "Message Queues",
-    //   url: "/queues",
-    //   childs: [
-    //     {
-    //       title: "BullMQ Queues",
-    //       url: "/",
-    //       icon: MessageSquare,
-    //       items: [],
-    //     },
-    //   ],
-    // },
-    docker: {
-      title: "CEE", // container excecution engine
-      url: "/cee",
-      color: "blue",
-      childs: [
-        {
-          title: "Docker",
-          url: "/docker",
-          icon: Docker,
-          items: [
-            {
-              title: "Conatiner",
-              url: "/container",
-              icon: Server,
-            },
-            {
-              title: "Packages",
-              url: "/packages",
-              icon: Box,
-            },
-            {
-              title: "Storages",
-              url: "/storages",
-              icon: Database,
-            },
-            {
-              title: "Network",
-              url: "/network",
-              icon: NetworkIcon,
-            },
-            {
-              title: "Hub",
-              url: "/hub",
-              icon: Computer,
-            },
-          ],
-        },
-      ],
+  const items = {
+    header: {
+      title: "Dashboard",
+      url: "/",
+      icon: LayoutDashboard,
     },
-    orchestration: {
-      title: "Orchestration",
-      url: "/orchestration",
-      color: "green",
-      childs: [
-        {
-          title: "Docker Swarms",
-          url: "/swarms",
-          icon: Network,
-          items: [],
-        },
-        {
-          title: "Kubernetes",
-          url: "/kubernetes",
-          icon: Cpu,
-          items: [
-            {
-              title: "Resources",
-              url: `/${selectedNamespace}/resources`,
-              icon: ListIcon,
-            },
-            // {
-            //   title: "Flow",
-            //   url: `/${selectedNamespace}/flow`,
-            //   icon: Share2Icon,
-            // },
-            {
-              title: "Deployment",
-              url: `/${selectedNamespace}/deployments`,
-              icon: RocketIcon,
-            },
-            {
-              title: "Config Map",
-              url: `/${selectedNamespace}/configmaps`,
-              icon: ShieldIcon,
-            },
-            {
-              title: "Pods",
-              url: `/${selectedNamespace}/pods`,
-              icon: BoxIcon,
-            },
-            {
-              title: "Secrets",
-              url: `/${selectedNamespace}/secrets`,
-              icon: FileKeyIcon,
-            },
-            {
-              title: "Services",
-              url: `/${selectedNamespace}/services`,
-              icon: NetworkIcon,
-            },
-            {
-              title: "Ingress",
-              url: `/${selectedNamespace}/ingresses`,
-              icon: Globe,
-            },
-            // {
-            //   title: "certificate",
-            //   url: `/${selectedNamespace}/certificates`,
-            //   icon: Certificate,
-            // },
-            // {
-            //   title: "issuer",
-            //   url: `/${selectedNamespace}/issuers`,
-            //   icon: HandCoinsIcon,
-            // },
-          ],
-        },
-      ],
+    items: {
+      // message_queue: {
+      //   title: "Message Queues",
+      //   url: "/queues",
+      //   childs: [
+      //     {
+      //       title: "BullMQ Queues",
+      //       url: "/",
+      //       // icon: MessageSquare,
+      //       items: [],
+      //     },
+      //   ],
+      // },
+      docker: {
+        title: "CEE", // container excecution engine
+        url: "/cee",
+        color: "blue",
+        childs: [
+          {
+            title: "Docker",
+            url: "/docker",
+            icon: Docker,
+            items: [
+              {
+                title: "Conatiner",
+                url: "/container",
+                icon: Server,
+              },
+              {
+                title: "Packages",
+                url: "/packages",
+                icon: Box,
+              },
+              {
+                title: "Storages",
+                url: "/storages",
+                icon: Database,
+              },
+              {
+                title: "Network",
+                url: "/network",
+                icon: NetworkIcon,
+              },
+              {
+                title: "Hub",
+                url: "/hub",
+                icon: Computer,
+              },
+            ],
+          },
+        ],
+      },
+      orchestration: {
+        title: "Orchestration",
+        url: "/orchestration",
+        color: "green",
+        childs: [
+          {
+            title: "Docker Swarms",
+            url: "/swarms",
+            icon: Network,
+            items: [],
+          },
+          {
+            title: "Kubernetes",
+            url: "/kubernetes",
+            icon: Cpu,
+            items: [
+              {
+                title: "Resources",
+                url: `/${selectedNamespace}/resources`,
+                icon: ListIcon,
+              },
+              // {
+              //   title: "Flow",
+              //   url: `/${selectedNamespace}/flow`,
+              //   icon: Share2Icon,
+              // },
+              {
+                title: "Deployment",
+                url: `/${selectedNamespace}/deployments`,
+                icon: RocketIcon,
+              },
+              {
+                title: "Config Map",
+                url: `/${selectedNamespace}/configmaps`,
+                icon: ShieldIcon,
+              },
+              {
+                title: "Pods",
+                url: `/${selectedNamespace}/pods`,
+                icon: BoxIcon,
+              },
+              {
+                title: "Secrets",
+                url: `/${selectedNamespace}/secrets`,
+                icon: FileKeyIcon,
+              },
+              {
+                title: "Services",
+                url: `/${selectedNamespace}/services`,
+                icon: NetworkIcon,
+              },
+              {
+                title: "Ingress",
+                url: `/${selectedNamespace}/ingresses`,
+                icon: Globe,
+              },
+              // {
+              //   title: "certificate",
+              //   url: `/${selectedNamespace}/certificates`,
+              //   icon: Certificate,
+              // },
+              // {
+              //   title: "issuer",
+              //   url: `/${selectedNamespace}/issuers`,
+              //   icon: HandCoinsIcon,
+              // },
+            ],
+          },
+        ],
+      },
+      settings: {
+        title: "Control Center",
+        url: "/settings",
+        color: "yellow",
+        childs: [
+          {
+            title: "Kubernetes",
+            url: "/kubernetes",
+            icon: Cpu,
+            items: [
+              {
+                title: "Contexts",
+                url: "/contexts",
+                icon: Layers,
+              },
+              {
+                title: "Namespaces",
+                url: "/namespaces",
+                icon: Folder,
+              },
+              {
+                title: "Resource Quota",
+                url: "/resource-quota",
+                icon: Settings,
+              },
+              {
+                title: "Users and RBAC",
+                url: "/rbac",
+                icon: Users,
+              },
+            ],
+          },
+          {
+            title: "CI/CD",
+            url: "/ci_cd",
+            icon: Cog,
+            items: [
+              {
+                title: "Source Control",
+                url: "/source_control",
+                icon: Unplug,
+                items: [],
+              },
+              {
+                title: "Release Config",
+                url: "/release_config",
+                icon: FileCog,
+                items: [
+                  {
+                    title: "Volumes",
+                    url: "/volumes",
+                    icon: Database,
+                    items: []
+                  }
+                ],
+              },
+              {
+                title: "Strategies",
+                url: "/release_strategies",
+                icon: Orbit,
+                items: [],
+              },
+            ],
+          },
+          {
+            title: "Docker",
+            url: "/docker",
+            icon: Docker,
+            items: [
+              {
+                title: "Registry",
+                url: "/registry",
+                icon: Computer,
+                items: [],
+              },
+            ],
+          },
+        ]
+      },
+      library: {
+        title: "CI/CD Library",
+        url: "/settings/ci_cd/library",
+        color: "blue",
+        childs: [
+          {
+            title: "Spec",
+            icon: Braces,
+            url: "",
+            items: [
+              {
+                title: "Container spec",
+                url: `/${selectedNamespace}/spec/container`,
+                icon: SquareTerminal,
+                items: []
+              },
+              {
+                title: "Pop spec",
+                url: `/${selectedNamespace}/spec/pod`,
+                icon: Box,
+                items: []
+              },
+              {
+                title: "Deployment pec",
+                url: `/${selectedNamespace}/spec/deployment`,
+                icon: Layers,
+                items: []
+              },
+            ]
+          },
+
+        ]
+      },
+
+      infraManager: {
+        title: "Infra",
+        url: "/infra",
+        color: "purple",
+        childs: [
+          {
+            title: "Manager",
+            url: "/manager",
+            icon: WaypointsIcon,
+            items: [],
+          },
+        ],
+      },
     },
-    settings:{
-      title: "Control Center",
-      url: "/settings",
-      color: "yellow",
-      childs:[
-        {
-          title: "Kubernetes",
-          url: "/kubernetes",
-          icon: Cpu,
-          items: [
-            {
-              title: "Contexts",
-              url: "/contexts",
-              icon: Layers,
-            },
-            {
-              title: "Namespaces",
-              url: "/namespaces",
-              icon: Folder,
-            },
-            {
-              title: "Resource Quota",
-              url: "/resource-quota",
-              icon: Settings,
-            },
-            {
-              title: "Users and RBAC",
-              url: "/rbac",
-              icon: Users,
-            },
-          ],
-        },
-        {
-          title: "CI/CD",
-          url: "/ci_cd",
-          icon: Cog,
-          items: [
-            {
-              title: "Source Control",
-              url: "/source_control",
-              icon: Unplug,
-              items: [],
-            },
-            {
-              title: "Release Config",
-              url: "/release_config",
-              icon: FileCog,
-              items: [],
-            },
-            {
-              title: "Strategies",
-              url: "/release_strategies",
-              icon: Orbit,
-              items: [],
-            },
-          ],
-        },
-        {
-          title: "Docker",
-          url: "/docker",
-          icon: Docker,
-          items: [
-            {
-              title: "Registry",
-              url: "/registry",
-              icon: Computer,
-              items: [],
-            },
-          ],
-        },
-      ]
-    },
-    infraManager: {
-      title: "Infra",
-      url: "/infra",
-      color: "purple",
-      childs: [
-        {
-          title: "Manager",
-          url: "/manager",
-          icon: WaypointsIcon,
-          items: [],
-        },
-      ],
-    },
-  },
-};
+  };
 
   return (
     <>
@@ -311,12 +360,12 @@ const items = {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className="hover:bg-gray-100">
+              <SidebarMenuButton size="lg" asChild className="hover:bg-sidebar-accent transition-colors duration-200">
                 <CustomLink href={items.header.url}>
-                  <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors">
-                    <items.header.icon className="h-6 w-6" />
+                  <span className="bg-gradient-to-br from-primary to-purple-600 p-2 rounded-lg flex items-center justify-center shadow-md">
+                    <items.header.icon className="h-5 w-5 text-white" />
                   </span>
-                  <span className="font-semibold">{items.header.title}</span>
+                  <span className="font-semibold text-sidebar-foreground">{items.header.title}</span>
                 </CustomLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -338,7 +387,7 @@ const items = {
                           {hasSubItems ? (
                             <SidebarMenuButton
                               asChild
-                              className="hover:bg-gray-100"
+                              className="hover:bg-sidebar-accent transition-colors duration-200"
                             >
                               <div className="flex items-center gap-2 cursor-pointer select-none">
                                 <CustomLink
@@ -347,20 +396,19 @@ const items = {
                                   className="flex items-center gap-2"
                                 >
                                   <span
-                                    
-                                    className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors"
+                                    className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-primary/10"
                                   >
-                                    <item.icon className="h-5 w-5" />
+                                    <item.icon className="h-4 w-4 text-sidebar-foreground" />
                                   </span>
-                                  <span className="font-medium">
+                                  <span className="font-medium text-sidebar-foreground">
                                     {item.title}
                                   </span>
                                 </CustomLink>
-                                <span onClick={() => handleToggleMenu(menuKey)} className="ml-auto">
+                                <span onClick={() => handleToggleMenu(menuKey)} className="ml-auto p-1 rounded-md hover:bg-sidebar-accent transition-colors">
                                   {expandedMenus[menuKey] ? (
-                                    <ChevronUp className="h-4 w-4" />
+                                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
                                   ) : (
-                                    <ChevronDown className="h-4 w-4" />
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                   )}
                                 </span>
                               </div>
@@ -368,16 +416,16 @@ const items = {
                           ) : (
                             <SidebarMenuButton
                               asChild
-                              className="hover:bg-gray-100"
+                              className="hover:bg-sidebar-accent transition-colors duration-200"
                             >
                               <CustomLink
                                 key={menuKey}
                                 href={value.url + item.url}
                               >
-                                <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors">
-                                  <item.icon className="h-5 w-5" />
+                                <span className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-primary/10">
+                                  <item.icon className="h-4 w-4 text-sidebar-foreground" />
                                 </span>
-                                <span className="font-medium">
+                                <span className="font-medium text-sidebar-foreground">
                                   {item.title}
                                 </span>
                               </CustomLink>
@@ -385,11 +433,10 @@ const items = {
                           )}
                           {hasSubItems && (
                             <div
-                              className={`overflow-hidden transition-all duration-300 ${
-                                expandedMenus[menuKey]
-                                  ? "max-h-96 opacity-100 mt-2"
-                                  : "max-h-0 opacity-0 pointer-events-none"
-                              }`}
+                              className={`overflow-hidden transition-all duration-300 ${expandedMenus[menuKey]
+                                ? "max-h-96 opacity-100 mt-2"
+                                : "max-h-0 opacity-0 pointer-events-none"
+                                }`}
                             >
                               <SidebarMenuSub>
                                 {item.items.map((subItem) => {
@@ -400,7 +447,7 @@ const items = {
                                     >
                                       <SidebarMenuSubButton
                                         asChild
-                                        className="hover:bg-gray-100"
+                                        className="hover:bg-sidebar-accent transition-colors duration-200"
                                       >
                                         <CustomLink
                                           key={
@@ -410,10 +457,10 @@ const items = {
                                             value.url + item.url + subItem.url
                                           }
                                         >
-                                          <span className="bg-gray-100 p-1 rounded-md flex items-center justify-center transition-colors mr-2">
-                                            <subItem.icon className="h-5 w-5" />
+                                          <span className="bg-sidebar-accent/50 p-1 rounded-md flex items-center justify-center transition-all duration-200 hover:bg-primary/10 mr-2">
+                                            <subItem.icon className="h-4 w-4 text-muted-foreground" />
                                           </span>
-                                          {subItem.title}
+                                          <span className="text-sm text-sidebar-foreground">{subItem.title}</span>
                                         </CustomLink>
                                       </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>

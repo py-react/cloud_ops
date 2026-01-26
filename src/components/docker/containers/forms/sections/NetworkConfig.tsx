@@ -23,13 +23,6 @@ interface NetworkConfigProps {
 }
 
 export function NetworkConfig({ control, errors, watch, setValue }: NetworkConfigProps) {
-  // Helper to indicate optional fields
-  const OptionalBadge = () => (
-    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-gray-50 px-1 py-0.5 text-xs font-medium text-gray-600">
-      Optional
-    </span>
-  );
-
   const ports = watch('ports') || {};
 
   const addPort = () => {
@@ -56,8 +49,8 @@ export function NetworkConfig({ control, errors, watch, setValue }: NetworkConfi
           name="networkMode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Network Mode <OptionalBadge />
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Network Mode
               </FormLabel>
               <FormDescription>
                 Network mode for the container
@@ -81,31 +74,36 @@ export function NetworkConfig({ control, errors, watch, setValue }: NetworkConfi
         {/* Empty cell for grid alignment */}
         <div />
         {/* Port Mappings (span both columns) */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 rounded-lg border border-border/40 p-4 bg-muted/20">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <div className="flex flex-col gap-2">
-                <FormLabel>Port Mappings</FormLabel>
-                <FormDescription>
+              <div className="flex flex-col gap-1">
+                <FormLabel className="text-sm font-medium text-foreground/80">Port Mappings</FormLabel>
+                <FormDescription className="text-xs">
                   Map container ports to host ports
                 </FormDescription>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={addPort}>
-                <Plus className="w-4 h-4 mr-1" />
+              <Button type="button" variant="secondary" size="sm" onClick={addPort}>
+                <Plus className="w-3.5 h-3.5 mr-1" />
                 Add Port
               </Button>
             </div>
-            <div className="space-y-4">
+            {Object.keys(ports).length === 0 && (
+              <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border/50 rounded-lg">
+                No ports mapped yet.
+              </div>
+            )}
+            <div className="space-y-3">
               {Object.entries(ports).map(([key, port]) => (
-                <div key={key} className="flex items-center space-x-2">
+                <div key={key} className="flex items-center gap-3">
                   <FormField
                     control={control}
                     name={`ports.${key}.protocol`}
                     render={({ field }) => (
-                      <FormItem className="w-24">
+                      <FormItem className="w-28">
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-9">
                               <SelectValue placeholder="Protocol" />
                             </SelectTrigger>
                           </FormControl>
@@ -125,6 +123,7 @@ export function NetworkConfig({ control, errors, watch, setValue }: NetworkConfi
                       <FormItem className="flex-1">
                         <FormControl>
                           <Input
+                            className="h-9"
                             type="number"
                             placeholder="Host Port"
                             {...field}
@@ -134,7 +133,7 @@ export function NetworkConfig({ control, errors, watch, setValue }: NetworkConfi
                       </FormItem>
                     )}
                   />
-                  <span>:</span>
+                  <span className="text-muted-foreground font-mono">:</span>
                   <FormField
                     control={control}
                     name={`ports.${key}.containerPort`}
@@ -142,6 +141,7 @@ export function NetworkConfig({ control, errors, watch, setValue }: NetworkConfi
                       <FormItem className="flex-1">
                         <FormControl>
                           <Input
+                            className="h-9"
                             type="number"
                             placeholder="Container Port"
                             {...field}
@@ -151,11 +151,12 @@ export function NetworkConfig({ control, errors, watch, setValue }: NetworkConfi
                       </FormItem>
                     )}
                   />
-                  <div className="flex items-center justify-end w-24">
+                  <div className="flex items-center justify-end w-10">
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => removePort(key)}
                     >
                       <X className="w-4 h-4" />

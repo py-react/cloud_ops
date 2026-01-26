@@ -14,7 +14,7 @@ const useAutoRefresh = (fetchFunction, interval = 1500) => {
   // Fetch the data
   const fetchData = async () => {
     if (isFetching) return; // If already fetching, don't do anything
-    
+
     setIsFetching(true);
     try {
       const result = await fetchFunction();
@@ -38,7 +38,7 @@ const useAutoRefresh = (fetchFunction, interval = 1500) => {
     };
   }, [isFetching]); // Only reset interval if fetch state changes
 
-  return { data, isFetching, error };
+  return { data, isFetching, error, refresh: fetchData };
 };
 
 export default useAutoRefresh;

@@ -94,7 +94,7 @@ export function SwarmNodeCard({ node }: SwarmNodeCardProps) {
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
+                  <Button variant="ghost" size="icon">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -145,7 +145,6 @@ export function SwarmNodeCard({ node }: SwarmNodeCardProps) {
 
           <Button
             onClick={() => setShowDetails(true)}
-            className="w-full mt-4"
             variant="outline"
           >
             View Details

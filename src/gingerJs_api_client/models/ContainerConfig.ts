@@ -8,6 +8,7 @@ import type { VolumeMount } from './VolumeMount';
 
 export type ContainerConfig = {
 	name: string;
+	image?: string | null;
 	command?: Array<string> | null;
 	args?: Array<string> | null;
 	workingDir?: string | null;

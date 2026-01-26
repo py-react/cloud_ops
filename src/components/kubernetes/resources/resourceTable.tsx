@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { CheckCircle, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon, X, Skull, RotateCcw, CircleCheck, HelpCircle, Copy, Undo2, MoreHorizontal, MoreVertical, ArrowDownToLineIcon } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, ExternalLink, FileText, Terminal, Trash2, Play, EditIcon, PauseIcon, StopCircleIcon, X, Skull, RotateCcw, CircleCheck, HelpCircle, Copy, Undo2, MoreHorizontal, MoreVertical, ArrowDownToLineIcon, Ban, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +28,7 @@ type ResourceTableActionProps = {
 };
 
 interface ResourceTableProps<T> {
-  columns: { header: string; accessor: string }[];
+  columns: { header: string; accessor: string; cell?: (row: T) => React.ReactNode }[];
   data: (T & ResourceTableActionProps)[];
   onViewDetails?: (resource: T) => void;
   onViewLogs?: (resource: T) => void;
@@ -40,8 +41,17 @@ interface ResourceTableProps<T> {
   onClone?: (resource: T) => void;
   onUndo?: (resource: T) => void;
   onPush?: (resource: T) => void;
+  onBulkPlay?: (resources: T[]) => void;
+  onBulkStop?: (resources: T[]) => void;
+  onBulkPause?: (resources: T[]) => void;
+  onBulkDelete?: (resources: T[]) => void;
   className?: string;
   tableClassName?: string;
+  title?: string;
+  description?: string;
+  icon?: React.ReactNode;
+  extraHeaderContent?: React.ReactNode;
+  loading?: boolean;
 }
 
 // Default all ResourceTableActionProps to true if not provided
@@ -76,9 +86,38 @@ export function ResourceTable<T>({
   onClone,
   onUndo,
   onPush,
+  onBulkPlay,
+  onBulkPause,
+  onBulkStop,
+  onBulkDelete,
   className,
   tableClassName,
+  title,
+  description,
+  icon,
+  extraHeaderContent,
+  loading,
 }: ResourceTableProps<T>) {
+
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  const toggleAll = () => {
+    if (selectedIds.size === data.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(data.map((_, i) => i)));
+    }
+  };
+
+  const toggleRow = (index: number) => {
+    const next = new Set(selectedIds);
+    if (next.has(index)) {
+      next.delete(index);
+    } else {
+      next.add(index);
+    }
+    setSelectedIds(next);
+  };
 
   const handleViewDetails = (resource: T) => {
     if (onViewDetails) onViewDetails(resource);
@@ -119,107 +158,223 @@ export function ResourceTable<T>({
   const showActions = onViewDetails || onViewLogs || onViewConfig || onDelete || onPlay || onStop || onPause || onEdit || onUndo || onClone
 
   return (
-    <Card className={cn("shadow-none", className)}>
-      <div className="rounded-[calc(0.5rem-2px)]">
-          <Table wrapperClassName={tableClassName}>
-            <TableHeader className="p-4 z-10">
-              <TableRow className='sticky top-0 bg-slate-50 '>
-                {columns.map((column) => (
-                  <TableHead key={column.accessor} className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">{column.header}</TableHead>
-                ))}
-                {showActions ? (
-                  <TableHead className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Actions</TableHead>
-                ) : null}
+    <Card className={cn("relative p-0 py-2 overflow-hidden border-none bg-transparent shadow-none", className)}>
+      {/* Floating Action Bar - Standardized to Bottom Center */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 z-50 animate-in fade-in slide-in-from-bottom-10  duration-500">
+          <div className="flex items-center gap-6 p-4 bg-background/60 backdrop-blur-2xl border border-primary/20 rounded-2xl">
+            <div className="flex items-center gap-3 border-r border-border/50 pr-6 mr-2">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70 leading-none mb-1">Selected</span>
+                <span className="text-2xl font-black text-foreground tabular-nums leading-none tracking-tight">{selectedIds.size}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {onBulkPlay && (
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={() => onBulkPlay(Array.from(selectedIds).map(idx => data[idx]))}
+                  title="Start Selected"
+                >
+                  <Play className="w-5 h-5" />
+                </Button>
+              )}
+              {onBulkPause && (
+                <Button
+                  variant="subtle"
+                  size="icon"
+                  className="hover:bg-amber-500/10 hover:text-amber-500"
+                  onClick={() => onBulkPause(Array.from(selectedIds).map(idx => data[idx]))}
+                  title="Pause Selected"
+                >
+                  <PauseIcon className="w-5 h-5" />
+                </Button>
+              )}
+              {onBulkStop && (
+                <Button
+                  variant="subtle"
+                  size="icon"
+                  className="hover:bg-orange-500/10 hover:text-orange-500"
+                  onClick={() => onBulkStop(Array.from(selectedIds).map(idx => data[idx]))}
+                  title="Stop Selected"
+                >
+                  <StopCircleIcon className="w-5 h-5" />
+                </Button>
+              )}
+
+
+              {onBulkDelete && (
+                <>
+                  <div className="w-px h-8 bg-border/50 mx-2" />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="shadow-lg"
+                    onClick={() => onBulkDelete(Array.from(selectedIds).map(idx => data[idx]))}
+                    title="Delete Selected"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <div className="border-l border-border/50 pl-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-muted/50 transition-colors"
+                onClick={() => setSelectedIds(new Set())}
+                title="Clear Selection"
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-xl overflow-hidden border border-border/40 bg-card/30 backdrop-blur-md shadow-sm">
+        {title && (
+          <div className="flex-none p-6 border-b border-border/30 bg-muted/20">
+            <div className="flex items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-bold text-foreground tracking-tight">{title}</h2>
+                {description && (
+                  <p className="text-[13px] font-medium text-muted-foreground mt-0.5 whitespace-normal">
+                    {description}
+                  </p>
+                )}
+              </div>
+              {extraHeaderContent && (
+                <div className="flex-none">
+                  {extraHeaderContent}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        <Table wrapperClassName={tableClassName}>
+          <TableHeader className="z-10 bg-background/50 backdrop-blur-md border-b border-border/30">
+            <TableRow className="border-none hover:bg-transparent">
+              <TableHead className="w-[50px] px-0 pl-1">
+                <div className="flex items-center justify-center">
+                  <Checkbox
+                    checked={selectedIds.size === data.length && data.length > 0}
+                    onCheckedChange={toggleAll}
+                    aria-label="Select all"
+                  />
+                </div>
+              </TableHead>
+              {columns.map((column) => (
+                <TableHead key={column.accessor} className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">{column.header}</TableHead>
+              ))}
+              {showActions ? (
+                <TableHead className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest text-center w-[100px]">Actions</TableHead>
+              ) : null}
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-border/20">
+            {loading ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell
+                  colSpan={columns.length + 2}
+                  className="h-32 text-center"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                    <span className="text-sm font-medium text-muted-foreground animate-pulse">Loading resources...</span>
+                  </div>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody className='bg-white divide-y divide-slate-200 p-4'>
-              {data.length > 0 ? (
-                data.map((row, index) => {
-                  const rowWithDefaults = withDefaultActionProps(row);
-                  return (
-                  <TableRow className='hover:bg-slate-50 transition-colors' key={index}>
-                    {columns.map((column) => (
-                      <TableCell className='px-6 py-4' key={column.accessor}>
-                        {renderCellContent(column.accessor, column.accessor.split('.').reduce((obj: any, key: string) => obj && obj[key], row as Record<string,any>))}
-                      </TableCell>
-                    ))}
+            ) : data.length > 0 ? (
+              data.map((row, index) => {
+                const rowWithDefaults = withDefaultActionProps(row);
+                const isSelected = selectedIds.has(index);
+                return (
+                  <TableRow
+                    className={cn(
+                      'group transition-all duration-300 animate-slide-in-up border-border/20',
+                      isSelected ? 'bg-primary/5' : 'hover:bg-muted/30'
+                    )}
+                    style={{ animationDelay: `${index * 40}ms` }}
+                    key={index}
+                  >
+                    <TableCell className="px-0 pl-1">
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleRow(index)}
+                          aria-label={`Select row ${index}`}
+                        />
+                      </div>
+                    </TableCell>
+                    {columns.map((column) => {
+                      const value = column.accessor.split('.').reduce((obj: any, key: string) => obj && obj[key], row as Record<string, any>);
+                      return (
+                        <TableCell className='px-4 py-3' key={column.accessor}>
+                          <div className="transition-transform duration-300 group-hover:translate-x-0.5">
+                            {column.cell ? column.cell(row) : renderCellContent(column.accessor, value)}
+                          </div>
+                        </TableCell>
+                      );
+                    })}
                     {showActions ? (
-                      <TableCell className='px-6 py-4'>
+                      <TableCell className='px-4 py-1 text-center'>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost">
-                              <MoreVertical className="h-5 w-5" />
-                              <span className="sr-only">Open menu</span>
+                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-48 bg-background/80 backdrop-blur-xl border-border/50">
                             {onPlay && rowWithDefaults.showPlay && (
-                              <DropdownMenuItem onSelect={() => handlePlay(row)}>
-                                <Play className="h-5 w-5 text-green-500 mr-2" />
-                                Play
-                              </DropdownMenuItem>
-                            )}
-                            {onStop && rowWithDefaults.showStop && (
-                              <DropdownMenuItem onSelect={() => handleStop(row)}>
-                                <StopCircleIcon className="h-5 w-5 text-red-500 mr-2" />
-                                Stop
+                              <DropdownMenuItem onSelect={() => handlePlay(row)} className="gap-2 text-sm">
+                                <Play className="h-4 w-4 text-emerald-500" />
+                                Start
                               </DropdownMenuItem>
                             )}
                             {onPause && rowWithDefaults.showPause && (
-                              <DropdownMenuItem onSelect={() => handlePause(row)}>
-                                <PauseIcon className="h-5 w-5 text-yellow-600 mr-2" />
+                              <DropdownMenuItem onSelect={() => handlePause(row)} className="gap-2 text-sm">
+                                <PauseIcon className="h-4 w-4 text-amber-500" />
                                 Pause
                               </DropdownMenuItem>
                             )}
+                            {onStop && rowWithDefaults.showStop && (
+                              <DropdownMenuItem onSelect={() => handleStop(row)} className="gap-2 text-sm">
+                                <StopCircleIcon className="h-4 w-4 text-orange-500" />
+                                Stop
+                              </DropdownMenuItem>
+                            )}
+                            <div className="h-px bg-border/50 my-1" />
                             {onViewDetails && rowWithDefaults.showViewDetails && (
-                              <DropdownMenuItem onSelect={() => handleViewDetails(row)}>
-                                <ExternalLink className="h-5 w-5 mr-2" />
+                              <DropdownMenuItem onSelect={() => handleViewDetails(row)} className="gap-2 text-sm">
+                                <ExternalLink className="h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
                             )}
                             {onViewLogs && rowWithDefaults.showViewLogs && (
-                              <DropdownMenuItem onSelect={() => handleViewLogs(row)}>
-                                <Terminal className="h-5 w-5 mr-2" />
+                              <DropdownMenuItem onSelect={() => handleViewLogs(row)} className="gap-2 text-sm">
+                                <Terminal className="h-4 w-4" />
                                 View Logs
                               </DropdownMenuItem>
                             )}
-                            {onViewConfig && rowWithDefaults.showViewConfig && (
-                              <DropdownMenuItem onSelect={() => handleViewConfig(row)}>
-                                <FileText className="h-5 w-5 mr-2" />
-                                View Config
-                              </DropdownMenuItem>
-                            )}
                             {onEdit && rowWithDefaults.showEdit && (
-                              <DropdownMenuItem onSelect={() => onEdit(row)}>
-                                <EditIcon className="h-5 w-5 mr-2" />
-                                Edit
+                              <DropdownMenuItem onSelect={() => onEdit(row)} className="gap-2 text-sm">
+                                <EditIcon className="h-4 w-4" />
+                                Edit Config
                               </DropdownMenuItem>
                             )}
-                            {onClone && rowWithDefaults.showClone && (
-                              <DropdownMenuItem onSelect={() => handleClone(row)}>
-                                <Copy className="h-5 w-5 mr-2" />
-                                Clone
-                              </DropdownMenuItem>
-                            )}
-                            {onUndo && rowWithDefaults.showUndo && (
-                              <DropdownMenuItem onSelect={() => handleUndo(row)}>
-                                <Undo2 className="h-5 w-5 mr-2" />
-                                Restore
-                              </DropdownMenuItem>
-                            )}
+                            <div className="h-px bg-border/50 my-1" />
                             {onDelete && rowWithDefaults.showDelete && (
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onSelect={() => handleDelete(row)}
-                                className="text-red-600 focus:text-red-600"
+                                className="text-destructive focus:text-destructive gap-2 text-sm"
                               >
-                                <Trash2 className="h-5 w-5 text-red-500 mr-2" />
+                                <Trash2 className="h-4 w-4" />
                                 Delete
-                              </DropdownMenuItem>
-                            )}
-                            {onPush && rowWithDefaults.showPush && (
-                              <DropdownMenuItem onSelect={() => handlePush(row)}>
-                                <ArrowDownToLineIcon className="h-5 w-5 mr-2" />
-                                Push
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -227,104 +382,80 @@ export function ResourceTable<T>({
                       </TableCell>
                     ) : null}
                   </TableRow>
-                )})
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length + 1}
-                    className="h-24 text-center"
-                  >
-                    No resources found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )
+              })
+            ) : (
+              <TableRow className="hover:bg-transparent">
+                <TableCell
+                  colSpan={columns.length + 2}
+                  className="h-32 text-center text-muted-foreground text-sm"
+                >
+                  No resources found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
-    </Card>
+    </Card >
   );
 }
 
 function renderCellContent(type: string, value: any) {
-  if(typeof value === "object" && ("props" in value)) {
+  if (typeof value === "object" && ("props" in value)) {
     return value
   }
+
   if (type === 'status') {
-    const statusMap = {
-      running: { icon: CheckCircle, color: 'text-green-500', label: 'Running' },
-      pending: { icon: Clock, color: 'text-yellow-500', label: 'Pending' },
-      failed: { icon: AlertTriangle, color: 'text-red-500', label: 'Failed' },
-    };
-    const statusMap2 = {
-      active: { icon: CheckCircle, color: 'text-green-500', label: 'Active' },
-      inactive: { icon: Clock, color: 'text-yellow-500', label: 'Inactive' },
-      deleted: { icon: AlertTriangle, color: 'text-red-500', label: 'Deleted' },
+    const val = String(value).toLowerCase();
+    if (val === 'running' || val === 'active' || val === 'online') {
+      return <Badge variant="success" className="gap-1.5 text-xs"><div className="w-1 h-1 rounded-full bg-current animate-pulse" /> {value}</Badge>
+    }
+    if (val === 'pending' || val === 'inactive' || val === 'stopped') {
+      return <Badge variant="warning" className="text-xs">{value}</Badge>
+    }
+    if (val === 'failed' || val === 'deleted' || val === 'error') {
+      return <Badge variant="destructive" className="text-xs">{value}</Badge>
+    }
+    return <Badge variant="outline" className="text-xs">{value}</Badge>
+  }
+
+  if (type === 'podStatus' || type === 'containerStatus') {
+    const val = String(value).toLowerCase();
+    const statusMap: Record<string, { variant: "success" | "warning" | "destructive" | "info" | "glow" | "outline", icon: any }> = {
+      running: { variant: "success", icon: CheckCircle },
+      active: { variant: "success", icon: CheckCircle },
+      completed: { variant: "success", icon: CircleCheck },
+      succeeded: { variant: "success", icon: CircleCheck },
+
+      pending: { variant: "warning", icon: Clock },
+      restarting: { variant: "warning", icon: RotateCcw },
+      paused: { variant: "warning", icon: PauseIcon },
+      created: { variant: "info", icon: CheckCircle },
+
+      failed: { variant: "destructive", icon: X },
+      error: { variant: "destructive", icon: AlertTriangle },
+      dead: { variant: "destructive", icon: Skull },
+      exited: { variant: "destructive", icon: Ban },
+      crashloopbackoff: { variant: "destructive", icon: AlertTriangle },
     };
 
-    const status =
-      statusMap[(value as string).toLowerCase() as keyof typeof statusMap] ||
-      statusMap2[(value as string).toLowerCase() as keyof typeof statusMap2] ||
-      statusMap.pending;
+    const status = statusMap[val] || { variant: "outline", icon: HelpCircle };
     const Icon = status.icon;
 
     return (
-      <div className="flex items-center gap-2 rounded-[0.5rem]">
-        <Icon className={`h-5 w-5 ${status.color}`} />
-        <span>{status.label}</span>
-      </div>
+      <Badge variant={status.variant} className="gap-1.5 py-0.5 text-xs">
+        <Icon className="h-3.5 w-3.5" />
+        <span>{value}</span>
+      </Badge>
     );
   }
-
-  if (type === 'podStatus') {
-    const statusMap = {
-      running:            { icon: CheckCircle,   color: 'text-green-500',  label: 'Running' },
-      pending:            { icon: Clock,          color: 'text-yellow-500', label: 'Pending' },
-      succeeded:          { icon: CircleCheck,    color: 'text-blue-500',   label: 'Succeeded' },
-      failed:             { icon: X,        color: 'text-red-500',    label: 'Failed' },
-      crashloopbackoff:   { icon: AlertTriangle,  color: 'text-orange-500', label: 'CrashLoopBackOff' },
-      unknown:            { icon: HelpCircle,     color: 'text-gray-500',   label: 'Unknown' },
-    };
-  
-    const key = (value as string).toLowerCase();
-    const status = statusMap[key as keyof typeof statusMap] || statusMap.unknown;
-    const Icon = status.icon;
-  
-    return (
-      <div className="flex items-center gap-2 rounded-[0.5rem]">
-        <Icon className={`h-5 w-5 ${status.color}`} />
-        <span>{status.label}</span>
-      </div>
-    );
-  }
-
-  if (type === 'containerStatus') {
-    const statusMap = {
-      created:       { icon: CheckCircle, color: 'text-blue-400', label: 'Created' },
-      restarting:    { icon: RotateCcw,   color: 'text-yellow-500', label: 'Restarting' },
-      running:       { icon: CheckCircle, color: 'text-green-500', label: 'Running' },
-      removing:      { icon: Trash2,      color: 'text-gray-500', label: 'Removing' },
-      paused:        { icon: PauseIcon, color: 'text-yellow-400', label: 'Paused' },
-      exited:        { icon: X,     color: 'text-red-500', label: 'Exited' },
-      dead:          { icon: Skull,       color: 'text-red-700', label: 'Dead' },
-    };
-  
-    const status = statusMap[(value as string)?.toLowerCase() as keyof typeof statusMap] || statusMap.exited;
-    const Icon = status.icon;
-  
-    return (
-      <div className="flex items-center gap-2 rounded-[0.5rem]">
-        <Icon className={`h-5 w-5 ${status.color}`} />
-        <span>{status.label}</span>
-      </div>
-    );
-  }
-
 
   if (type === 'labels' && Array.isArray(value)) {
     return (
-      <div className="flex flex-wrap gap-1 ">
+      <div className="flex flex-wrap gap-1">
         {value.map((label, i) => (
-          <Badge key={i} variant="outline" className="text-base rounded-[0.5rem]">
+          <Badge key={i} variant="outline" className="text-[11px] font-normal px-2 py-0 border-border/30">
             {label}
           </Badge>
         ))}
@@ -333,7 +464,9 @@ function renderCellContent(type: string, value: any) {
   }
 
   if (typeof value === "object" && !("props" in value)) {
-    return JSON.stringify(value)
+    return <code className="text-xs bg-muted px-1.5 rounded">{JSON.stringify(value)}</code>
   }
-  return value;
+
+  return <span className="text-sm font-medium text-foreground/80">{value}</span>;
 }
+

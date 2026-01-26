@@ -1,359 +1,511 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import {
-  Plug,
-  Plus,
-  Settings,
-  GitBranch,
-  Shield,
-  Webhook,
-  CheckCircle,
-  XCircle,
-  FolderGit,
+    Plug,
+    RefreshCw,
+    Plus,
+    Search,
+    MoreVertical,
+    GitBranch,
+    ShieldCheck,
+    ExternalLink,
+    Trash2,
+    AlertCircle,
+    Eye,
+    MessageSquare,
+    Settings2
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
-import RouteDescription from '@/components/route-description';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import AddRepositoryForm from '@/components/ciCd/sourceControl/github/forms/AddRepositoryForm';
-import ManagePatsDialog from '@/components/ciCd/sourceControl/github/ManagePatsDialog';
 import { DefaultService } from '@/gingerJs_api_client';
+import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
+import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import useNavigate from '@/libs/navigate';
+import ManagePatsDialog from '@/components/ciCd/sourceControl/github/ManagePatsDialog';
+// Final cleanup of index.tsx - removing AddRepositoryForm import
+import { FormWizard } from '@/components/wizard/form-wizard';
+import * as z from 'zod';
 
-interface WebhookConfig {
-  status: string;
-  supported_events: string[];
-  allowed_repositories: Record<string, string>;
-  allowed_branches: Record<string, string[]>;
-  timestamp: string;
+// Step sections
+import BasicRepoConfig from '@/components/ciCd/sourceControl/github/forms/sections/BasicConfig';
+
+const repoSchema = z.object({
+    name: z.string().min(1, 'Repository name is required'),
+    branches: z.array(z.object({ value: z.string() })).min(1, 'At least one branch is required'),
+});
+
+type RepoFormData = z.infer<typeof repoSchema>;
+
+interface FlatMappedRepo {
+    id: string;
+    repository: string;
+    branch: string;
+    status: string;
+    permissionInfo: string | React.ReactNode;
 }
 
-interface Repository {
-  name: string;
-  allowedBranches: string[];
-  status: 'active' | 'inactive';
-  supportedEvents: string[];
-}
+const SourceControlPage = () => {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState<any>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [refreshing, setRefreshing] = useState<Record<string, boolean>>({});
+    const [detailedPermissions, setDetailedPermissions] = useState<Record<string, any>>({});
 
-interface EnhancedRepository extends Omit<Repository, 'allowedBranches' | 'supportedEvents' | 'status'> {
-  allowedBranches: React.ReactElement;
-  supportedEvents: React.ReactElement;
-  status: React.ReactElement;
-  data: Repository
-}
+    // Modal states
+    const [isAddRepoOpen, setIsAddRepoOpen] = useState(false);
+    const [editingRepo, setEditingRepo] = useState<{ name: string; branches: string[] } | null>(null);
+    const [currentStep, setCurrentStep] = useState('basic');
 
-const IntegrationsPage = () => {
-  const navigate = useNavigate()
-  const [webhookConfig, setWebhookConfig] = useState<WebhookConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editingRepo,setEditingRepor] = useState({})
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [repoToDelete, setRepoToDelete] = useState<EnhancedRepository | null>(null);
-  const [repoAccess, setRepoAccess] = useState<Record<string, any>>({});
+    const repoSteps = [
+        {
+            id: 'basic',
+            label: 'Repository Details',
+            icon: Plug,
+            description: 'General SCM settings',
+            longDescription: 'Provide the name of the GitHub repository (owner/repo) and configure which branches should be allowed to trigger CI workflows via polling.',
+            component: BasicRepoConfig,
+        },
+    ];
 
-  const fetchWebhookConfig = async () => {
-    try {
-      const res = await DefaultService.apiIntegrationGithubPollingGet();
-      const data = res as any;
-      // adapt polling response to previous webhook config shape
-      setWebhookConfig({
-        status: data.status,
-        supported_events: ['pull_request'],
-        allowed_repositories: data.allowed_repositories,
-        allowed_branches: data.allowed_branches,
-        timestamp: data.timestamp,
-      });
-      // kick off access checks for configured repos
-      try {
-        const repoNames = Object.keys(data.allowed_repositories || {});
-        for (const rn of repoNames) {
-          fetchRepoAccess(rn);
+    const repoInitialValues: RepoFormData = editingRepo ? {
+        name: editingRepo.name,
+        branches: editingRepo.branches.map(b => ({ value: b }))
+    } : {
+        name: '',
+        branches: [],
+    };
+
+    const handleRepoSubmit = async (data: RepoFormData) => {
+        try {
+            const allowed_branches = data.branches.map(b => b.value);
+            const isEdit = !!editingRepo;
+
+            const res = isEdit
+                ? await DefaultService.apiIntegrationGithubReposPut({
+                    requestBody: { name: data.name, branches: allowed_branches }
+                })
+                : await DefaultService.apiIntegrationGithubReposPost({
+                    requestBody: { name: data.name, branches: allowed_branches }
+                });
+
+            const body: any = res as any;
+            if (body && body.success) {
+                toast.success(body.message || (isEdit ? 'Repository updated' : 'Repository added'));
+                fetchData();
+                setIsAddRepoOpen(false);
+                setEditingRepo(null);
+            } else {
+                toast.error((body && body.message) || (isEdit ? 'Failed to update repository' : 'Failed to add repository'));
+            }
+        } catch (err: any) {
+            toast.error(err.message || String(err));
         }
-      } catch (e) {
-        // ignore
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch webhook configuration');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const fetchRepoAccess = async (repoName: string) => {
-    try {
-      const r = await fetch(`/api/integration/github/polling/access?name=${encodeURIComponent(repoName)}`);
-      if (!r.ok) {
-        const txt = await r.text();
-        setRepoAccess(prev => ({ ...prev, [repoName]: { error: txt } }));
-        return;
-      }
-      const json = await r.json();
-      setRepoAccess(prev => ({ ...prev, [repoName]: json }));
-    } catch (err: any) {
-      setRepoAccess(prev => ({ ...prev, [repoName]: { error: err?.message || String(err) } }));
-    }
-  }
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const res = await DefaultService.apiIntegrationGithubPollingGet();
+            setData(res);
 
-  useEffect(() => {
+            // Auto-fetch detailed permissions for unique repos
+            if (res.allowed_branches) {
+                const uniqueRepos = Object.keys(res.allowed_branches);
+                uniqueRepos.forEach(repo => fetchDetailedPermissions(repo));
+            }
+        } catch (err: any) {
+            toast.error("Failed to fetch source control data: " + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    fetchWebhookConfig();
-  }, []);
+    const fetchDetailedPermissions = async (repoName: string) => {
+        try {
+            const details = await DefaultService.apiIntegrationGithubPollingAccessGet({ name: repoName });
+            setDetailedPermissions(prev => ({ ...prev, [repoName]: details }));
+        } catch (err) {
+            console.error(`Failed to fetch permissions for ${repoName}:`, err);
+        }
+    };
 
-  // Transform API data to repository format
-  const repositories: Repository[] = webhookConfig ? Object.entries(webhookConfig.allowed_repositories).map(([repoName, repoId]) => ({
-    name: repoName,
-    allowedBranches: webhookConfig.allowed_branches[repoName] || [],
-    status: 'active' as const,
-    supportedEvents: webhookConfig.supported_events
-  })) : [];
+    useEffect(() => {
+        fetchData();
+    }, []);
 
-  const columns = [
-    { header: 'Repository', accessor: 'name' },
-    { header: 'Branches', accessor: 'allowedBranches' },
-    { header: 'Status', accessor: 'status' },
-  ];
+    const handleSyncRepo = async (repoName: string) => {
+        setRefreshing(prev => ({ ...prev, [repoName]: true }));
+        try {
+            await fetchDetailedPermissions(repoName);
+            toast.success(`Synced access for ${repoName}`);
+        } catch (err: any) {
+            toast.error(`Failed to sync ${repoName}: ` + err.message);
+        } finally {
+            setRefreshing(prev => ({ ...prev, [repoName]: false }));
+        }
+    };
 
+    const handleDeleteRepo = async (repoName: string) => {
+        if (!confirm(`Are you sure you want to remove ${repoName}?`)) return;
+        try {
+            await DefaultService.apiIntegrationGithubReposDelete({ name: repoName });
+            toast.success(`Removed repository ${repoName}`);
+            fetchData();
+        } catch (err: any) {
+            toast.error(`Failed to remove ${repoName}: ` + err.message);
+        }
+    };
 
-  const handleEdit = (repository: EnhancedRepository) => {
-    console.log('Edit repository:', repository.data);
-    setEditingRepor({
-      name:repository.data.name,
-      branches:repository.data.allowedBranches.map(item=>({value:item}))
-    })
-    setAddDialogOpen(true)
-  };
+    const handleBulkDelete = async (selectedItems: FlatMappedRepo[]) => {
+        // Group selected branches by repository
+        const selectionByRepo: Record<string, string[]> = {};
+        selectedItems.forEach(item => {
+            if (!selectionByRepo[item.repository]) {
+                selectionByRepo[item.repository] = [];
+            }
+            selectionByRepo[item.repository].push(item.branch);
+        });
 
-  const handleDelete = async (repository: EnhancedRepository) => {
-    // Open confirmation dialog
-    setRepoToDelete(repository);
-    setDeleteDialogOpen(true);
-  };
+        const repos = Object.keys(selectionByRepo);
+        if (repos.length === 0) return;
 
-  const confirmDelete = async () => {
-    if (!repoToDelete) return;
-    const repository = repoToDelete;
-    try {
-      const res = await DefaultService.apiIntegrationGithubPollingDelete({ name: repository.data.name })
-      const body: any = res as any
-      if (body && body.success) {
-        toast.success(`Repository ${repository.data.name} removed from SCM polling.`)
-        fetchWebhookConfig()
-      } else {
-        toast.error((body && body.message) || 'Failed to remove repository from SCM polling')
-      }
-    } catch (err: any) {
-      toast.error(err.message || String(err))
-    } finally {
-      setDeleteDialogOpen(false);
-      setRepoToDelete(null);
-    }
-  };
+        // Calculate operations
+        const operations: { type: 'delete' | 'update', repo: string, branches?: string[] }[] = [];
+        let totalBranchesToRemove = 0;
+        let fullRepoDeletions = 0;
 
-  const cancelDelete = () => {
-    setDeleteDialogOpen(false);
-    setRepoToDelete(null);
-  };
+        repos.forEach(repo => {
+            const selectedBranches = selectionByRepo[repo];
+            const allBranches = data.allowed_branches[repo] || [];
 
+            // If all branches are selected, it's a full delete
+            // Using set for robust comparison
+            const selectedSet = new Set(selectedBranches);
+            const remainingBranches = allBranches.filter((b: string) => !selectedSet.has(b));
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'inactive':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <XCircle className="h-4 w-4 text-gray-500" />;
-    }
-  };
+            if (remainingBranches.length === 0) {
+                operations.push({ type: 'delete', repo });
+                fullRepoDeletions++;
+            } else {
+                operations.push({ type: 'update', repo, branches: remainingBranches });
+            }
+            totalBranchesToRemove += selectedBranches.length;
+        });
 
-  const handleViewDetails = (repo: any,branch:string) => {
-    navigate(`/settings/ci_cd/source_control/${repo.name}/${branch}`)
-  };
+        const confirmMessage = fullRepoDeletions === repos.length
+            ? `Are you sure you want to remove ${fullRepoDeletions} repositories? This action cannot be undone.`
+            : `Are you sure you want to remove ${totalBranchesToRemove} branches across ${repos.length} repositories?`;
 
-  const enhancedData: EnhancedRepository[] = repositories.map(repository => ({
-    ...repository,
-    data:repository,
-    allowedBranches: (
-      <div className="flex flex-wrap gap-1">
-        {repository.allowedBranches.map((branch, i) => (
-          <span onClick={()=>{
-            handleViewDetails(repository,branch)
-          }} key={i} className="inline-flex items-center px-2 py-1 cursor-pointer rounded text-base bg-green-100 text-green-800">
-            {branch}
-          </span>
-        ))}
-      </div>
-    ),
-    supportedEvents: (
-      <div className="flex flex-wrap gap-1">
-        {repository.supportedEvents.map((event, i) => (
-          <span key={i} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-            {event}
-          </span>
-        ))}
-      </div>
-    ),
-    status: (
-      <div className="flex items-center gap-2">
-        {getStatusIcon(repository.status)}
-        <span className="capitalize">{repository.status}</span>
-        {/* access info */}
-        {repoAccess[repository.name] && (
-          <div className="ml-4 text-xs text-slate-500">
-            {repoAccess[repository.name].error ? (
-              <span className="text-red-600">Access check failed</span>
-            ) : (
-              <>
-                <span className={repoAccess[repository.name].accessible ? 'text-green-600' : 'text-red-600'}>
-                  {repoAccess[repository.name].accessible ? 'Accessible' : 'No Access'}
-                </span>
-                {' • '}
-                <span>{repoAccess[repository.name].can_post_comments ? 'Can comment' : 'Cannot comment'}</span>
-                {' '}
-                <Button size="xs" className="ml-2" onClick={() => fetchRepoAccess(repository.name)}>Refresh</Button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    )
-  }));
+        if (!confirm(confirmMessage)) return;
 
-  if (loading) {
-    return (
-      <div className="p-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading SCM polling configuration...</div>
-        </div>
-      </div>
-    );
-  }
+        setLoading(true);
+        let successCount = 0;
+        let failCount = 0;
 
-  if (error) {
-    return (
-      <div className="p-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-red-500">Error: {error}</div>
-        </div>
-      </div>
-    );
-  }
+        for (const op of operations) {
+            try {
+                if (op.type === 'delete') {
+                    await DefaultService.apiIntegrationGithubReposDelete({ name: op.repo });
+                } else if (op.type === 'update' && op.branches) {
+                    await DefaultService.apiIntegrationGithubReposPut({
+                        requestBody: { name: op.repo, branches: op.branches }
+                    });
+                }
+                successCount++;
+            } catch (err) {
+                console.error(`Failed to process ${op.repo}`, err);
+                failCount++;
+            }
+        }
 
-  return (
-    <div title="Integrations">
-      <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <Plug className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  Source Control
-                </h2>
-                <p className="text-base text-slate-500">
-                  Repository Configuration
-                </p>
-              </div>
-            </div>
-          }
-          shortDescription=""
-          description="Manage repositories and their allowed branches to trigger Continuous Integration (CI) workflows via SCM polling. Only specified repositories and branches will be permitted to initiate build, test, and deployment processes."
-        />
+        if (successCount > 0) {
+            toast.success(`Successfully processed ${successCount} operations`);
+        }
+        if (failCount > 0) {
+            toast.error(`Failed to complete ${failCount} operations. Check console for details.`);
+        }
 
-        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
-          <CardHeader>
-            <CardTitle>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <FolderGit className="h-5 w-5 text-blue-500" />
-                  <h2 className="text-xl font-semibold text-slate-900">
-                    Active Repositories
-                  </h2>
+        fetchData();
+    };
+
+    const handleEditRepo = (repoName: string) => {
+        // Get all branches for this repository
+        const branches = data.allowed_branches[repoName] || [];
+        setEditingRepo({ name: repoName, branches });
+        setIsAddRepoOpen(true);
+    };
+
+    const flatData = useMemo(() => {
+        if (!data || !data.allowed_branches) return [];
+
+        const result: FlatMappedRepo[] = [];
+        Object.entries(data.allowed_branches).forEach(([repo, branches]: [string, any]) => {
+            const details = detailedPermissions[repo];
+
+            branches.forEach((branch: string) => {
+                result.push({
+                    id: `${repo}:${branch}`,
+                    repository: repo,
+                    branch: branch,
+                    status: 'Active',
+                    permissionInfo: details ? (
+                        <div className="flex items-center gap-3">
+                            {details.accessible && (
+                                <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
+                                    <Eye className="h-3 w-3" /> Accessible
+                                </span>
+                            )}
+                            {details.can_post_comments && (
+                                <span className="flex items-center gap-1 text-[10px] text-blue-600 font-bold">
+                                    <MessageSquare className="h-3 w-3" /> Can Comment
+                                </span>
+                            )}
+                            {!details.accessible && !details.can_post_comments && (
+                                <span className="text-[10px] text-muted-foreground italic">No detailed info</span>
+                            )}
+                        </div>
+                    ) : (
+                        <span className="text-[10px] text-muted-foreground animate-pulse">Checking access...</span>
+                    )
+                });
+            });
+        });
+        return result;
+    }, [data, detailedPermissions]);
+
+    const filteredData = useMemo(() => {
+        return flatData.filter(item =>
+            item.repository.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.branch.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [flatData, searchTerm]);
+
+    const columns = [
+        {
+            header: 'Repository',
+            accessor: 'repository',
+            cell: (row: FlatMappedRepo) => (
+                <div className="flex items-center gap-2">
+                    <Plug className="h-4 w-4 text-primary/70" />
+                    <span className="font-bold text-foreground">{row.repository}</span>
                 </div>
-                <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="flex items-center gap-2">
-                      <Plug className="h-5 w-5" />
+            )
+        },
+        {
+            header: 'Branch',
+            accessor: 'branch',
+            cell: (row: FlatMappedRepo) => (
+                <div className="flex items-center gap-2">
+                    <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 font-mono text-[10px]">
+                        {row.branch}
+                    </Badge>
+                </div>
+            )
+        },
+        {
+            header: 'Status',
+            accessor: 'status',
+            cell: (row: FlatMappedRepo) => (
+                <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-tighter">
+                        {row.status}
+                    </span>
+                </div>
+            )
+        },
+        {
+            header: 'Permission Info',
+            accessor: 'permissionInfo',
+            cell: (row: FlatMappedRepo) => row.permissionInfo
+        },
+        {
+            header: 'Actions',
+            accessor: 'actions',
+            cell: (row: FlatMappedRepo) => (
+                <div className="flex justify-center pr-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10 hover:text-primary"
+                            >
+                                <MoreVertical className="h-3.5 w-3.5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40 bg-background/95 backdrop-blur-md border-border/50 shadow-xl">
+                            <DropdownMenuItem
+                                onClick={() => navigate(`/settings/ci_cd/source_control/${row.repository}/${row.branch}`)}
+                                className="gap-2 text-[12px] font-medium py-2 cursor-pointer"
+                            >
+                                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                                View Builds
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => handleEditRepo(row.repository)}
+                                className="gap-2 text-[12px] font-medium py-2 cursor-pointer"
+                            >
+                                <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                Edit Branches
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => handleSyncRepo(row.repository)}
+                                disabled={refreshing[row.repository]}
+                                className="gap-2 text-[12px] font-medium py-2 cursor-pointer"
+                            >
+                                <RefreshCw className={`h-3.5 w-3.5 text-muted-foreground ${refreshing[row.repository] ? 'animate-spin' : ''}`} />
+                                Refresh Access
+                            </DropdownMenuItem>
+                            <div className="h-px bg-border/40 my-1" />
+                            <DropdownMenuItem
+                                onClick={() => handleDeleteRepo(row.repository)}
+                                className="gap-2 text-[12px] font-medium py-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Remove Repo
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            )
+        }
+    ];
+
+    return (
+        <div className="w-full h-full flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
+            {/* Page Header */}
+            <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
+                <div>
+                    <div className="flex items-center gap-4 mb-1 p-1">
+                        <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
+                            <Plug className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Source Control</h1>
+                            <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
+                                Manage repositories and their allowed branches to trigger Continuous Integration (CI) workflows via SCM polling.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 mb-1">
+                    <Button variant="outline" size="sm" onClick={fetchData} disabled={loading} className="h-8 text-xs">
+                        <RefreshCw className={`w-3.5 h-3.5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
+                    <Button
+                        variant="gradient"
+                        size="sm"
+                        onClick={() => setIsAddRepoOpen(true)}
+                        className="h-8 text-xs font-bold shadow-lg shadow-primary/20"
+                    >
+                        <Plus className="w-3.5 h-3.5 mr-1" />
                         Add Repository
                     </Button>
-                  </DialogTrigger>
-                  <div className="ml-2">
                     <ManagePatsDialog />
-                  </div>
-                  <DialogContent className="max-w-none  w-screen h-screen flex flex-col">
-                    <DialogHeader className="py-4 px-6 border-b">
-                      <DialogTitle className="flex gap-2 items-center">
-                        {" "}
-                        <Plug className="w-4 h-4" />
-                        Add Repository
-                      </DialogTitle>
-                      <DialogDescription>
-                        Add a new GitHub repository and configure allowed
-                        branches.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex-1 overflow-auto">
-                      <AddRepositoryForm
-                        onSuccess={() => {
-                          setAddDialogOpen(false);
-                          setEditingRepor({});
-                          fetchWebhookConfig();
-                        }}
-                        initialValues={editingRepo}
-                        isEdit={!!Object.keys(editingRepo).length}
-                      />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                {/* Delete confirmation dialog (styled) */}
-                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Remove repository from SCM polling</DialogTitle>
-                      <DialogDescription>
-                        {repoToDelete ? (
-                          <>This will stop polling PRs for <strong>{repoToDelete.data.name}</strong> on the configured branches.</>
-                        ) : 'Confirm removal from SCM polling.'}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex gap-2 justify-end mt-4">
-                      <DialogClose asChild>
-                        <Button variant="outline" onClick={cancelDelete}>Cancel</Button>
-                      </DialogClose>
-                      <Button variant="destructive" onClick={confirmDelete}>Remove</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardTitle>
-            <CardDescription>
-              Configure which repositories and branches are allowed to trigger
-              build, test, and deployment processes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="shadow-none p-0">
-            <ResourceTable
-              columns={columns}
-              data={enhancedData}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+                </div>
+            </div>
+
+            {/* Hero Stats Section */}
+            <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
+                <ResourceCard
+                    title="Repositories"
+                    count={data?.allowed_branches ? Object.keys(data.allowed_branches).length : 0}
+                    icon={<Plug className="w-4 h-4" />}
+                    color="bg-primary"
+                    className="border-primary/20 bg-primary/5 shadow-none hover:border-primary/30 transition-all"
+                    isLoading={loading}
+                />
+                <ResourceCard
+                    title="Branches"
+                    count={flatData.length}
+                    icon={<GitBranch className="w-4 h-4" />}
+                    color="bg-emerald-500"
+                    className="border-emerald-500/20 bg-emerald-500/5 shadow-none hover:border-emerald-500/30 transition-all"
+                    isLoading={loading}
+                />
+                <ResourceCard
+                    title="Accessible"
+                    count={Object.values(detailedPermissions).filter((d: any) => d.accessible).length}
+                    icon={<ShieldCheck className="w-4 h-4" />}
+                    color="bg-blue-500"
+                    className="border-blue-500/20 bg-blue-500/5 shadow-none hover:border-blue-500/30 transition-all"
+                    isLoading={loading}
+                />
+                <ResourceCard
+                    title="Polling"
+                    count={data?.enabled ? "Enabled" : "Disabled"}
+                    icon={<RefreshCw className={`w-4 h-4 ${data?.enabled ? 'animate-spin-slow' : ''}`} />}
+                    color={data?.enabled ? "bg-amber-500" : "bg-muted-foreground"}
+                    className={`${data?.enabled ? "border-amber-500/20 bg-amber-500/5" : "border-border/50 bg-muted/5"} shadow-none hover:border-amber-500/30 transition-all`}
+                    isLoading={loading}
+                />
+            </div>
+
+            <div className="flex-1 min-h-0 flex flex-col space-y-4 pt-4">
+                <ResourceTable
+                    title="Active Repositories"
+                    description="Configure which repositories and branches are allowed to trigger build, test, and deployment processes."
+                    icon={<Plug className="h-4 w-4" />}
+                    columns={columns}
+                    data={filteredData}
+                    onBulkDelete={handleBulkDelete}
+                    loading={loading}
+                    extraHeaderContent={
+                        <div className="relative w-64 mr-2">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Search repo or branch..."
+                                className="pl-8 h-8 text-[11px] bg-muted/40 border-border/40 focus-visible:ring-primary/20"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    }
+                />
+            </div>
+
+            {/* Modals */}
+            <FormWizard
+                name="add-repository-wizard"
+                isWizardOpen={isAddRepoOpen}
+                setIsWizardOpen={setIsAddRepoOpen}
+                steps={repoSteps}
+                currentStep={currentStep}
+                setCurrentStep={setCurrentStep}
+                initialValues={repoInitialValues}
+                schema={repoSchema}
+                onSubmit={handleRepoSubmit}
+                heading={{
+                    primary: editingRepo ? 'Edit Repository' : 'Add Repository',
+                    secondary: editingRepo
+                        ? `Configure branches for ${editingRepo.name}`
+                        : 'Configure a new repository for source control polling.',
+                    icon: Plug,
+                }}
+                submitLabel={editingRepo ? 'Save Changes' : 'Add Repository'}
+                submitIcon={Plug}
             />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+        </div >
+    );
 };
 
-export default IntegrationsPage;
+export default SourceControlPage;

@@ -17,13 +17,6 @@ interface BasicConfigProps {
 }
 
 export function BasicConfig({ control, errors, watch }: BasicConfigProps) {
-  // Helper to indicate required fields
-  const RequiredBadge = () => (
-    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-red-50 px-1 py-0.5 text-xs font-medium text-red-700">
-      Required
-    </span>
-  );
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -32,8 +25,8 @@ export function BasicConfig({ control, errors, watch }: BasicConfigProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Volume Name <RequiredBadge />
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Volume Name <span className="text-red-500">*</span>
               </FormLabel>
               <FormDescription>
                 A unique name to identify this Docker volume
@@ -51,7 +44,7 @@ export function BasicConfig({ control, errors, watch }: BasicConfigProps) {
           name="driver"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
+              <FormLabel className="text-sm font-medium text-foreground/80">
                 Driver
               </FormLabel>
               <FormDescription>

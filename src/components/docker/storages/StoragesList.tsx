@@ -4,24 +4,36 @@ import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import { format } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { HardDrive } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { StorageDetails } from './StorageDetails';
 
 interface StorageTableData {
-  name: string;
+  name: React.ReactNode;
   created: string;
   driver: string;
   scope: React.ReactNode;
-  inUse:React.ReactNode,
+  inUse: React.ReactNode,
   storage: StorageInfo;
 }
 
 interface StoragesListProps {
   storages: StorageInfo[];
   onDelete: (id: string) => Promise<boolean>;
+  onBulkDelete?: (storages: StorageTableData[]) => void;
+  title?: string;
+  description?: string;
+  icon?: React.ReactNode;
+  extraHeaderContent?: React.ReactNode;
 }
 
-export const StoragesList: React.FC<StoragesListProps> = ({ storages, onDelete }) => {
+export const StoragesList: React.FC<StoragesListProps> = ({ storages, onDelete, onBulkDelete, title, description, icon, extraHeaderContent }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [storageToDelete, setStorageToDelete] = useState<StorageTableData | null>(null);
@@ -59,10 +71,14 @@ export const StoragesList: React.FC<StoragesListProps> = ({ storages, onDelete }
   ];
 
   const data: StorageTableData[] = storages.map((storage) => ({
-    name: storage.name,
+    name: (
+      <div className="flex flex-col gap-0.5">
+        <span className="font-medium text-sm text-foreground tracking-tight">{storage.name}</span>
+      </div>
+    ),
     created: format(new Date(storage.created), 'PPP'),
     driver: storage.driver,
-    inUse:(
+    inUse: (
       <Badge variant={storage.inUse ? "default" : "secondary"}>
         {storage.inUse ? "In Use" : "Not In Use"}
       </Badge>
@@ -82,7 +98,12 @@ export const StoragesList: React.FC<StoragesListProps> = ({ storages, onDelete }
         data={data}
         onDelete={handleDeleteClick}
         onViewDetails={handleViewDetails}
-        tableClassName="max-h-[490px]"
+        onBulkDelete={onBulkDelete}
+        tableClassName="max-h-[550px]"
+        title={title}
+        description={description}
+        icon={icon}
+        extraHeaderContent={extraHeaderContent}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -106,14 +127,24 @@ export const StoragesList: React.FC<StoragesListProps> = ({ storages, onDelete }
         </AlertDialogContent>
       </AlertDialog>
 
-      <Sheet open={showDetails} onOpenChange={setShowDetails}>
-        <SheetContent className="!w-[30%] sm:!max-w-[30%]">
-          <SheetHeader>
-            <SheetTitle>Volume Details</SheetTitle>
-          </SheetHeader>
-          {selectedStorage && <StorageDetails storage={selectedStorage} />}
-        </SheetContent>
-      </Sheet>
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="sm:max-w-xl p-0 overflow-hidden border border-border/30 bg-background shadow-2xl rounded-3xl animate-in fade-in zoom-in-95 duration-500">
+          <DialogHeader className="py-6 px-8 border-b border-border/30 bg-muted/30 backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                <HardDrive className="h-6 w-6" />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <DialogTitle className="text-2xl font-bold tracking-tight">Volume Details</DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground font-medium">Inspect Docker volume configuration and mount point</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="max-h-[85vh] overflow-y-auto px-8 py-6">
+            {selectedStorage && <StorageDetails storage={selectedStorage} />}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
