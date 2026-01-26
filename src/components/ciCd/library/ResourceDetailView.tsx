@@ -37,6 +37,8 @@ interface ResourceDetailViewProps {
         service_account_name?: string;
         host_network?: boolean;
         dns_policy?: string;
+        tty?: boolean;
+        stdin?: boolean;
         containers?: Array<{ id: number; name: string; image?: string; type?: string }>;
         // Container Specific
         image?: string;
@@ -172,11 +174,26 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                 {/* Container Specific Config */}
                 {type === "container" && (
                     <>
-                        <SectionHeader icon={Box} title="Container Settings" />
+                        <SectionHeader icon={Box} title="Derived Container Settings" />
                         <div className="grid grid-cols-2 gap-3">
+                            <InfoItem label="Name" value={data.name} icon={FileText} />
                             <InfoItem label="Image" value={data.image || "<NAME_AT_RUNTIME>"} icon={Box} />
                             <InfoItem label="Pull Policy" value={data.image_pull_policy} icon={RefreshCw} />
                             <InfoItem label="Working Dir" value={data.working_dir} icon={FileText} />
+                            <div className="flex items-center gap-6 mt-1 px-4 py-3 rounded-xl bg-background/40 border border-border/20 col-span-2">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">TTY:</span>
+                                    <Badge variant={data.tty ? "success" : "secondary"} className="h-6 text-[10px] px-2.5 font-bold uppercase tracking-wider">
+                                        {data.tty ? "Enabled" : "Disabled"}
+                                    </Badge>
+                                </div>
+                                <div className="flex items-center gap-3 border-l border-border/40 pl-6">
+                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Interactive (Stdin):</span>
+                                    <Badge variant={data.stdin ? "success" : "secondary"} className="h-6 text-[10px] px-2.5 font-bold uppercase tracking-wider">
+                                        {data.stdin ? "Enabled" : "Disabled"}
+                                    </Badge>
+                                </div>
+                            </div>
                         </div>
 
                         {data.command && data.command.length > 0 && (
