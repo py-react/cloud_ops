@@ -82,7 +82,6 @@ class AllowedRepoUtils:
                     "tag": d.tag,
                     "pr_url": getattr(d, "pr_url", None),
                     "jira": getattr(d, "jira", None),
-                    "deployment_strategy_id": d.deployment_strategy_id,
                 }
         
         # Build PAT map

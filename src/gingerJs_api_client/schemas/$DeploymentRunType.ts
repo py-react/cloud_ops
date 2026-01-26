@@ -16,9 +16,16 @@ export const $DeploymentRunType = {
 	type: 'null',
 }],
 },
-		image_name: {
+		images: {
+	type: 'any-of',
+	contains: [{
+	type: 'dictionary',
+	contains: {
 	type: 'string',
-	isRequired: true,
+},
+}, {
+	type: 'null',
+}],
 },
 		deployment_config_id: {
 	type: 'number',

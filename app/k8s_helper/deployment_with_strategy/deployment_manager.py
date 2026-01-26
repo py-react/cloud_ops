@@ -1,3 +1,4 @@
+import sys
 from typing import Dict, Any, Optional
 from ...db_client.models.deployment_config.types import DeploymentConfigType
 from ...db_client.controllers.deployment_config.deployment_config import (
@@ -158,16 +159,33 @@ class DeploymentManager:
         # 1. Store the run in the DB
         run_obj = self.create_deployment_run(run_data)
         try:
-            # 2. Fetch the deployment config
+            # 2. Fetch and compose the deployment config
             config_obj = self.session.get(DeploymentConfig, run_data.deployment_config_id)
             if not config_obj:
                 raise Exception(f"DeploymentConfig with id={run_data.deployment_config_id} not found")
             
-            # 3. Generate deployment spec using DeploymentGenerator
-            generator = {}
-            deployment_spec = generator.generate(config_obj.id)
+            composer = DeploymentComposer(self.session)
+            composed_data = composer.compose(config_obj)
             
-            # 4. Apply run-time overrides (pr_url, jira, environment, image)
+            if not composed_data:
+                raise Exception("Failed to compose deployment data: Result is empty")
+
+            # Apply run-time image overrides to composed_data BEFORE generation
+            # This avoids issues with container name sanitization in the generator
+            if getattr(run_data, "images", None):
+                for container in composed_data.get("containers", []):
+                    c_name = container.get("name")
+                    if c_name and c_name in run_data.images:
+                         container["image"] = run_data.images[c_name]
+
+            # 3. Generate deployment spec using DeploymentGenerator
+            generator = DeploymentGenerator(self.session)
+            deployment_spec = generator.generate(composed_data)
+            
+            if not deployment_spec:
+                raise Exception("Failed to generate deployment spec: Result is empty")
+
+            # 4. Apply run-time overrides (pr_url, jira, environment)
             if getattr(run_data, "pr_url", None):
                 deployment_spec.setdefault("metadata", {}).setdefault("annotations", {})["pr_url"] = run_data.pr_url
             if getattr(run_data, "jira", None):
@@ -176,48 +194,65 @@ class DeploymentManager:
                 deployment_spec.setdefault("metadata", {}).setdefault("labels", {})["environment"] = run_data.environment
                 deployment_spec.get("spec", {}).get("template", {}).setdefault("metadata", {}).setdefault("labels", {})["environment"] = run_data.environment
             
-            # Override image in all containers if image_name is provided
-            if getattr(run_data, "image_name", None):
-                containers = deployment_spec.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [])
-                for container in containers:
-                    container["image"] = run_data.image_name
-            
-            # 5. Apply deployment strategy
+            # 5. Apply deployment strategy (fallback to 1 if missing)
+            strategy_id = composed_data.get("deployment_strategy_id") or 1
             deployment_spec = StrategyHandler.apply_strategy(
                 deployment_spec,
-                config_obj.deployment_strategy_id
+                strategy_id
             )
             
             # 6. Build K8s service spec (if service_ports are defined)
             service_spec = None
-            if config_obj.service_ports:
+            if composed_data.get("service_ports"):
                 service_spec = self._build_k8s_service_spec({
-                    "deployment_name": config_obj.deployment_name,
-                    "namespace": config_obj.namespace,
-                    "service_ports": config_obj.service_ports,
+                    "deployment_name": composed_data.get("deployment_name"),
+                    "namespace": composed_data.get("namespace"),
+                    "service_ports": composed_data.get("service_ports"),
                     "labels": deployment_spec.get("metadata", {}).get("labels", {}),
                     "annotations": deployment_spec.get("metadata", {}).get("annotations", {}),
-                    "tag": config_obj.tag,
+                    "tag": composed_data.get("tag"),
                     "pr_url": getattr(run_data, "pr_url", None),
                     "jira": getattr(run_data, "jira", None)
                 })
             
             # 7. Create the deployment and service in Kubernetes
-            k8s_helper = KubernetesResourceHelper()
-            k8s_helper.apply_resource(deployment_spec)
+            from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
+            from kubernetes.client.rest import ApiException
+            import json
+            import sys
             
+            # LOGGING THE MANIFEST
+            sys.stderr.write("\n--- APPLYING KUBERNETES MANIFEST ---\n")
+            sys.stderr.write(json.dumps(deployment_spec, indent=2, default=str))
+            sys.stderr.write("\n------------------------------------\n")
+
+            k8s_helper = KubernetesResourceHelper()
+            
+            try:
+                k8s_helper.apply_resource(deployment_spec)
+            except ApiException as e:
+                import json
+                error_body = json.loads(e.body) if e.body else {}
+                sys.stderr.write(f"K8s API Error (Deployment): {error_body.get('message', str(e))}\n")
+                sys.stderr.write(f"Problematic Spec: {json.dumps(deployment_spec, indent=2)}\n")
+                raise Exception(f"Kubernetes rejected deployment: {error_body.get('message', str(e))}")
+                
             result_messages = ["Deployment created in Kubernetes"]
             
             # Apply service if it was built
             if service_spec:
-                k8s_helper.apply_resource(service_spec)
-                result_messages.append("Service created in Kubernetes")
+                try:
+                    k8s_helper.apply_resource(service_spec)
+                    result_messages.append("Service created in Kubernetes")
+                except ApiException as e:
+                    error_body = json.loads(e.body) if e.body else {}
+                    sys.stderr.write(f"K8s API Error (Service): {error_body.get('message', str(e))}\n")
+                    raise Exception(f"Kubernetes rejected service: {error_body.get('message', str(e))}")
             
             # 8. Update run status
             self.update_deployment_run_status(run_obj.id, "deployed")
             return {"run": run_obj, "deployment_result": "; ".join(result_messages)}
         except Exception as e:
-            print(str(e))
             self.update_deployment_run_status(run_obj.id, "failed")
             raise Exception(f"Unexpected error running deployment: {str(e)}")
 

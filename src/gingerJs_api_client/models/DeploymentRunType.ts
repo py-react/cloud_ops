@@ -3,7 +3,7 @@
 export type DeploymentRunType = {
 	pr_url?: string | null;
 	jira?: string | null;
-	image_name: string;
+	images?: Record<string, string> | null;
 	deployment_config_id: number;
 	status?: string | null;
 };

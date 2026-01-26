@@ -1,27 +1,12 @@
-import React, { useState } from "react";
-import { Activity } from "lucide-react";
+import React, { useMemo } from "react";
+import { Activity, Rocket, Link, Hash } from "lucide-react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  FormField,
-} from "@/components/ui/form";
 import { DefaultService } from "@/gingerJs_api_client/services/DefaultService";
 import type { DeploymentRunType } from "@/gingerJs_api_client/models/DeploymentRunType";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
+import FormWizard from "@/components/wizard/form-wizard";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
 // Types
 export interface ServicePort {
@@ -56,7 +41,6 @@ export interface ReleaseConfigData {
   namespace: string;
   id: number;
   tag: string;
-  deployment_strategy_id: number;
   containers: Container[];
   labels: Record<string, string>;
   soft_delete: boolean;
@@ -65,7 +49,7 @@ export interface ReleaseConfigData {
 
 export interface ReleaseRunData {
   pr_url: string;
-  image_name: string;
+  images: Record<string, string>;
   status: string;
   jira: string;
   id: number;
@@ -74,124 +58,143 @@ export interface ReleaseRunData {
 }
 
 interface ReleaseRunProps {
-  deployment_config_id: number;
+  deployment_config: ReleaseConfigData;
   open: boolean;
   onClose: (open: boolean) => void;
-  onSuccess:()=>void
+  onSuccess: () => void
 }
 
 const releaseRunSchema = z.object({
   pr_url: z.string().optional(),
   jira: z.string().optional(),
-  image_name: z.string().min(1, "Image name is required"),
+  images: z.record(z.string().min(1, "Image name is required")),
 });
 
 type ReleaseRunFormValues = z.infer<typeof releaseRunSchema>;
 
 export const ReleaseRun = ({
-  deployment_config_id,
+  deployment_config,
   open,
   onClose,
   onSuccess
 }: ReleaseRunProps) => {
-  const form = useForm<ReleaseRunFormValues>({
-    resolver: zodResolver(releaseRunSchema),
-    defaultValues: {
-      pr_url: "",
-      jira: "",
-      image_name: "",
-    },
-  });
+  const [activeStep, setActiveStep] = React.useState("metadata");
+
+  const initialValues = useMemo(() => ({
+    pr_url: "",
+    jira: "",
+    images: (deployment_config?.containers || []).reduce((acc: any, c) => {
+      acc[c.name] = "";
+      return acc;
+    }, {}),
+  }), [deployment_config]);
 
   const onSubmit = async (values: ReleaseRunFormValues) => {
     try {
       const payload: DeploymentRunType = {
         ...values,
-        deployment_config_id: deployment_config_id,
+        deployment_config_id: deployment_config.id,
       };
       await DefaultService.apiIntegrationKubernetesReleaseRunPost({
         requestBody: payload,
       });
       toast.success("Release run triggered successfully.")
-      form.reset();
       onSuccess()
+      onClose(false);
     } catch (e: any) {
-      toast.success(e?.message || "Failed to trigger release run.")
+      toast.error(e?.message || "Failed to trigger release run.")
     }
   };
 
+  const steps = useMemo(() => [
+    {
+      id: "metadata",
+      label: "Metadata",
+      description: "Optional references",
+      longDescription: "Add links to Pull Requests and Jira tickets for tracking.",
+      component: ({ control }: any) => (
+        <div className="space-y-4">
+          <FormField
+            control={control}
+            name="pr_url"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Link className="h-3 w-3" /> PR URL
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="https://github.com/.../pull/123" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="jira"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Hash className="h-3 w-3" /> Jira Ticket
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="OPS-1234" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      )
+    },
+    {
+      id: "images",
+      label: "Deployment Images",
+      description: "Container versions",
+      longDescription: "Specify the image name and tag for each container in this release.",
+      component: ({ control }: any) => (
+        <div className="space-y-6">
+          {(deployment_config?.containers || []).map((container) => (
+            <FormField
+              key={container.name}
+              control={control}
+              name={`images.${container.name}`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 font-black uppercase text-[10px] tracking-widest text-muted-foreground bg-muted/30 px-2 py-1 rounded w-fit">
+                    {container.name}
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. nginx:1.21-alpine" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+        </div>
+      )
+    }
+  ], [deployment_config]);
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="p-0">
-        {/* Release Run Form */}
-        <div className="border-b border-slate-200">
-          <DialogTitle className="text-lg font-semibold text-slate-900 flex flex-row items-center gap-2 p-6">
-            <div className="flex items-center space-x-3 gap-2">
-              <Activity className="h-5 w-5 text-indigo-500" />
-              Run New Release
-            </div>
-          </DialogTitle>
-        </div>
-        <div className="px-6 max-w-lg">
-          <Form {...form}>
-            <form
-              id="ReleaseRun"
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-4"
-            >
-              <FormField
-                control={form.control}
-                name="pr_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PR URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter PR URL (optional)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="jira"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Jira</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter Jira (optional)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="image_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Image Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. nginx:latest" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </form>
-          </Form>
-        </div>
-        <DialogFooter className="px-6 pb-6 pt-2">
-          <Button
-            form="ReleaseRun"
-            type="submit"
-            disabled={form.formState.isSubmitting}
-          >
-            {form.formState.isSubmitting ? "Running..." : "Run Release"}
-          </Button>
-          
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <FormWizard
+      name="release-run-wizard"
+      isWizardOpen={open}
+      setIsWizardOpen={onClose}
+      currentStep={activeStep}
+      setCurrentStep={setActiveStep}
+      steps={steps}
+      schema={releaseRunSchema}
+      initialValues={initialValues}
+      onSubmit={onSubmit}
+      submitLabel="Run Release"
+      submitIcon={Rocket}
+      heading={{
+        primary: "Run New Release",
+        secondary: `Trigger a fresh deployment for ${deployment_config?.deployment_name}`,
+        icon: Activity,
+      }}
+    />
   );
 };
