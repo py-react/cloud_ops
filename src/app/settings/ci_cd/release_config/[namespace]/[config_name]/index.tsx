@@ -421,6 +421,9 @@ const ReleaseConfigDetailedInfo = () => {
           <Button
             variant="gradient"
             onClick={() => setCreateRun(true)}
+            disabled={configData?.status !== "active"}
+            title={configData?.status !== "active" ? "Configuration must be 'active' to run a release" : ""}
+            className={configData?.status !== "active" ? "opacity-50 cursor-not-allowed grayscale" : ""}
           >
             <Play className="w-3.5 h-3.5 mr-1" />
             Run Release

@@ -164,6 +164,10 @@ class DeploymentManager:
             if not config_obj:
                 raise Exception(f"DeploymentConfig with id={run_data.deployment_config_id} not found")
             
+            # GUARDRAIL: Only allow active configurations to be released
+            if config_obj.status != 'active':
+                raise Exception(f"Release forbidden: Configuration '{config_obj.deployment_name}' is currently {config_obj.status}. It must be 'active' to run a release.")
+
             composer = DeploymentComposer(self.session)
             composed_data = composer.compose(config_obj)
             
