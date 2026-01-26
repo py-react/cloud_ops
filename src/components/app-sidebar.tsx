@@ -401,7 +401,21 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                               asChild
                               className="hover:bg-sidebar-accent transition-colors duration-200"
                             >
-                              <div className="flex items-center gap-2 cursor-pointer select-none w-full min-w-0">
+                              <div className="flex items-center gap-1 cursor-pointer select-none w-full min-w-0">
+                                <span
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleToggleMenu(menuKey);
+                                  }}
+                                  className="p-1 rounded-md hover:bg-sidebar-accent transition-colors"
+                                >
+                                  {expandedMenus[menuKey] ? (
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </span>
                                 <CustomLink
                                   key={menuKey}
                                   href={value.url + item.url}
@@ -416,13 +430,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                                     {item.title}
                                   </span>
                                 </CustomLink>
-                                <span onClick={() => handleToggleMenu(menuKey)} className="ml-auto p-1 rounded-md hover:bg-sidebar-accent transition-colors">
-                                  {expandedMenus[menuKey] ? (
-                                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                                  ) : (
-                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </span>
                               </div>
                             </SidebarMenuButton>
                           ) : (
@@ -430,18 +437,21 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                               asChild
                               className="hover:bg-sidebar-accent transition-colors duration-200"
                             >
-                              <CustomLink
-                                key={menuKey}
-                                href={value.url + item.url}
-                                className="flex items-center gap-2 min-w-0 overflow-hidden"
-                              >
-                                <span className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-primary/10 flex-shrink-0">
-                                  <item.icon className="h-4 w-4 text-sidebar-foreground" />
-                                </span>
-                                <span className="font-medium text-sidebar-foreground truncate">
-                                  {item.title}
-                                </span>
-                              </CustomLink>
+                              <div className="flex items-center gap-1 w-full min-w-0">
+                                <div className="w-6 h-6 shrink-0" /> {/* Placeholder for alignment */}
+                                <CustomLink
+                                  key={menuKey}
+                                  href={value.url + item.url}
+                                  className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden"
+                                >
+                                  <span className="bg-sidebar-accent p-1.5 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-primary/10 flex-shrink-0">
+                                    <item.icon className="h-4 w-4 text-sidebar-foreground" />
+                                  </span>
+                                  <span className="font-medium text-sidebar-foreground truncate">
+                                    {item.title}
+                                  </span>
+                                </CustomLink>
+                              </div>
                             </SidebarMenuButton>
                           )}
                           {hasSubItems && (
@@ -465,7 +475,25 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                                         asChild
                                         className="hover:bg-sidebar-accent transition-colors duration-200"
                                       >
-                                        <div className="flex items-center gap-2 cursor-pointer select-none w-full min-w-0">
+                                        <div className="flex items-center gap-1 cursor-pointer select-none w-full min-w-0">
+                                          {hasSubSubItems ? (
+                                            <span
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleToggleMenu(subItemKey);
+                                              }}
+                                              className="p-1 rounded-md hover:bg-sidebar-accent transition-colors"
+                                            >
+                                              {expandedMenus[subItemKey] ? (
+                                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                              ) : (
+                                                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                                              )}
+                                            </span>
+                                          ) : (
+                                            <div className="w-5 h-5 shrink-0" />
+                                          )}
                                           <CustomLink
                                             key={subItemKey}
                                             href={(value.url + item.url + subItem.url).replace(/\/\//g, '/')}
@@ -476,22 +504,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                                             </span>
                                             <span className="text-sm text-sidebar-foreground truncate">{subItem.title}</span>
                                           </CustomLink>
-                                          {hasSubSubItems && (
-                                            <span
-                                              onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                handleToggleMenu(subItemKey);
-                                              }}
-                                              className="ml-auto p-1 rounded-md hover:bg-sidebar-accent transition-colors"
-                                            >
-                                              {expandedMenus[subItemKey] ? (
-                                                <ChevronUp className="h-3 w-3 text-muted-foreground" />
-                                              ) : (
-                                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                                              )}
-                                            </span>
-                                          )}
                                         </div>
                                       </SidebarMenuSubButton>
 

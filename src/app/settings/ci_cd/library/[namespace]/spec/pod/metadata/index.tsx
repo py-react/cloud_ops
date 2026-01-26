@@ -40,6 +40,8 @@ function MetadataProfiles() {
     const [metadataProfiles, setMetadataProfiles] = useState<any[]>([]);
     const [loadingMetadata, setLoadingMetadata] = useState(false);
     const [viewMetadataInitialValues, setViewMetadataInitialValues] = useState<any>(null);
+    const [editMode, setEditMode] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     // Conflict/Dependency state
     const [conflictDialog, setConflictDialog] = useState<{
@@ -84,12 +86,17 @@ function MetadataProfiles() {
 
     const handleSubmitMetadata = async (values: any) => {
         try {
-            await DefaultService.apiIntegrationKubernetesLibraryPodMetadataProfilePost({ requestBody: values });
-            toast.success("Metadata profile created");
+            if (editMode && editingId) {
+                await DefaultService.apiIntegrationKubernetesLibraryPodMetadataProfilePut({ id: editingId, requestBody: values } as any);
+                toast.success("Metadata profile updated");
+            } else {
+                await DefaultService.apiIntegrationKubernetesLibraryPodMetadataProfilePost({ requestBody: values });
+                toast.success("Metadata profile created");
+            }
             setMetadataDialogOpen(false);
             fetchMetadataProfiles();
         } catch (error) {
-            toast.error("Error creating metadata profile");
+            toast.error(editMode ? "Error updating metadata profile" : "Error creating metadata profile");
         }
     };
 
@@ -110,6 +117,14 @@ function MetadataProfiles() {
         setViewMetadataInitialValues(row);
         setViewMetadataStep("view");
         setViewMetadataDialogOpen(true);
+    };
+
+    const handleEditMetadata = (row: any) => {
+        setEditMode(true);
+        setEditingId(row.id);
+        setMetadataStep("config");
+        setViewMetadataInitialValues(row);
+        setMetadataDialogOpen(true);
     };
 
     return (
@@ -138,7 +153,10 @@ function MetadataProfiles() {
                         variant="gradient"
                         size="sm"
                         onClick={() => {
+                            setEditMode(false);
+                            setEditingId(null);
                             setMetadataStep("config");
+                            setViewMetadataInitialValues({ name: "", type: "", namespace: selectedNamespace, config: "" });
                             setMetadataDialogOpen(true);
                         }}
                     >
@@ -164,6 +182,7 @@ function MetadataProfiles() {
                 selectedNamespace={selectedNamespace}
                 onDelete={handleDeleteMetadata}
                 onViewDetails={handleViewMetadata}
+                onEdit={handleEditMetadata}
                 type="pod_metadata_profile"
                 highlightedId={resourceType === 'pod_metadata_profile' ? highlightedId : null}
                 onRowClick={clearFocus}
@@ -177,13 +196,13 @@ function MetadataProfiles() {
                 setCurrentStep={setMetadataStep}
                 steps={steps}
                 schema={profileSchema}
-                initialValues={{ name: "", type: "", namespace: selectedNamespace, config: "" }}
+                initialValues={viewMetadataInitialValues}
                 onSubmit={handleSubmitMetadata}
-                submitLabel="Create Metadata"
+                submitLabel={editMode ? "Update Metadata" : "Create Metadata"}
                 submitIcon={Layout}
                 heading={{
-                    primary: "Manage Metadata Profiles",
-                    secondary: "Create and configure reusable metadata profiles",
+                    primary: editMode ? "Edit Metadata Profile" : "Manage Metadata Profiles",
+                    secondary: editMode ? "Update reusable metadata profile configuration" : "Create and configure reusable metadata profiles",
                     icon: Layout,
                 }}
             />

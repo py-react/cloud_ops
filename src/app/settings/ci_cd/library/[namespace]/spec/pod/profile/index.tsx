@@ -40,6 +40,8 @@ function PodProfiles() {
     const [podProfiles, setPodProfiles] = useState<any[]>([]);
     const [loadingProfiles, setLoadingProfiles] = useState(false);
     const [viewProfileInitialValues, setViewProfileInitialValues] = useState<any>(null);
+    const [editMode, setEditMode] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     // Conflict/Dependency state
     const [conflictDialog, setConflictDialog] = useState<{
@@ -84,12 +86,17 @@ function PodProfiles() {
 
     const handleSubmitProfile = async (values: any) => {
         try {
-            await DefaultService.apiIntegrationKubernetesLibraryPodProfilePost({ requestBody: values });
-            toast.success("Pod profile created");
+            if (editMode && editingId) {
+                await DefaultService.apiIntegrationKubernetesLibraryPodProfilePut({ id: editingId, requestBody: values } as any);
+                toast.success("Pod profile updated");
+            } else {
+                await DefaultService.apiIntegrationKubernetesLibraryPodProfilePost({ requestBody: values });
+                toast.success("Pod profile created");
+            }
             setProfileDialogOpen(false);
             fetchPodProfiles();
         } catch (error) {
-            toast.error("Error creating pod profile");
+            toast.error(editMode ? "Error updating pod profile" : "Error creating pod profile");
         }
     };
 
@@ -110,6 +117,14 @@ function PodProfiles() {
         setViewProfileInitialValues(row);
         setViewProfileStep("view");
         setViewProfileDialogOpen(true);
+    };
+
+    const handleEditProfile = (row: any) => {
+        setEditMode(true);
+        setEditingId(row.id);
+        setProfileStep("config");
+        setViewProfileInitialValues(row);
+        setProfileDialogOpen(true);
     };
 
     return (
@@ -138,7 +153,10 @@ function PodProfiles() {
                         variant="gradient"
                         size="sm"
                         onClick={() => {
+                            setEditMode(false);
+                            setEditingId(null);
                             setProfileStep("config");
+                            setViewProfileInitialValues({ name: "", type: "", namespace: selectedNamespace, config: "" });
                             setProfileDialogOpen(true);
                         }}
                     >
@@ -164,6 +182,7 @@ function PodProfiles() {
                 selectedNamespace={selectedNamespace}
                 onDelete={handleDeleteProfile}
                 onViewDetails={handleViewProfile}
+                onEdit={handleEditProfile}
                 type="pod_profile"
                 highlightedId={resourceType === 'pod_profile' ? highlightedId : null}
                 onRowClick={clearFocus}
@@ -177,13 +196,13 @@ function PodProfiles() {
                 setCurrentStep={setProfileStep}
                 steps={steps}
                 schema={profileSchema}
-                initialValues={{ name: "", type: "", namespace: selectedNamespace, config: "" }}
+                initialValues={viewProfileInitialValues}
                 onSubmit={handleSubmitProfile}
-                submitLabel="Create Profile"
+                submitLabel={editMode ? "Update Profile" : "Create Profile"}
                 submitIcon={Settings}
                 heading={{
-                    primary: "Manage Pod Profiles",
-                    secondary: "Create and configure reusable pod profiles",
+                    primary: editMode ? "Edit Pod Profile" : "Manage Pod Profiles",
+                    secondary: editMode ? "Update reusable pod profile configuration" : "Create and configure reusable pod profiles",
                     icon: Settings,
                 }}
             />

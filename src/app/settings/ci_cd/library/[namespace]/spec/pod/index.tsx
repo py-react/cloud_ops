@@ -79,22 +79,9 @@ function PodLibrary() {
 
     // View details state
     const [viewPodDialogOpen, setViewPodDialogOpen] = useState(false);
-    const [viewPodInitialValues, setViewPodInitialValues] = useState<any>({
-        name: "",
-        metadata_profile_id: "",
-        namespace: selectedNamespace,
-        containers: [],
-        dynamic_attr: {},
-        service_account_name: "",
-        automount_service_account_token: undefined,
-        host_network: undefined,
-        dns_policy: "",
-        hostname: "",
-        subdomain: "",
-        termination_grace_period_seconds: undefined,
-        enable_service_links: undefined,
-        share_process_namespace: undefined
-    });
+    const [viewPodInitialValues, setViewPodInitialValues] = useState<any>(null);
+    const [editMode, setEditMode] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
 
     // Conflict/Dependency state
@@ -142,12 +129,17 @@ function PodLibrary() {
 
     const handleCreatePod = async (values: any) => {
         try {
-            await DefaultService.apiIntegrationKubernetesLibraryPodPost({ requestBody: values } as any);
-            toast.success("Pod specification created");
+            if (editMode && editingId) {
+                await DefaultService.apiIntegrationKubernetesLibraryPodPut({ id: editingId, requestBody: values } as any);
+                toast.success(`Updated ${values.name}`);
+            } else {
+                await DefaultService.apiIntegrationKubernetesLibraryPodPost({ requestBody: values });
+                toast.success(`Created ${values.name}`);
+            }
             setPodDialogOpen(false);
             fetchPods();
         } catch (error) {
-            toast.error("Error creating pod");
+            toast.error(editMode ? "Error updating pod" : "Error creating pod");
         }
     };
 
@@ -186,6 +178,25 @@ function PodLibrary() {
         });
         setViewPodStep("view");
         setViewPodDialogOpen(true);
+    };
+
+    const handleEditPod = (row: any) => {
+        setEditMode(true);
+        setEditingId(row.id);
+        const transformedPod = {
+            name: row.name,
+            namespace: row.namespace,
+            containers: row.containers || [],
+            dynamic_attr: row.dynamic_attr || {},
+            metadata_profile_id: row.metadata_profile_id,
+            service_account_name: row.service_account_name,
+            image_pull_secrets: row.image_pull_secrets || [],
+            node_selector: row.node_selector || {},
+            tolerations: row.tolerations || []
+        };
+        setViewPodInitialValues(transformedPod);
+        setPodStep("setup");
+        setPodDialogOpen(true);
     };
 
 
@@ -250,7 +261,15 @@ function PodLibrary() {
                         Refresh
                     </Button>
                     <Button variant="gradient" size="sm" onClick={() => {
+                        setEditMode(false);
+                        setEditingId(null);
                         setPodStep("setup");
+                        setViewPodInitialValues({
+                            name: "",
+                            namespace: selectedNamespace,
+                            containers: [],
+                            dynamic_attr: {},
+                        });
                         setPodDialogOpen(true);
                     }}>
                         <Plus className="w-3.5 h-3.5 mr-1" />
@@ -276,6 +295,7 @@ function PodLibrary() {
                 selectedNamespace={selectedNamespace}
                 onDelete={handleDeletePod}
                 onViewDetails={handleViewDetails}
+                onEdit={handleEditPod}
                 highlightedId={resourceType === 'pod' ? highlightedId : null}
                 onRowClick={clearFocus}
             />
@@ -290,11 +310,11 @@ function PodLibrary() {
                 schema={podSchema}
                 initialValues={viewPodInitialValues}
                 onSubmit={handleCreatePod}
-                submitLabel="Create Pod"
+                submitLabel={editMode ? "Update Pod" : "Create Pod"}
                 submitIcon={Box}
                 heading={{
-                    primary: "Create Derived Pod",
-                    secondary: "Define a new derived pod by linking containers and selecting profiles",
+                    primary: editMode ? "Edit Derived Pod" : "Create Derived Pod",
+                    secondary: editMode ? "Update derived pod configuration" : "Define a new derived pod by linking containers and selecting profiles",
                     icon: Box,
                 }}
             />

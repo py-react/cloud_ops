@@ -8,6 +8,7 @@ interface PodListProps {
     selectedNamespace: string;
     onDelete?: (row: any, dependents?: any[]) => void;
     onViewDetails?: (row: any) => void;
+    onEdit?: (row: any) => void;
     highlightedId?: string | number | null;
     onRowClick?: (row: any) => void;
 }
@@ -18,6 +19,7 @@ export const PodList: React.FC<PodListProps> = ({
     selectedNamespace,
     onDelete,
     onViewDetails,
+    onEdit,
     highlightedId,
     onRowClick
 }) => {
@@ -53,6 +55,7 @@ export const PodList: React.FC<PodListProps> = ({
                 data={pods}
                 onViewDetails={onViewDetails}
                 onDelete={onDelete}
+                onEdit={onEdit}
                 highlightedId={highlightedId}
                 onRowClick={onRowClick}
             />

@@ -1,7 +1,7 @@
 from fastapi import Request
 from app.db_client.db import engine, get_session
 from sqlmodel import Session
-from app.db_client.controllers.kubernetes_profiles.container import list_profiles, create_profile, delete_profile
+from app.db_client.controllers.kubernetes_profiles.container import list_profiles, create_profile, delete_profile, update_profile
 from app.db_client.models.kubernetes_profiles.container import K8sContainerProfile
 from typing import Optional, List
 
@@ -14,6 +14,14 @@ async def GET(request: Request, namespace: Optional[str] = None, ids: Optional[s
 async def POST(request: Request, body: K8sContainerProfile):
     with get_session() as session:
         profile = create_profile(session, body.dict())
+        return profile.dict()
+
+async def PUT(request: Request, id: int, body: K8sContainerProfile):
+    with get_session() as session:
+        data = body.dict(exclude_unset=True)
+        profile = update_profile(session, id, data)
+        if not profile:
+            return JSONResponse(status_code=404, content={"detail": "Container not found"})
         return profile.dict()
 
 

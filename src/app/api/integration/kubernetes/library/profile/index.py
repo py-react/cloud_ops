@@ -1,7 +1,8 @@
 from fastapi import Request
 from app.db_client.db import engine, get_session
 from sqlmodel import Session
-from app.db_client.controllers.kubernetes_profiles.profiles import list_profiles, create_profile, delete_profile
+from app.db_client.controllers.kubernetes_profiles.profiles import list_profiles, create_profile, delete_profile, update_profile
+from app.db_client.models.kubernetes_profiles.profile import K8sEntityProfile
 from typing import Optional, List
 
 async def GET(request: Request, namespace: Optional[str] = None, ids: Optional[str] = None):
@@ -10,10 +11,17 @@ async def GET(request: Request, namespace: Optional[str] = None, ids: Optional[s
         profiles = list_profiles(session, namespace, ids=ids_list)
         return [p.dict() for p in profiles]
 
-async def POST(request: Request):
+async def POST(request: Request, body: K8sEntityProfile):
     with get_session() as session:
-        data = await request.json()
-        profile = create_profile(session, data)
+        profile = create_profile(session, body.dict())
+        return profile.dict()
+
+async def PUT(request: Request, id: int, body: K8sEntityProfile):
+    with get_session() as session:
+        data = body.dict(exclude_unset=True)
+        profile = update_profile(session, id, data)
+        if not profile:
+            return JSONResponse(status_code=404, content={"detail": "Profile not found"})
         return profile.dict()
 
 
