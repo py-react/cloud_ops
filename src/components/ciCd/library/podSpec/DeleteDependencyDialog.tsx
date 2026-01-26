@@ -36,7 +36,34 @@ export const DeleteDependencyDialog: React.FC<DeleteDependencyDialogProps> = ({
     dependents
 }) => {
     const handleOpenDependent = (dep: Dependent) => {
-        const url = `${window.location.pathname}?focusId=${dep.id}&resourceType=${dep.type}&autoOpen=true`;
+        // Extract namespace from current path
+        const pathParts = window.location.pathname.split('/');
+        const namespaceIndex = pathParts.findIndex(part => part === 'library') + 1;
+        const namespace = pathParts[namespaceIndex] || 'default';
+
+        // Build the correct path based on resource type
+        let targetPath = '';
+        switch (dep.type) {
+            case 'pod_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/pod/profile`;
+                break;
+            case 'pod_metadata_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/pod/metadata`;
+                break;
+            case 'profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/container/profile`;
+                break;
+            case 'container':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/container`;
+                break;
+            case 'pod':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/pod`;
+                break;
+            default:
+                targetPath = window.location.pathname;
+        }
+
+        const url = `${targetPath}?focusId=${dep.id}&resourceType=${dep.type}&autoOpen=true`;
         window.open(url, "_blank");
     };
 
