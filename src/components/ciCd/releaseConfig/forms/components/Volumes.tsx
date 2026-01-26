@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, HardDrive } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { DeploymentFormData, getVolumeType, updateVolumeType } from "./formUtils";
-import { 
+import {
   K8sVolume,
   K8sEmptyDirVolume,
   K8sConfigMapVolume,
@@ -84,12 +84,7 @@ const Volumes: React.FC<VolumesProps> = ({ form }) => {
                 <div className="space-y-2">
                   <Label className="text-base font-medium">Volume Name</Label>
                   <Input
-                    value={volume.name}
-                    onChange={(e) => {
-                      const newVolumes = [...(formData.volumes || [])];
-                      newVolumes[index].name = e.target.value;
-                      form.setValue("volumes", newVolumes);
-                    }}
+                    {...form.register(`volumes.${index}.name` as const)}
                     placeholder="volume-name"
                   />
                 </div>
@@ -138,12 +133,7 @@ const Volumes: React.FC<VolumesProps> = ({ form }) => {
                   <div className="space-y-2">
                     <Label className="text-base font-medium">Size Limit</Label>
                     <Input
-                      value={(volume as K8sEmptyDirVolume).emptyDir?.sizeLimit || ""}
-                      onChange={(e) => {
-                        const newVolumes = [...(formData.volumes || [])];
-                        (newVolumes[index] as K8sEmptyDirVolume).emptyDir.sizeLimit = e.target.value;
-                        form.setValue("volumes", newVolumes);
-                      }}
+                      {...form.register(`volumes.${index}.emptyDir.sizeLimit` as any)}
                       placeholder="e.g., 1Gi, 100Mi"
                     />
                   </div>
@@ -155,25 +145,14 @@ const Volumes: React.FC<VolumesProps> = ({ form }) => {
                   <div className="space-y-2">
                     <Label className="text-base font-medium">ConfigMap Name</Label>
                     <Input
-                      value={(volume as K8sConfigMapVolume).configMap?.name || ""}
-                      onChange={(e) => {
-                        const newVolumes = [...(formData.volumes || [])];
-                        (newVolumes[index] as K8sConfigMapVolume).configMap.name = e.target.value;
-                        form.setValue("volumes", newVolumes);
-                      }}
+                      {...form.register(`volumes.${index}.configMap.name` as any)}
                       placeholder="configmap-name"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-base font-medium">Default Mode</Label>
                     <Input
-                      type="number"
-                      value={(volume as K8sConfigMapVolume).configMap?.defaultMode || ""}
-                      onChange={(e) => {
-                        const newVolumes = [...(formData.volumes || [])];
-                        (newVolumes[index] as K8sConfigMapVolume).configMap.defaultMode = parseInt(e.target.value) || undefined;
-                        form.setValue("volumes", newVolumes);
-                      }}
+                      {...form.register(`volumes.${index}.configMap.defaultMode` as any, { valueAsNumber: true })}
                       placeholder="e.g., 420"
                     />
                   </div>

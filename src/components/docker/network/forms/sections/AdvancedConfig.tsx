@@ -1,7 +1,6 @@
 import React from "react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Editor } from "@monaco-editor/react";
-import { OptionalBadge } from "@/components/docker/network/forms/badges";
 
 export function AdvancedConfig({ control, errors }: { control: any; errors: any }) {
   return (
@@ -11,8 +10,8 @@ export function AdvancedConfig({ control, errors }: { control: any; errors: any 
         name="options"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              Options <OptionalBadge />
+            <FormLabel className="text-sm font-medium text-foreground/80">
+              Options
             </FormLabel>
             <FormDescription>
               Network options in JSON format
@@ -59,8 +58,8 @@ export function AdvancedConfig({ control, errors }: { control: any; errors: any 
         name="labels"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              Labels <OptionalBadge />
+            <FormLabel className="text-sm font-medium text-foreground/80">
+              Labels
             </FormLabel>
             <FormDescription>
               Network labels in JSON format

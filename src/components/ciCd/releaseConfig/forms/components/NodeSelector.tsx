@@ -28,7 +28,7 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ form }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {Object.entries(formData.nodeSelector || {}).map(([key, value]) => (
+        {Object.entries(formData.node_selector || {}).map(([key, value]) => (
           <div key={key} className="flex gap-2 items-end">
             <div className="flex-1 space-y-2">
               <Input
@@ -36,7 +36,7 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ form }) => {
                 onChange={(e) =>
                   updateKeyValuePair(
                     form,
-                    "nodeSelector",
+                    "node_selector",
                     key,
                     e.target.value,
                     value
@@ -49,7 +49,7 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ form }) => {
               <Input
                 value={value}
                 onChange={(e) =>
-                  updateKeyValuePair(form, "nodeSelector", key, key, e.target.value)
+                  updateKeyValuePair(form, "node_selector", key, key, e.target.value)
                 }
                 placeholder="value"
               />
@@ -58,7 +58,7 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ form }) => {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => removeKeyValuePair(form, "nodeSelector", key)}
+              onClick={() => removeKeyValuePair(form, "node_selector", key)}
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
               <Trash2 className="h-4 w-4" />
@@ -68,7 +68,7 @@ const NodeSelector: React.FC<NodeSelectorProps> = ({ form }) => {
         <Button
           type="button"
           variant="outline"
-          onClick={() => addKeyValuePair(form, "nodeSelector")}
+          onClick={() => addKeyValuePair(form, "node_selector")}
           className="w-full border-dashed"
         >
           <Plus className="h-4 w-4 mr-2" />

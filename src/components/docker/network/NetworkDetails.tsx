@@ -3,19 +3,19 @@ import { Network } from "./types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { format } from 'date-fns';
-import { 
-  Network as NetworkIcon, 
-  Info, 
-  Settings, 
-  Server, 
-  Tag, 
-  List, 
-  Globe, 
-  Shield, 
-  Link, 
-  Lock, 
-  Wifi, 
-  CheckCircle2, 
+import {
+  Network as NetworkIcon,
+  Info,
+  Settings,
+  Server,
+  Tag,
+  List,
+  Globe,
+  Shield,
+  Link,
+  Lock,
+  Wifi,
+  CheckCircle2,
   XCircle,
   Database,
   Sliders,
@@ -197,7 +197,7 @@ export function NetworkDetails({ network }: NetworkDetailsProps) {
                 <h3 className="text-base font-medium text-muted-foreground">Labels</h3>
               </div>
               <div className="mt-4 space-y-3">
-                {Object.entries(network.Labels).map(([key, value]) => (
+                {Object.entries(network.Labels || {}).map(([key, value]) => (
                   <div key={key} className="flex items-start gap-3">
                     <KeyRound className="h-5 w-5 text-muted-foreground mt-1" />
                     <p className="text-sm text-muted-foreground">

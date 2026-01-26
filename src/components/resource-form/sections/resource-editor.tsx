@@ -4,10 +4,10 @@ import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessa
 import Editor from "@monaco-editor/react";
 import { SchemaValues } from '../resource-form';
 
-const ResourceEditor: React.FC = ({resourceType}) => {
+const ResourceEditor: React.FC = ({ resourceType }) => {
   const form = useFormContext<SchemaValues>();
   const { control, formState: { errors } } = form;
-  
+
   const handleYamlChange = (value: string | undefined) => {
     try {
       form.setValue("rawYaml", value || "");
@@ -32,9 +32,8 @@ const ResourceEditor: React.FC = ({resourceType}) => {
             </FormLabel>
             <FormControl>
               <div
-                className={`h-[calc(100vh-29rem)] border rounded-md overflow-hidden ${
-                  errors?.rawYaml?.message?.length ? "border-destructive" : ""
-                }`}
+                className={`h-[calc(100vh-29rem)] border rounded-md overflow-hidden ${errors?.rawYaml?.message?.length ? "border-destructive" : ""
+                  }`}
               >
                 <Editor
                   className="h-[calc(100vh-29rem)]"
@@ -61,9 +60,9 @@ const ResourceEditor: React.FC = ({resourceType}) => {
               Edit the YAML configuration for your resource quota. This will
               define all resource limits and constraints for the namespace.
             </FormDescription>
-              <FormMessage>
-                {errors?.rawYaml?.message}
-              </FormMessage>
+            <FormMessage>
+              {errors?.rawYaml?.message}
+            </FormMessage>
           </FormItem>
         )}
       />

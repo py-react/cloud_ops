@@ -30,7 +30,7 @@ const LabelsAndAnnotations: React.FC<LabelsAndAnnotationsProps> = ({ form }) => 
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {Object.entries(formData.labels).map(([key, value]) => (
+          {Object.entries(formData.labels || {}).map(([key, value]) => (
             <div key={key} className="flex gap-2 items-end">
               <div className="flex-1 space-y-2">
                 <Input
@@ -88,7 +88,7 @@ const LabelsAndAnnotations: React.FC<LabelsAndAnnotationsProps> = ({ form }) => 
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {Object.entries(formData.annotations).map(([key, value]) => (
+          {Object.entries(formData.annotations || {}).map(([key, value]) => (
             <div key={key} className="flex gap-2 items-end">
               <div className="flex-1 space-y-2">
                 <Input

@@ -81,60 +81,60 @@ const shortcutToResources = {
 
 function Kubernetes() {
   const navigate = useNavigate()
-  const [showApplyResouceFormm,setShowApplyResourceForm] = useState(false)
+  const [showApplyResouceFormm, setShowApplyResourceForm] = useState(false)
   const [resources, setResources] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  const [clusterInfo, setCLusterInfo] = useState({});
+  const [clusterInfo, setClusterInfo] = useState<any>({});
   const [isLoadingClusterInfo, setIsLoadingClusterInfo] = useState(true);
   const [clusterInfoError, setClusterInfoError] = useState("");
 
-  const [clusterMettrics, setCLusterMetrics] = useState({});
+  const [clusterMetrics, setClusterMetrics] = useState<any>({});
   const [isLoadingClusterMetrics, setIsLoadingClusterMetrics] = useState(true);
   const [clusterMetricsError, setClusterMetricsError] = useState("");
 
-  const {namespace} = useParams()
+  const { namespace } = useParams()
 
   const {
     error: recentEventsError,
     resource: recentEvents,
     isLoading: isRecentEventsLoading,
   } = useKubernertesResources({
-    nameSpace: null,
+    nameSpace: (namespace as any) || null,
     type: "events",
   });
 
   const fetchClusterInfo = useCallback(async () => {
     setIsLoadingClusterInfo(true);
-    const response = await DefaultService.apiKubernertesClusterGet().catch(
+    const response: any = await DefaultService.apiKubernertesClusterGet().catch(
       (err) => {
         setClusterInfoError("Unable to fetch cluster info");
       }
     );
-    if (response.status != "error") {
-      setCLusterInfo(response.data);
+    if (response && response.status != "error") {
+      setClusterInfo(response.data);
       setIsLoadingClusterInfo(false);
     }
   }, []);
 
   const fetchClusterMetrics = useCallback(async () => {
     setIsLoadingClusterMetrics(true);
-    const response = await DefaultService.apiKubernertesClusterMetricsGet().catch(
+    const response: any = await DefaultService.apiKubernertesClusterMetricsGet().catch(
       (err) => {
         setClusterMetricsError("Unable to fetch cluster info");
       }
     );
-    if (response.status != "error") {
-      setCLusterMetrics(response.data);
+    if (response && response.status != "error") {
+      setClusterMetrics(response.data);
       setIsLoadingClusterMetrics(false);
     }
   }, []);
 
   const fetchShortcutToResourcesData = useCallback(async () => {
     setIsLoading(true);
-    const response = await DefaultService.apiKubernertesResourcesGet({
-      scope: null,
+    const response: any = await DefaultService.apiKubernertesResourcesGet({
+      scope: (namespace as any) || null,
       resources: Object.keys(shortcutToResources).join(","),
     }).catch((err) => {
       setError("Unable to fetch ResourceData");
@@ -142,7 +142,7 @@ function Kubernetes() {
     });
     setResources(response as []);
     setIsLoading(false);
-  }, []);
+  }, [namespace]);
 
   useEffect(() => {
     fetchShortcutToResourcesData();
@@ -151,16 +151,16 @@ function Kubernetes() {
   }, []);
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <ApplyResourceDialog open={showApplyResouceFormm} onClose={() => setShowApplyResourceForm(false)} />
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Kubernetes</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">Kubernetes</h1>
       <div className="space-y-6">
         <RouteDescription
           title={
             <div className="flex items-center justify-between">
               <h2>Dashboard</h2>
               <div className="flex items-center gap-2">
-                
+
                 <Button
                   variant={"outline"}
                   className=""
@@ -173,7 +173,7 @@ function Kubernetes() {
                 </Button>
                 <Button
                   className=""
-                  onClick={()=>{
+                  onClick={() => {
                     setShowApplyResourceForm(true)
                   }}
                 >
@@ -186,7 +186,7 @@ function Kubernetes() {
           shortDescription="Welcome to your Kubernetes Dashboard. Monitor and manage your cluster resources from this central hub."
           description="Get an overview of your cluster health, resource utilization, and running workloads. Use the navigation on the left to access specific resource types like Pods, Services, Deployments, and more."
         />
-        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200">
+        <Card className="rounded-xl border border-border/50">
           <CardHeader>
             <CardTitle>Quick Links</CardTitle>
             <CardDescription>
@@ -205,7 +205,7 @@ function Kubernetes() {
                         count={0}
                         color={item.color}
                         icon={item.icon}
-                        onClick={() => {}}
+                        onClick={() => { }}
                         isLoading={isLoading}
                         error={!!error}
                       />
@@ -271,9 +271,9 @@ function Kubernetes() {
               isLoading={isLoadingClusterMetrics}
               error={clusterMetricsError}
               usage={{
-                cpu: clusterMettrics?.usage?.cpu?.percentage,
-                memory: clusterMettrics?.usage?.memory?.percentage,
-                disk: clusterMettrics?.usage?.disk?.percentage,
+                cpu: clusterMetrics?.usage?.cpu?.percentage,
+                memory: clusterMetrics?.usage?.memory?.percentage,
+                disk: clusterMetrics?.usage?.disk?.percentage,
               }}
             />
           </div>

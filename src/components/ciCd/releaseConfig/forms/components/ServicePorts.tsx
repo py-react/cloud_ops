@@ -51,32 +51,19 @@ const ServicePorts: React.FC<ServicePortsProps> = ({ form }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {formData.service_ports.map((port, index) => (
+        {formData.service_ports?.map((port, index) => (
           <div key={index} className="flex gap-2 items-end">
             <div className="flex-1 space-y-2">
               <Label className="text-base font-medium">Port</Label>
               <Input
-                type="number"
-                value={port.port}
-                onChange={(e) => {
-                  const newPorts = [...formData.service_ports];
-                  newPorts[index].port = parseInt(e.target.value) || 0;
-                  form.setValue("service_ports", newPorts);
-                }}
+                {...form.register(`service_ports.${index}.port`, { valueAsNumber: true })}
                 placeholder="80"
               />
             </div>
             <div className="flex-1 space-y-2">
               <Label className="text-base font-medium">Target Port</Label>
               <Input
-                type="number"
-                value={port.target_port}
-                onChange={(e) => {
-                  const newPorts = [...formData.service_ports];
-                  newPorts[index].target_port =
-                    parseInt(e.target.value) || 0;
-                  form.setValue("service_ports", newPorts);
-                }}
+                {...form.register(`service_ports.${index}.target_port`, { valueAsNumber: true })}
                 placeholder="8080"
               />
             </div>
@@ -85,9 +72,7 @@ const ServicePorts: React.FC<ServicePortsProps> = ({ form }) => {
               <Select
                 value={port.protocol}
                 onValueChange={(value: "TCP" | "UDP") => {
-                  const newPorts = [...formData.service_ports];
-                  newPorts[index].protocol = value;
-                  form.setValue("service_ports", newPorts);
+                  form.setValue(`service_ports.${index}.protocol`, value);
                 }}
               >
                 <SelectTrigger>

@@ -19,20 +19,6 @@ interface BasicConfigProps {
 }
 
 export function BasicConfig({ control, errors, watch }: BasicConfigProps) {
-  // Helper to indicate required fields
-  const RequiredBadge = () => (
-    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-red-50 px-1 py-0.5 text-xs font-medium text-red-700">
-      Required
-    </span>
-  );
-
-  // Helper to indicate optional fields
-  const OptionalBadge = () => (
-    <span className="inline-flex ml-1 items-center rounded-[0.5rem] bg-gray-50 px-1 py-0.5 text-xs font-medium text-gray-600">
-      Optional
-    </span>
-  );
-
   return (
     <div className="space-y-6">
       {/* Main Fields in Grid, 2 per row, preserve spacing */}
@@ -43,8 +29,8 @@ export function BasicConfig({ control, errors, watch }: BasicConfigProps) {
           name="image"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Image <RequiredBadge />
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Image <span className="text-red-500">*</span>
               </FormLabel>
               <FormDescription>
                 The Docker image to use for this container
@@ -61,8 +47,8 @@ export function BasicConfig({ control, errors, watch }: BasicConfigProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Container Name <RequiredBadge />
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Container Name <span className="text-red-500">*</span>
               </FormLabel>
               <FormDescription>
                 A name for this container
@@ -80,8 +66,8 @@ export function BasicConfig({ control, errors, watch }: BasicConfigProps) {
           name="command"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                Command <OptionalBadge />
+              <FormLabel className="text-sm font-medium text-foreground/80">
+                Command
               </FormLabel>
               <FormDescription>
                 The command to run in the container
@@ -97,75 +83,80 @@ export function BasicConfig({ control, errors, watch }: BasicConfigProps) {
       </div>
 
       {/* Runtime Options in a row */}
-      <div className="flex flex-col md:flex-row gap-6">
-        <FormField
-          control={control}
-          name="detach"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center gap-2 space-y-0">
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="m-0">
-                  Detach
-                </FormLabel>
-                <FormDescription>
-                  Run container in background
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
+      <div className="rounded-lg border border-border/40 p-4 bg-muted/20">
+        <h4 className="text-sm font-medium mb-4 text-foreground/80 flex items-center gap-2">
+          Runtime Options
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <FormField
+            control={control}
+            name="detach"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center gap-3 space-y-0">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-0.5 leading-none">
+                  <FormLabel className="text-sm font-medium">
+                    Detach
+                  </FormLabel>
+                  <FormDescription className="text-xs">
+                    Run in background
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={control}
-          name="removeOnExit"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center gap-2 space-y-0">
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="m-0">
-                  Remove on Exit
-                </FormLabel>
-                <FormDescription>
-                  Automatically remove the container when it exits
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={control}
+            name="removeOnExit"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center gap-3 space-y-0">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-0.5 leading-none">
+                  <FormLabel className="text-sm font-medium">
+                    Auto-remove
+                  </FormLabel>
+                  <FormDescription className="text-xs">
+                    Remove on exit
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={control}
-          name="privileged"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center gap-2 space-y-0">
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="m-0">
-                  Privileged
-                </FormLabel>
-                <FormDescription>
-                  Give extended privileges to this container
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={control}
+            name="privileged"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center gap-3 space-y-0">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-0.5 leading-none">
+                  <FormLabel className="text-sm font-medium">
+                    Privileged
+                  </FormLabel>
+                  <FormDescription className="text-xs">
+                    Elevated permissions
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+        </div>
       </div>
     </div>
   );

@@ -40,12 +40,46 @@ export const $DeploymentConfigType = {
 	type: 'null',
 }],
 },
+		scheduling_profile_id: {
+	type: 'any-of',
+	contains: [{
+	type: 'number',
+}, {
+	type: 'null',
+}],
+},
+		container_profile_ids: {
+	type: 'any-of',
+	contains: [{
+	type: 'array',
+	contains: {
+	type: 'number',
+},
+}, {
+	type: 'null',
+}],
+},
+		volume_profile_ids: {
+	type: 'any-of',
+	contains: [{
+	type: 'array',
+	contains: {
+	type: 'number',
+},
+}, {
+	type: 'null',
+}],
+},
 		containers: {
+	type: 'any-of',
+	contains: [{
 	type: 'array',
 	contains: {
 		type: 'ContainerConfig',
 	},
-	isRequired: true,
+}, {
+	type: 'null',
+}],
 },
 		service_ports: {
 	type: 'any-of',

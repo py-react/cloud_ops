@@ -1,5 +1,5 @@
 import React from 'react';
-import { Control, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import { Control } from 'react-hook-form';
 import type { ContainerRunConfig } from '../types';
 import {
   FormControl,
@@ -14,80 +14,104 @@ import { Input } from "@/components/ui/input";
 interface HealthConfigProps {
   control: Control<ContainerRunConfig>;
   errors: any;
-  watch: UseFormWatch<ContainerRunConfig>;
-  setValue: UseFormSetValue<ContainerRunConfig>;
 }
 
-export function HealthConfig({ control, errors, watch, setValue }: HealthConfigProps) {
+export function HealthConfig({ control, errors }: HealthConfigProps) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormField
           control={control}
           name="healthcheck.test.0"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Test Command</FormLabel>
-              <FormDescription>e.g., CMD-SHELL curl -f http://localhost/ || exit 1</FormDescription>
+              <FormLabel className="text-sm font-medium text-foreground/80">Test Command</FormLabel>
+              <FormDescription>The command to run to check container health</FormDescription>
               <FormControl>
-                <Input placeholder="e.g., CMD-SHELL curl -f http://localhost/ || exit 1" {...field} />
+                <Input placeholder="e.g., curl -f http://localhost/ || exit 1" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormField
-          control={control}
-          name="healthcheck.interval"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Interval (seconds)</FormLabel>
-              <FormDescription>e.g., 30s</FormDescription>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="30"
-                  {...field}
-                  onChange={e => setValue('healthcheck.interval', parseInt(e.target.value) * 1000000000)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name="healthcheck.timeout"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Timeout (seconds)</FormLabel>
-              <FormDescription>e.g., 10s</FormDescription>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="3"
-                  {...field}
-                  onChange={e => setValue('healthcheck.timeout', parseInt(e.target.value) * 1000000000)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name="healthcheck.retries"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Retries</FormLabel>
-              <FormDescription>e.g., 3</FormDescription>
-              <FormControl>
-                <Input type="number" placeholder="3" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
+        <div className="rounded-lg border border-border/40 p-4 bg-muted/20 md:col-span-2">
+          <h4 className="text-sm font-medium mb-4 text-foreground/80 flex items-center gap-2">
+            Health Check Settings
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FormField
+              control={control}
+              name="healthcheck.interval"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Interval (sec)</FormLabel>
+                  <FormDescription className="text-xs">Time between checks</FormDescription>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="30"
+                      min={0}
+                      value={field.value ? field.value / 1000000000 : ""}
+                      onChange={e => {
+                        const val = e.target.value === "" ? undefined : parseInt(e.target.value) * 1000000000;
+                        field.onChange(val);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="healthcheck.timeout"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Timeout (sec)</FormLabel>
+                  <FormDescription className="text-xs">Max time for check</FormDescription>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="3"
+                      min={0}
+                      value={field.value ? field.value / 1000000000 : ""}
+                      onChange={e => {
+                        const val = e.target.value === "" ? undefined : parseInt(e.target.value) * 1000000000;
+                        field.onChange(val);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="healthcheck.retries"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Retries</FormLabel>
+                  <FormDescription className="text-xs">Consecutive failures</FormDescription>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="3"
+                      min={0}
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={e => {
+                        const val = e.target.value === "" ? undefined : parseInt(e.target.value);
+                        field.onChange(val);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

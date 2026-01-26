@@ -9,34 +9,36 @@ import { NavigationHistoryProvider } from '@/libs/navigationHistory'
 import BackButton from '@/components/BackButton'
 
 function AppLayout() {
-  useEffect(()=>{
+  useEffect(() => {
     const mysocket = new WebSocket("ws://127.0.0.1:5001/ws/test");
-    mysocket.onmessage = function(event) {
-        console.log(event.data)
+    mysocket.onmessage = function (event) {
+      console.log(event.data)
     };
-    mysocket.onopen = function(event) {
-        mysocket.send("Hello, world!")
+    mysocket.onopen = function (event) {
+      mysocket.send("Hello, world!")
     }
     // return ()=>{
     //   mysocket.close()
     // }
-  },[])
-  
+  }, [])
+
   return (
     <NavigationHistoryProvider>
-      <div key="AppLayout" className='p-0 w-full'>
+      <div key="AppLayout" className='p-0 w-full min-h-screen bg-background'>
         <SidebarProvider>
-        <KubeContextProvider>
-          <NamespaceContextProvider>
+          <KubeContextProvider>
+            <NamespaceContextProvider>
               <AppSidebar />
-              <div className='w-full p-4'>
+              <main className='w-full p-6 overflow-auto'>
                 <BackButton />
-                <Outlet />
-              </div>
-          </NamespaceContextProvider>
+                <div className="animate-fade-in">
+                  <Outlet />
+                </div>
+              </main>
+            </NamespaceContextProvider>
           </KubeContextProvider>
         </SidebarProvider>
-        <Toaster />
+        <Toaster richColors position="bottom-right" />
       </div>
     </NavigationHistoryProvider>
   )

@@ -7,9 +7,9 @@
     "dev": "render_relay runserver dev",
     "start": "render_relay runserver",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "generate_migrations":"alembic revision --autogenerate",
-    "apply_migrations":"alembic upgrade head",
-    "sync_db":"alembic revision --autogenerate && alembic upgrade head",
+    "generate_migrations": "alembic revision --autogenerate",
+    "apply_migrations": "alembic upgrade head",
+    "sync_db": "alembic revision --autogenerate && alembic upgrade head",
     "generate-client": "openapi-ts --input ./public/static/openapi.json --output ./src/gingerJs_api_client --client fetch"
   },
   "dependencies": {

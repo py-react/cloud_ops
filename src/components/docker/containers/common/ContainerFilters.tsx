@@ -1,5 +1,13 @@
 import React from 'react';
 import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ContainerFiltersProps {
   search: string;
@@ -15,35 +23,29 @@ export function ContainerFilters({
   onStatusFilterChange,
 }: ContainerFiltersProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 px-6">
+    <div className="flex flex-col sm:flex-row gap-2 px-0">
       <div className="relative flex-1">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          type="text"
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground z-10" />
+        <Input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 
-                   bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 
-                   focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="pl-9 bg-card/10 border-border/50 h-8 text-[12px]"
           placeholder="Search containers..."
         />
       </div>
 
-      <select
-        value={statusFilter}
-        onChange={(e) => onStatusFilterChange(e.target.value)}
-        className="block w-full sm:w-40 pl-3 pr-10 py-2 text-base border-gray-300 
-                 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm 
-                 rounded-md"
-      >
-        <option value="">All Status</option>
-        <option value="running">Running</option>
-        <option value="exited">Exited</option>
-        <option value="paused">Paused</option>
-        <option value="restarting">Restarting</option>
-      </select>
+      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+        <SelectTrigger className="w-full sm:w-[140px] bg-card/10 border-border/50 h-8 text-[12px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent className="bg-background/80 backdrop-blur-xl border-border/50 text-[12px]">
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="running">Running</SelectItem>
+          <SelectItem value="exited">Exited</SelectItem>
+          <SelectItem value="paused">Paused</SelectItem>
+          <SelectItem value="restarting">Restarting</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

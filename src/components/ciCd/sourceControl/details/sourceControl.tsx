@@ -22,12 +22,13 @@ import {
   User,
   Webhook,
   XCircle,
+  GitBranch,
 } from "lucide-react";
 import React, { useState } from "react";
 
-function formatUtcToLocal(dateString:string) {
+function formatUtcToLocal(dateString: string) {
   // dateString is in UTC
-  const utcDate = new Date(dateString+ "Z"); // JS auto-parses UTC
+  const utcDate = new Date(dateString + "Z"); // JS auto-parses UTC
 
   // Get local date equivalent (JS auto adjusts)
   return utcDate.toLocaleString(undefined, {
@@ -121,8 +122,6 @@ export const BuildLogsViewer: React.FC<BuildLogsViewerProps> = ({
     .flatMap((log) => log.logs.split("\n"))
     .filter((line) => line.trim() !== "");
 
-  console.log({logLines})
-
   return (
     <div className={`border rounded-lg overflow-hidden ${getStatusColor()}`}>
       {/* Header */}
@@ -182,9 +181,8 @@ export const BuildLogsViewer: React.FC<BuildLogsViewerProps> = ({
 
       {/* Logs Content */}
       <div
-        className={`bg-slate-900 text-green-400 font-mono text-xs overflow-x-auto ${
-          isExpanded ? "max-h-96" : "max-h-48"
-        } overflow-y-auto`}
+        className={`bg-slate-900 text-green-400 font-mono text-xs overflow-x-auto ${isExpanded ? "max-h-96" : "max-h-48"
+          } overflow-y-auto`}
       >
         <div className="p-4">
           {logLines.map((line, idx) => (
@@ -200,12 +198,12 @@ export const BuildLogsViewer: React.FC<BuildLogsViewerProps> = ({
                   line.includes("Successfully")
                     ? "text-green-400"
                     : line.includes("Error") || line.includes("FAILED")
-                    ? "text-red-400"
-                    : line.includes("Step")
-                    ? "text-blue-400"
-                    : line.includes("---->")
-                    ? "text-yellow-400"
-                    : "text-slate-300"
+                      ? "text-red-400"
+                      : line.includes("Step")
+                        ? "text-blue-400"
+                        : line.includes("---->")
+                          ? "text-yellow-400"
+                          : "text-slate-300"
                 }
               >
                 {line}
@@ -273,7 +271,7 @@ const BuildRow: React.FC<{ build: any }> = ({ build }) => {
   const [expanded, setExpanded] = useState(false);
 
   const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch ((status || "").toLowerCase()) {
       case "success":
         return <CheckCircle className="h-5 w-5 text-emerald-500" />;
       case "failed":
@@ -289,20 +287,20 @@ const BuildRow: React.FC<{ build: any }> = ({ build }) => {
 
   return (
     <>
-      <tr className="hover:bg-slate-50 transition-colors">
+      <tr className="hover:bg-muted/20 transition-colors group">
         <td className="px-6 py-4">
           <button
             onClick={() => setExpanded(!expanded)}
             className="flex items-center space-x-2 text-left"
           >
             {expanded ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
             )}
             <div>
               {build.pull_request_number && (
-                <p className="text-xs text-slate-500">
+                <p className="text-[11px] font-bold text-blue-500 transition-all group-hover:pl-0.5">
                   PR #{build.pull_request_number}
                 </p>
               )}
@@ -310,7 +308,7 @@ const BuildRow: React.FC<{ build: any }> = ({ build }) => {
           </button>
         </td>
         <td className="px-6 py-4">
-          <span className="font-mono text-sm text-slate-900">
+          <span className="font-mono text-[13px] font-medium text-foreground bg-muted/30 px-2 py-0.5 rounded border border-border/40">
             {build.image_name}
           </span>
         </td>
@@ -322,17 +320,17 @@ const BuildRow: React.FC<{ build: any }> = ({ build }) => {
         </td>
 
         <td className="px-6 py-4">
-          <div className="flex items-center space-x-1">
-            <User className="h-3 w-3 text-slate-400" />
-            <span className="text-sm text-slate-900">{build.user_login}</span>
+          <div className="flex items-center space-x-1.5">
+            <User className="h-3 w-3 text-muted-foreground" />
+            <span className="text-[13px] font-medium text-foreground">{build.user_login}</span>
           </div>
         </td>
-        <td className="px-6 py-4 text-sm text-slate-900">
-            {build.created_at ? formatUtcToLocal(build.created_at) : "NA"}
-          </td>
-          <td className="px-6 py-4 text-sm text-slate-900">
-            {Number(build.time_taken).toFixed(2) || "NA"}
-          </td>
+        <td className="px-6 py-4 text-[13px] font-medium text-muted-foreground">
+          {build.created_at ? formatUtcToLocal(build.created_at) : "NA"}
+        </td>
+        <td className="px-6 py-4 text-[13px] font-bold text-foreground tabular-nums">
+          {Number(build.time_taken).toFixed(1)}s
+        </td>
       </tr>
 
       {expanded && (
@@ -352,25 +350,21 @@ const BuildRow: React.FC<{ build: any }> = ({ build }) => {
   );
 };
 
-export const SourceControlDetailedInfo = ({
+interface SourceControlDetailedInfoProps {
+  data: any[];
+  loading: boolean;
+  error: string | null;
+  name: string;
+  branch: string;
+}
+
+export const SourceControlDetailedInfo: React.FC<SourceControlDetailedInfoProps> = ({
   data,
   loading,
   error,
   name,
   branch,
 }) => {
-  const [copied, setCopied] = useState("");
-
-  const handleCopy = async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(type);
-      setTimeout(() => setCopied(""), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-  };
-
   const getStatusIcon = (status: string) => {
     switch ((status || "").toLowerCase()) {
       case "success":
@@ -394,10 +388,13 @@ export const SourceControlDetailedInfo = ({
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-slate-900 mb-2">
-            Error Loading ConfigMap
+            Error Loading Data
           </h2>
           <p className="text-slate-600 mb-4">{error}</p>
-          <button className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Retry
           </button>
@@ -408,224 +405,186 @@ export const SourceControlDetailedInfo = ({
 
   return (
     <div className="min-h-screen w-full">
-      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
-        {loading ? (
-          <div className="animate-pulse">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-slate-200 rounded-xl"></div>
-                <div>
-                  <div className="h-6 w-32 bg-slate-200 rounded mb-2"></div>
-                  <div className="h-4 w-20 bg-slate-200 rounded"></div>
-                </div>
+      {loading ? (
+        <div className="bg-white rounded-xl border border-border/40 p-6 animate-pulse mb-8 overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-muted rounded-lg"></div>
+              <div>
+                <div className="h-5 w-32 bg-muted rounded mb-2"></div>
+                <div className="h-4 w-20 bg-muted rounded"></div>
               </div>
-              <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-6">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <MetricSkeletonLoader key={index} />
-              ))}
-            </div>
+            <div className="h-6 w-16 bg-muted rounded-full"></div>
           </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <Plug className="h-6 w-6 text-blue-600" />
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <MetricSkeletonLoader key={index} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="animate-fade-in space-y-4">
+          {/* Header */}
+          <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
+            <div>
+              <div className="flex items-center gap-4 mb-1 p-1">
+                <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
+                  <GitBranch className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    Repository Overview
-                  </h2>
-                  <p className="text-sm text-slate-500">
-                    Build status and repository information
+                  <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Repository Overview</h1>
+                  <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
+                    Build status and repository information for <span className="text-primary font-bold">{branch}</span>.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-slate-500">
-                  Created:{" "}
-                  {data?.creation_timestamp
-                    ? new Date(data.creation_timestamp).toLocaleDateString()
-                    : "Unknown"}
-                </span>
-              </div>
             </div>
-
-            <div className={`grid grid-cols-2 md:grid-cols-2 gap-6 px-4 pb-6`}>
-              <div className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mx-auto mb-2">
-                  <Webhook className="h-6 w-6 text-blue-600" />
-                </div>
-                <p className="text-2xl font-bold text-slate-900">Github</p>
-                <p className="text-sm text-slate-500 font-medium">Provider</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mx-auto mb-2">
-                  <DockIcon className="h-6 w-6 text-purple-600" />
-                </div>
-                <p className="text-2xl font-bold text-slate-900">
-                  {lastBuild ? lastBuild?.status : "Unknonw"}
-                </p>
-                <p className="text-sm text-slate-500 font-medium">Last Build</p>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Repository Information */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden p-4">
-          <div className="px-6 pb-4 border-b border-slate-200">
-            <div className="flex items-center space-x-3">
-              <Webhook className="h-5 w-5 text-blue-500" />
-              <h2 className="text-lg font-semibold text-slate-900">
-                Repository Information
-              </h2>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/50 px-2 py-1 rounded border border-border/40">
+                Created: {data && (data as any).creation_timestamp ? new Date((data as any).creation_timestamp).toLocaleDateString() : "Unknown"}
+              </span>
             </div>
           </div>
 
-          <div className="px-6 pt-6">
-            <div className="border-b border-slate-100 last:border-b-0 pb-4 last:pb-0 mb-4 last:mb-0">
-              <div className="flex flex-col mb-4">
-                <p className="text-slate-500 text-sm">Repository URL</p>
-                <h3 className="font-semibold text-slate-900 text-base">
-                  {name}
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-slate-500 mb-2 text-sm">Branch</p>
-                  <span className="inline-block text-base bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">
-                    {branch}
-                  </span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
+              <div className="flex items-center gap-3 mb-4 border-b border-border/30 pb-3">
+                <div className="p-2 rounded-md bg-blue-500/10 text-blue-500 ring-1 ring-blue-500/20">
+                  <Webhook className="h-4 w-4" />
                 </div>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Repository Info</h2>
+              </div>
+              <div className="space-y-4 px-1">
                 <div>
-                  <p className="text-slate-500 mb-2 text-sm">Provider</p>
-                  <span className="space-y-1 text-base">Github</span>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Source URL</p>
+                  <p className="text-sm font-medium text-foreground truncate">{name}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Branch</p>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-primary/10 text-primary ring-1 ring-primary/20">
+                      {branch}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Provider</p>
+                    <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                      GitHub
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-border/30 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-green-500/10 text-green-500 ring-1 ring-green-500/20">
+                    <DockIcon className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Last Build</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(lastBuild?.status)}
+                  <StatusBadge status={lastBuild?.status} />
+                </div>
+              </div>
+              <div className="space-y-4 px-1">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Artifact Image</p>
+                  <p className="text-sm font-mono font-medium text-foreground truncate">{lastBuild?.image_name || "N/A"}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Pull Request</p>
+                    <p className="text-sm font-bold text-blue-500">#{lastBuild?.pull_request_number || "---"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Author</p>
+                    <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                      <User className="w-3 h-3 text-muted-foreground" />
+                      {lastBuild?.user_login || "Internal"}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        {/* Last Build Info */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden p-4">
-          <div className="px-6 pb-4 border-b flex items-center justify-between border-slate-200">
-            <div className="flex items-center space-x-3">
-              <DockIcon className="h-5 w-5 text-green-600" />
-              <h2 className="text-lg font-semibold text-slate-900">
-                Last Build
-              </h2>
-            </div>
-            <div className="flex items-center space-x-2">
-              {loading ? (
-                <SkeletonLoader className="w-8" />
-              ) : (
-                <>
-                  {getStatusIcon(lastBuild?.status)}
-                  <StatusBadge status={lastBuild?.status} />
-                </>
+      )}
+
+      {/* Builds Table */}
+      <div className="mt-10">
+        <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 overflow-hidden shadow-sm">
+          <div className="p-6 border-b border-border/30 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-md bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/20">
+                  <Activity className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-foreground tracking-tight">Build Timeline</h2>
+                  <p className="text-[13px] font-medium text-muted-foreground mt-0.5">
+                    History of triggered builds and deployments
+                  </p>
+                </div>
+              </div>
+              {!loading && (
+                <span className="text-[11px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-500 px-2 py-1 rounded ring-1 ring-indigo-500/20">
+                  Total: {data?.length || 0}
+                </span>
               )}
             </div>
           </div>
           {loading ? (
             <div className="p-6">
-              <SkeletonLoader rows={3} height="h-16" />
+              <TableSkeletonLoader />
+            </div>
+          ) : data && data.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-muted/30">
+                  <tr className="border-b border-border/30">
+                    <th className="px-6 py-4 text-left text-[11px] font-black text-muted-foreground uppercase tracking-widest">
+                      Build
+                    </th>
+                    <th className="px-6 py-4 text-left text-[11px] font-black text-muted-foreground uppercase tracking-widest">
+                      Image name
+                    </th>
+                    <th className="px-6 py-4 text-left text-[11px] font-black text-muted-foreground uppercase tracking-widest">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-[11px] font-black text-muted-foreground uppercase tracking-widest">
+                      Triggered By
+                    </th>
+                    <th className="px-6 py-4 text-left text-[11px] font-black text-muted-foreground uppercase tracking-widest">
+                      Created At
+                    </th>
+                    <th className="px-6 py-4 text-left text-[11px] font-black text-muted-foreground uppercase tracking-widest">
+                      Duration
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/30">
+                  {data.map((build, index) => (
+                    <BuildRow key={index} build={build} />
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <div className="px-6 pt-6">
-              <div className="border-b border-slate-100 last:border-b-0 pb-4 last:pb-0 mb-4 last:mb-0">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-slate-500 mb-2 text-sm">Docker Image</p>
-                    <span className="inline-block text-base font-medium">
-                      {lastBuild?.image_name}
-                    </span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-slate-500 mb-2 text-sm">Pull Request</p>
-                    <span className="inline-block text-base font-medium">
-                      #{lastBuild?.pull_request_number}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-slate-500 mb-2 text-sm">Author</p>
-                    <span className="inline-block text-base font-medium">
-                      {lastBuild?.user_login}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div className="p-12 text-center text-slate-500">
+              <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">No Builds Found</p>
+              <p className="text-sm">
+                Builds will appear here once triggered for this repository and
+                branch
+              </p>
             </div>
           )}
         </div>
-      </div>
-
-      {/* Build Information  */}
-      <div className="bg-white rounded-xl border border-slate-200 mb-8 p-4 overflow-hidden">
-        <div className="px-6 pb-4 border-b border-slate-200">
-          <div className="flex items-center space-x-3">
-            <Activity className="h-5 w-5 text-indigo-500" />
-            <h2 className="text-lg font-semibold text-slate-900">Builds</h2>
-            {loading ? (
-              <SkeletonLoader className="w-8" />
-            ) : (
-              <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-sm font-medium">
-                {data?.length}
-              </span>
-            )}
-          </div>
-        </div>
-        {loading ? (
-          <div className="p-6">
-            <TableSkeletonLoader />
-          </div>
-        ) : data && data.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-slate-50 p-4">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Build
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Image name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Triggered By
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Created At
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    Time Taken (seconds)
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-200 p-4">
-                {data.map((build, index) => (
-                  <BuildRow key={index} build={build} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="p-12 text-center text-slate-500">
-            <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium">No Builds Found</p>
-            <p className="text-sm">
-              Builds will appear here once triggered for this repository and
-              branch
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

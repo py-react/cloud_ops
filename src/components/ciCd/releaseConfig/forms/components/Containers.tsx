@@ -44,6 +44,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
       ...currentContainers,
       {
         name: "",
+        image: "",
         command: [],
         args: [],
         env: [],
@@ -144,7 +145,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {formData.containers.map((container, containerIndex) => (
+        {formData.containers?.map((container, containerIndex) => (
           <div
             key={containerIndex}
             className="border border-slate-200 rounded-lg p-4 space-y-4"
@@ -171,13 +172,15 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
               <div className="space-y-2">
                 <Label className="text-base font-medium">Container Name</Label>
                 <Input
-                  value={container.name}
-                  onChange={(e) => {
-                    const newContainers = [...formData.containers];
-                    newContainers[containerIndex].name = e.target.value;
-                    form.setValue("containers", newContainers);
-                  }}
+                  {...form.register(`containers.${containerIndex}.name` as const)}
                   placeholder="my-app-container"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-base font-medium">Default Image (Optional)</Label>
+                <Input
+                  {...form.register(`containers.${containerIndex}.image` as const)}
+                  placeholder="e.g. nginx:latest"
                 />
               </div>
               <div className="space-y-2">
@@ -205,12 +208,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
             <div className="space-y-2">
               <Label className="text-base font-medium">Working Directory</Label>
               <Input
-                value={container.workingDir || ""}
-                onChange={(e) => {
-                  const newContainers = [...formData.containers];
-                  newContainers[containerIndex].workingDir = e.target.value;
-                  form.setValue("containers", newContainers);
-                }}
+                {...form.register(`containers.${containerIndex}.workingDir` as const)}
                 placeholder="/app"
               />
             </div>
@@ -222,9 +220,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                 <Input
                   value={container.command?.join(", ") || ""}
                   onChange={(e) => {
-                    const newContainers = [...formData.containers];
-                    newContainers[containerIndex].command = e.target.value.split(",").map(cmd => cmd.trim()).filter(cmd => cmd);
-                    form.setValue("containers", newContainers);
+                    form.setValue(`containers.${containerIndex}.command`, e.target.value.split(",").map(cmd => cmd.trim()).filter(cmd => cmd));
                   }}
                   placeholder="npm, start"
                 />
@@ -234,9 +230,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                 <Input
                   value={container.args?.join(", ") || ""}
                   onChange={(e) => {
-                    const newContainers = [...formData.containers];
-                    newContainers[containerIndex].args = e.target.value.split(",").map(arg => arg.trim()).filter(arg => arg);
-                    form.setValue("containers", newContainers);
+                    form.setValue(`containers.${containerIndex}.args`, e.target.value.split(",").map(arg => arg.trim()).filter(arg => arg));
                   }}
                   placeholder="--env, production"
                 />
@@ -250,7 +244,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   <Key className="h-4 w-4" />
                   Environment Variables
                 </Label>
-                
+
               </div>
               {container.env?.map((env, envIndex) => (
                 <div key={envIndex} className="flex gap-2 items-end">
@@ -296,14 +290,14 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                 </div>
               ))}
               <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => addEnvironmentVariable(containerIndex)}
-                  className="w-full border-dashed"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Env Var
-                </Button>
+                type="button"
+                variant="outline"
+                onClick={() => addEnvironmentVariable(containerIndex)}
+                className="w-full border-dashed"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Env Var
+              </Button>
             </div>
 
             {/* Ports */}
@@ -313,7 +307,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   <Network className="h-4 w-4" />
                   Container Ports
                 </Label>
-                
+
               </div>
               {container.ports?.map((port, portIndex) => (
                 <div key={portIndex} className="flex gap-2 items-end">
@@ -381,14 +375,14 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                 </div>
               ))}
               <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => addPort(containerIndex)}
-                  className="w-full border-dashed"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Port
-                </Button>
+                type="button"
+                variant="outline"
+                onClick={() => addPort(containerIndex)}
+                className="w-full border-dashed"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Port
+              </Button>
             </div>
 
             {/* Resources */}
@@ -407,36 +401,14 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                       <div className="flex-1">
                         <Label className="text-base font-medium">CPU</Label>
                         <Input
-                          value={container.resources?.requests?.cpu || ""}
-                          onChange={(e) => {
-                            const newContainers = [...formData.containers];
-                            if (!newContainers[containerIndex].resources) {
-                              newContainers[containerIndex].resources = { requests: {}, limits: {} };
-                            }
-                            if (!newContainers[containerIndex].resources.requests) {
-                              newContainers[containerIndex].resources.requests = {};
-                            }
-                            newContainers[containerIndex].resources.requests.cpu = e.target.value;
-                            form.setValue("containers", newContainers);
-                          }}
+                          {...form.register(`containers.${containerIndex}.resources.requests.cpu` as const)}
                           placeholder="100m"
                         />
                       </div>
                       <div className="flex-1">
                         <Label className="text-base font-medium">Memory</Label>
                         <Input
-                          value={container.resources?.requests?.memory || ""}
-                          onChange={(e) => {
-                            const newContainers = [...formData.containers];
-                            if (!newContainers[containerIndex].resources) {
-                              newContainers[containerIndex].resources = { requests: {}, limits: {} };
-                            }
-                            if (!newContainers[containerIndex].resources.requests) {
-                              newContainers[containerIndex].resources.requests = {};
-                            }
-                            newContainers[containerIndex].resources.requests.memory = e.target.value;
-                            form.setValue("containers", newContainers);
-                          }}
+                          {...form.register(`containers.${containerIndex}.resources.requests.memory` as const)}
                           placeholder="128Mi"
                         />
                       </div>
@@ -450,36 +422,14 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                       <div className="flex-1">
                         <Label className="text-base font-medium">CPU</Label>
                         <Input
-                          value={container.resources?.limits?.cpu || ""}
-                          onChange={(e) => {
-                            const newContainers = [...formData.containers];
-                            if (!newContainers[containerIndex].resources) {
-                              newContainers[containerIndex].resources = { requests: {}, limits: {} };
-                            }
-                            if (!newContainers[containerIndex].resources.limits) {
-                              newContainers[containerIndex].resources.limits = {};
-                            }
-                            newContainers[containerIndex].resources.limits.cpu = e.target.value;
-                            form.setValue("containers", newContainers);
-                          }}
+                          {...form.register(`containers.${containerIndex}.resources.limits.cpu` as const)}
                           placeholder="500m"
                         />
                       </div>
                       <div className="flex-1">
                         <Label className="text-base font-medium">Memory</Label>
                         <Input
-                          value={container.resources?.limits?.memory || ""}
-                          onChange={(e) => {
-                            const newContainers = [...formData.containers];
-                            if (!newContainers[containerIndex].resources) {
-                              newContainers[containerIndex].resources = { requests: {}, limits: {} };
-                            }
-                            if (!newContainers[containerIndex].resources.limits) {
-                              newContainers[containerIndex].resources.limits = {};
-                            }
-                            newContainers[containerIndex].resources.limits.memory = e.target.value;
-                            form.setValue("containers", newContainers);
-                          }}
+                          {...form.register(`containers.${containerIndex}.resources.limits.memory` as const)}
                           placeholder="512Mi"
                         />
                       </div>
@@ -496,7 +446,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                   <HardDrive className="h-4 w-4" />
                   Volume Mounts
                 </Label>
-                
+
               </div>
               {container.volumeMounts?.map((mount, mountIndex) => (
                 <div key={mountIndex} className="flex gap-2 items-end">
@@ -533,11 +483,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                         id={`readonly-${containerIndex}-${mountIndex}`}
                         checked={mount.readOnly || false}
                         onChange={(e) => {
-                          const newContainers = [...formData.containers];
-                          if (newContainers[containerIndex]?.volumeMounts?.[mountIndex]) {
-                            newContainers[containerIndex].volumeMounts[mountIndex].readOnly = e.target.checked;
-                            form.setValue("containers", newContainers);
-                          }
+                          form.setValue(`containers.${containerIndex}.volumeMounts.${mountIndex}.readOnly`, e.target.checked);
                         }}
                       />
                       <Label htmlFor={`readonly-${containerIndex}-${mountIndex}`} className="text-xs">Read Only</Label>
@@ -554,14 +500,14 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                 </div>
               ))}
               <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => addVolumeMount(containerIndex)}
-                  className="w-full border-dashed"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Mount
-                </Button>
+                type="button"
+                variant="outline"
+                onClick={() => addVolumeMount(containerIndex)}
+                className="w-full border-dashed"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Mount
+              </Button>
             </div>
 
             {/* Advanced Settings */}
@@ -584,18 +530,18 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                             const newContainers = [...formData.containers];
                             if (!newContainers[containerIndex].envFrom) newContainers[containerIndex].envFrom = [];
                             if (!newContainers[containerIndex].envFrom[envFromIndex]) newContainers[containerIndex].envFrom[envFromIndex] = {};
-                            
+
                             // Clear existing refs
                             delete newContainers[containerIndex].envFrom[envFromIndex].configMapRef;
                             delete newContainers[containerIndex].envFrom[envFromIndex].secretRef;
-                            
+
                             // Set new ref based on selection
                             if (value === "configMap") {
                               newContainers[containerIndex].envFrom[envFromIndex].configMapRef = { name: "" };
                             } else if (value === "secret") {
                               newContainers[containerIndex].envFrom[envFromIndex].secretRef = { name: "" };
                             }
-                            
+
                             form.setValue("containers", newContainers);
                           }}
                         >
@@ -616,7 +562,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                             const newContainers = [...formData.containers];
                             if (!newContainers[containerIndex].envFrom) newContainers[containerIndex].envFrom = [];
                             if (!newContainers[containerIndex].envFrom[envFromIndex]) newContainers[containerIndex].envFrom[envFromIndex] = {};
-                            
+
                             if (envFromType === "configMap") {
                               if (!newContainers[containerIndex].envFrom[envFromIndex].configMapRef) newContainers[containerIndex].envFrom[envFromIndex].configMapRef = { name: "" };
                               newContainers[containerIndex].envFrom[envFromIndex].configMapRef.name = e.target.value;
@@ -624,7 +570,7 @@ const Containers: React.FC<ContainersProps> = ({ form }) => {
                               if (!newContainers[containerIndex].envFrom[envFromIndex].secretRef) newContainers[containerIndex].envFrom[envFromIndex].secretRef = { name: "" };
                               newContainers[containerIndex].envFrom[envFromIndex].secretRef.name = e.target.value;
                             }
-                            
+
                             form.setValue("containers", newContainers);
                           }}
                           placeholder={envFromType === "configMap" ? "ConfigMap name" : "Secret name"}

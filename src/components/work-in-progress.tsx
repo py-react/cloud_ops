@@ -23,15 +23,15 @@ export function WorkInProgress({
         <Construction className="w-20 h-20 mx-auto text-blue-500" aria-hidden="true" />
         <h1 className="text-4xl font-bold text-gray-900">{title}</h1>
         <p className="text-xl text-gray-600">{message}</p>
-        
+
         {ctaText && ctaLink && (
-            <Button asChild className="mt-4">
+          <Button asChild>
             <a href={ctaLink}>
-                {ctaText} <ArrowRight className="ml-2 h-4 w-4" />
+              {ctaText} <ArrowRight className="ml-2 h-4 w-4" />
             </a>
-            </Button>
+          </Button>
         )}
-        
+
         <div className="pt-6">
           <p className="text-sm text-gray-400 flex items-center justify-center">
             I am working tirelessly

@@ -56,12 +56,7 @@ const Tolerations: React.FC<TolerationsProps> = ({ form }) => {
             <div className="flex-1 space-y-2">
               <Label className="text-base font-medium">Key</Label>
               <Input
-                value={toleration.key}
-                onChange={(e) => {
-                  const newTolerations = [...(formData.tolerations || [])];
-                  newTolerations[index].key = e.target.value;
-                  form.setValue("tolerations", newTolerations);
-                }}
+                {...form.register(`tolerations.${index}.key` as const)}
                 placeholder="key"
               />
             </div>
@@ -69,11 +64,7 @@ const Tolerations: React.FC<TolerationsProps> = ({ form }) => {
               <Label className="text-base font-medium">Operator</Label>
               <Select
                 value={toleration.operator || "Equal"}
-                onValueChange={(value) => {
-                  const newTolerations = [...(formData.tolerations || [])];
-                  newTolerations[index].operator = value as "Exists" | "Equal";
-                  form.setValue("tolerations", newTolerations);
-                }}
+                onValueChange={(value) => form.setValue(`tolerations.${index}.operator`, value as any)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -87,12 +78,7 @@ const Tolerations: React.FC<TolerationsProps> = ({ form }) => {
             <div className="flex-1 space-y-2">
               <Label className="text-base font-medium">Value</Label>
               <Input
-                value={toleration.value}
-                onChange={(e) => {
-                  const newTolerations = [...(formData.tolerations || [])];
-                  newTolerations[index].value = e.target.value;
-                  form.setValue("tolerations", newTolerations);
-                }}
+                {...form.register(`tolerations.${index}.value` as const)}
                 placeholder="value"
               />
             </div>
@@ -100,11 +86,7 @@ const Tolerations: React.FC<TolerationsProps> = ({ form }) => {
               <Label className="text-base font-medium">Effect</Label>
               <Select
                 value={toleration.effect || "NoSchedule"}
-                onValueChange={(value) => {
-                  const newTolerations = [...(formData.tolerations || [])];
-                  newTolerations[index].effect = value as "NoSchedule" | "PreferNoSchedule" | "NoExecute";
-                  form.setValue("tolerations", newTolerations);
-                }}
+                onValueChange={(value) => form.setValue(`tolerations.${index}.effect`, value as any)}
               >
                 <SelectTrigger>
                   <SelectValue />

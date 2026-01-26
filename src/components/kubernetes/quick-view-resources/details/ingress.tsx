@@ -746,8 +746,8 @@ export const IngressDetailedInfo = ({ data, loading, error }) => {
                     Created:{" "}
                     {data?.ingress.creation_timestamp
                       ? new Date(
-                          data.ingress.creation_timestamp
-                        ).toLocaleDateString()
+                        data.ingress.creation_timestamp
+                      ).toLocaleDateString()
                       : "Unknown"}
                   </span>
                 </div>
@@ -812,7 +812,7 @@ export const IngressDetailedInfo = ({ data, loading, error }) => {
                       </h3>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {Object.entries(data.ingress.labels).map(
+                      {Object.entries(data.ingress.labels || {}).map(
                         ([key, value]) => (
                           <div
                             key={key}
@@ -880,7 +880,7 @@ export const IngressDetailedInfo = ({ data, loading, error }) => {
                 </div>
                 <p className="text-sm font-mono text-slate-900">
                   {data?.ingress.load_balancer_status.ingress &&
-                  data.ingress.load_balancer_status.ingress.length > 0 ? (
+                    data.ingress.load_balancer_status.ingress.length > 0 ? (
                     data.ingress.load_balancer_status.ingress[0].ip
                   ) : (
                     <span className="text-slate-400">Pending</span>
@@ -898,9 +898,8 @@ export const IngressDetailedInfo = ({ data, loading, error }) => {
                 </div>
                 <p className="text-sm font-mono text-slate-900">
                   {data?.ingress.default_backend ? (
-                    `${data.ingress.default_backend.service.name}:${
-                      data.ingress.default_backend.service.port.number ||
-                      data.ingress.default_backend.service.port.name
+                    `${data.ingress.default_backend.service.name}:${data.ingress.default_backend.service.port.number ||
+                    data.ingress.default_backend.service.port.name
                     }`
                   ) : (
                     <span className="text-slate-400">None</span>

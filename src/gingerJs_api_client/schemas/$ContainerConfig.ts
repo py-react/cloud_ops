@@ -4,6 +4,14 @@ export const $ContainerConfig = {
 	type: 'string',
 	isRequired: true,
 },
+		image: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
 		command: {
 	type: 'any-of',
 	contains: [{

@@ -1,121 +1,182 @@
 import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Activity, Box, Cpu, Database, DatabaseIcon, HardDrive, ImageIcon, Info, Layers, Lock, MemoryStickIcon as Memory, Network, Power, Server, Settings, Shield, Sliders } from 'lucide-react'
+import { Activity, Box, Cpu, Database, DatabaseIcon, DockIcon, HardDrive, ImageIcon, Info, Layers, Lock, MemoryStickIcon as Memory, Network, Power, Server, Settings, Shield, Sliders } from 'lucide-react'
 import { MemroryStatsDetail } from "./MemoryStatsDetail";
 import { ISystemInfo } from "./types";
 import { NetworkStatsDetail } from "./NetworkStatsDetail";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 function replaceDockerWithSystem(text) {
-    // Define the regex pattern to match 'docker' or 'Docker' as a whole word, case-insensitive
-    const pattern = /\bdocker\b/gi;  // Matches 'docker' as a whole word, case-insensitive
+  // Define the regex pattern to match 'docker' or 'Docker' as a whole word, case-insensitive
+  const pattern = /\bdocker\b/gi;  // Matches 'docker' as a whole word, case-insensitive
 
-    // Replace all occurrences of 'docker' with 'system', and 'Docker' with 'System'.
-    return text.replace(pattern, (match, p1) => {
-        // If it's 'docker' (lowercase), replace with 'system'
-        if (match === 'docker') {
-            return 'system';
-        }
-        // If it's 'Docker' (uppercase), replace with 'System'
-        else {
-            return 'System';
-        }
-    });
+  // Replace all occurrences of 'docker' with 'system', and 'Docker' with 'System'.
+  return text.replace(pattern, (match, p1) => {
+    // If it's 'docker' (lowercase), replace with 'system'
+    if (match === 'docker') {
+      return 'system';
+    }
+    // If it's 'Docker' (uppercase), replace with 'System'
+    else {
+      return 'System';
+    }
+  });
 }
 
 
 
-export default function SystemInfo({systemInfo}:{systemInfo:ISystemInfo}) {
+// Helper component for loading overlay
+const LoadingOverlay = () => (
+  <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl transition-all duration-200">
+    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+  </div>
+);
+
+export default function SystemInfo({
+  systemInfo,
+  loadingStates,
+  onRefresh,
+  isRefreshing
+}: {
+  systemInfo: ISystemInfo,
+  loadingStates?: Record<string, boolean>,
+  onRefresh?: () => void,
+  isRefreshing?: boolean
+}) {
   const formatBytes = (bytes: number) => {
     const gb = bytes / (1024 * 1024 * 1024)
     return `${gb.toFixed(2)} GB`
   }
 
   return (
-    <div className="container mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">System Information</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mx-auto">
-        <Card>
+    <div className="container mx-aut p-0 space-y-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-b border-border/100 pb-2 mb-2">
+        <div className="flex items-center gap-4 mb-1 p-1">
+          <div className="p-2.5 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
+            <DockIcon className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">System Information</h1>
+            <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-0 mt-2">
+              Monitor your system resources, network activity, and container status in real-time.
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRefresh}
+          className="h-8 gap-2"
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 !mt-4">
+        <MemroryStatsDetail data={systemInfo.system_stats?.memory} isLoading={loadingStates?.["memory_usage"]} />
+        <NetworkStatsDetail data={systemInfo.system_stats?.network} isLoading={loadingStates?.["network_io"]} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="relative overflow-hidden">
+          {loadingStates?.["general"] && <LoadingOverlay />}
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Info className="w-6 h-6 mr-2" /> General Info
+            <CardTitle className="text-base font-medium flex items-center">
+              <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                <Info className="w-4 h-4 text-primary" />
+              </div>
+              General Info
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 w-full text-sm">
               <li className="flex items-center justify-between">
-                <span className="font-semibold">ID:</span>
-                <span>{systemInfo.ID.slice(0, 8)}...</span>
+                <span className="text-muted-foreground">ID:</span>
+                <span className="font-medium">{systemInfo.ID?.slice(0, 8)}...</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold">Name:</span>
-                <span>{replaceDockerWithSystem(systemInfo.Name)}</span>
+                <span className="text-muted-foreground">Name:</span>
+                <span className="font-medium">{replaceDockerWithSystem(systemInfo.Name || "")}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold">OS:</span>
-                <span>{systemInfo.OSType}</span>
+                <span className="text-muted-foreground">OS:</span>
+                <span className="font-medium">{systemInfo.OSType}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold">Kernel:</span>
-                <span>{systemInfo.KernelVersion}</span>
+                <span className="text-muted-foreground">Kernel:</span>
+                <span className="font-medium">{systemInfo.KernelVersion}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold">Architecture:</span>
-                <span>{systemInfo.Architecture}</span>
+                <span className="text-muted-foreground">Architecture:</span>
+                <span className="font-medium">{systemInfo.Architecture}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold">Docker Version:</span>
-                <span>{systemInfo.ServerVersion}</span>
+                <span className="text-muted-foreground">Docker Version:</span>
+                <span className="font-medium">{systemInfo.ServerVersion}</span>
               </li>
             </ul>
           </CardContent>
         </Card>
-        <MemroryStatsDetail data={systemInfo.system_stats.memory} />
-        <NetworkStatsDetail data={systemInfo.system_stats.network} />
-        <Card>
+
+        <Card className="relative overflow-hidden">
+          {loadingStates?.["resources"] && <LoadingOverlay />}
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Server className="w-6 h-6 mr-2" /> Resources
+            <CardTitle className="text-base font-medium flex items-center">
+              <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                <Server className="w-4 h-4 text-primary" />
+              </div>
+              Resources
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 w-full text-sm">
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <Cpu className="w-4 h-4 mr-2" /> CPUs:
+                <span className="font-medium flex items-center">
+                  <Cpu className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> CPUs:
                 </span>
                 <span>{systemInfo.NCPU}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <Memory className="w-4 h-4 mr-2" /> Memory:
+                <span className="font-medium flex items-center">
+                  <Memory className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Memory:
                 </span>
                 <span>{formatBytes(systemInfo.MemTotal)}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <HardDrive className="w-4 h-4 mr-2" /> Driver:
+                <span className="font-medium flex items-center">
+                  <HardDrive className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Driver:
                 </span>
                 <span>{systemInfo.Driver}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <Lock className="w-4 h-4 mr-2" /> Memory Limit:
+                <span className="font-medium flex items-center">
+                  <Lock className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Memory Limit:
                 </span>
                 <span>{systemInfo.MemoryLimit ? 'Yes' : 'No'}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <Lock className="w-4 h-4 mr-2" /> Swap Limit:
+                <span className="font-medium flex items-center">
+                  <Lock className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Swap Limit:
                 </span>
                 <span>{systemInfo.SwapLimit ? 'Yes' : 'No'}</span>
               </li>
@@ -123,38 +184,42 @@ export default function SystemInfo({systemInfo}:{systemInfo:ISystemInfo}) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden">
+          {loadingStates?.["containers"] && <LoadingOverlay />}
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Box className="w-6 h-6 mr-2" /> Containers
+            <CardTitle className="text-base font-medium flex items-center">
+              <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                <Box className="w-4 h-4 text-primary" />
+              </div>
+              Containers
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 w-full text-sm">
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <Box className="w-4 h-4 mr-2" /> Total:
+                <span className="font-medium flex items-center">
+                  <Box className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Total:
                 </span>
                 <span>{systemInfo.Containers}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <Activity className="w-4 h-4 mr-2" /> Running:
+                <span className="font-medium flex items-center">
+                  <Activity className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Running:
                 </span>
                 <span>{systemInfo.ContainersRunning}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <Sliders className="w-4 h-4 mr-2" /> Paused:
+                <span className="font-medium flex items-center">
+                  <Sliders className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Paused:
                 </span>
                 <span>{systemInfo.ContainersPaused}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <Power className="w-4 h-4 mr-2" /> Stopped:
+                <span className="font-medium flex items-center">
+                  <Power className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Stopped:
                 </span>
                 <span>{systemInfo.ContainersStopped}</span>
               </li>
@@ -162,24 +227,28 @@ export default function SystemInfo({systemInfo}:{systemInfo:ISystemInfo}) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden">
+          {loadingStates?.["images"] && <LoadingOverlay />}
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <ImageIcon className="w-6 h-6 mr-2" /> Images and Storage
+            <CardTitle className="text-base font-medium flex items-center">
+              <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                <ImageIcon className="w-4 h-4 text-primary" />
+              </div>
+              Images and Storage
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 w-full text-sm">
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <ImageIcon className="w-4 h-4 mr-2" /> Total Images:
+                <span className="font-medium flex items-center">
+                  <ImageIcon className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Total Images:
                 </span>
                 <span>{systemInfo.Images}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold flex items-center">
-                  <Database className="w-4 h-4 mr-2" /> Docker Root Dir:
+                <span className="font-medium flex items-center">
+                  <Database className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Docker Root Dir:
                 </span>
                 <span>{systemInfo.DockerRootDir}</span>
               </li>
@@ -187,44 +256,52 @@ export default function SystemInfo({systemInfo}:{systemInfo:ISystemInfo}) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden">
+          {loadingStates?.["network_config"] && <LoadingOverlay />}
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Network className="w-6 h-6 mr-2" /> Network
+            <CardTitle className="text-base font-medium flex items-center">
+              <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                <Network className="w-4 h-4 text-primary" />
+              </div>
+              Network
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 w-full text-sm">
               <li className="flex items-center justify-between">
-                <span className="font-semibold">HTTP Proxy:</span>
+                <span className="text-muted-foreground">HTTP Proxy:</span>
                 <span>{systemInfo.HttpProxy}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold">HTTPS Proxy:</span>
+                <span className="text-muted-foreground">HTTPS Proxy:</span>
                 <span>{systemInfo.HttpsProxy}</span>
               </li>
               <Separator className="my-2" />
               <li className="flex items-center justify-between">
-                <span className="font-semibold">No Proxy:</span>
+                <span className="text-muted-foreground">No Proxy:</span>
                 <span>{systemInfo.NoProxy}</span>
               </li>
             </ul>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden">
+          {loadingStates?.["security"] && <LoadingOverlay />}
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Shield className="w-6 h-6 mr-2" /> Security
+            <CardTitle className="text-base font-medium flex items-center">
+              <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                <Shield className="w-4 h-4 text-primary" />
+              </div>
+              Security
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 w-full text-sm">
-              {systemInfo.SecurityOptions.map((option, index) => (
+              {systemInfo.SecurityOptions?.map((option, index) => (
                 <li key={index}>
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">Option {index + 1}:</span>
+                    <span className="text-muted-foreground">Option {index + 1}:</span>
                     <span>{option}</span>
                   </div>
                   {index < systemInfo.SecurityOptions.length - 1 && <Separator className="my-2" />}
@@ -234,10 +311,14 @@ export default function SystemInfo({systemInfo}:{systemInfo:ISystemInfo}) {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 lg:col-span-1">
+        <Card className="relative overflow-hidden">
+          {loadingStates?.["drivers"] && <LoadingOverlay />}
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Settings className="w-6 h-6 mr-2" /> Driver Status
+            <CardTitle className="text-base font-medium flex items-center">
+              <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                <Settings className="w-4 h-4 text-primary" />
+              </div>
+              Driver Status
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -245,7 +326,7 @@ export default function SystemInfo({systemInfo}:{systemInfo:ISystemInfo}) {
               {systemInfo.DriverStatus?.map(([key, value], index) => (
                 <li key={index}>
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{key}:</span>
+                    <span className="text-muted-foreground">{key}:</span>
                     <span>{value}</span>
                   </div>
                   {index < systemInfo.DriverStatus.length - 1 && <Separator className="my-2" />}
@@ -255,65 +336,83 @@ export default function SystemInfo({systemInfo}:{systemInfo:ISystemInfo}) {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 lg:col-span-3">
+        <Card className="md:col-span-2 lg:col-span-2 relative overflow-hidden">
+          {loadingStates?.["plugins"] && <LoadingOverlay />}
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Layers className="w-6 h-6 mr-2" /> Plugins
+            <CardTitle className="text-base font-medium flex items-center">
+              <div className="bg-primary/10 p-2 rounded-lg mr-3">
+                <Layers className="w-4 h-4 text-primary" />
+              </div>
+              Plugins
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <h3 className="font-semibold mb-2 flex items-center">
-                  <DatabaseIcon className="w-4 h-4 mr-2" /> Volume
-                </h3>
-                <ul className="space-y-2 w-full text-sm">
-                  {systemInfo.Plugins.Volume.map((plugin, index) => (
-                    <li key={index}>
-                      <div className="flex items-center justify-between">
-                        <span>{plugin}</span>
-                      </div>
-                      {index < systemInfo.Plugins.Volume.length - 1 && <Separator className="my-2" />}
-                    </li>
-                  ))}
-                </ul>
+            <TooltipProvider>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <h3 className="font-medium mb-3 flex items-center text-sm text-foreground/80">
+                    <DatabaseIcon className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Volume
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {systemInfo.Plugins?.Volume?.map((plugin, index) => (
+                      <Tooltip key={index}>
+                        <TooltipTrigger asChild>
+                          <Badge variant="secondary" className="font-normal max-w-[150px] cursor-help">
+                            <span className="truncate">{plugin}</span>
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{plugin}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                    {!systemInfo.Plugins?.Volume?.length && <span className="text-muted-foreground text-xs italic">None</span>}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-medium mb-3 flex items-center text-sm text-foreground/80">
+                    <Network className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Network
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {systemInfo.Plugins?.Network?.map((plugin, index) => (
+                      <Tooltip key={index}>
+                        <TooltipTrigger asChild>
+                          <Badge variant="secondary" className="font-normal max-w-[150px] cursor-help">
+                            <span className="truncate">{plugin}</span>
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{plugin}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                    {!systemInfo.Plugins?.Network?.length && <span className="text-muted-foreground text-xs italic">None</span>}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-medium mb-3 flex items-center text-sm text-foreground/80">
+                    <Activity className="w-3.5 h-3.5 mr-2 text-muted-foreground" /> Log
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {systemInfo.Plugins?.Log?.map((plugin, index) => (
+                      <Tooltip key={index}>
+                        <TooltipTrigger asChild>
+                          <Badge variant="secondary" className="font-normal max-w-[150px] cursor-help">
+                            <span className="truncate">{plugin}</span>
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{plugin}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                    {!systemInfo.Plugins?.Log?.length && <span className="text-muted-foreground text-xs italic">None</span>}
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold mb-2 flex items-center">
-                  <Network className="w-4 h-4 mr-2" /> Network
-                </h3>
-                <ul className="space-y-2 w-full text-sm">
-                  {systemInfo.Plugins.Network.map((plugin, index) => (
-                    <li key={index}>
-                      <div className="flex items-center justify-between">
-                        <span>{plugin}</span>
-                      </div>
-                      {index < systemInfo.Plugins.Network.length - 1 && <Separator className="my-2" />}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2 flex items-center">
-                  <Activity className="w-4 h-4 mr-2" /> Log
-                </h3>
-                <ul className="space-y-2 w-full text-sm">
-                  {systemInfo.Plugins.Log.map((plugin, index) => (
-                    <li key={index}>
-                      <div className="flex items-center justify-between">
-                        <span>{plugin}</span>
-                      </div>
-                      {index < systemInfo.Plugins.Log.length - 1 && <Separator className="my-2" />}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            </TooltipProvider>
           </CardContent>
         </Card>
-
-        
-
       </div>
     </div>
   )

@@ -13,7 +13,10 @@ export type DeploymentConfigType = {
 	code_source_control_name: string;
 	deployment_strategy_id: number;
 	replicas?: number | null;
-	containers: Array<ContainerConfig>;
+	scheduling_profile_id?: number | null;
+	container_profile_ids?: Array<number> | null;
+	volume_profile_ids?: Array<number> | null;
+	containers?: Array<ContainerConfig> | null;
 	service_ports?: Array<ServicePortConfig> | null;
 	labels?: Record<string, string> | null;
 	annotations?: Record<string, string> | null;

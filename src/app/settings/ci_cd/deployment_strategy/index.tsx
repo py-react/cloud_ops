@@ -64,7 +64,7 @@ interface DeploymentStrategyPageProps {
   strategies: string[];
 }
 
-const DeploymentStrategyPage = ({strategies}: DeploymentStrategyPageProps) => {
+const DeploymentStrategyPage = ({ strategies }: DeploymentStrategyPageProps) => {
   const [deploymentStrategies, setDeploymentStrategies] = useState<TransformedDeploymentStrategy[]>(() => {
     return strategies.map((item: string) => {
       const strategy: DeploymentStrategy = JSON.parse(item);
@@ -116,35 +116,33 @@ const DeploymentStrategyPage = ({strategies}: DeploymentStrategyPageProps) => {
   }, [strategies]);
 
   return (
-    <div title="Deployment Strategies" className="p-4 w-full">
-      <div className="space-y-6">
-        <RouteDescription
-          title={<span className="flex items-center gap-2"><FileCog className="h-4 w-4" /> Deployment Strategies</span>}
-          shortDescription="Available deployment strategies for your services."
-          description="View the different deployment strategies that can be used when deploying your services. Each strategy has its own characteristics and is suited for different scenarios."
+    <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
+      {/* Page Header */}
+      <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
+        <div>
+          <div className="flex items-center gap-4 mb-1 p-1">
+            <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
+              <FileCog className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Deployment Strategies</h1>
+              <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
+                Available deployment strategies for your services. Reference these ID's when configuring your deployments.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 min-h-0 mt-10">
+        <ResourceTable
+          title="Available Strategies"
+          description="Reference these strategy IDs when configuring your deployments. Hover over strategy types to see more details."
+          icon={<FileCog className="h-4 w-4" />}
+          columns={columns}
+          data={deploymentStrategies}
+          className="mt-4"
         />
-        <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-lg">
-              <div className="flex items-center justify-between">
-                <h2>Available Strategies</h2>
-              </div>
-            </CardTitle>
-            <CardDescription>
-              Reference these strategy IDs when configuring your deployments. Hover over strategy types to see more details.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="shadow-none p-0">
-            <ResourceTable
-              columns={columns}
-              data={deploymentStrategies}
-              onEdit={undefined}
-              onDelete={undefined}
-              onViewDetails={undefined}
-              className="mt-4"
-            />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

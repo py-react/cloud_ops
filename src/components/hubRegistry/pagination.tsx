@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../ui/button';
 
 interface PaginationProps {
   currentPage: number;
@@ -10,24 +11,33 @@ interface PaginationProps {
 
 export function Pagination({ currentPage, hasNext, hasPrevious, onPageChange }: PaginationProps) {
   return (
-    <div className="flex items-center justify-center gap-4 mt-8">
-      <button
+    <div className="flex items-center justify-center gap-6 py-4">
+      <Button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={!hasPrevious}
-        className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        variant="outline"
+        className="gap-2 rounded-xl font-bold border-border/40 hover:bg-muted/50 disabled:opacity-50"
       >
         <ChevronLeft className="w-4 h-4" />
         Previous
-      </button>
-      <span className="text-sm text-gray-700">Page {currentPage}</span>
-      <button
+      </Button>
+
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Page</span>
+        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary text-sm font-bold ring-1 ring-primary/20">
+          {currentPage}
+        </span>
+      </div>
+
+      <Button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={!hasNext}
-        className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        variant="outline"
+        className="gap-2 rounded-xl font-bold border-border/40 hover:bg-muted/50 disabled:opacity-50"
       >
         Next
         <ChevronRight className="w-4 h-4" />
-      </button>
+      </Button>
     </div>
   );
 }
