@@ -41,8 +41,8 @@ export const ReleaseConfigFilters: React.FC<ReleaseConfigFiltersProps> = ({
       >
         <option value="">All</option>
         <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
-        <option value="delete">Delete</option>
+        <option value="inactive">Inactive Status</option>
+        <option value="delete">Deleted</option>
       </select>
     </div>
   );

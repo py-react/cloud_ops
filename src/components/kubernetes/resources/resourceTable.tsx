@@ -393,6 +393,15 @@ export function ResourceTable<T>({
                               );
                             })}
                             <div className="h-px bg-border/50 my-1" />
+                            {onUndo && rowWithDefaults.showUndo && (
+                              <DropdownMenuItem
+                                onSelect={() => handleUndo(row)}
+                                className="gap-2 text-sm"
+                              >
+                                <Undo2 className="h-4 w-4" />
+                                Restore
+                              </DropdownMenuItem>
+                            )}
                             {onDelete && rowWithDefaults.showDelete && (
                               <DropdownMenuItem
                                 onSelect={() => handleDelete(row)}

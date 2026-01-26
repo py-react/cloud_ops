@@ -20,17 +20,51 @@ export const $DeploymentConfigType = {
 	type: 'string',
 	isRequired: true,
 },
-		tag: {
+		status: {
 	type: 'string',
-	isRequired: true,
+},
+		tag: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		required_source_control: {
+	type: 'boolean',
 },
 		code_source_control_name: {
+	type: 'any-of',
+	contains: [{
 	type: 'string',
-	isRequired: true,
+}, {
+	type: 'null',
+}],
+},
+		source_control_branch: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		derived_deployment_id: {
+	type: 'any-of',
+	contains: [{
+	type: 'number',
+}, {
+	type: 'null',
+}],
 },
 		deployment_strategy_id: {
+	type: 'any-of',
+	contains: [{
 	type: 'number',
-	isRequired: true,
+}, {
+	type: 'null',
+}],
 },
 		replicas: {
 	type: 'any-of',

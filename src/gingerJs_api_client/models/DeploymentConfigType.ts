@@ -9,9 +9,13 @@ export type DeploymentConfigType = {
 	type: string;
 	namespace: string;
 	deployment_name: string;
-	tag: string;
-	code_source_control_name: string;
-	deployment_strategy_id: number;
+	status?: string;
+	tag?: string | null;
+	required_source_control?: boolean;
+	code_source_control_name?: string | null;
+	source_control_branch?: string | null;
+	derived_deployment_id?: number | null;
+	deployment_strategy_id?: number | null;
 	replicas?: number | null;
 	scheduling_profile_id?: number | null;
 	container_profile_ids?: Array<number> | null;

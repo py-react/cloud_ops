@@ -2542,7 +2542,8 @@ id,
 	}
 
 	/**
-	 * Get deployment details.
+	 * Get deployment details. Returns all non-hard-deleted items.
+ * Frontend handles filtering by status/soft_delete.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
@@ -2564,7 +2565,7 @@ namespace,
 	}
 
 	/**
-	 * Create a new deployment with the specified configuration.
+	 * Create a new release configuration.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
@@ -2584,7 +2585,7 @@ requestBody,
 	}
 
 	/**
-	 * Update an existing deployment with new configuration.
+	 * Update an existing release configuration.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */

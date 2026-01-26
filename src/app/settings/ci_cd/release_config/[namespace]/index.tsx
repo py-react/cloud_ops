@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileCog, SlidersHorizontal, RefreshCw, Plus, FileText, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { FileCog, SlidersHorizontal, RefreshCw, Plus, FileText, CheckCircle, XCircle, Trash2, Package, GitBranch } from "lucide-react";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
 import { DefaultService } from "@/gingerJs_api_client";
@@ -15,19 +15,19 @@ import { ReleaseConfigFilters } from "@/components/ciCd/releaseConfig/common/Rel
 import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 import useNavigate from "@/libs/navigate";
-// Final cleanup of index.tsx - removing CreateRelease import
 import { FormWizard } from "@/components/wizard/form-wizard";
-import { releaseFormSchema, DeploymentFormData } from "@/components/ciCd/releaseConfig/forms/components/formUtils";
-import { Settings, Container, Network, Tag, FileCode } from "lucide-react";
+import { releaseFormSchema } from "@/components/ciCd/releaseConfig/forms/components/formUtils";
+import { Settings } from "lucide-react";
 
-// Step components
-import EssentialConfig from "@/components/ciCd/releaseConfig/forms/EssentialConfig";
-import YamlReviewStep from "@/components/ciCd/releaseConfig/forms/YamlReviewStep";
+// Simplified step component
+import SimpleReleaseConfig from "@/components/ciCd/releaseConfig/forms/SimpleReleaseConfig";
 
 const columns = [
-  { header: "Deployment Name", accessor: "deployment_name" },
+  { header: "Release Config Name", accessor: "deployment_name" },
+  { header: "Type", accessor: "type" },
   { header: "Source Control", accessor: "code_source_control_name" },
-  { header: "Labels", accessor: "labels" },
+  { header: "Branch", accessor: "source_control_branch" },
+  { header: "Derived Deployment", accessor: "derived_deployment_name" },
   { header: "Status", accessor: "status" },
 ];
 
@@ -42,61 +42,57 @@ const ReleaseConfigPage = () => {
   const [deleteFilter, setDeleteFilter] = useState(""); // "", "active", "inactive", "delete"
   const [currentStep, setCurrentStep] = useState("essential");
 
-  const INITIAL_VALUES: DeploymentFormData = React.useMemo(() => ({
+  const INITIAL_VALUES = React.useMemo(() => ({
     deployment_name: '',
     namespace: selectedNamespace || 'default',
-    type: 'web-app',
-    tag: 'latest',
-    code_source_control_name: '',
-    deployment_strategy_id: 1, // Default strategy
-    replicas: 1,
-    containers: [{ name: '' }],
+    type: '',
+    required_source_control: false,
+    code_source_control_name: null,
+    source_control_branch: null,
+    derived_deployment_id: null,
   }), [selectedNamespace]);
 
-  const sanitizeFormData = (data: any): DeploymentFormData => {
+  const sanitizeFormData = (data: any) => {
     if (!data || !data.deployment_name) return INITIAL_VALUES;
 
-    // Destructure to omit internal fields from form state
     const { soft_delete, hard_delete, deleted_at, id, ...cleanData } = data;
 
     return {
       ...INITIAL_VALUES,
       ...cleanData,
-      containers: data.containers?.length
-        ? data.containers.map((c: any) => ({ ...c, name: c.name || '' }))
-        : [{ name: '' }],
-      node_selector: data.node_selector || {},
-      labels: data.labels || {},
-      annotations: data.annotations || {},
-      service_ports: data.service_ports || [],
     };
   };
 
   const steps = [
     {
       id: "essential",
-      label: "Essential Details",
+      label: "Release Configuration",
       icon: Settings,
       description: "Required config",
-      longDescription: "Fill in the mandatory fields to define your deployment's identity, image, and pipeline strategy.",
-      component: EssentialConfig,
-    },
-    {
-      id: "yaml",
-      label: "Advanced YAML",
-      icon: FileCode,
-      description: "Optional settings",
-      longDescription: "Review the generated manifest and add optional configurations like replicas, ports, and metadata labels.",
-      component: YamlReviewStep,
+      longDescription: "Define the release configuration with source control and deployment references.",
+      component: SimpleReleaseConfig,
     },
   ];
 
-  const handleWizardSubmit = async (data: DeploymentFormData) => {
+  const handleWizardSubmit = async (data: any) => {
     try {
       const isEdit = !!editingConfig?.deployment_name;
+
+      // Prepare payload with required backend fields
+      const payload = {
+        ...data,
+        id: isEdit ? editingConfig?.id : undefined,  // Include id for updates
+        tag: data.tag || null,
+        deployment_strategy_id: data.deployment_strategy_id || null,
+        code_source_control_name: data.code_source_control_name || null,
+        source_control_branch: data.source_control_branch || null,
+      };
+
+      console.log("Submitting payload:", payload);
+
       const response: any = isEdit
-        ? await DefaultService.apiIntegrationKubernetesReleasePut({ requestBody: data })
-        : await DefaultService.apiIntegrationKubernetesReleasePost({ requestBody: data });
+        ? await DefaultService.apiIntegrationKubernetesReleasePut({ requestBody: payload })
+        : await DefaultService.apiIntegrationKubernetesReleasePost({ requestBody: payload });
 
       if (response.status === "success") {
         toast.success(isEdit ? "Release configuration updated!" : "Release configuration created!");
@@ -107,6 +103,7 @@ const ReleaseConfigPage = () => {
         toast.error(response.message || "Failed to save configuration");
       }
     } catch (error: any) {
+      console.error("Submit error:", error);
       toast.error(error.message || "An error occurred");
     }
   };
@@ -114,6 +111,7 @@ const ReleaseConfigPage = () => {
   const fetchDeployments = async () => {
     setLoading(true);
     try {
+      // Fetch all items (backend only excludes hard-deleted)
       const response: any = await DefaultService.apiIntegrationKubernetesReleaseGet({
         name: null,
         namespace: selectedNamespace,
@@ -133,34 +131,37 @@ const ReleaseConfigPage = () => {
   useEffect(() => {
     if (!selectedNamespace) return;
     fetchDeployments();
-  }, [selectedNamespace]);
+  }, [selectedNamespace]);  // Only refetch when namespace changes
 
   const filteredDeployments = deployments
     .filter((item) => {
+      // Always exclude hard-deleted items from all views
+      if (item.hard_delete === true) {
+        return false;
+      }
+
+      // Filter by delete status
       if (deleteFilter === "active") {
-        return item.hard_delete === false && item.soft_delete === false;
+        return item.status === "active" && item.soft_delete === false;
       }
       if (deleteFilter === "inactive") {
-        return item.soft_delete === true && item.hard_delete === false;
+        return item.status === "inactive" && item.soft_delete === false;
       }
       if (deleteFilter === "delete") {
-        return item.hard_delete === true;
+        return item.soft_delete === true;
       }
+      // No filter - show all (active, inactive, and soft-deleted)
       return true;
     })
     .filter((item) => {
+      if (!search) return true;
       const searchLower = search.toLowerCase();
       const sourceControl = (item.code_source_control_name || "").toLowerCase();
       const deploymentName = (item.deployment_name || "").toLowerCase();
-      const labels = Object.entries(item.labels || {})
-        .map(([k, v]) => `${k}: ${v}`)
-        .join(" ")
-        .toLowerCase();
 
       return (
         sourceControl.includes(searchLower) ||
-        deploymentName.includes(searchLower) ||
-        labels.includes(searchLower)
+        deploymentName.includes(searchLower)
       );
     });
 
@@ -204,7 +205,7 @@ const ReleaseConfigPage = () => {
       <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
         <ResourceCard
           title="Total Configs"
-          count={deployments.length}
+          count={deployments.filter(d => !d.soft_delete).length}
           icon={<FileCog className="w-4 h-4" />}
           color="bg-primary"
           className="border-primary/20 bg-primary/5 shadow-none hover:border-primary/30 transition-all"
@@ -212,7 +213,7 @@ const ReleaseConfigPage = () => {
         />
         <ResourceCard
           title="Active"
-          count={deployments.filter(d => !d.hard_delete && !d.soft_delete).length}
+          count={deployments.filter(d => !d.soft_delete && d.status === 'active').length}
           icon={<CheckCircle className="w-4 h-4" />}
           color="bg-emerald-500"
           className="border-emerald-500/20 bg-emerald-500/5 shadow-none hover:border-emerald-500/30 transition-all"
@@ -220,7 +221,7 @@ const ReleaseConfigPage = () => {
         />
         <ResourceCard
           title="Inactive"
-          count={deployments.filter(d => !d.hard_delete && d.soft_delete).length}
+          count={deployments.filter(d => !d.soft_delete && d.status === 'inactive').length}
           icon={<XCircle className="w-4 h-4" />}
           color="bg-amber-500"
           className="border-amber-500/20 bg-amber-500/5 shadow-none hover:border-amber-500/30 transition-all"
@@ -228,7 +229,7 @@ const ReleaseConfigPage = () => {
         />
         <ResourceCard
           title="Deleted"
-          count={deployments.filter(d => d.hard_delete).length}
+          count={deployments.filter(d => d.soft_delete).length}
           icon={<Trash2 className="w-4 h-4" />}
           color="bg-destructive"
           className="border-destructive/20 bg-destructive/5 shadow-none hover:border-destructive/30 transition-all"
@@ -253,31 +254,33 @@ const ReleaseConfigPage = () => {
           data={filteredDeployments.map((item) => ({
             ...item,
             fullData: item,
-            status: item.hard_delete
-              ? "deleted"
-              : item.soft_delete
-                ? "inactive"
-                : "active",
-            labels: Object.entries(item.labels || {}).map(
-              ([key, value]) => `${key}: ${value}`
-            ),
+            code_source_control_name: item.code_source_control_name || (item.required_source_control ? "Missing" : "N/A"),
+            source_control_branch: item.source_control_branch || (item.required_source_control ? "Missing" : "N/A"),
+            derived_deployment_name: item.derived_deployment_name || "N/A",
+            status: item.soft_delete ? "deleted" : (item.status || "active"),
             showDelete: !item.hard_delete,
-            showEdit: !item.hard_delete,
-            showClone: !item.hard_delete,
-            showUndo: item.hard_delete,
+            showEdit: !item.hard_delete && !item.soft_delete,
+            showClone: !item.hard_delete && !item.soft_delete,
+            showUndo: item.soft_delete === true && !item.hard_delete,
+            showPause: item.status === "active" && !item.soft_delete,  // Show pause for active items
+            showPlay: item.status === "inactive" && !item.soft_delete,  // Show play for inactive items
           }))}
           onEdit={(row) => {
             setEditingConfig(row.fullData);
             setAddDialogOpen(true);
           }}
-          onDelete={(row) => {
-            DefaultService.apiIntegrationKubernetesReleaseDelete({
-              namespace: row.fullData.namespace,
-              name: row.fullData.deployment_name,
+          onUndo={(row) => {
+            // Restore soft-deleted item and set to active
+            DefaultService.apiIntegrationKubernetesReleasePut({
+              requestBody: {
+                ...row.fullData,
+                soft_delete: false,
+                status: "active",
+              },
             })
               .then((res: any) => {
                 if (res.status === "success") {
-                  toast.success("Release config deleted successfully!");
+                  toast.success("Release config restored and activated");
                   fetchDeployments();
                 } else {
                   toast.error(res.message);
@@ -286,6 +289,105 @@ const ReleaseConfigPage = () => {
               .catch((err) => {
                 toast.error(err.message);
               });
+          }}
+          onPause={(row) => {
+            console.log("Pausing config:", row.fullData);
+            if (!row.fullData.id) {
+              toast.error("Error: Missing ID for toggle action");
+              return;
+            }
+            // Toggle status to inactive
+            DefaultService.apiIntegrationKubernetesReleasePut({
+              requestBody: {
+                ...row.fullData,
+                status: "inactive",
+              },
+            })
+              .then((res: any) => {
+                if (res.status === "success") {
+                  toast.success("Release config set to inactive");
+                  fetchDeployments();
+                } else {
+                  toast.error(res.message);
+                }
+              })
+              .catch((err) => {
+                toast.error(err.message);
+              });
+          }}
+          onPlay={(row) => {
+            console.log("Starting config:", row.fullData);
+            if (!row.fullData.id) {
+              toast.error("Error: Missing ID for toggle action");
+              return;
+            }
+            // Toggle status to active
+            DefaultService.apiIntegrationKubernetesReleasePut({
+              requestBody: {
+                ...row.fullData,
+                status: "active",
+              },
+            })
+              .then((res: any) => {
+                if (res.status === "success") {
+                  toast.success("Release config set to active");
+                  fetchDeployments();
+                } else {
+                  toast.error(res.message);
+                }
+              })
+              .catch((err) => {
+                toast.error(err.message);
+              });
+          }}
+          onDelete={(row) => {
+            const isSoftDeleted = row.fullData.soft_delete === true;
+
+            // If already soft-deleted, confirm hard delete (irreversible)
+            if (isSoftDeleted) {
+              if (!window.confirm(
+                "⚠️ WARNING: This will permanently delete this release config and cannot be undone.\n\n" +
+                "Are you sure you want to proceed with permanent deletion?"
+              )) {
+                return; // User cancelled
+              }
+
+              // Perform hard delete via API (update hard_delete flag)
+              DefaultService.apiIntegrationKubernetesReleasePut({
+                requestBody: {
+                  ...row.fullData,
+                  hard_delete: true,
+                },
+              })
+                .then((res: any) => {
+                  if (res.status === "success") {
+                    toast.success("Release config permanently deleted");
+                    fetchDeployments();
+                  } else {
+                    toast.error(res.message);
+                  }
+                })
+                .catch((err) => {
+                  toast.error(err.message);
+                });
+            } else {
+              // Perform soft delete (normal delete)
+              DefaultService.apiIntegrationKubernetesReleaseDelete({
+                namespace: row.fullData.namespace,
+                name: row.fullData.deployment_name,
+              })
+                .then((res: any) => {
+                  if (res.status === "success") {
+                    toast.success("Release config deleted (can be restored)");
+                    fetchDeployments();
+                  } else {
+                    toast.error(res.message);
+                  }
+                })
+                .catch((err) => {
+                  toast.error(err.message);
+                });
+            }
           }}
           onViewDetails={(row) => {
             navigate(
@@ -312,25 +414,6 @@ const ReleaseConfigPage = () => {
               })
               .catch((error: any) => {
                 toast.error("Error Cloning form:", error);
-              });
-          }}
-          onUndo={(row) => {
-            DefaultService.apiIntegrationKubernetesReleasePut({
-              requestBody: {
-                ...row.fullData,
-                hard_delete: false,
-              },
-            })
-              .then((response: any) => {
-                if (response.status === "success") {
-                  toast.success("Release config restored successfully!");
-                  fetchDeployments();
-                } else {
-                  toast.error(response.message);
-                }
-              })
-              .catch((error: any) => {
-                toast.error("Error restoring form:", error);
               });
           }}
         />
