@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List
 from app.db_client.models.kubernetes_profiles.pod_metadata_profile import K8sPodMetaDataProfile
 
 def create_profile(session: Session, data: dict) -> K8sPodMetaDataProfile:
@@ -9,9 +9,11 @@ def create_profile(session: Session, data: dict) -> K8sPodMetaDataProfile:
     session.refresh(obj)
     return obj
 
-def list_profiles(session: Session, namespace: Optional[str] = None) -> Sequence[K8sPodMetaDataProfile]:
+def list_profiles(session: Session, namespace: Optional[str] = None, ids: Optional[List[int]] = None) -> Sequence[K8sPodMetaDataProfile]:
     query = select(K8sPodMetaDataProfile)
-    if namespace:
+    if ids:
+        query = query.where(K8sPodMetaDataProfile.id.in_(ids))
+    elif namespace:
         query = query.where(K8sPodMetaDataProfile.namespace == namespace)
     return session.exec(query).all()
 

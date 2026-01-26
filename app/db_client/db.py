@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, create_engine, Session
 import os
 from sqlmodel import Session, select
+from contextlib import contextmanager
 
 # --- DB Engine and Session Management ---
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
@@ -12,21 +13,18 @@ DATABASE_URL = (
     f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 )
 
+engine = create_engine(DATABASE_URL)
+
+@contextmanager
 def get_session():
-    if "engine" not in globals():
-        engine = create_engine(DATABASE_URL)
-        globals()["engine"] = engine
-    with Session(globals()["engine"]) as session:
+    with Session(engine) as session:
         yield session
 
 # --- Import all models to register them with SQLModel ---
 from .models import *
 
 def run_migrations():
-    if "engine" not in globals():
-        engine = create_engine(DATABASE_URL)
-        globals()["engine"] = engine
-    SQLModel.metadata.create_all(globals()["engine"])
+    SQLModel.metadata.create_all(engine)
 
 DEFAULT_STRATEGIES = [
     {"id": 1, "name": "rolling", "description": "Rolling update strategy that gradually replaces old pods with new ones"},
@@ -36,14 +34,12 @@ DEFAULT_STRATEGIES = [
 ]
 
 def ensure_default_strategies():
-    session_ctx = get_session()
-    session = next(session_ctx)
-    for strat in DEFAULT_STRATEGIES:
-        existing = session.exec(select(DeploymentStrategy).where(DeploymentStrategy.id == strat["id"])).first()
-        if not existing:
-            session.add(DeploymentStrategy(**strat))
-    session.commit()
-    session_ctx.close()
+    with Session(engine) as session:
+        for strat in DEFAULT_STRATEGIES:
+            existing = session.exec(select(DeploymentStrategy).where(DeploymentStrategy.id == strat["id"])).first()
+            if not existing:
+                session.add(DeploymentStrategy(**strat))
+        session.commit()
 
 # Call this function once before you create any deployment configs
 ensure_default_strategies()

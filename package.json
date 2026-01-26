@@ -43,6 +43,7 @@
     "elkjs": "^0.9.3",
     "lucide-react": "^0.509.0",
     "next-themes": "^0.3.0",
+    "radix-ui": "^1.4.3",
     "react": "^18.3.1",
     "react-day-picker": "^9.6.7",
     "react-dom": "^18.3.1",

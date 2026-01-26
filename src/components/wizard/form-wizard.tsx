@@ -23,7 +23,8 @@ type TSteps<T extends FieldValues> = {
   longDescription: string;
   props?: Record<string, any>;
   component: React.FC<any>;
-  hideSectionHeader?:boolean
+  hideSectionHeader?: boolean;
+  hideActions?: boolean;
   canNavigateNext?: (form: UseFormReturn<T>) => { can: boolean; message?: string };
 };
 
@@ -227,7 +228,7 @@ export const FormWizard = <T extends FieldValues>({
                     </div>
                   </div>
                 </ScrollArea>
-                {!hideActions &&(
+                {(!hideActions && !currentStepData.hideActions) && (
                   // {/* Footer: Sticky, Standard sized buttons, right-aligned */}
                   <div className="py-3 px-8 bg-background/95 backdrop-blur-xl border-t border-border/40 flex justify-end items-center z-20 gap-3 shrink-0">
                     {currentStepIndex > 0 && (
