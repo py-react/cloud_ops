@@ -111,10 +111,9 @@ export const BasicConfig = ({ control, setValue, watch, form }: { control: Contr
                         </span>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {cmdWatch.size > 0 && Array.from(cmdWatch).map((field: any) => (
-                            <>
+                        {((cmdWatch instanceof Set ? cmdWatch.size : ((cmdWatch as any)?.length || 0)) > 0) && (cmdWatch instanceof Set ? Array.from(cmdWatch) : ((cmdWatch as any) || [])).map((field: any) => (
+                            <React.Fragment key={field}>
                                 <div
-                                    key={field}
                                     className={cn(
                                         "pl-3 pr-2 py-1.5 gap-2 text-primary transition-all group",
                                         "font-mono text-xs font-semibold flex item-center gap-2"
@@ -125,8 +124,13 @@ export const BasicConfig = ({ control, setValue, watch, form }: { control: Contr
                                         type="button"
                                         onClick={() => {
                                             const oldVal = form.getValues("command")
-                                            oldVal.delete(field)
-                                            setValue("command", oldVal)
+                                            if (oldVal instanceof Set) {
+                                                const newVal = new Set(oldVal);
+                                                newVal.delete(field);
+                                                setValue("command", newVal);
+                                            } else {
+                                                setValue("command", ((oldVal as any) || []).filter((f: any) => f !== field));
+                                            }
                                         }}
                                         className="rounded-full p-0.5 hover:bg-destructive/20 transition-colors"
                                     >
@@ -134,7 +138,7 @@ export const BasicConfig = ({ control, setValue, watch, form }: { control: Contr
                                     </button>
                                 </div>
                                 <span>{" "}</span>
-                            </>
+                            </React.Fragment>
                         ))}
                     </div>
                     <div className="w-full flex gap-2">
@@ -164,7 +168,7 @@ export const BasicConfig = ({ control, setValue, watch, form }: { control: Contr
                     </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {argsWatch.size > 0 && Array.from(argsWatch).map((field: any) => (
+                    {((argsWatch instanceof Set ? argsWatch.size : ((argsWatch as any)?.length || 0)) > 0) && (argsWatch instanceof Set ? Array.from(argsWatch) : ((argsWatch as any) || [])).map((field: any) => (
                         <div
                             key={field}
                             className={cn(
@@ -177,8 +181,13 @@ export const BasicConfig = ({ control, setValue, watch, form }: { control: Contr
                                 type="button"
                                 onClick={() => {
                                     const oldVal = form.getValues("args")
-                                    oldVal.delete(field)
-                                    setValue("args", oldVal)
+                                    if (oldVal instanceof Set) {
+                                        const newVal = new Set(oldVal);
+                                        newVal.delete(field);
+                                        setValue("args", newVal);
+                                    } else {
+                                        setValue("args", ((oldVal as any) || []).filter((f: any) => f !== field));
+                                    }
                                 }}
                                 className="rounded-full p-0.5 hover:bg-destructive/20 transition-colors"
                             >

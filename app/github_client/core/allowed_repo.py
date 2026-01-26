@@ -22,14 +22,14 @@ class AllowedRepoUtils:
         if session is None:
             # Use context manager to get a session if not provided
             self.session_ctx = get_session()
-            self.session = next(self.session_ctx)
+            self.session = self.session_ctx.__enter__()
         else:
             self.session = session
             self.session_ctx = None
 
     def __del__(self):
         if self.session_ctx:
-            self.session_ctx.close()
+            self.session_ctx.__exit__(None, None, None)
 
     def get_builds(self,repo_name,base_branch):
         return get_source_code_build(self.session,repo_name=repo_name,base_branch=base_branch)

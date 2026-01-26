@@ -15,12 +15,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-function replaceDockerWithSystem(text) {
+function replaceDockerWithSystem(text: string) {
   // Define the regex pattern to match 'docker' or 'Docker' as a whole word, case-insensitive
   const pattern = /\bdocker\b/gi;  // Matches 'docker' as a whole word, case-insensitive
 
   // Replace all occurrences of 'docker' with 'system', and 'Docker' with 'System'.
-  return text.replace(pattern, (match, p1) => {
+  return text.replace(pattern, (match: string, p1: string) => {
     // If it's 'docker' (lowercase), replace with 'system'
     if (match === 'docker') {
       return 'system';
@@ -73,9 +73,8 @@ export default function SystemInfo({
         </div>
         <Button
           variant="outline"
-          size="sm"
           onClick={onRefresh}
-          className="h-8 gap-2"
+          className="gap-2"
           disabled={isRefreshing}
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />

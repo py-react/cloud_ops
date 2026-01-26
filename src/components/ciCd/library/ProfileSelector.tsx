@@ -18,7 +18,7 @@ interface Profile {
 }
 
 interface ProfileSelectorProps {
-    profileType: "container" | "pod_profile" | "pod_metadata_profile";
+    profileType: "container" | "pod_profile" | "pod_metadata_profile" | "deployment_selector" | "deployment_profile" | "pod";
     namespace: string;
     selectedIds: number[];
     onChange: (ids: number[]) => void;
@@ -26,11 +26,6 @@ interface ProfileSelectorProps {
     label?: string;
 }
 
-const API_ENDPOINTS = {
-    container: "/api/integration/kubernetes/library/container",
-    pod_profile: "/api/integration/kubernetes/library/pod_profile",
-    pod_metadata_profile: "/api/integration/kubernetes/library/pod_metadata_profile",
-};
 
 export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
     profileType,
@@ -47,10 +42,27 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
         const fetchProfiles = async () => {
             setLoading(true);
             try {
-                const response = await fetch(
-                    `${API_ENDPOINTS[profileType]}?namespace=${namespace}`
-                );
-                const data = await response.json();
+                let data: any[] = [];
+                switch (profileType) {
+                    case "container":
+                        data = await DefaultService.apiIntegrationKubernetesLibraryContainerGet({ namespace }) as any[];
+                        break;
+                    case "pod_profile":
+                        data = await DefaultService.apiIntegrationKubernetesLibraryPodProfileGet({ namespace }) as any[];
+                        break;
+                    case "pod_metadata_profile":
+                        data = await DefaultService.apiIntegrationKubernetesLibraryPodMetadataProfileGet({ namespace }) as any[];
+                        break;
+                    case "deployment_selector":
+                        data = await DefaultService.apiIntegrationKubernetesLibraryDeploymentSelectorGet({ namespace }) as any[];
+                        break;
+                    case "deployment_profile":
+                        data = await DefaultService.apiIntegrationKubernetesLibraryDeploymentProfileGet({ namespace }) as any[];
+                        break;
+                    case "pod":
+                        data = await DefaultService.apiIntegrationKubernetesLibraryPodGet({ namespace }) as any[];
+                        break;
+                }
                 setProfiles(data);
             } catch (error) {
                 console.error(`Error fetching ${profileType} profiles:`, error);

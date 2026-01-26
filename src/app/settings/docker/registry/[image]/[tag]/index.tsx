@@ -630,7 +630,6 @@ const Tag = () => {
               </CardTitle>
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => fetchImageConfig(imageManifest?.config.digest!)}
                 disabled={detailLoading}
               >

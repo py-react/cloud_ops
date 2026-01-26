@@ -11,6 +11,9 @@ import type { InfraDeleteResponse } from '../models/InfraDeleteResponse';
 import type { InfraPostResponse } from '../models/InfraPostResponse';
 import type { InfraPutResponse } from '../models/InfraPutResponse';
 import type { K8sContainerProfile } from '../models/K8sContainerProfile';
+import type { K8sDeployment } from '../models/K8sDeployment';
+import type { K8sDeploymentProfile } from '../models/K8sDeploymentProfile';
+import type { K8sDeploymentSelectorProfile } from '../models/K8sDeploymentSelectorProfile';
 import type { K8sEntityProfile } from '../models/K8sEntityProfile';
 import type { K8sPod } from '../models/K8sPod';
 import type { K8sPodMetaDataProfile } from '../models/K8sPodMetaDataProfile';
@@ -295,6 +298,34 @@ requestBody: K8sPod
 export type TDataApiIntegrationKubernetesLibraryPodDelete = {
                 id: number
             }
+export type TDataApiIntegrationKubernetesLibraryDeploymentSelectorGet = {
+                ids?: string | null
+namespace?: string | null
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentSelectorPost = {
+                requestBody: K8sDeploymentSelectorProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentSelectorPut = {
+                id: number
+requestBody: K8sDeploymentSelectorProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentSelectorDelete = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentProfileGet = {
+                ids?: string | null
+namespace?: string | null
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentProfilePost = {
+                requestBody: K8sDeploymentProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentProfilePut = {
+                id: number
+requestBody: K8sDeploymentProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentProfileDelete = {
+                id: number
+            }
 export type TDataApiIntegrationKubernetesLibraryPodMetadataProfileGet = {
                 ids?: string | null
 namespace?: string | null
@@ -349,6 +380,19 @@ export type TDataApiIntegrationKubernetesLibraryProfilePut = {
 requestBody: K8sEntityProfile
             }
 export type TDataApiIntegrationKubernetesLibraryProfileDelete = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentGet = {
+                namespace: string
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentPost = {
+                requestBody: K8sDeployment
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentPut = {
+                id: number
+requestBody: K8sDeployment
+            }
+export type TDataApiIntegrationKubernetesLibraryDeploymentDelete = {
                 id: number
             }
 export type TDataApiIntegrationKubernetesReleaseGet = {
@@ -1921,6 +1965,172 @@ id,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
+	public static apiIntegrationKubernetesLibraryDeploymentSelectorGet(data: TDataApiIntegrationKubernetesLibraryDeploymentSelectorGet = {}): CancelablePromise<unknown> {
+		const {
+ids,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/library/deployment_selector',
+			query: {
+				namespace, ids
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentSelectorPost(data: TDataApiIntegrationKubernetesLibraryDeploymentSelectorPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/deployment_selector',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentSelectorPut(data: TDataApiIntegrationKubernetesLibraryDeploymentSelectorPut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/library/deployment_selector',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentSelectorDelete(data: TDataApiIntegrationKubernetesLibraryDeploymentSelectorDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/library/deployment_selector',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentProfileGet(data: TDataApiIntegrationKubernetesLibraryDeploymentProfileGet = {}): CancelablePromise<unknown> {
+		const {
+ids,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/library/deployment_profile',
+			query: {
+				namespace, ids
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentProfilePost(data: TDataApiIntegrationKubernetesLibraryDeploymentProfilePost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/deployment_profile',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentProfilePut(data: TDataApiIntegrationKubernetesLibraryDeploymentProfilePut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/library/deployment_profile',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentProfileDelete(data: TDataApiIntegrationKubernetesLibraryDeploymentProfileDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/library/deployment_profile',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
 	public static apiIntegrationKubernetesLibraryPodMetadataProfileGet(data: TDataApiIntegrationKubernetesLibraryPodMetadataProfileGet = {}): CancelablePromise<unknown> {
 		const {
 ids,
@@ -2240,6 +2450,88 @@ id,
 		return __request(OpenAPI, {
 			method: 'DELETE',
 			url: '/api/integration/kubernetes/library/profile',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentGet(data: TDataApiIntegrationKubernetesLibraryDeploymentGet): CancelablePromise<unknown> {
+		const {
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/library/deployment',
+			query: {
+				namespace
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentPost(data: TDataApiIntegrationKubernetesLibraryDeploymentPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/deployment',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentPut(data: TDataApiIntegrationKubernetesLibraryDeploymentPut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/library/deployment',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryDeploymentDelete(data: TDataApiIntegrationKubernetesLibraryDeploymentDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/library/deployment',
 			query: {
 				id
 			},
@@ -2762,6 +3054,39 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/settings/ci_cd/library/{namespace}/spec/container/profile',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecDeploymentGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/deployment',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecDeploymentSelectorGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/deployment/selector',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecDeploymentProfileGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/deployment/profile',
 		});
 	}
 

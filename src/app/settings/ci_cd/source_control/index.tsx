@@ -406,15 +406,14 @@ const SourceControlPage = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2 mb-1">
-                    <Button variant="outline" size="sm" onClick={fetchData} disabled={loading} className="h-8 text-xs">
+                    <Button variant="outline" onClick={fetchData} disabled={loading} className="text-xs">
                         <RefreshCw className={`w-3.5 h-3.5 mr-2 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
                     </Button>
                     <Button
                         variant="gradient"
-                        size="sm"
                         onClick={() => setIsAddRepoOpen(true)}
-                        className="h-8 text-xs font-bold shadow-lg shadow-primary/20"
+                        className="text-xs font-bold shadow-lg shadow-primary/20"
                     >
                         <Plus className="w-3.5 h-3.5 mr-1" />
                         Add Repository

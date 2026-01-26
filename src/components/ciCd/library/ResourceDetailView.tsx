@@ -13,7 +13,9 @@ import {
     User,
     Shield,
     Globe,
-    Zap
+    Zap,
+    Layers,
+    Target
 } from "lucide-react";
 import { cn } from "@/libs/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -46,8 +48,12 @@ interface ResourceDetailViewProps {
         command?: string[];
         args?: string[];
         working_dir?: string;
+        // Deployment Specific
+        replicas?: number;
+        selector?: ProfileInfo;
+        pod?: ProfileInfo;
     };
-    type: "pod" | "container";
+    type: "pod" | "container" | "deployment";
 }
 
 export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, type }) => {
@@ -74,6 +80,15 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                 break;
             case 'pod':
                 targetPath = `/settings/ci_cd/library/${namespace}/spec/pod`;
+                break;
+            case 'deployment':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/deployment`;
+                break;
+            case 'deployment_selector':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/deployment/selector`;
+                break;
+            case 'deployment_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/deployment/profile`;
                 break;
             default:
                 targetPath = window.location.pathname;
@@ -170,6 +185,59 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                                             </Button>
                                         </div>
                                     ))}
+                                </div>
+                            </>
+                        )}
+                    </>
+                )}
+
+                {/* Deployment Specific Config */}
+                {type === "deployment" && (
+                    <>
+                        <SectionHeader icon={Layers} title="Derived Deployment Settings" />
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <InfoItem label="Name" value={data.name} icon={FileText} />
+                            <InfoItem label="Replicas" value={data.replicas} icon={Layers} />
+                        </div>
+
+                        {data.selector && (
+                            <>
+                                <SectionHeader icon={Target} title="Deployment Selector" />
+                                <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/20 flex items-center justify-between group">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-tight">Active Selector</span>
+                                        <span className="text-xs font-bold text-foreground mt-0.5">{data.selector.name}</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleOpenProfile(data.selector!.id, "deployment_selector")}
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-bold uppercase">Inspect</span>
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+
+                        {data.pod && (
+                            <>
+                                <SectionHeader icon={Box} title="Pod Template" />
+                                <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20 flex items-center justify-between group">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-tight">Active Pod Profile</span>
+                                        <span className="text-xs font-bold text-foreground mt-0.5">{data.pod.name}</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleOpenProfile(data.pod!.id, "pod")}
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-bold uppercase">Inspect</span>
+                                    </Button>
                                 </div>
                             </>
                         )}

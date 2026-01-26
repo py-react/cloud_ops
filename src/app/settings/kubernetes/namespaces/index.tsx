@@ -37,7 +37,7 @@ export const Namespaces = () => {
 
   const fetchResourceQuotas = async (namespace) => {
     const response =
-      await DefaultService.apiKubernertesResourceQuotaGet({namespace}).catch((err) => {
+      await DefaultService.apiKubernertesResourceQuotaGet({ namespace }).catch((err) => {
         toast.error(err as string);
       });
     console.log({ response });
@@ -63,7 +63,7 @@ export const Namespaces = () => {
 
   const fetchLimitRange = async (namespace) => {
     const response =
-      await DefaultService.apiKubernertesLimitRangeGet({namespace}).catch((err) => {
+      await DefaultService.apiKubernertesLimitRangeGet({ namespace }).catch((err) => {
         toast.error(err as string);
       });
     console.log({ response });
@@ -98,7 +98,7 @@ export const Namespaces = () => {
           .includes(limitRangeSearchTerm.toLowerCase())
     ) || [];
 
-    return (
+  return (
     <div title="Kubernetes namespace">
       <div className="space-y-6">
         <RouteDescription

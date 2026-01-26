@@ -176,16 +176,16 @@ const PackagesPage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 mb-1">
-            <Button variant="outline" size="sm" onClick={() => fetchPackages().then(setPackages)}>
+            <Button variant="outline" onClick={() => fetchPackages().then(setPackages)}>
               <RefreshCw className="w-3.5 h-3.5 mr-2" />
               Refresh
             </Button>
             <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={() => setShowPackagePullModal(true)}>
+              <Button variant="secondary" onClick={() => setShowPackagePullModal(true)}>
                 <ArrowDownToLineIcon className="w-3.5 h-3.5 mr-2" />
                 Pull
               </Button>
-              <Button variant="gradient" size="sm" onClick={() => setShowPackageCreateModal(true)}>
+              <Button variant="gradient" onClick={() => setShowPackageCreateModal(true)}>
                 <Plus className="w-3.5 h-3.5 mr-1" />
                 Create
               </Button>

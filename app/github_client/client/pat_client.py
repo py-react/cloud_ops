@@ -12,9 +12,7 @@ logger = logging.getLogger(__name__)
 
 def _get_pat_from_db() -> Optional[str]:
     """Retrieve and decrypt the active GitHub PAT from the database."""
-    session_gen = get_session()
-    session = next(session_gen)
-    try:
+    with get_session() as session:
         pat_obj = get_active_pat(session)
         if not pat_obj:
             return None
@@ -64,8 +62,6 @@ def _get_pat_from_db() -> Optional[str]:
         except Exception as e:
             logger.error(f"Failed to decrypt PAT from DB: {e}")
             return None
-    finally:
-        session_gen.close()
 
 
 def get_github_client_from_pat() -> Github:

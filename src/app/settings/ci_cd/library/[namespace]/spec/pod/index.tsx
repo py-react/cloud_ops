@@ -256,11 +256,11 @@ function PodLibrary() {
                 </div>
                 <div className="flex items-center gap-2 mb-1">
                     <NamespaceSelector />
-                    <Button variant="outline" size="sm" onClick={fetchPods}>
+                    <Button variant="outline" onClick={fetchPods}>
                         <RefreshCw className="w-3.5 h-3.5 mr-2" />
                         Refresh
                     </Button>
-                    <Button variant="gradient" size="sm" onClick={() => {
+                    <Button variant="gradient" onClick={() => {
                         setEditMode(false);
                         setEditingId(null);
                         setPodStep("setup");

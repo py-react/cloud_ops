@@ -63,11 +63,11 @@ function ContainersPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 mb-1">
-          <Button variant="outline" size="sm" onClick={refetch}>
+          <Button variant="outline" onClick={refetch}>
             <RefreshCw className="w-3.5 h-3.5 mr-2" />
             Refresh
           </Button>
-          <Button variant="gradient" size="sm" onClick={() => setShowRunnerModal(true)}>
+          <Button variant="gradient" onClick={() => setShowRunnerModal(true)}>
             <Plus className="w-3.5 h-3.5 mr-1" />
             Add Container
           </Button>
