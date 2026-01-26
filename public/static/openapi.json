@@ -7098,17 +7098,6 @@
             ],
             "title": "Derived Deployment Id"
           },
-          "deployment_strategy_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Deployment Strategy Id"
-          },
           "replicas": {
             "anyOf": [
               {
@@ -7359,9 +7348,19 @@
             ],
             "title": "Jira"
           },
-          "image_name": {
-            "type": "string",
-            "title": "Image Name"
+          "images": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Images"
           },
           "deployment_config_id": {
             "type": "integer",
@@ -7382,7 +7381,6 @@
         },
         "type": "object",
         "required": [
-          "image_name",
           "deployment_config_id"
         ],
         "title": "DeploymentRunType"

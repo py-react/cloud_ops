@@ -712,10 +712,28 @@ const ReleaseConfigDetailedInfo = () => {
                 <tbody className="divide-y divide-border/20">
                   {runData.map((run) => (
                     <tr key={run.id} className="group hover:bg-primary/[0.02] transition-colors relative">
-                      <td className="px-4 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-[13px] font-bold text-foreground font-mono">{run.image_name}</span>
-                          <span className="text-[11px] text-muted-foreground font-medium opacity-70">ID: {run.id}</span>
+                      <td className="px-4 py-4 min-w-[250px]">
+                        <div className="flex flex-col gap-3">
+                          <div className="grid grid-cols-1 gap-2">
+                            {Object.entries(run.images || {}).map(([containerName, imageName]) => (
+                              <div key={containerName} className="flex items-center gap-3">
+                                <div className="flex items-center min-w-[80px]">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/60 mr-2" />
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground truncate">
+                                    {containerName}
+                                  </span>
+                                </div>
+                                <code className="text-[11px] font-mono font-medium text-foreground break-all">
+                                  {imageName}
+                                </code>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-2">
+                            <span className="text-[10px] font-mono font-bold text-muted-foreground/40">
+                              RUN ID: {run.id}
+                            </span>
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-4">
@@ -770,7 +788,7 @@ const ReleaseConfigDetailedInfo = () => {
             fetchConfigData();
             setCreateRun(false);
           }}
-          deployment_config_id={configData.id}
+          deployment_config={configData}
           open={createRun}
           onClose={(open) => {
             setCreateRun(open);

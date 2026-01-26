@@ -5,8 +5,8 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 
 def validate_deployment_run(run: DeploymentRunType) -> None:
-    if not run.image_name:
-        raise HTTPException(status_code=400, detail="Image name is required")
+    if not run.images or len(run.images) == 0:
+        raise HTTPException(status_code=400, detail="At least one image is required")
     if not run.deployment_config_id:
         raise HTTPException(status_code=400, detail="deployment_config_id is required")
 
@@ -23,6 +23,8 @@ async def POST(request: Request, body: DeploymentRunType):
     except HTTPException as he:
         return JSONResponse(content={"status": "error", "message": he.detail}, status_code=he.status_code)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
 async def GET(request: Request,config_id: int, id: Optional[int] = None):

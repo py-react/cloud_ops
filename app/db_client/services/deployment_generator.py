@@ -8,42 +8,43 @@ class DeploymentGenerator:
     def __init__(self, session: Session):
         self.session = session
 
-    def generate(self, deployment_id: int) -> Dict[str, Any]:
+    def generate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Generates a Kubernetes Deployment YAML (dict) from the database models.
+        Generates a Kubernetes Deployment YAML (dict) from the composed data.
         """
-        deployment = self.session.get(DeploymentConfig, deployment_id)
-        if not deployment:
-            raise ValueError(f"DeploymentConfig with ID {deployment_id} not found")
-
+        deployment_name = data.get("deployment_name")
+        namespace = data.get("namespace")
+        
         # 1. Metadata
         metadata = client.V1ObjectMeta(
-            name=deployment.deployment_name,
-            namespace=deployment.namespace,
-            labels=deployment.labels or {},
-            annotations=deployment.annotations or {}
+            name=deployment_name,
+            namespace=namespace,
+            labels=(data.get("labels") or {}),
+            annotations=(data.get("annotations") or {})
         )
 
         # 2. Pod Spec Construction
-        pod_spec = self._build_pod_spec(deployment)
+        pod_spec = self._build_pod_spec(data)
 
         # 3. Pod Template
-        # Ensure 'app' label exists for selector match
-        labels = deployment.labels.copy() if deployment.labels else {}
-        labels.setdefault("app", deployment.deployment_name)
+        # 3. Pod Template
+        # Ensure 'app' label exists for selector match (FORCE OVERWRITE)
+        labels = (data.get("labels") or {}).copy()
+        labels["app"] = deployment_name  # Force match selector
 
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(
-                labels=labels
+                labels=labels,
+                annotations=data.get("annotations")
             ),
             spec=pod_spec
         )
 
         # 4. Deployment Spec
         spec = client.V1DeploymentSpec(
-            replicas=deployment.replicas,
+            replicas=data.get("replicas", 1),
             selector=client.V1LabelSelector(
-                match_labels={"app": deployment.deployment_name}
+                match_labels={"app": deployment_name}
             ),
             template=template
         )
@@ -58,118 +59,129 @@ class DeploymentGenerator:
 
         return client.ApiClient().sanitize_for_serialization(deployment_obj)
 
-    def _build_pod_spec(self, deployment: DeploymentConfig):
-        pass
-        # containers = []
-        # volumes = []
-
-        # # Process Containers
-        # for container_profile in deployment.containers:
-        #     containers.append(self._build_container(container_profile))
-
-        # # Process Volumes
-        # for volume_profile in deployment.volumes:
-        #     volumes.append(self._build_volume(volume_profile))
-
-        # # Process Scheduling (Affinity, NodeSelector, Tolerations)
-        # node_selector = None
-        # affinity = None
-        # tolerations = None
+    def _build_pod_spec(self, data: Dict[str, Any]) -> client.V1PodSpec:
+        containers = []
         
-        # if deployment.scheduling_profile:
-        #     sched = deployment.scheduling_profile
-        #     node_selector = sched.node_selector
-        #     if sched.affinity:
-        #         # Assuming affinity is stored as a valid K8s dict structure in JSONB
-        #         affinity = sched.affinity 
-        #     if sched.tolerations:
-        #         tolerations = sched.tolerations
+        composed_containers = data.get("containers", [])
+        for c_data in composed_containers:
+            if c_data:
+                containers.append(self._build_container(c_data))
 
-        # return client.V1PodSpec(
-        #     containers=containers,
-        #     volumes=volumes,
-        #     node_selector=node_selector,
-        #     affinity=affinity,
-        #     tolerations=tolerations
-        # )
+        # Build Volumes
+        volumes = []
+        if data.get("volumes"):
+            for v_data in data["volumes"]:
+                volumes.append(self._build_volume(v_data))
 
-    def _build_container(self, profile: K8sContainerProfile) :
-        pass
-        # Resolve Resources
-        # resources = None
-        # if profile.resources_profile_id:
-        #     res_profile = self.session.get(K8sResourceProfile, profile.resources_profile_id)
-        #     if res_profile:
-        #         resources = client.V1ResourceRequirements(
-        #             requests=res_profile.requests,
-        #             limits=res_profile.limits
-        #         )
+        affinity_data = data.get("affinity")
+        affinity = client.V1Affinity(**affinity_data) if affinity_data else None
 
-        # # Resolve Probes
-        # liveness_probe = self._build_probe(profile.liveness_probe_id)
-        # readiness_probe = self._build_probe(profile.readiness_probe_id)
-        # startup_probe = self._build_probe(profile.startup_probe_id)
+        return client.V1PodSpec(
+            containers=containers,
+            volumes=volumes if volumes else None,
+            service_account_name=data.get("service_account_name"),
+            affinity=affinity,
+            node_selector=data.get("node_selector"),
+            tolerations=data.get("tolerations")
+        )
 
-        # # Resolve Lifecycle
-        # lifecycle = None
-        # if profile.lifecycle_profile_id:
-        #     lc_profile = self.session.get(K8sLifecycleProfile, profile.lifecycle_profile_id)
-        #     if lc_profile:
-        #         lifecycle = client.V1Lifecycle(**lc_profile.lifecycle_config)
+    def _build_container(self, c_data: Dict[str, Any]) -> client.V1Container:
+        # Helper to map camelCase probes to snake_case
+        def map_probe(probe_dict):
+            if not probe_dict: return None
+            return probe_dict
 
-        # # Resolve Env Vars
-        # env = [] 
-        # # Manually query the link table since it's defined but relationship might not be auto-loaded
-        # # Depends on if 'env_profiles' relationship exists. Checking container.py snippet...
-        # # It had K8sContainerEnv defined but no explicit relationship on K8sContainerProfile.
-        # # So we query manually.
+        # Sanitize container name
+        container_name = self._sanitize_container_name(c_data.get("name"))
         
-        # stmt = select(K8sEnvProfile).join(K8sContainerEnv).where(K8sContainerEnv.container_profile_id == profile.id)
-        # env_profiles = self.session.exec(stmt).all()
+        # Ensure image is never None
+        image = c_data.get("image")
+        if not image:
+            image = "<IMAGE_NAME_FILLED_AT_RUNTIME>"
+
+        return client.V1Container(
+            name=container_name,
+            image=image,
+            image_pull_policy=c_data.get("image_pull_policy", "IfNotPresent"),
+            command=c_data.get("command"),
+            args=c_data.get("args"),
+            working_dir=c_data.get("working_dir"),
+            resources=c_data.get("resources"),
+            liveness_probe=map_probe(c_data.get("livenessProbe")),
+            readiness_probe=map_probe(c_data.get("readinessProbe")),
+            startup_probe=map_probe(c_data.get("startupProbe")),
+            
+            # Debugging Env
+            # env=[client.V1EnvVar(name=e.get("name"), value=str(e.get("value", ""))) for e in c_data.get("env", [])] if c_data.get("env") else None,
+            env=self._build_env(c_data.get("env")),
+            ports=[client.V1ContainerPort(container_port=p["containerPort"], name=p.get("name"), protocol=p.get("protocol", "TCP")) for p in c_data.get("ports", [])] if c_data.get("ports") else None,
+            volume_mounts=[client.V1VolumeMount(name=vm["name"], mount_path=vm["mountPath"], read_only=vm.get("readOnly", False)) for vm in c_data.get("volumeMounts", [])] if c_data.get("volumeMounts") else None,
+            tty=c_data.get("tty"),
+            stdin=c_data.get("stdin")
+        )
+
+    def _build_env(self, env_data):
+        if not env_data:
+            return None
         
-        # for env_prof in env_profiles:
-        #     # K8sEnvProfile has 'data' which is Dict[str, str]
-        #     if env_prof.data:
-        #         for k, v in env_prof.data.items():
-        #             env.append(client.V1EnvVar(name=k, value=str(v)))
-
-        # return client.V1Container(
-        #     name=profile.container_name,
-        #     image=profile.image,
-        #     image_pull_policy=profile.image_pull_policy,
-        #     command=profile.command,
-        #     args=profile.args,
-        #     working_dir=profile.working_dir,
-        #     resources=resources,
-        #     liveness_probe=liveness_probe,
-        #     readiness_probe=readiness_probe,
-        #     startup_probe=startup_probe,
-        #     lifecycle=lifecycle,
-        #     env=env,
-        #     volume_mounts=profile.volume_mounts, # Assuming List[V1VolumeMount] dicts
-        #     ports=profile.ports # Assuming List[V1ContainerPort] dicts
-        # )
-
-    def _build_probe(self, probe_id: int) -> Any:
-        pass
-        # if not probe_id:
-        #     return None
-        # probe_profile = self.session.get(K8sProbeProfile, probe_id)
-        # if not probe_profile:
-        #     return None
+        result = []
+        import sys
         
-        # # Convert camelCase keys to snake_case for K8s Python client
-        # safe_config = {self._to_snake_case(k): v for k, v in probe_profile.probe_config.items()}
-        # return client.V1Probe(**safe_config)
+        try:
+            # sys.stderr.write(f"DEBUG ENV DATA TYPE: {type(env_data)}\n")
+            # sys.stderr.write(f"DEBUG ENV DATA CONTENT: {env_data}\n")
+            
+            for e in env_data:
+                # sys.stderr.write(f"DEBUG ENV ITEM: {e} TYPE: {type(e)}\n")
+                if isinstance(e, dict):
+                     # Safe access with defaults
+                    name = e.get("name")
+                    value = str(e.get("value", ""))
+                    if name:
+                        result.append(client.V1EnvVar(name=name, value=value))
+                else:
+                    sys.stderr.write(f"WARNING: Skipping invalid env item: {e}\n")
+                    
+        except Exception as ex:
+            sys.stderr.write(f"ERROR constructing env vars: {ex}\n")
+            # Don't crash the whole generation for env vars
+            return None
+            
+        return result
 
-    def _build_volume(self, profile ) :
-        pass
-        # # Convert camelCase keys to snake_case for K8s Python client
-        # safe_config = {self._to_snake_case(k): v for k, v in profile.volume_config.items()}
-        # return client.V1Volume(
-        #     name=profile.volume_name,
-        #     **safe_config
-        # )
+    def _build_volume(self, v_data: Dict[str, Any]) -> client.V1Volume:
+        return client.V1Volume(
+            name=v_data.get("name"),
+            empty_dir=v_data.get("emptyDir"),
+            config_map=v_data.get("configMap"),
+            secret=v_data.get("secret"),
+            persistent_volume_claim=v_data.get("persistentVolumeClaim")
+        )
+
+    def _sanitize_container_name(self, name: str) -> str:
+        """
+        Sanitizes the container name to be RFC 1123 compliant.
+        - Lowercase only
+        - Alphanumeric and hyphens only
+        - Start/end with alphanumeric
+        """
+        if not name:
+            return "container"
+        
+        # Lowercase
+        sanitized = name.lower()
+        
+        # Replace invalid chars with hyphen
+        import re
+        sanitized = re.sub(r'[^a-z0-9-]', '-', sanitized)
+        
+        # Remove consecutive hyphens
+        sanitized = re.sub(r'-+', '-', sanitized)
+        
+        # Strip leading/trailing hyphens
+        sanitized = sanitized.strip('-')
+        
+        return sanitized or "container"
 
     def _to_snake_case(self, name: str) -> str:
         import re

@@ -203,8 +203,8 @@ class RuntimeDeploymentComposer:
             "deployment_name": deployment_config.deployment_name,
             "namespace": deployment_config.namespace,
             "replicas": deployment_config.replicas,
-            "labels": deployment_config.labels or {},
-            "annotations": deployment_config.annotations or {}
+            "labels": getattr(deployment_config, "labels", {}) or {},
+            "annotations": getattr(deployment_config, "annotations", {}) or {}
         }
         
         # Apply runtime overrides to base config

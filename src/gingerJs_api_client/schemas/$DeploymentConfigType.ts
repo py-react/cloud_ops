@@ -58,14 +58,6 @@ export const $DeploymentConfigType = {
 	type: 'null',
 }],
 },
-		deployment_strategy_id: {
-	type: 'any-of',
-	contains: [{
-	type: 'number',
-}, {
-	type: 'null',
-}],
-},
 		replicas: {
 	type: 'any-of',
 	contains: [{

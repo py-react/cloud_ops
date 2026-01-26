@@ -21,7 +21,6 @@ def create_deployment_config(session: Session, data: DeploymentConfigType) -> De
         code_source_control_name=data.code_source_control_name,
         source_control_branch=data.source_control_branch,
         derived_deployment_id=data.derived_deployment_id,
-        deployment_strategy_id=data.deployment_strategy_id,  # Optional now
         replicas=data.replicas or 1,
         soft_delete=False,
         hard_delete=False
@@ -74,9 +73,7 @@ def update_deployment_config(session: Session, id: int, data: DeploymentConfigTy
     obj.source_control_branch = data.source_control_branch
     obj.derived_deployment_id = data.derived_deployment_id
     
-    # Update optional fields
-    if data.deployment_strategy_id is not None:
-        obj.deployment_strategy_id = data.deployment_strategy_id
+    # Update optional fields (no deployment_strategy_id anymore)
     
     # Handle delete flags if provided (for hard delete via update)
     if hasattr(data, 'hard_delete') and data.hard_delete is not None:
