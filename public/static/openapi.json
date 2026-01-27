@@ -8260,6 +8260,18 @@
             ],
             "title": "Status",
             "default": "pending"
+          },
+          "apply_derived_service": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apply Derived Service",
+            "default": false
           }
         },
         "type": "object",
