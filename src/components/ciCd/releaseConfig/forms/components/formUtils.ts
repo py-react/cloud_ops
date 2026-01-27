@@ -12,10 +12,12 @@ export interface ExtendedContainerConfig extends ContainerConfig {
 export interface DeploymentFormData extends Omit<DeploymentConfigType, 'node_selector' | 'containers'> {
   node_selector?: Record<string, string> | null;
   containers: ExtendedContainerConfig[];
+  kind: string;
 }
 
 export const releaseFormSchema = z.object({
   deployment_name: z.string().min(1, 'Release config name is required'),
+  kind: z.enum(['Deployment', 'StatefulSet', 'ReplicaSet']).default('Deployment'),
   type: z.string().min(1, 'Type is required'),
   required_source_control: z.boolean().default(false),
   code_source_control_name: z.string().optional().nullable(),

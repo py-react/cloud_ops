@@ -8,6 +8,7 @@ class K8sDeployment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(description="Name of the deployment definition")
     namespace: str = Field(description="Namespace scope")
+    kind: str = Field(default="Deployment", description="Kubernetes Resource Kind: Deployment, StatefulSet, ReplicaSet")
     
     replicas: Optional[int] = Field(default=1)
     min_ready_seconds: Optional[int] = Field(default=None)

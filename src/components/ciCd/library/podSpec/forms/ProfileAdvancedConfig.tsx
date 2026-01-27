@@ -12,7 +12,7 @@ interface ProfileAdvancedConfigProps {
         namespace: string;
         config: any;
     };
-    profileType: "pod_profile" | "pod_metadata_profile" | "profile";
+    profileType: "pod_profile" | "pod_metadata_profile" | "service_profile" | "service_metadata_profile" | "service_selector_profile" | "profile";
 }
 
 export const ProfileAdvancedConfig: React.FC<ProfileAdvancedConfigProps> = ({ profile, profileType }) => {
@@ -21,7 +21,7 @@ export const ProfileAdvancedConfig: React.FC<ProfileAdvancedConfigProps> = ({ pr
     // Parse config and convert to YAML
     const yamlConfig = useMemo(() => {
         if (!profile.config) return "# No configuration available";
-        
+
         let configObj: any;
         if (typeof profile.config === 'string') {
             try {

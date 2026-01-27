@@ -46,9 +46,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
         try {
             setLoading(true);
             const res: any = await DefaultService.apiIntegrationKubernetesLibraryDeploymentGet({ namespace });
-            if (res.status === "success") {
-                setDeployments(res.data || []);
-            }
+            setDeployments(res || []);
         } catch (err: any) {
             toast.error(err.message || "Failed to fetch deployments");
         } finally {
@@ -105,7 +103,29 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                     )}
                 />
 
-
+                <FormField
+                    control={form.control}
+                    name="namespace"
+                    disabled
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
+                                Target Namespace *
+                            </FormLabel>
+                            <FormControl>
+                                <Input
+                                    {...field}
+                                    placeholder="e.g., prod, staging, default"
+                                    className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
+                                />
+                            </FormControl>
+                            <FormDescription className="text-[10px]">
+                                The Kubernetes namespace where this release will be deployed
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <FormField
                     control={form.control}
@@ -130,6 +150,32 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                     )}
                 />
 
+
+                <FormField
+                    control={form.control}
+                    name="kind"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">Resource Kind</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || 'Deployment'}>
+                                <FormControl>
+                                    <SelectTrigger className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20">
+                                        <SelectValue placeholder="Select resource kind" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Deployment">Deployment</SelectItem>
+                                    <SelectItem value="StatefulSet">StatefulSet</SelectItem>
+                                    <SelectItem value="ReplicaSet">ReplicaSet</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormDescription className="text-[10px]">
+                                The type of Kubernetes resource to generate
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
             </div>
 

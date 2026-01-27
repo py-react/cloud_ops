@@ -40,24 +40,55 @@ class DeploymentGenerator:
             spec=pod_spec
         )
 
-        # 4. Deployment Spec
-        spec = client.V1DeploymentSpec(
-            replicas=data.get("replicas", 1),
-            selector=client.V1LabelSelector(
-                match_labels={"app": deployment_name}
-            ),
-            template=template
-        )
+        # 4. Spec Construction based on Kind
+        kind = data.get("kind", "Deployment")
         
-        # 5. Full Object
-        deployment_obj = client.V1Deployment(
-            api_version="apps/v1",
-            kind="Deployment",
-            metadata=metadata,
-            spec=spec
-        )
-
-        return client.ApiClient().sanitize_for_serialization(deployment_obj)
+        # Common fields
+        replicas = data.get("replicas", 1)
+        selector = client.V1LabelSelector(match_labels={"app": deployment_name})
+        
+        if kind == "StatefulSet":
+            spec = client.V1StatefulSetSpec(
+                service_name=deployment_name, # Requirement for StatefulSet
+                replicas=replicas,
+                selector=selector,
+                template=template
+            )
+            workload_obj = client.V1StatefulSet(
+                api_version="apps/v1",
+                kind="StatefulSet",
+                metadata=metadata,
+                spec=spec
+            )
+            
+        elif kind == "ReplicaSet":
+            spec = client.V1ReplicaSetSpec(
+                replicas=replicas,
+                selector=selector,
+                template=template
+            )
+            workload_obj = client.V1ReplicaSet(
+                api_version="apps/v1",
+                kind="ReplicaSet",
+                metadata=metadata,
+                spec=spec
+            )
+            
+        else: # Default to Deployment
+            spec = client.V1DeploymentSpec(
+                replicas=replicas,
+                selector=selector,
+                template=template
+            )
+            workload_obj = client.V1Deployment(
+                api_version="apps/v1",
+                kind="Deployment",
+                metadata=metadata,
+                spec=spec
+            )
+            
+        # 5. Full Object Serialization
+        return client.ApiClient().sanitize_for_serialization(workload_obj)
 
     def _build_pod_spec(self, data: Dict[str, Any]) -> client.V1PodSpec:
         containers = []

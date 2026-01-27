@@ -59,6 +59,11 @@ export const DeleteDependencyDialog: React.FC<DeleteDependencyDialogProps> = ({
             case 'pod':
                 targetPath = `/settings/ci_cd/library/${namespace}/spec/pod`;
                 break;
+            case 'release_config':
+                targetPath = `/settings/ci_cd/release_config/${namespace}`;
+                // For release_config, we use the name as the identifier in the URL path sometimes, 
+                // but focusId should work if the list handles it.
+                break;
             default:
                 targetPath = window.location.pathname;
         }

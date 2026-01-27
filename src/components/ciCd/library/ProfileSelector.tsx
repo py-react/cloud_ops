@@ -18,7 +18,7 @@ interface Profile {
 }
 
 interface ProfileSelectorProps {
-    profileType: "container" | "pod_profile" | "pod_metadata_profile" | "deployment_selector" | "deployment_profile" | "pod";
+    profileType: "container" | "pod_profile" | "pod_metadata_profile" | "deployment_selector" | "deployment_profile" | "pod" | "service_profile" | "service_metadata_profile" | "service_selector_profile";
     namespace: string;
     selectedIds: number[];
     onChange: (ids: number[]) => void;
@@ -61,6 +61,15 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
                         break;
                     case "pod":
                         data = await DefaultService.apiIntegrationKubernetesLibraryPodGet({ namespace }) as any[];
+                        break;
+                    case "service_profile":
+                        data = await DefaultService.apiIntegrationKubernetesLibraryServiceProfileGet({ namespace }) as any[];
+                        break;
+                    case "service_metadata_profile":
+                        data = await DefaultService.apiIntegrationKubernetesLibraryServiceMetadataGet({ namespace }) as any[];
+                        break;
+                    case "service_selector_profile":
+                        data = await DefaultService.apiIntegrationKubernetesLibraryServiceSelectorGet({ namespace }) as any[];
                         break;
                 }
                 setProfiles(data);

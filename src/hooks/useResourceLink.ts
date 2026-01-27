@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 
-export type ResourceType = "pod" | "pod_profile" | "pod_metadata_profile" | "container" | "profile" | "deployment" | "deployment_profile" | "deployment_selector";
+export type ResourceType = "pod" | "pod_profile" | "pod_metadata_profile" | "container" | "profile" | "deployment" | "deployment_profile" | "deployment_selector" | "service" | "service_profile" | "service_metadata_profile" | "service_selector_profile" | "release_config";
 
 export const useResourceLink = () => {
     const [searchParams, setSearchParams] = useSearchParams();

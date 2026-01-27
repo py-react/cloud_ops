@@ -15,7 +15,9 @@ import {
     Globe,
     Zap,
     Layers,
-    Target
+    Target,
+    Network,
+    Puzzle
 } from "lucide-react";
 import { cn } from "@/libs/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -52,8 +54,11 @@ interface ResourceDetailViewProps {
         replicas?: number;
         selector?: ProfileInfo;
         pod?: ProfileInfo;
+        // Service Specific
+        service_profile?: ProfileInfo;
+        selector_profile?: ProfileInfo;
     };
-    type: "pod" | "container" | "deployment";
+    type: "pod" | "container" | "deployment" | "service";
 }
 
 export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, type }) => {
@@ -89,6 +94,18 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                 break;
             case 'deployment_profile':
                 targetPath = `/settings/ci_cd/library/${namespace}/spec/deployment/profile`;
+                break;
+            case 'service_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/service/profile`;
+                break;
+            case 'service_metadata_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/service/metadata`;
+                break;
+            case 'service_selector_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/service/selector`;
+                break;
+            case 'service':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/service`;
                 break;
             default:
                 targetPath = window.location.pathname;
@@ -297,6 +314,60 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                     </>
                 )}
 
+                {/* Service Specific Config */}
+                {type === "service" && (
+                    <>
+                        <SectionHeader icon={Network} title="Derived Service Settings" />
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <InfoItem label="Name" value={data.name} icon={FileText} />
+                            <InfoItem label="Namespace" value={data.namespace} icon={Globe} />
+                        </div>
+
+
+                        {data.metadata_profile && (
+                            <>
+                                <SectionHeader icon={Layout} title="Metadata Profile" />
+                                <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-between group">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-tight">Active Metadata Profile</span>
+                                        <span className="text-xs font-bold text-foreground mt-0.5">{data.metadata_profile.name}</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleOpenProfile(data.metadata_profile!.id, "service_metadata_profile")}
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-bold uppercase">Inspect</span>
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+
+                        {data.selector_profile && (
+                            <>
+                                <SectionHeader icon={Target} title="Selector Profile" />
+                                <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/20 flex items-center justify-between group">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-tight">Active Selector Profile</span>
+                                        <span className="text-xs font-bold text-foreground mt-0.5">{data.selector_profile.name}</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleOpenProfile(data.selector_profile!.id, "service_selector_profile")}
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-bold uppercase">Inspect</span>
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </>
+                )}
+
                 {/* Dynamic Attributes / Profiles */}
                 {data.dynamic_attr && Object.keys(data.dynamic_attr).length > 0 && (
                     <>
@@ -317,7 +388,7 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                                         variant="ghost"
                                         size="sm"
                                         className="h-8 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={() => handleOpenProfile(profile.id, type === "container" ? "pod_profile" : "pod_profile")} // Note: container spec uses general profile
+                                        onClick={() => handleOpenProfile(profile.id, type === "container" ? "profile" : (type === "service" ? "service_profile" : "pod_profile"))} // Note: container spec uses general profile
                                     >
                                         <ExternalLink className="h-3.5 w-3.5 mr-1 text-primary" />
                                         <span className="text-[10px] font-bold uppercase text-primary">Inspect</span>

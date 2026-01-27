@@ -6,3 +6,7 @@ from .pod_metadata_profile import *
 from .deployment import *
 from .deployment_selector import *
 from .deployment_profile import *
+from .service import *
+from .service_profile import *
+from .service_metadata_profile import *
+from .service_selector_profile import *

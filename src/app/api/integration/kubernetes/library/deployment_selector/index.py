@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 from app.db_client.controllers.kubernetes_profiles.deployment_selector import list_profiles, create_profile, delete_profile, update_profile
 from app.db_client.models.kubernetes_profiles.deployment_selector import K8sDeploymentSelectorProfile
 from app.db_client.models.kubernetes_profiles.deployment import K8sDeployment
+
 from typing import Optional, List
 from fastapi.responses import JSONResponse
 
@@ -29,11 +30,18 @@ async def PUT(request: Request, id: int, body: K8sDeploymentSelectorProfile):
 async def DELETE(request: Request, id: int):
     with get_session() as session:
         # Check for dependencies in K8sDeployment
-        stmt = select(K8sDeployment).where(K8sDeployment.selector_id == id)
-        dependents = session.exec(stmt).all()
+        stmt_deploy = select(K8sDeployment).where(K8sDeployment.selector_id == id)
+        dependents_deploy = session.exec(stmt_deploy).all()
         
-        if dependents:
-            dependent_data = [{"id": d.id, "name": d.name, "type": "deployment"} for d in dependents]
-            return JSONResponse(status_code=409, content={"detail": {"dependents": dependent_data}})
+
+        
+        all_dependents = []
+        if dependents_deploy:
+            all_dependents.extend([{"id": d.id, "name": d.name, "type": "deployment"} for d in dependents_deploy])
+        
+
+        
+        if all_dependents:
+            return JSONResponse(status_code=409, content={"detail": {"dependents": all_dependents}})
             
         return delete_profile(session, id)
