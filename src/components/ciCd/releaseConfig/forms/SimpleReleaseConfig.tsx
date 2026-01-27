@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { UseFormReturn } from "react-hook-form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, GitBranch, Package, Tag } from "lucide-react";
+import { Settings, GitBranch, Package, Tag, Network } from "lucide-react";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
     const requiredSourceControl = form.watch("required_source_control") || false;
     const selectedRepo = form.watch("code_source_control_name");
     const [deployments, setDeployments] = useState<any[]>([]);
+    const [services, setServices] = useState<any[]>([]);
     const [sourceControls, setSourceControls] = useState<any[]>([]);
     const [branchesMap, setBranchesMap] = useState<Record<string, string[]>>({});
     const [loading, setLoading] = useState(false);
@@ -32,6 +33,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
 
     useEffect(() => {
         fetchDeployments();
+        fetchServices();
         fetchSourceControls();
     }, [namespace]);
 
@@ -51,6 +53,15 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
             toast.error(err.message || "Failed to fetch deployments");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchServices = async () => {
+        try {
+            const res: any = await DefaultService.apiIntegrationKubernetesLibraryServiceGet({ namespace });
+            setServices(res || []);
+        } catch (err: any) {
+            toast.error(err.message || "Failed to fetch services");
         }
     };
 
@@ -79,104 +90,106 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                     </div>
                     <h4 className="text-sm font-bold uppercase tracking-widest text-foreground">Release Configuration</h4>
                 </div>
-
-                <FormField
-                    control={form.control}
-                    name="deployment_name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
-                                Release Config Name *
-                            </FormLabel>
-                            <FormControl>
-                                <Input
-                                    {...field}
-                                    placeholder="e.g., my-app-release"
-                                    className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
-                                />
-                            </FormControl>
-                            <FormDescription className="text-[10px]">
-                                A unique name to identify this release configuration
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="namespace"
-                    disabled
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
-                                Target Namespace *
-                            </FormLabel>
-                            <FormControl>
-                                <Input
-                                    {...field}
-                                    placeholder="e.g., prod, staging, default"
-                                    className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
-                                />
-                            </FormControl>
-                            <FormDescription className="text-[10px]">
-                                The Kubernetes namespace where this release will be deployed
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                                <Tag className="h-3.5 w-3.5 opacity-60" /> Type *
-                            </FormLabel>
-                            <FormControl>
-                                <Input
-                                    {...field}
-                                    placeholder="e.g., web-app, api-service, worker"
-                                    className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
-                                />
-                            </FormControl>
-                            <FormDescription className="text-[10px]">
-                                Categorize this release configuration (e.g., web-app, microservice, batch-job)
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-
-                <FormField
-                    control={form.control}
-                    name="kind"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">Resource Kind</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || 'Deployment'}>
+                <div className="flex gap-2 items-center">
+                    <FormField
+                        control={form.control}
+                        name="deployment_name"
+                        render={({ field }) => (
+                            <FormItem className="w-full">
+                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
+                                    Release Config Name *
+                                </FormLabel>
                                 <FormControl>
-                                    <SelectTrigger className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20">
-                                        <SelectValue placeholder="Select resource kind" />
-                                    </SelectTrigger>
+                                    <Input
+                                        {...field}
+                                        placeholder="e.g., my-app-release"
+                                        className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
+                                    />
                                 </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="Deployment">Deployment</SelectItem>
-                                    <SelectItem value="StatefulSet">StatefulSet</SelectItem>
-                                    <SelectItem value="ReplicaSet">ReplicaSet</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormDescription className="text-[10px]">
-                                The type of Kubernetes resource to generate
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                                <FormDescription className="text-[10px]">
+                                    A unique name to identify this release configuration
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
+                    <FormField
+                        control={form.control}
+                        name="namespace"
+                        disabled
+                        render={({ field }) => (
+                            <FormItem className="w-full">
+                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
+                                    Target Namespace *
+                                </FormLabel>
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        placeholder="e.g., prod, staging, default"
+                                        className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-[10px]">
+                                    The Kubernetes namespace where this release will be deployed
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
+                <div className="flex gap-2 items-center">
+                    <FormField
+                        control={form.control}
+                        name="type"
+                        render={({ field }) => (
+                            <FormItem className="w-full">
+                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                                    <Tag className="h-3.5 w-3.5 opacity-60" /> Type *
+                                </FormLabel>
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        placeholder="e.g., web-app, api-service, worker"
+                                        className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-[10px]">
+                                    Categorize this release configuration (e.g., web-app, microservice, batch-job)
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+
+                    <FormField
+                        control={form.control}
+                        name="kind"
+                        render={({ field }) => (
+                            <FormItem className="w-full">
+                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">Resource Kind</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || 'Deployment'}>
+                                    <FormControl>
+                                        <SelectTrigger className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20">
+                                            <SelectValue placeholder="Select resource kind" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Deployment">Deployment</SelectItem>
+                                        <SelectItem value="StatefulSet">StatefulSet</SelectItem>
+                                        <SelectItem value="ReplicaSet">ReplicaSet</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormDescription className="text-[10px]">
+                                    The type of Kubernetes resource to generate
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
             </div>
 
             {/* Source Control Section */}
@@ -210,101 +223,103 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                         </FormItem>
                     )}
                 />
-
-                {requiredSourceControl && (
-                    <FormField
-                        control={form.control}
-                        name="code_source_control_name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
-                                    Source Repository *
-                                </FormLabel>
-                                <div className="flex gap-2">
-                                    <Select onValueChange={field.onChange} value={field.value || ""}>
-                                        <FormControl>
-                                            <SelectTrigger className="h-11 rounded-xl bg-background border-border/40">
-                                                <SelectValue placeholder="Select a source control" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {sourceControls.map((sc) => (
-                                                <SelectItem key={sc.name} value={sc.name}>
-                                                    {sc.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {field.value && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                field.onChange(null);
-                                                form.setValue("source_control_branch", null);
-                                            }}
-                                            className="px-3 h-11 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
-                                            title="Clear selection"
-                                        >
-                                            ✕
-                                        </button>
-                                    )}
-                                </div>
-                                <FormDescription className="text-[10px]">
-                                    Select the source control repository for this release
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
-
-                {requiredSourceControl && selectedRepo && (
-                    <FormField
-                        control={form.control}
-                        name="source_control_branch"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
-                                    Branch *
-                                </FormLabel>
-                                <div className="flex gap-2">
-                                    <Select onValueChange={field.onChange} value={field.value || ""}>
-                                        <FormControl>
-                                            <SelectTrigger className="h-11 rounded-xl bg-background border-border/40">
-                                                <SelectValue placeholder="Select a branch" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {availableBranches.length === 0 ? (
-                                                <SelectItem value="no-branches" disabled>No branches available</SelectItem>
-                                            ) : (
-                                                availableBranches.map((branch) => (
-                                                    <SelectItem key={branch} value={branch}>
-                                                        {branch}
+                <div className="flex gap-2 items-center">
+                    {requiredSourceControl && (
+                        <FormField
+                            control={form.control}
+                            name="code_source_control_name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
+                                        Source Repository *
+                                    </FormLabel>
+                                    <div className="flex gap-2">
+                                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-11 rounded-xl bg-background border-border/40">
+                                                    <SelectValue placeholder="Select a source control" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {sourceControls.map((sc) => (
+                                                    <SelectItem key={sc.name} value={sc.name}>
+                                                        {sc.name}
                                                     </SelectItem>
-                                                ))
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                    {field.value && (
-                                        <button
-                                            type="button"
-                                            onClick={() => field.onChange(null)}
-                                            className="px-3 h-11 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
-                                            title="Clear selection"
-                                        >
-                                            ✕
-                                        </button>
-                                    )}
-                                </div>
-                                <FormDescription className="text-[10px]">
-                                    Select the branch to use for this release
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                )}
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {field.value && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    field.onChange(null);
+                                                    form.setValue("source_control_branch", null);
+                                                }}
+                                                className="px-3 h-11 rounded bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+                                                title="Clear selection"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                    <FormDescription className="text-[10px]">
+                                        Select the source control repository for this release
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+
+                    {requiredSourceControl && selectedRepo && (
+                        <FormField
+                            control={form.control}
+                            name="source_control_branch"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
+                                        Branch *
+                                    </FormLabel>
+                                    <div className="flex gap-2">
+                                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-11 rounded-xl bg-background border-border/40">
+                                                    <SelectValue placeholder="Select a branch" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {availableBranches.length === 0 ? (
+                                                    <SelectItem value="no-branches" disabled>No branches available</SelectItem>
+                                                ) : (
+                                                    availableBranches.map((branch) => (
+                                                        <SelectItem key={branch} value={branch}>
+                                                            {branch}
+                                                        </SelectItem>
+                                                    ))
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        {field.value && (
+                                            <button
+                                                type="button"
+                                                onClick={() => field.onChange(null)}
+                                                className="px-3 h-11 rounded bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+                                                title="Clear selection"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                    <FormDescription className="text-[10px]">
+                                        Select the branch to use for this release
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                </div>
+
             </div>
 
             {/* Derived Deployment Selection */}
@@ -360,6 +375,65 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                         <span className="font-bold text-primary not-italic">Note:</span> Library deployments are reusable deployment configurations managed in Settings → CI/CD → Library → Deployments.
                     </p>
                 </div>
+            </div>
+
+            {/* Derived Service Selection */}
+            <div className="grid grid-cols-1 gap-6 p-6 rounded-2xl border border-border/50 bg-muted/5">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                        <Network className="h-5 w-5" />
+                    </div>
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-foreground">Derived Service (Optional)</h4>
+                </div>
+
+                <FormField
+                    control={form.control}
+                    name="service_id"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
+                                Library Service
+                            </FormLabel>
+                            <div className="flex gap-2">
+                                <Select
+                                    onValueChange={(value) => field.onChange(parseInt(value))}
+                                    value={field.value?.toString() || ""}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger className="h-11 rounded-xl bg-background border-border/40">
+                                            <SelectValue placeholder="Select a service from library (Optional)" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {services.length === 0 ? (
+                                            <SelectItem value="empty" disabled>No services available</SelectItem>
+                                        ) : (
+                                            services.map((service) => (
+                                                <SelectItem key={service.id} value={service.id.toString()}>
+                                                    {service.name}
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                {field.value && (
+                                    <button
+                                        type="button"
+                                        onClick={() => field.onChange(null)}
+                                        className="px-3 h-11 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+                                        title="Clear selection"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                            <FormDescription className="text-[10px]">
+                                Optionally link a service configuration to expose this deployment
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </div>
         </div>
     );

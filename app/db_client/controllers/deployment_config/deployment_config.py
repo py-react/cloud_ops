@@ -1,7 +1,8 @@
 from sqlmodel import Session, select, delete
 from app.db_client.models.deployment_config.deployment_config import DeploymentConfig
 from app.db_client.models.deployment_config.types import DeploymentConfigType
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
+from app.db_client.models.kubernetes_profiles.service import K8sService
 from datetime import datetime
 from sqlalchemy import or_
 
@@ -21,6 +22,7 @@ def create_deployment_config(session: Session, data: DeploymentConfigType) -> De
         code_source_control_name=data.code_source_control_name,
         source_control_branch=data.source_control_branch,
         derived_deployment_id=data.derived_deployment_id,
+        service_id=data.service_id,
         replicas=data.replicas or 1,
         soft_delete=False,
         hard_delete=False
@@ -39,11 +41,23 @@ def list_deployment_configs(
     List all deployment configs, excluding hard-deleted items.
     Filtering by status/soft_delete is handled on frontend.
     """
-    query = select(DeploymentConfig).where(
+    query = select(DeploymentConfig, K8sService.name.label("service_name")).outerjoin(
+        K8sService, DeploymentConfig.service_id == K8sService.id
+    ).where(
         DeploymentConfig.namespace == namespace,
-        DeploymentConfig.hard_delete == False  # Only exclude hard-deleted
+        DeploymentConfig.hard_delete == False
     )
-    return session.exec(query).all()
+    
+    results = session.exec(query).all()
+    
+    # Convert to list of dicts with service_name included
+    response = []
+    for config, service_name in results:
+        config_dict = config.model_dump()
+        config_dict["service_name"] = service_name
+        response.append(config_dict)
+        
+    return response
 
 def get_deployment_config(session: Session, id: int) -> Optional[DeploymentConfig]:
     return session.get(DeploymentConfig, id)
@@ -72,6 +86,7 @@ def update_deployment_config(session: Session, id: int, data: DeploymentConfigTy
     obj.code_source_control_name = data.code_source_control_name
     obj.source_control_branch = data.source_control_branch
     obj.derived_deployment_id = data.derived_deployment_id
+    obj.service_id = data.service_id
     
     # Update optional fields (no deployment_strategy_id anymore)
     

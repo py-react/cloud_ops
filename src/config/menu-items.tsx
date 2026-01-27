@@ -72,6 +72,11 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                             url: "/hub",
                             icon: Computer,
                         },
+                        {
+                            title: "Local Registry",
+                            url: "/registry",
+                            icon: Folder,
+                        },
                     ],
                 },
             ],
@@ -151,16 +156,16 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                             url: "/namespaces",
                             icon: Folder,
                         },
-                        {
-                            title: "Resource Quota",
-                            url: "/resource-quota",
-                            icon: Settings,
-                        },
-                        {
-                            title: "Users and RBAC",
-                            url: "/rbac",
-                            icon: Users,
-                        },
+                        // {
+                        //     title: "Resource Quota",
+                        //     url: "/resource-quota",
+                        //     icon: Settings,
+                        // },
+                        // {
+                        //     title: "Users and RBAC",
+                        //     url: "/rbac",
+                        //     icon: Users,
+                        // },
                     ],
                 },
                 {
@@ -194,10 +199,9 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                     icon: Docker,
                     items: [
                         {
-                            title: "Registry",
-                            url: "/registry",
-                            icon: Computer,
-                            items: [],
+                            title: "Config",
+                            url: "/config",
+                            icon: Settings,
                         },
                     ],
                 },

@@ -1,6 +1,9 @@
 from sqlmodel import Session, select
 from typing import List, Optional, Dict
+from typing import List, Optional, Dict
 from app.db_client.models.kubernetes_profiles.service import K8sService
+from app.db_client.models.deployment_config.deployment_config import DeploymentConfig
+from fastapi import HTTPException, status
 
 def create_service(session: Session, spec: K8sService) -> K8sService:
     """Creates a new service."""
@@ -37,6 +40,23 @@ def delete_service(session: Session, spec_id: int) -> bool:
     spec = session.get(K8sService, spec_id)
     if not spec:
         return False
+
+    # Check for dependents in Release Configs
+    statement = select(DeploymentConfig).where(
+        DeploymentConfig.service_id == spec_id,
+        DeploymentConfig.soft_delete == False
+    )
+    dependents = session.exec(statement).all()
+    
+    if dependents:
+        dependent_list = [
+            {"id": d.id, "name": d.deployment_name, "type": "release_config"} 
+            for d in dependents
+        ]
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"message": "Service is in use", "dependents": dependent_list}
+        )
     
     session.delete(spec)
     session.commit()

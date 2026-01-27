@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Activity,
   AlertCircle,
@@ -34,6 +34,8 @@ import {
   RefreshCw,
   Plug,
   ExternalLink,
+  PlayCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
@@ -43,7 +45,9 @@ import { ReleaseRun, type ReleaseRunData } from "@/components/ciCd/releaseConfig
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { K8sContainer } from "@/components/ciCd/releaseConfig/forms/type";
-import Copier from "@/components/tooltip/copier";
+import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
+import { ResourceTable } from "@/components/kubernetes/resources/resourceTable"; // Added
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const getStatusColor = (status: string) => {
@@ -75,7 +79,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 const getStatusIcon = (status: string) => {
   switch (status.toLowerCase()) {
     case "success":
-      return <CheckCircle className="h-5 w-5 text-emerald-500" />;
+      return <CheckCircle2 className="h-5 w-5 text-emerald-500" />; // Changed to CheckCircle2
     case "failed":
     case "error":
       return <XCircle className="h-5 w-5 text-red-500" />;
@@ -289,7 +293,7 @@ const ContainerDetails: React.FC<{ container: K8sContainer }> = ({ container }) 
             <div className="pt-6 border-t border-border/40">
               <h6 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1.5">
                 <Terminal className="h-3 w-3" />
-                Execution Vector
+                CMD/ARGS
               </h6>
               <div className="space-y-3">
                 {container.command && (
@@ -323,12 +327,115 @@ const ContainerDetails: React.FC<{ container: K8sContainer }> = ({ container }) 
 
 const ReleaseConfigDetailedInfo = () => {
   const { config_name, namespace } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [runData, setRunData] = useState([] as ReleaseRunData[]);
-  const [runDataLoading, setRunDataLoading] = useState(true);
   const [configData, setConfigData] = useState<any>(null);
-  const [createRun, setCreateRun] = useState(false)
+  const [runData, setRunData] = useState<ReleaseRunData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [runDataLoading, setRunDataLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isRunModalOpen, setIsRunModalOpen] = useState(false);
+  const [rerunValues, setRerunValues] = useState<any>(null);
+  const [serviceData, setServiceData] = useState<any>(null);
+
+  const [metadataProfile, setMetadataProfile] = useState<any>(null);
+  const [selectorProfile, setSelectorProfile] = useState<any>(null);
+  const [dynamicProfiles, setDynamicProfiles] = useState<any[]>([]);
+
+  const toggleRunModal = (open: boolean) => {
+    setIsRunModalOpen(open);
+    if (!open) setRerunValues(null); // Clear rerun values on close
+  };
+
+  const handleRerun = (run: ReleaseRunData) => {
+    const values = {
+      pr_url: run.pr_url,
+      jira: run.jira,
+      images: run.images
+    };
+    setRerunValues(values);
+    setIsRunModalOpen(true);
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const historyColumns = [
+    {
+      header: "Image Identifier",
+      accessor: "images",
+      cell: (row: ReleaseRunData) => (
+        <div className="flex flex-col gap-1">
+          {Object.entries(row.images || {}).map(([containerName, imageName]) => (
+            <div key={containerName} className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/60" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground w-20 truncate">{containerName}</span>
+              <code className="text-[11px] font-mono font-medium text-foreground px-1 bg-muted/30 rounded">{imageName}</code>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      header: "Lifecycle State",
+      accessor: "status",
+      cell: (row: ReleaseRunData) => (
+        <StatusBadge status={row.status || 'unknown'} />
+      )
+    },
+    {
+      header: "PR URL",
+      accessor: "pr_url",
+      cell: (row: ReleaseRunData) => (
+        row.pr_url ? (
+          <div className="max-w-[150px] truncate" title={row.pr_url}>
+            <a href={row.pr_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] text-blue-500 hover:underline">
+              <Globe className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{row.pr_url}</span>
+            </a>
+          </div>
+        ) : <span className="text-[11px] text-muted-foreground italic">N/A</span>
+      )
+    },
+    {
+      header: "Jira Ticket",
+      accessor: "jira",
+      cell: (row: ReleaseRunData) => (
+        row.jira ? (
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground max-w-[100px]" title={row.jira}>
+            <Hash className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{row.jira}</span>
+          </div>
+        ) : <span className="text-[11px] text-muted-foreground italic">N/A</span>
+      )
+    },
+    {
+      header: "Timeline",
+      accessor: "created_at",
+      cell: (row: ReleaseRunData) => (
+        <div className="flex flex-col">
+          <span className="text-[11px] font-bold text-foreground">{formatDate(row.created_at)}</span>
+        </div>
+      )
+    },
+    {
+      header: "Initiated By",
+      accessor: "initiated_by",
+      cell: (row: ReleaseRunData) => (
+        <span className="text-[10px] text-muted-foreground">System</span>
+      )
+    }
+  ];
 
   // Accordion states for affinity sections
   const [nodeAffinityExpanded, setNodeAffinityExpanded] = useState(false);
@@ -344,7 +451,8 @@ const ReleaseConfigDetailedInfo = () => {
         if (res.status === "success") {
           setConfigData(res.data);
         } else {
-          setError(res.message);
+          // setError(res.message); // Removed error state
+          toast.error(res.message);
         }
       })
       .finally(() => {
@@ -352,7 +460,9 @@ const ReleaseConfigDetailedInfo = () => {
       });
   };
 
-  const fetchRunData = () => {
+  const fetchRunHistory = () => { // Renamed from fetchRunData
+    if (!configData?.id) return;
+    setRunDataLoading(true);
     DefaultService.apiIntegrationKubernetesReleaseRunGet({
       configId: configData.id,
     })
@@ -374,27 +484,91 @@ const ReleaseConfigDetailedInfo = () => {
 
   useEffect(() => {
     if (configData?.id) {
-      fetchRunData();
+      fetchRunHistory(); // Call renamed function
     }
   }, [configData]);
 
   useEffect(() => {
     fetchConfigData();
-  }, []);
+  }, [namespace, config_name]); // Added config_name to dependencies
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">
-            Error Loading Release Config
-          </h2>
-          <p className="text-slate-600 mb-4">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (configData?.service_id && namespace) {
+      DefaultService.apiIntegrationKubernetesLibraryServiceGet({ namespace })
+        .then((res: any) => {
+          if (res && Array.isArray(res)) {
+            const svc = res.find((s: any) => s.id === configData.service_id);
+            if (svc) {
+              setServiceData(svc);
+
+              // Fetch Metadata Profile
+              if (svc.metadata_profile_id) {
+                DefaultService.apiIntegrationKubernetesLibraryServiceMetadataGet({ namespace })
+                  .then((metaRes: any) => {
+                    if (metaRes && Array.isArray(metaRes)) {
+                      const meta = metaRes.find((m: any) => m.id === svc.metadata_profile_id);
+                      if (meta) setMetadataProfile(meta);
+                    }
+                  })
+                  .catch(console.error);
+              }
+
+              // Fetch Selector Profile
+              if (svc.selector_profile_id) {
+                DefaultService.apiIntegrationKubernetesLibraryServiceSelectorGet({ namespace })
+                  .then((selRes: any) => {
+                    if (selRes && Array.isArray(selRes)) {
+                      const sel = selRes.find((s: any) => s.id === svc.selector_profile_id);
+                      if (sel) setSelectorProfile(sel);
+                    }
+                  })
+                  .catch(console.error);
+              }
+              // Fetch Dynamic Profiles (ServiceProfiles)
+              if (svc.dynamic_attr && Object.keys(svc.dynamic_attr).length > 0) {
+                DefaultService.apiIntegrationKubernetesLibraryServiceProfileGet({ namespace })
+                  .then((profilesRes: any) => {
+                    if (profilesRes && Array.isArray(profilesRes)) {
+                      const loadedProfiles: Record<string, any> = {};
+                      Object.entries(svc.dynamic_attr).forEach(([key, id]) => {
+                        const profile = profilesRes.find((p: any) => p.id === id);
+                        if (profile) {
+                          loadedProfiles[key] = profile;
+                        }
+                      });
+                      console.log({ loadedProfiles })
+                      setDynamicProfiles(Object.values(loadedProfiles)); // Changed to array
+                    }
+                  })
+                  .catch(console.error);
+              }
+            }
+          }
+        })
+        .catch(console.error);
+    }
+  }, [configData, namespace]);
+
+
+
+  useEffect(() => {
+    console.log({ metadataProfile })
+  }, [metadataProfile])
+
+  // Removed error handling block as error state is removed.
+  // if (error) {
+  //   return (
+  //     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+  //         <h2 className="text-xl font-semibold text-slate-900 mb-2">
+  //           Error Loading Release Config
+  //         </h2>
+  //         <p className="text-slate-600 mb-4">{error}</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="w-full h-full flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
@@ -416,11 +590,11 @@ const ReleaseConfigDetailedInfo = () => {
         <div className="flex items-center gap-2 mb-1">
           <Button variant="outline" onClick={fetchConfigData}>
             <RefreshCw className="w-3.5 h-3.5 mr-2" />
-            Sync Config
+            Refresh
           </Button>
           <Button
             variant="gradient"
-            onClick={() => setCreateRun(true)}
+            onClick={() => toggleRunModal(true)} // Changed to toggleRunModal
             disabled={configData?.status !== "active"}
             title={configData?.status !== "active" ? "Configuration must be 'active' to run a release" : ""}
             className={configData?.status !== "active" ? "opacity-50 cursor-not-allowed grayscale" : ""}
@@ -473,9 +647,6 @@ const ReleaseConfigDetailedInfo = () => {
                   <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Replicas</p>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-foreground tabular-nums">{configData?.replicas}</span>
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-black uppercase tracking-tighter bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20">
-                      Standard
-                    </span>
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -490,6 +661,14 @@ const ReleaseConfigDetailedInfo = () => {
                     Kubernetes Runtime
                   </span>
                 </div>
+                {serviceData && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Derived Service</p>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-500 ring-1 ring-purple-500/20">
+                      {serviceData.name}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {configData?.labels && Object.keys(configData.labels).length > 0 && (
@@ -510,6 +689,110 @@ const ReleaseConfigDetailedInfo = () => {
             </>
           )}
         </div>
+
+        {/* Derived Service Card */}
+        {serviceData && (
+          <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
+            <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
+              <div className="p-2 rounded-md bg-purple-500/10 text-purple-500 ring-1 ring-purple-500/20">
+                <Network className="h-4 w-4" />
+              </div>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Derived Service</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-1">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Service Name</p>
+                <p className="text-sm font-medium text-foreground">{serviceData.name}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Metadata Profile</p>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    {metadataProfile ? (
+                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border/40">
+                        {JSON.stringify(metadataProfile.config)}
+                      </span>
+                    ) : (
+                      serviceData.metadata_profile_id && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-black uppercase tracking-tighter bg-muted text-muted-foreground ring-1 ring-border/50">
+                          Linked
+                        </span>
+                      )
+                    )}
+                  </div>
+                  {metadataProfile?.labels && Object.keys(metadataProfile.labels).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {Object.entries(metadataProfile.labels).map(([k, v]) => (
+                        <span key={k} className="text-[9px] px-1 py-0.5 rounded bg-muted/50 border border-border/30 text-muted-foreground">
+                          {k}={String(v)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {metadataProfile?.annotations && Object.keys(metadataProfile.annotations).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {Object.entries(metadataProfile.annotations).map(([k, v]) => (
+                        <span key={k} className="text-[9px] px-1 py-0.5 rounded bg-orange-500/5 border border-orange-500/10 text-orange-600/70">
+                          {k}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Selector Profile</p>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    {selectorProfile ? (
+                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border/40">
+                        {JSON.stringify(selectorProfile.selector)}
+                      </span>
+                    ) : (
+                      serviceData.selector_profile_id && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-black uppercase tracking-tighter bg-muted text-muted-foreground ring-1 ring-border/50">
+                          Linked
+                        </span>
+                      )
+                    )}
+                  </div>
+                  {selectorProfile?.labels && Object.keys(selectorProfile.labels).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {Object.entries(selectorProfile.labels).map(([k, v]) => (
+                        <span key={k} className="text-[9px] px-1 py-0.5 rounded bg-indigo-500/5 border border-indigo-500/10 text-indigo-600/70">
+                          {k}={String(v)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Ports</p>
+                {dynamicProfiles.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {dynamicProfiles.map((profile, idx) => (
+                      <div key={idx} className="flex flex-col gap-1">
+                        {/* Specific rendering for 'ports' key if profile has ports */}
+                        {(profile.type === 'ports') && ( // Assuming 'type' property to identify port profiles
+                          <div className="flex flex-wrap gap-1.5 pl-1">
+                            {profile.config?.map((port: any, pIdx: number) => (
+                              <span key={pIdx} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-muted text-muted-foreground border border-border/40" title={`${port.name || 'Port'} ${port.port}:${port.targetPort}`}>
+                                Ports: {port.port}/{port.protocol || 'TCP'}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground italic">No dynamic attributes</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Network & Connectivity (Service Ports) */}
         {(configData?.service || (configData?.service_ports && configData.service_ports.length > 0)) && (
@@ -552,12 +835,12 @@ const ReleaseConfigDetailedInfo = () => {
         )}
 
         {/* Containers Section */}
-        <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
+        <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm space-y-4">
           <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
             <div className="p-2 rounded-md bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/20">
               <DockIcon className="h-4 w-4" />
             </div>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Defined Containers</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Derived Deployment</h2>
             <span className="ml-auto bg-muted text-muted-foreground px-2 py-0.5 rounded text-[10px] font-bold border border-border/40">
               {configData?.containers?.length || 0} Unit{configData?.containers?.length !== 1 ? 's' : ''}
             </span>
@@ -572,249 +855,245 @@ const ReleaseConfigDetailedInfo = () => {
               <div className="py-8 text-center text-muted-foreground italic text-sm">No containers defined for this configuration.</div>
             )}
           </div>
-        </div>
+          {/* Scheduling & Affinity */}
+          <div className="grid grid-cols-1 gap-4">
+            <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
+              <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
+                <div className="p-2 rounded-md bg-purple-500/10 text-purple-500 ring-1 ring-purple-500/20">
+                  <Network className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Scheduling & Affinity</h2>
+              </div>
 
-        {/* Scheduling & Affinity */}
-        <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-3">
+                {/* Node Affinity */}
+                <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
+                  <button
+                    onClick={() => setNodeAffinityExpanded(!nodeAffinityExpanded)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Server className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">Node Affinity</span>
+                    </div>
+                    {nodeAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {nodeAffinityExpanded && (
+                    <div className="p-4 border-t border-border/40 bg-card/40">
+                      {configData?.affinity?.nodeAffinity ? (
+                        <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-emerald-400">
+                          {JSON.stringify(configData.affinity.nodeAffinity, null, 2)}
+                        </pre>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic px-2">No node affinity rules defined.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Pod Affinity */}
+                <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
+                  <button
+                    onClick={() => setPodAffinityExpanded(!podAffinityExpanded)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Boxes className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">Pod Affinity</span>
+                    </div>
+                    {podAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {podAffinityExpanded && (
+                    <div className="p-4 border-t border-border/40 bg-card/40">
+                      {configData?.affinity?.podAffinity ? (
+                        <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-blue-400">
+                          {JSON.stringify(configData.affinity.podAffinity, null, 2)}
+                        </pre>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic px-2">No pod affinity rules defined.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Anti-Affinity */}
+                <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
+                  <button
+                    onClick={() => setPodAntiAffinityExpanded(!podAntiAffinityExpanded)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">Anti-Affinity</span>
+                    </div>
+                    {podAntiAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {podAntiAffinityExpanded && (
+                    <div className="p-4 border-t border-border/40 bg-card/40">
+                      {configData?.affinity?.podAntiAffinity ? (
+                        <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-amber-400">
+                          {JSON.stringify(configData.affinity.podAntiAffinity, null, 2)}
+                        </pre>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic px-2">No anti-affinity rules defined.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Annotations */}
           <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
             <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
-              <div className="p-2 rounded-md bg-purple-500/10 text-purple-500 ring-1 ring-purple-500/20">
-                <Network className="h-4 w-4" />
+              <div className="p-2 rounded-md bg-orange-500/10 text-orange-500 ring-1 ring-orange-500/20">
+                <Hash className="h-4 w-4" />
               </div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Scheduling & Affinity</h2>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Annotations</h2>
             </div>
 
-            <div className="space-y-3">
-              {/* Node Affinity */}
-              <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
-                <button
-                  onClick={() => setNodeAffinityExpanded(!nodeAffinityExpanded)}
-                  className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Server className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-foreground">Node Affinity</span>
-                  </div>
-                  {nodeAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </button>
-                {nodeAffinityExpanded && (
-                  <div className="p-4 border-t border-border/40 bg-card/40">
-                    {configData?.affinity?.nodeAffinity ? (
-                      <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-emerald-400">
-                        {JSON.stringify(configData.affinity.nodeAffinity, null, 2)}
-                      </pre>
-                    ) : (
-                      <p className="text-xs text-muted-foreground italic px-2">No node affinity rules defined.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Pod Affinity */}
-              <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
-                <button
-                  onClick={() => setPodAffinityExpanded(!podAffinityExpanded)}
-                  className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Boxes className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-foreground">Pod Affinity</span>
-                  </div>
-                  {podAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </button>
-                {podAffinityExpanded && (
-                  <div className="p-4 border-t border-border/40 bg-card/40">
-                    {configData?.affinity?.podAffinity ? (
-                      <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-blue-400">
-                        {JSON.stringify(configData.affinity.podAffinity, null, 2)}
-                      </pre>
-                    ) : (
-                      <p className="text-xs text-muted-foreground italic px-2">No pod affinity rules defined.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Anti-Affinity */}
-              <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
-                <button
-                  onClick={() => setPodAntiAffinityExpanded(!podAntiAffinityExpanded)}
-                  className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-foreground">Anti-Affinity</span>
-                  </div>
-                  {podAntiAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </button>
-                {podAntiAffinityExpanded && (
-                  <div className="p-4 border-t border-border/40 bg-card/40">
-                    {configData?.affinity?.podAntiAffinity ? (
-                      <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-amber-400">
-                        {JSON.stringify(configData.affinity.podAntiAffinity, null, 2)}
-                      </pre>
-                    ) : (
-                      <p className="text-xs text-muted-foreground italic px-2">No anti-affinity rules defined.</p>
-                    )}
-                  </div>
-                )}
-              </div>
+            <div className="px-1">
+              {Object.keys(configData?.annotations || {}).length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">No annotations defined.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(configData?.annotations || {}).map(([k, v]) => (
+                    <div key={k} className="flex flex-col gap-1 p-2 rounded-md bg-muted/20 border border-border/40">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{k}</span>
+                      <span className="text-[11px] font-mono text-foreground break-all">{String(v)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Annotations */}
+
+
+        {/* Release Stats Card */}
         <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
           <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
-            <div className="p-2 rounded-md bg-orange-500/10 text-orange-500 ring-1 ring-orange-500/20">
-              <Hash className="h-4 w-4" />
+            <div className="p-2 rounded-md bg-slate-500/10 text-slate-500 ring-1 ring-slate-500/20">
+              <Activity className="h-4 w-4" />
             </div>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Annotations</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Release Statistics</h2>
           </div>
 
-          <div className="px-1">
-            {Object.keys(configData?.annotations || {}).length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">No annotations defined.</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(configData?.annotations || {}).map(([k, v]) => (
-                  <div key={k} className="flex flex-col gap-1 p-2 rounded-md bg-muted/20 border border-border/40">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{k}</span>
-                    <span className="text-[11px] font-mono text-foreground break-all">{String(v)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+            {(() => {
+              // Calculate stats
+              const stats = runData.reduce((acc, run) => {
+                const status = (run.status || 'unknown').toLowerCase();
+                acc.counts[status] = (acc.counts[status] || 0) + 1;
+                return acc;
+              }, { counts: {} as Record<string, number> });
+
+              const knownStatuses = ['deployed', 'failed', 'pending'];
+              const otherStatuses = Object.keys(stats.counts).filter(k => !knownStatuses.includes(k));
+
+              return (
+                <>
+                  <ResourceCard
+                    title="Total Runs"
+                    count={runData.length}
+                    icon={<Activity className="w-4 h-4" />}
+                    color="bg-indigo-500"
+                    className="border-indigo-500/20 bg-indigo-500/5 shadow-none hover:border-indigo-500/30 transition-all border"
+                    isLoading={runDataLoading}
+                  />
+
+                  <ResourceCard
+                    title="Deployed"
+                    count={stats.counts['deployed'] || 0}
+                    icon={<CheckCircle2 className="w-4 h-4" />}
+                    color="bg-emerald-500"
+                    className="border-emerald-500/20 bg-emerald-500/5 shadow-none hover:border-emerald-500/30 transition-all border"
+                    isLoading={runDataLoading}
+                  />
+
+                  <ResourceCard
+                    title="Failed"
+                    count={stats.counts['failed'] || 0}
+                    icon={<XCircle className="w-4 h-4" />}
+                    color="bg-red-500"
+                    className="border-red-500/20 bg-red-500/5 shadow-none hover:border-red-500/30 transition-all border"
+                    isLoading={runDataLoading}
+                  />
+
+                  <ResourceCard
+                    title="Pending"
+                    count={stats.counts['pending'] || 0}
+                    icon={<Clock className="w-4 h-4" />}
+                    color="bg-amber-500"
+                    className="border-amber-500/20 bg-amber-500/5 shadow-none hover:border-amber-500/30 transition-all border"
+                    isLoading={runDataLoading}
+                  />
+
+                  {otherStatuses.map(status => (
+                    <ResourceCard
+                      key={status}
+                      title={status}
+                      count={stats.counts[status]}
+                      icon={<Activity className="w-4 h-4" />}
+                      color="bg-slate-500"
+                      className="border-slate-500/20 bg-slate-500/5 shadow-none hover:border-slate-500/30 transition-all border"
+                      isLoading={runDataLoading}
+                    />
+                  ))}
+                </>
+              );
+            })()}
           </div>
         </div>
 
         {/* Release History Table */}
-        <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-border/30 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-md bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/20">
-                <Activity className="h-4 w-4" />
-              </div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Release History</h2>
-              {!runDataLoading && (
-                <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded text-[10px] font-bold border border-border/40">
+        <div className="mt-8">
+          <ResourceTable
+            title="Release History"
+            description="View and manage past deployment runs."
+            icon={<Activity className="h-4 w-4" />}
+            columns={historyColumns}
+            data={runData}
+            loading={runDataLoading}
+            extraHeaderContent={
+              !runDataLoading && (
+                <Badge variant="outline" className="ml-2 font-mono text-[10px]">
                   {runData.length} RUNS
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="overflow-x-auto min-h-[300px]">
-            {runDataLoading ? (
-              <div className="p-8 space-y-4">
-                {[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted/30 rounded animate-pulse" />)}
-              </div>
-            ) : runData.length > 0 ? (
-              <table className="w-full border-collapse">
-                <thead className="bg-muted/50 border-b border-border/30">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Image Identifier</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Lifecycle State</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Resources</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Timeline</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/20">
-                  {runData.map((run) => (
-                    <tr key={run.id} className="group hover:bg-primary/[0.02] transition-colors relative">
-                      <td className="px-4 py-4 min-w-[250px]">
-                        <div className="flex flex-col gap-3">
-                          <div className="grid grid-cols-1 gap-2">
-                            {Object.entries(run.images || {}).map(([containerName, imageName]) => (
-                              <div key={containerName} className="flex items-center gap-3">
-                                <div className="flex items-center min-w-[80px]">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/60 mr-2" />
-                                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground truncate">
-                                    {containerName}
-                                  </span>
-                                </div>
-                                <code className="text-[11px] font-mono font-medium text-foreground break-all">
-                                  {imageName}
-                                </code>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="mt-2">
-                            <span className="text-[10px] font-mono font-bold text-muted-foreground/40">
-                              RUN ID: {run.id}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(run.status)}
-                          <StatusBadge status={run.status} />
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
-                          <span className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer">
-                            <a href={run.pr_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
-                              <Globe className="w-3.5 h-3.5" />
-                              PR Link
-                            </a>
-                          </span>
-                          <span className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer">
-                            <Globe className="w-3.5 h-3.5" />
-                            {run.jira || 'NO-JIRA'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-col text-[11px]">
-                          <span className="font-bold text-foreground/80">{run.created_at}</span>
-                          <span className="text-muted-foreground opacity-60">Initiated By System</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <a
-                          href={`/orchestration/kubernetes/${configData.namespace}/deployments/${(configData.kind || "Deployment").toLowerCase()}s/${configData.deployment_name}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/5 text-primary text-[10px] font-bold hover:bg-primary/10 transition-all border border-primary/20"
-                        >
-                          View {configData.kind || "Deployment"} <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="p-12 text-center">
-                <div className="p-4 rounded-full bg-muted/20 w-16 h-16 flex items-center justify-center mx-auto mb-4 border border-border/30">
-                  <Activity className="h-8 w-8 text-muted-foreground/30" />
-                </div>
-                <h3 className="text-sm font-bold text-foreground mb-1">No execution history found</h3>
-                <p className="text-xs text-muted-foreground opacity-60">Trigger a new release to see deployment telemetry here.</p>
-              </div>
-            )}
-          </div>
+                </Badge>
+              )
+            }
+            customActions={[
+              {
+                label: "View Deployment",
+                icon: ExternalLink,
+                onClick: (row) => window.open(`/kubernetes/deployments/${configData?.namespace}/${configData?.deployment_name}`, '_blank'),
+              },
+              {
+                label: "Rerun",
+                icon: RotateCcw,
+                onClick: (row) => handleRerun(row),
+              }
+            ]}
+          />
         </div>
-
-        {/* Global Padding Bottom */}
         <div className="h-10" />
       </div>
 
       {configData && configData.id && (
         <ReleaseRun
-          onSuccess={() => {
-            fetchConfigData();
-            setCreateRun(false);
-          }}
+          open={isRunModalOpen}
+          onClose={toggleRunModal}
           deployment_config={configData}
-          open={createRun}
-          onClose={(open) => {
-            setCreateRun(open);
+          onSuccess={() => {
+            fetchRunHistory();
+            toggleRunModal(false);
           }}
+          defaultValues={rerunValues}
         />
       )}
-    </div>
+    </div >
   );
 };
 

@@ -112,7 +112,7 @@ export default function ServiceProfileList() {
         label: 'Configuration',
         description: 'Configure service ports and type',
         longDescription: 'Define the service type and port mappings using JSON/YAML.',
-        component: (props: any) => <PodProfileForm {...props} title="Service Profile" />
+        component: (props: any) => <PodProfileForm {...props} namespace={selectedNamespace} title="Service Profile" />
     }], []);
 
     return (

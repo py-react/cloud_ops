@@ -3,9 +3,9 @@ import { useEffect } from "react"
 
 function Docker() {
   const navigate = useNavigate()
-  useEffect(()=>{
-    navigate("/settings/docker/registry")
-  },[])
+  useEffect(() => {
+    navigate("/settings/docker/config")
+  }, [])
   return "redirecting..."
 }
 

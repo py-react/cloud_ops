@@ -8,7 +8,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Tag, List, Target, Settings2, Plus, Info, Cpu, X, Box, ExternalLink } from "lucide-react";
+import { Tag, List, Target, Settings2, Plus, Info, Cpu, X, Box, ExternalLink, Globe } from "lucide-react";
 import { ProfileSelector } from "@/components/ciCd/library/ProfileSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ const DerivedServiceForm: React.FC<DerivedServiceFormProps> = ({ form, namespace
             <div className="space-y-4 p-4 rounded-xl border bg-muted/20">
                 <div className="flex items-center gap-2 mb-2">
                     <List className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Basic Configuration</h3>
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 font-black">Basic Configuration</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -69,7 +69,9 @@ const DerivedServiceForm: React.FC<DerivedServiceFormProps> = ({ form, namespace
                         name="name"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Service Name *</FormLabel>
+                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                                    <Tag className="h-3.5 w-3.5 opacity-60" /> Service Name <RequiredBadge />
+                                </FormLabel>
                                 <FormControl>
                                     <Input {...field} placeholder="e.g., my-service" />
                                 </FormControl>
@@ -83,7 +85,9 @@ const DerivedServiceForm: React.FC<DerivedServiceFormProps> = ({ form, namespace
                         name="namespace"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Namespace *</FormLabel>
+                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                                    <Globe className="h-3.5 w-3.5 opacity-60" /> Namespace <RequiredBadge />
+                                </FormLabel>
                                 <FormControl>
                                     <Input {...field} disabled />
                                 </FormControl>
@@ -98,7 +102,7 @@ const DerivedServiceForm: React.FC<DerivedServiceFormProps> = ({ form, namespace
             <div className="space-y-4 p-4 rounded-xl border bg-muted/20">
                 <div className="flex items-center gap-2 mb-2">
                     <Settings2 className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Profiles</h3>
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 font-black">Profiles</h3>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
 
@@ -109,7 +113,7 @@ const DerivedServiceForm: React.FC<DerivedServiceFormProps> = ({ form, namespace
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                                        <Tag className="h-3.5 w-3.5 opacity-60" /> Metadata Profile (Labels, Annotations)
+                                        <Tag className="h-3.5 w-3.5 opacity-60" /> Metadata Profile (Labels, Annotations) <RequiredBadge />
                                     </FormLabel>
                                     <FormControl>
                                         <ProfileSelector
@@ -130,7 +134,7 @@ const DerivedServiceForm: React.FC<DerivedServiceFormProps> = ({ form, namespace
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                                        <Target className="h-3.5 w-3.5 opacity-60" /> Selector Profile (Pod Match)
+                                        <Target className="h-3.5 w-3.5 opacity-60" /> Selector Profile (Pod Match) <RequiredBadge />
                                     </FormLabel>
                                     <FormControl>
                                         <ProfileSelector
@@ -151,7 +155,7 @@ const DerivedServiceForm: React.FC<DerivedServiceFormProps> = ({ form, namespace
                 <div className="space-y-4 border-t pt-4">
                     <div className="flex items-center gap-2 mb-2">
                         <Cpu className="h-4 w-4 text-primary" />
-                        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Dynamic Attributes</h3>
+                        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 font-black">Dynamic Attributes</h3>
                     </div>
                     <p className="text-xs text-muted-foreground font-medium pb-2">
                         Attach additional specifications from Service Profiles under specific keys in <code>spec</code>.
@@ -198,7 +202,7 @@ const DerivedServiceForm: React.FC<DerivedServiceFormProps> = ({ form, namespace
                                     placeholder="Key (e.g., config)"
                                     value={attributeInput}
                                     onChange={(e) => setAttributeInput(e.target.value)}
-                                    className="h-10 pl-10 bg-muted/30 border-border/40 focus-visible:ring-primary/20 rounded-xl"
+                                    className="h-10 pl-10 bg-muted/30 border-border/40 focus-visible:ring-primary/20"
                                 />
                             </div>
 
