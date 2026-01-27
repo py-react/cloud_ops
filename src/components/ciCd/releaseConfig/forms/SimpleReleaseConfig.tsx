@@ -103,7 +103,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                                     <Input
                                         {...field}
                                         placeholder="e.g., my-app-release"
-                                        className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
+                                        className="h-11 bg-background border-border/40 focus-visible:ring-primary/20"
                                     />
                                 </FormControl>
                                 <FormDescription className="text-[10px]">
@@ -127,7 +127,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                                     <Input
                                         {...field}
                                         placeholder="e.g., prod, staging, default"
-                                        className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
+                                        className="h-11 bg-background border-border/40 focus-visible:ring-primary/20"
                                     />
                                 </FormControl>
                                 <FormDescription className="text-[10px]">
@@ -152,7 +152,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                                     <Input
                                         {...field}
                                         placeholder="e.g., web-app, api-service, worker"
-                                        className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20"
+                                        className="h-11 bg-background border-border/40 focus-visible:ring-primary/20"
                                     />
                                 </FormControl>
                                 <FormDescription className="text-[10px]">
@@ -172,7 +172,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                                 <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">Resource Kind</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value || 'Deployment'}>
                                     <FormControl>
-                                        <SelectTrigger className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20">
+                                        <SelectTrigger className="h-11 bg-background border-border/40 focus-visible:ring-primary/20">
                                             <SelectValue placeholder="Select resource kind" />
                                         </SelectTrigger>
                                     </FormControl>
@@ -205,7 +205,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                     control={form.control}
                     name="required_source_control"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/40 p-4 bg-background">
+                        <FormItem className="flex flex-row items-center justify-between border border-border/40 p-4 bg-background">
                             <div className="space-y-0.5">
                                 <FormLabel className="text-xs font-black uppercase tracking-wider text-foreground">
                                     Required Source Control
@@ -229,14 +229,14 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                             control={form.control}
                             name="code_source_control_name"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem className="w-full">
                                     <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
                                         Source Repository *
                                     </FormLabel>
                                     <div className="flex gap-2">
                                         <Select onValueChange={field.onChange} value={field.value || ""}>
                                             <FormControl>
-                                                <SelectTrigger className="h-11 rounded-xl bg-background border-border/40">
+                                                <SelectTrigger className="h-11  bg-background border-border/40">
                                                     <SelectValue placeholder="Select a source control" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -276,14 +276,14 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                             control={form.control}
                             name="source_control_branch"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem className="w-full">
                                     <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
                                         Branch *
                                     </FormLabel>
                                     <div className="flex gap-2">
                                         <Select onValueChange={field.onChange} value={field.value || ""}>
                                             <FormControl>
-                                                <SelectTrigger className="h-11 rounded-xl bg-background border-border/40">
+                                                <SelectTrigger className="h-11  bg-background border-border/40">
                                                     <SelectValue placeholder="Select a branch" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -339,29 +339,41 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                             <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
                                 Library Deployment *
                             </FormLabel>
-                            <Select
-                                onValueChange={(value) => field.onChange(parseInt(value))}
-                                value={field.value?.toString()}
-                            >
-                                <FormControl>
-                                    <SelectTrigger className="h-11 rounded-xl bg-background border-border/40">
-                                        <SelectValue placeholder="Select a deployment from library" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {loading ? (
-                                        <SelectItem value="loading" disabled>Loading deployments...</SelectItem>
-                                    ) : deployments.length === 0 ? (
-                                        <SelectItem value="empty" disabled>No deployments available</SelectItem>
-                                    ) : (
-                                        deployments.map((deployment) => (
-                                            <SelectItem key={deployment.id} value={deployment.id.toString()}>
-                                                {deployment.deployment_name || deployment.name || `Deployment ${deployment.id}`}
-                                            </SelectItem>
-                                        ))
-                                    )}
-                                </SelectContent>
-                            </Select>
+                            <div className="flex gap-2">
+                                <Select
+                                    onValueChange={(value) => field.onChange(parseInt(value))}
+                                    value={field.value?.toString()}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger className="h-11 bg-background border-border/40">
+                                            <SelectValue placeholder="Select a deployment from library" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {loading ? (
+                                            <SelectItem value="loading" disabled>Loading deployments...</SelectItem>
+                                        ) : deployments.length === 0 ? (
+                                            <SelectItem value="empty" disabled>No deployments available</SelectItem>
+                                        ) : (
+                                            deployments.map((deployment) => (
+                                                <SelectItem key={deployment.id} value={deployment.id.toString()}>
+                                                    {deployment.deployment_name || deployment.name || `Deployment ${deployment.id}`}
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                {field.value && (
+                                    <button
+                                        type="button"
+                                        onClick={() => field.onChange(null)}
+                                        className="px-3 h-11 bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+                                        title="Clear selection"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
                             <FormDescription className="text-[10px]">
                                 Select a deployment configuration from your library
                             </FormDescription>
@@ -400,7 +412,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                                     value={field.value?.toString() || ""}
                                 >
                                     <FormControl>
-                                        <SelectTrigger className="h-11 rounded-xl bg-background border-border/40">
+                                        <SelectTrigger className="h-11 bg-background border-border/40">
                                             <SelectValue placeholder="Select a service from library (Optional)" />
                                         </SelectTrigger>
                                     </FormControl>
@@ -420,7 +432,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                                     <button
                                         type="button"
                                         onClick={() => field.onChange(null)}
-                                        className="px-3 h-11 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+                                        className="px-3 h-11 bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
                                         title="Clear selection"
                                     >
                                         ✕

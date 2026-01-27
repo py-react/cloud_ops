@@ -14,6 +14,9 @@ from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
 from app.k8s_helper.deployment_with_strategy.strategy_handler import StrategyHandler
 from app.db_client.services.deployment_generator import DeploymentGenerator
 from app.db_client.services.deployment_composer import DeploymentComposer
+from app.db_client.services.service_composer import ServiceComposer
+from app.db_client.services.service_generator import ServiceGenerator
+from ...db_client.models.kubernetes_profiles.service import K8sService
 
 
 class DeploymentManager:
@@ -205,21 +208,7 @@ class DeploymentManager:
                 strategy_id
             )
             
-            # 6. Build K8s service spec (if service_ports are defined)
-            service_spec = None
-            if composed_data.get("service_ports"):
-                service_spec = self._build_k8s_service_spec({
-                    "deployment_name": composed_data.get("deployment_name"),
-                    "namespace": composed_data.get("namespace"),
-                    "service_ports": composed_data.get("service_ports"),
-                    "labels": deployment_spec.get("metadata", {}).get("labels", {}),
-                    "annotations": deployment_spec.get("metadata", {}).get("annotations", {}),
-                    "tag": composed_data.get("tag"),
-                    "pr_url": getattr(run_data, "pr_url", None),
-                    "jira": getattr(run_data, "jira", None)
-                })
-            
-            # 7. Create the deployment and service in Kubernetes
+            # 6. Create the deployment and service in Kubernetes
             from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
             from kubernetes.client.rest import ApiException
             import json
@@ -242,18 +231,34 @@ class DeploymentManager:
                 raise Exception(f"Kubernetes rejected deployment: {error_body.get('message', str(e))}")
                 
             result_messages = ["Deployment created in Kubernetes"]
+
+            # 8. Apply Derived Service if Requested (NEW)
+            if getattr(run_data, "apply_derived_service", False):
+                if config_obj.service_id:
+                    sys.stderr.write(f"\n--- APPLYING DERIVED SERVICE for {deployment_spec['metadata']['name']} ---\n")
+                    service_obj = self.session.get(K8sService, config_obj.service_id)
+                    if service_obj:
+                        svc_composer = ServiceComposer(self.session)
+                        svc_data = svc_composer.compose(service_obj)
+                        
+                        if svc_data:
+                            svc_generator = ServiceGenerator()
+                            svc_spec = svc_generator.generate(svc_data)
+                            
+                            if svc_spec:
+                                sys.stderr.write(f"Applying Service: {svc_spec['metadata']['name']}\n")
+                                sys.stderr.write(json.dumps(svc_spec, indent=2, default=str))
+                                sys.stderr.write("\n------------------------------------\n")
+                                k8s_helper.apply_resource(svc_spec)
+                                result_messages.append("Derived Service created")
+                            else:
+                                sys.stderr.write("Warning: Generated Service spec is empty.\n")
+                        else:
+                            sys.stderr.write("Warning: Composed Service data is empty.\n")
+                    else:
+                        sys.stderr.write(f"Warning: Service ID {config_obj.service_id} not found in DB.\n")
             
-            # Apply service if it was built
-            if service_spec:
-                try:
-                    k8s_helper.apply_resource(service_spec)
-                    result_messages.append("Service created in Kubernetes")
-                except ApiException as e:
-                    error_body = json.loads(e.body) if e.body else {}
-                    sys.stderr.write(f"K8s API Error (Service): {error_body.get('message', str(e))}\n")
-                    raise Exception(f"Kubernetes rejected service: {error_body.get('message', str(e))}")
-            
-            # 8. Update run status
+            # 7. Update run status
             self.update_deployment_run_status(run_obj.id, "deployed")
             return {"run": run_obj, "deployment_result": "; ".join(result_messages)}
         except Exception as e:

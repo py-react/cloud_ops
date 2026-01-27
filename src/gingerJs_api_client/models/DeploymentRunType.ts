@@ -6,5 +6,6 @@ export type DeploymentRunType = {
 	images?: Record<string, string> | null;
 	deployment_config_id: number;
 	status?: string | null;
+	apply_derived_service?: boolean | null;
 };
 

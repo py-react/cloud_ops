@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import FormWizard from "@/components/wizard/form-wizard";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Types
 export interface ServicePort {
@@ -71,6 +72,7 @@ const releaseRunSchema = z.object({
   pr_url: z.string().optional(),
   jira: z.string().optional(),
   images: z.record(z.string().min(1, "Image name is required")),
+  apply_derived_service: z.boolean(),
 });
 
 type ReleaseRunFormValues = z.infer<typeof releaseRunSchema>;
@@ -88,6 +90,7 @@ export const ReleaseRun = ({
     const defaults = {
       pr_url: "",
       jira: "",
+      apply_derived_service: false,
       images: (deployment_config?.containers || []).reduce((acc: any, c) => {
         acc[c.name] = "";
         return acc;
@@ -182,6 +185,26 @@ You can only run releases for 'active' configurations. Please activate it first.
       longDescription: "Specify the image name and tag for each container in this release.",
       component: ({ control }: any) => (
         <div className="space-y-6">
+          <FormField
+            control={control}
+            name="apply_derived_service"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base font-semibold">Apply Derived Service</FormLabel>
+                  <div className="text-[0.8rem] text-muted-foreground">
+                    If enabled, the associated Service YAML (from Advanced Config) will be reapplied with this deployment.
+                  </div>
+                </div>
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           {(deployment_config?.containers || []).map((container) => (
             <FormField
               key={container.name}
@@ -204,6 +227,8 @@ You can only run releases for 'active' configurations. Please activate it first.
       )
     }
   ], [deployment_config]);
+
+  // Insert Configuration step at the beginning if service_id exists (indicates derived service capability)
 
   return (
     <FormWizard

@@ -7,3 +7,4 @@ class DeploymentRunType(BaseModel):
     images: Optional[Dict[str, str]] = None
     deployment_config_id: int
     status: Optional[str] = "pending"
+    apply_derived_service: Optional[bool] = False

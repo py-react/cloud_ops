@@ -10,4 +10,5 @@ class DeploymentRun(SQLModel, table=True):
     images: Optional[Dict[str, str]] = Field(default=None, sa_column=Column(JSONB))
     deployment_config_id: int = Field(foreign_key="deploymentconfig.id")
     status: str = Field(default="pending")
+    apply_derived_service: bool = Field(default=False, sa_column=Column(JSONB))
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=True)

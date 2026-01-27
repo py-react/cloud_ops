@@ -98,6 +98,7 @@ class KubernetesResourceHelper:
         
         Handles field removal when fields are not present in the new resource spec.
         """
+        print("resource", type(resource))
         api_version = resource['apiVersion']
         kind = resource['kind']
         name = resource['metadata']['name']

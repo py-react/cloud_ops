@@ -39,5 +39,13 @@ export const $DeploymentRunType = {
 	type: 'null',
 }],
 },
+		apply_derived_service: {
+	type: 'any-of',
+	contains: [{
+	type: 'boolean',
+}, {
+	type: 'null',
+}],
+},
 	},
 } as const;
