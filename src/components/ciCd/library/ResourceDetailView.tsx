@@ -54,6 +54,10 @@ interface ResourceDetailViewProps {
         replicas?: number;
         selector?: ProfileInfo;
         pod?: ProfileInfo;
+        min_ready_seconds?: number;
+        revision_history_limit?: number;
+        progress_deadline_seconds?: number;
+        paused?: boolean;
         // Service Specific
         service_profile?: ProfileInfo;
         selector_profile?: ProfileInfo;
@@ -212,14 +216,25 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                 {type === "deployment" && (
                     <>
                         <SectionHeader icon={Layers} title="Derived Deployment Settings" />
-                        <div className="grid grid-cols-2 gap-3 mb-6">
+                        <div className="grid grid-cols-2 gap-3 mb-4">
                             <InfoItem label="Name" value={data.name} icon={FileText} />
                             <InfoItem label="Replicas" value={data.replicas} icon={Layers} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <InfoItem label="Min Ready Secs" value={data.min_ready_seconds} icon={Zap} />
+                            <InfoItem label="Revision Limit" value={data.revision_history_limit} icon={Settings} />
+                            <InfoItem label="Progress Deadline" value={data.progress_deadline_seconds} icon={Zap} />
+                            <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-background/40 border border-border/20 self-center">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Paused:</span>
+                                <Badge variant={data.paused ? "destructive" : "success"} className="h-5 text-[9px] px-2 font-bold uppercase tracking-wider">
+                                    {data.paused ? "Yes" : "No"}
+                                </Badge>
+                            </div>
                         </div>
 
                         {data.selector && (
                             <>
-                                <SectionHeader icon={Target} title="Deployment Selector" />
+                                <SectionHeader icon={Target} title="Selector Profile" />
                                 <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/20 flex items-center justify-between group">
                                     <div className="flex flex-col">
                                         <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-tight">Active Selector</span>

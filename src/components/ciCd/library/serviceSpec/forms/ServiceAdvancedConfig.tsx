@@ -7,7 +7,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { ResourceDetailView } from "../../ResourceDetailView";
 
 export const ServiceAdvancedConfig = ({ watch, namespace }: { watch: any; namespace: string }) => {
-    const [activeTab, setActiveTab] = useState("yaml");
+    const [activeTab, setActiveTab] = useState("overview");
     const [loading, setLoading] = useState(true);
     const [metadataProfile, setMetadataProfile] = useState<any>(null);
     const [selectorProfile, setSelectorProfile] = useState<any>(null);
