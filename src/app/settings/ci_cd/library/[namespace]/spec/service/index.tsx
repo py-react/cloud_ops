@@ -136,6 +136,17 @@ export default function DerivedServiceList() {
         }
     ], [selectedNamespace]);
 
+    const serviceViewSteps = useMemo(() => [
+        {
+            id: 'view',
+            label: 'Service Details',
+            description: 'View Service Summary',
+            longDescription: 'View the composition and details of this service.',
+            component: (props: any) => <ServiceAdvancedConfig {...props} namespace={selectedNamespace} />,
+            hideSectionHeader: true,
+        },
+    ], [selectedNamespace]);
+
     return (
         <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
             <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
@@ -248,51 +259,14 @@ export default function DerivedServiceList() {
                 setIsWizardOpen={setViewDialogOpen}
                 currentStep="view"
                 setCurrentStep={() => { }}
-                steps={[{
-                    id: 'view',
-                    label: 'Service Details',
-                    description: 'View Service Summary',
-                    longDescription: 'View the composition and details of this service.',
-                    component: (props: any) => initialValues ? (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 rounded-xl bg-muted/20 border border-border/30">
-                                    <div className="text-xs font-medium text-muted-foreground mb-1">Name</div>
-                                    <div className="text-sm font-bold">{initialValues.name}</div>
-                                </div>
-                                <div className="p-4 rounded-xl bg-muted/20 border border-border/30">
-                                    <div className="text-xs font-medium text-muted-foreground mb-1">Namespace</div>
-                                    <div className="text-sm font-bold">{initialValues.namespace}</div>
-                                </div>
-                            </div>
-                            <div className="p-4 rounded-xl bg-muted/20 border border-border/30">
-                                <div className="text-xs font-medium text-muted-foreground mb-2">Configuration Summary</div>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-muted-foreground">Service Profile ID:</span>
-                                        <span className="font-mono">{initialValues.service_profile_id || "None"}</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-muted-foreground">Metadata Profile ID:</span>
-                                        <span className="font-mono">{initialValues.metadata_profile_id || "None"}</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs">
-                                        <span className="text-muted-foreground">Selector Profile ID:</span>
-                                        <span className="font-mono">{initialValues.selector_profile_id || "None"}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : null,
-                    hideSectionHeader: true,
-                }]}
+                steps={serviceViewSteps}
                 schema={serviceSchema}
                 initialValues={initialValues}
                 onSubmit={() => { }}
                 submitLabel="Close"
                 heading={{
                     primary: "Service Details",
-                    secondary: "View service composition",
+                    secondary: "View service composition details",
                     icon: Network,
                 }}
                 hideActions={true}

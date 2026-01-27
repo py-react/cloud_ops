@@ -467,6 +467,10 @@ export const DeploymentAdvancedConfig = ({ control, watch, namespace }: { contro
             name: (formValues.name as string) || "Unnamed Deployment",
             namespace: namespace as string,
             replicas: formValues.replicas || 1,
+            paused: formValues.paused,
+            min_ready_seconds: formValues.min_ready_seconds,
+            revision_history_limit: formValues.revision_history_limit,
+            progress_deadline_seconds: formValues.progress_deadline_seconds,
             selector: selector ? selector : undefined,
             pod: pod ? pod : undefined,
             dynamic_attr: Object.entries(dynamicAttr).reduce((acc, [key, id]) => {
