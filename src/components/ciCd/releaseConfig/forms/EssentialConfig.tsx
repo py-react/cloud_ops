@@ -7,6 +7,13 @@ import {
     FormMessage,
     FormDescription,
 } from "@/components/ui/form";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { DeploymentFormData } from "./components/formUtils";
@@ -167,8 +174,34 @@ const EssentialConfig: React.FC<EssentialConfigProps> = ({ form }) => {
                         <FormItem>
                             <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">Release Tag</FormLabel>
                             <FormControl>
-                                <Input {...field} placeholder="e.g., latest or v1.0.0" className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20" />
+                                <Input {...field} value={field.value || ''} placeholder="e.g., latest or v1.0.0" className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20" />
                             </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="kind"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">Resource Kind</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || 'Deployment'}>
+                                <FormControl>
+                                    <SelectTrigger className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20">
+                                        <SelectValue placeholder="Select resource kind" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Deployment">Deployment</SelectItem>
+                                    <SelectItem value="StatefulSet">StatefulSet</SelectItem>
+                                    <SelectItem value="ReplicaSet">ReplicaSet</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormDescription className="text-[10px]">
+                                The type of Kubernetes resource to generate
+                            </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -228,7 +261,7 @@ const EssentialConfig: React.FC<EssentialConfigProps> = ({ form }) => {
                                 <Plug className="h-3.5 w-3.5 opacity-60" /> Source Repository
                             </FormLabel>
                             <FormControl>
-                                <Input {...field} placeholder="owner/repo" className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20" />
+                                <Input {...field} value={field.value || ''} placeholder="owner/repo" className="h-11 rounded-xl bg-background border-border/40 focus-visible:ring-primary/20" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

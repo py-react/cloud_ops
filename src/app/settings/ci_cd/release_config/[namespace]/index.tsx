@@ -86,6 +86,7 @@ const ReleaseConfigPage = () => {
         deployment_strategy_id: data.deployment_strategy_id || null,
         code_source_control_name: data.code_source_control_name || null,
         source_control_branch: data.source_control_branch || null,
+        namespace: selectedNamespace
       };
 
       console.log("Submitting payload:", payload);

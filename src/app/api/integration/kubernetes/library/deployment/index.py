@@ -6,6 +6,8 @@ from app.db_client.models.kubernetes_profiles.deployment import K8sDeployment
 from typing import Optional, List
 from app.utils.json_utils import clean_deployment_profile
 from fastapi.responses import JSONResponse
+from app.db_client.models.deployment_config.deployment_config import DeploymentConfig
+from sqlmodel import select
 
 async def GET(request: Request, namespace: str):
     with get_session() as session:
@@ -27,5 +29,12 @@ async def PUT(request: Request, id: int, body: K8sDeployment):
 
 async def DELETE(request: Request, id: int):
     with get_session() as session:
-        # Dependency checks can be added here later if needed
+        # Dependency check - check if any release config uses this derived deployment
+        stmt = select(DeploymentConfig).where(DeploymentConfig.derived_deployment_id == id)
+        dependents = session.exec(stmt).all()
+        
+        if dependents:
+            dependent_data = [{"id": d.id, "name": d.deployment_name, "type": "release_config"} for d in dependents]
+            return JSONResponse(status_code=409, content={"detail": {"dependents": dependent_data}})
+
         return delete_deployment(session, id)

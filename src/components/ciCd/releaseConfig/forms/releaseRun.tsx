@@ -46,6 +46,7 @@ export interface ReleaseConfigData {
   soft_delete: boolean;
   hard_delete: boolean;
   status: string;
+  kind?: string;
 }
 
 export interface ReleaseRunData {

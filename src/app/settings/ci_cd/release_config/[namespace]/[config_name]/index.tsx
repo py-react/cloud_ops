@@ -479,6 +479,12 @@ const ReleaseConfigDetailedInfo = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Resource Kind</p>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/20">
+                    {configData?.kind || 'Deployment'}
+                  </span>
+                </div>
+                <div className="space-y-1">
                   <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Service Type</p>
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-500 ring-1 ring-blue-500/20">
                     Kubernetes Runtime
@@ -769,10 +775,10 @@ const ReleaseConfigDetailedInfo = () => {
                       </td>
                       <td className="px-4 py-4 text-center">
                         <a
-                          href={`/orchestration/kubernetes/${configData.namespace}/deployments/deployments/${configData.deployment_name}`}
+                          href={`/orchestration/kubernetes/${configData.namespace}/deployments/${(configData.kind || "Deployment").toLowerCase()}s/${configData.deployment_name}`}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/5 text-primary text-[10px] font-bold hover:bg-primary/10 transition-all border border-primary/20"
                         >
-                          View Deployment <ExternalLink className="w-3 h-3" />
+                          View {configData.kind || "Deployment"} <ExternalLink className="w-3 h-3" />
                         </a>
                       </td>
                     </tr>

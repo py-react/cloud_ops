@@ -24,6 +24,7 @@ import {
     Orbit,
     WaypointsIcon,
     SquareTerminal,
+    Target,
     Braces,
     Layout,
     Key,
@@ -255,6 +256,28 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                                     title: "Selectors",
                                     url: `/selector`,
                                     icon: Layout,
+                                },
+                            ],
+                        },
+                        {
+                            title: "Derived Services",
+                            url: `/${selectedNamespace}/spec/service`,
+                            icon: NetworkIcon,
+                            items: [
+                                {
+                                    title: "Specifications",
+                                    url: `/profile`,
+                                    icon: Settings,
+                                },
+                                {
+                                    title: "Metadata",
+                                    url: `/metadata`,
+                                    icon: Layout,
+                                },
+                                {
+                                    title: "Selectors",
+                                    url: `/selector`,
+                                    icon: Target,
                                 },
                             ],
                         },

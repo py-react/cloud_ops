@@ -14,7 +14,7 @@ interface ProfileDetailViewProps {
         namespace: string;
         config: any;
     };
-    profileType: "pod_profile" | "pod_metadata_profile" | "profile";
+    profileType: "pod_profile" | "pod_metadata_profile" | "service_profile" | "service_metadata_profile" | "service_selector_profile" | "profile";
 }
 
 export const ProfileDetailView: React.FC<ProfileDetailViewProps> = ({ data, profileType }) => {
