@@ -62,7 +62,8 @@ class AllowedRepoUtils:
         deployments = {}
 
         # Build a mapping from deployment_name to deployment config
-        deployment_map = {d.deployment_name: d for d in deployment_configs}
+        # deployment_configs is now a list of dicts
+        deployment_map = {d["deployment_name"]: d for d in deployment_configs}
 
         for repo in repos:
             result[repo.name] = str(repo.id)  # Ensure repo id is a string
@@ -74,14 +75,14 @@ class AllowedRepoUtils:
             d = deployment_map.get(repo.name)
             if d:
                 deployments[repo.name] = {
-                    "id": d.id,
-                    "type": d.type,
-                    "namespace": d.namespace,
-                    "deployment_name": d.deployment_name,
-                    "strategy": getattr(d, "strategy", None),
-                    "tag": d.tag,
-                    "pr_url": getattr(d, "pr_url", None),
-                    "jira": getattr(d, "jira", None),
+                    "id": d["id"],
+                    "type": d["type"],
+                    "namespace": d["namespace"],
+                    "deployment_name": d["deployment_name"],
+                    "strategy": d.get("strategy"),
+                    "tag": d["tag"],
+                    "pr_url": d.get("pr_url"),
+                    "jira": d.get("jira"),
                 }
         
         # Build PAT map

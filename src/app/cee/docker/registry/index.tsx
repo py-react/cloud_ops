@@ -22,13 +22,13 @@ const Registry = () => {
   const [error, setError] = useState<string | null>(null)
   const [repositories, setRepositories] = useState<string[]>([])
   const [isRegistryInitialized, setIsRegistryInitialized] = useState(false)
-  
+
   // API methods and helper functions will be added here in the next step
   const fetchRegistryStatus = async () => {
     try {
       setLoading(true)
       setError(null)
-      
+
       const data = await DefaultService.apiDockerRegistryGet({}) as any
 
       if (data?.error) {
@@ -46,7 +46,7 @@ const Registry = () => {
       }
 
       throw new Error('Unexpected response format')
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch registry status'
       setError(errorMessage)
@@ -116,7 +116,7 @@ const Registry = () => {
             shortDescription=""
             description="A Docker registry is a storage and distribution system for named Docker images. It allows you to push and pull container images, making it easy to share and deploy applications across different environments."
           />
-          
+
           <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
             <CardContent className="text-center space-y-6 py-12">
               <FileText className="w-20 h-20 mx-auto text-blue-500" />
@@ -126,7 +126,7 @@ const Registry = () => {
                   Get started by creating your Docker image registry. This will set up a secure container registry where you can store and manage your Docker images.
                 </p>
               </div>
-              
+
               <div className="flex gap-4 justify-center">
                 <Button onClick={handleCreateRegistry}>
                   Create Registry
@@ -166,7 +166,7 @@ const Registry = () => {
             shortDescription=""
             description="Your Docker registry is ready! Push your first container image to get started. You can use docker push commands or integrate with your CI/CD pipeline."
           />
-          
+
           <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
             <CardContent className="text-center space-y-6 py-12">
               <Monitor className="w-20 h-20 mx-auto text-blue-500" />
@@ -176,7 +176,7 @@ const Registry = () => {
                   Your Docker registry is ready! Push your first container image to get started. You can use docker push commands or integrate with your CI/CD pipeline.
                 </p>
               </div>
-              
+
               <div className="flex gap-4 justify-center">
                 <Button onClick={handlePushFirstImage}>
                   Push First Image
@@ -225,7 +225,7 @@ const Registry = () => {
           shortDescription=""
           description="Browse and manage your Docker repositories and images. View image details, inspect layers, and explore the contents of your container images."
         />
-        
+
         <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -240,7 +240,7 @@ const Registry = () => {
             <ResourceTable
               columns={repositoryColumns}
               data={repositoryData}
-              onViewDetails={(row) => navigate(`/settings/docker/registry/${row.rawRepo}`)}
+              onViewDetails={(row) => navigate(`/cee/docker/registry/${row.rawRepo}`)}
               className="shadow-none"
             />
           </CardContent>

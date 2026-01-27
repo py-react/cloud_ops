@@ -23,6 +23,7 @@ export const releaseFormSchema = z.object({
   code_source_control_name: z.string().optional().nullable(),
   source_control_branch: z.string().optional().nullable(),
   derived_deployment_id: z.number().nullable().optional(),
+  service_id: z.number().nullable().optional(),
   namespace: z.string().min(1, 'Namespace is required'),
 }).refine((data) => {
   // Ensure derived_deployment_id is selected

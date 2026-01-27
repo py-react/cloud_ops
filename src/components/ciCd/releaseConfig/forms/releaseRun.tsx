@@ -63,7 +63,8 @@ interface ReleaseRunProps {
   deployment_config: ReleaseConfigData;
   open: boolean;
   onClose: (open: boolean) => void;
-  onSuccess: () => void
+  onSuccess: () => void;
+  defaultValues?: Partial<ReleaseRunFormValues>;
 }
 
 const releaseRunSchema = z.object({
@@ -78,18 +79,33 @@ export const ReleaseRun = ({
   deployment_config,
   open,
   onClose,
-  onSuccess
+  onSuccess,
+  defaultValues
 }: ReleaseRunProps) => {
   const [activeStep, setActiveStep] = React.useState("metadata");
 
-  const initialValues = useMemo(() => ({
-    pr_url: "",
-    jira: "",
-    images: (deployment_config?.containers || []).reduce((acc: any, c) => {
-      acc[c.name] = "";
-      return acc;
-    }, {}),
-  }), [deployment_config]);
+  const initialValues = useMemo(() => {
+    const defaults = {
+      pr_url: "",
+      jira: "",
+      images: (deployment_config?.containers || []).reduce((acc: any, c) => {
+        acc[c.name] = "";
+        return acc;
+      }, {}),
+    };
+
+    if (defaultValues) {
+      return {
+        ...defaults,
+        ...defaultValues,
+        images: {
+          ...defaults.images,
+          ...(defaultValues.images || {})
+        }
+      };
+    }
+    return defaults;
+  }, [deployment_config, defaultValues]);
 
   const onSubmit = async (values: ReleaseRunFormValues) => {
     if (deployment_config.status !== "active") {

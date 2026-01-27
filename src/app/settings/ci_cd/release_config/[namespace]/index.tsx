@@ -28,6 +28,7 @@ const columns = [
   { header: "Source Control", accessor: "code_source_control_name" },
   { header: "Branch", accessor: "source_control_branch" },
   { header: "Derived Deployment", accessor: "derived_deployment_name" },
+  { header: "Derived Service", accessor: "service_name" },
   { header: "Status", accessor: "status" },
 ];
 
@@ -50,6 +51,7 @@ const ReleaseConfigPage = () => {
     code_source_control_name: null,
     source_control_branch: null,
     derived_deployment_id: null,
+    service_id: null,
   }), [selectedNamespace]);
 
   const sanitizeFormData = (data: any) => {
@@ -86,6 +88,7 @@ const ReleaseConfigPage = () => {
         deployment_strategy_id: data.deployment_strategy_id || null,
         code_source_control_name: data.code_source_control_name || null,
         source_control_branch: data.source_control_branch || null,
+        service_id: data.service_id || null,
         namespace: selectedNamespace
       };
 
@@ -258,6 +261,7 @@ const ReleaseConfigPage = () => {
             code_source_control_name: item.code_source_control_name || (item.required_source_control ? "Missing" : "N/A"),
             source_control_branch: item.source_control_branch || (item.required_source_control ? "Missing" : "N/A"),
             derived_deployment_name: item.derived_deployment_name || "N/A",
+            service_name: item.service_name || (item.service_id ? `Service #${item.service_id}` : "N/A"),
             status: item.soft_delete ? "deleted" : (item.status || "active"),
             showDelete: !item.hard_delete,
             showEdit: !item.hard_delete && !item.soft_delete,

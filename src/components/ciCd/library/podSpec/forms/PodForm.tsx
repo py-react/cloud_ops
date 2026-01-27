@@ -6,7 +6,7 @@ import { ProfileSelector } from "@/components/ciCd/library/ProfileSelector";
 import { DefaultService } from "@/gingerJs_api_client";
 import Editor from "@monaco-editor/react";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Info, Cpu, Box, ExternalLink } from "lucide-react";
+import { X, Plus, Info, Cpu, Box, ExternalLink, List, Puzzle, Tag, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequiredBadge } from "@/components/docker/network/forms/badges";
 import { cn } from "@/libs/utils";
@@ -51,63 +51,96 @@ export const PodForm = ({ control, setValue, watch, namespace }: { control: any;
     };
 
     return (
-        <div className="space-y-6">
-            <FormField
-                control={control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Pod Name <RequiredBadge /></FormLabel>
-                        <FormControl>
-                            <Input placeholder="Pod name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <div className="space-y-4">
-                <FormLabel>Containers <RequiredBadge /></FormLabel>
-                <ProfileSelector
-                    profileType="container"
-                    namespace={namespace}
-                    selectedIds={selectedContainers}
-                    onChange={(ids) => setValue("containers", ids)}
-                    multiple={true}
-                    label="Select Containers"
-                />
-            </div>
-
-            <div className="space-y-4">
-                <FormLabel>Metadata Profile</FormLabel>
-                <ProfileSelector
-                    profileType="pod_metadata_profile"
-                    namespace={namespace}
-                    selectedIds={selectedMetadataProfile ? [selectedMetadataProfile] : []}
-                    onChange={(ids) => setValue("metadata_profile_id", ids[0])}
-                    multiple={false}
-                    label="Select Metadata Profile"
-                />
-            </div>
-
-            <div className="space-y-4 border-t pt-4">
-                <div>
-                    <FormLabel className="text-sm font-bold text-foreground">
-                        Profile <RequiredBadge />
-                    </FormLabel>
-                    <FormDescription className="text-xs text-muted-foreground font-medium mt-1">
-                        Configure profile to attach
-                    </FormDescription>
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Basic Configuration */}
+            <div className="space-y-4 p-4 rounded-xl border bg-muted/20">
+                <div className="flex items-center gap-2 mb-2">
+                    <List className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-black">Basic Configuration</h3>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                        control={control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                                    <Tag className="h-3.5 w-3.5 opacity-60" /> Pod Name <RequiredBadge />
+                                </FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Pod name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={control}
+                        name="namespace"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                                    <Globe className="h-3.5 w-3.5 opacity-60" /> Namespace <RequiredBadge />
+                                </FormLabel>
+                                <FormControl>
+                                    <Input {...field} value={namespace} disabled />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            </div>
+
+            {/* Composition */}
+            <div className="space-y-4 p-4 rounded-xl border bg-muted/20">
+                <div className="flex items-center gap-2 mb-2">
+                    <Puzzle className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-black">Composition</h3>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                            Containers <RequiredBadge />
+                        </FormLabel>
+                        <ProfileSelector
+                            profileType="container"
+                            namespace={namespace}
+                            selectedIds={selectedContainers}
+                            onChange={(ids) => setValue("containers", ids)}
+                            multiple={true}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                            Metadata Profile
+                        </FormLabel>
+                        <ProfileSelector
+                            profileType="pod_metadata_profile"
+                            namespace={namespace}
+                            selectedIds={selectedMetadataProfile ? [selectedMetadataProfile] : []}
+                            onChange={(ids) => setValue("metadata_profile_id", ids[0])}
+                            multiple={false}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Advanced Configuration (Dynamic Attributes) */}
+            <div className="space-y-4 p-4 rounded-xl border bg-muted/20">
+                <div className="flex items-center gap-2 mb-2">
+                    <Cpu className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-black">Advanced Profiles</h3>
+                </div>
+                <p className="text-xs text-muted-foreground font-medium pb-2">
+                    Attach additional specifications from Pod Profiles under specific keys in <code>spec</code>.
+                </p>
 
                 {Object.keys(dynamicAttr).length > 0 && (
                     <div className="p-4 rounded-xl border border-border/40 bg-muted/20 space-y-3">
-                        <div className="flex items-center gap-2 pb-2 border-b border-border/30">
-                            <Cpu className="h-4 w-4 text-primary" />
-                            <span className="text-xs font-bold text-foreground uppercase tracking-widest">
-                                Configured profiles ({Object.keys(dynamicAttr).length})
-                            </span>
-                        </div>
                         <div className="flex flex-wrap gap-2">
                             {Object.keys(dynamicAttr).map((key) => (
                                 <Badge
@@ -146,7 +179,7 @@ export const PodForm = ({ control, setValue, watch, namespace }: { control: any;
                     </div>
                 )}
 
-                <div className="flex items-end justify-between w-full gap-4">
+                <div className="flex items-end justify-between w-full gap-4 pt-2">
                     <div className="flex flex-1 gap-2">
                         <div className="relative flex-1">
                             <Info className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -154,7 +187,7 @@ export const PodForm = ({ control, setValue, watch, namespace }: { control: any;
                                 placeholder="Attribute Name (e.g., config)"
                                 value={attributeInput}
                                 onChange={(e) => setAttributeInput(e.target.value)}
-                                className="h-10 pl-10 bg-muted/30 border-border/40 focus-visible:ring-primary/20 rounded-xl"
+                                className="h-10 pl-10 bg-muted/30 border-border/40 focus-visible:ring-primary/20"
                             />
                         </div>
 
@@ -175,7 +208,7 @@ export const PodForm = ({ control, setValue, watch, namespace }: { control: any;
                         className="h-10 px-4 gap-2 font-semibold hover:bg-primary/10 hover:text-primary hover:border-primary/20"
                     >
                         <Plus className="h-4 w-4" />
-                        Add Profile
+                        Add Attribute
                     </Button>
                 </div>
 
@@ -183,7 +216,6 @@ export const PodForm = ({ control, setValue, watch, namespace }: { control: any;
                     <div className="p-6 rounded-xl border-2 border-dashed border-border/40 bg-muted/10 text-center">
                         <Box className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
                         <p className="text-xs font-bold text-muted-foreground">No profile configured yet</p>
-                        <p className="text-[11px] text-muted-foreground/60 mt-1">Add your first profile above to get started</p>
                     </div>
                 )}
             </div>
@@ -402,7 +434,7 @@ export const PodAdvancedConfig = ({ control, namespace }: { control: any; namesp
                         <ResourceDetailView data={structuredData} type="pod" />
                     )
                 ) : (
-                    <div className="h-full rounded-2xl overflow-hidden border border-border/30">
+                    <div className="h-full rounded-xl overflow-hidden border border-border/30">
                         <Editor
                             height="100%"
                             width="100%"

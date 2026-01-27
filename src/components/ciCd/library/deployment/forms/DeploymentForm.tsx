@@ -2,12 +2,12 @@ import React, { useEffect, useState, useMemo } from "react";
 import yaml from "js-yaml";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ProfileSelector } from "@/components/ciCd/library/ProfileSelector";
 import { DefaultService } from "@/gingerJs_api_client";
 import Editor from "@monaco-editor/react";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Info, Cpu, Box, Layout, Layers, ExternalLink } from "lucide-react";
+import { X, Plus, Info, Cpu, Box, Layout, Layers, ExternalLink, List, Settings2, Target, Tag, Puzzle, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequiredBadge } from "@/components/docker/network/forms/badges";
 import { cn } from "@/libs/utils";
@@ -52,139 +52,182 @@ export const DeploymentForm = ({ control, setValue, watch, namespace }: { contro
     };
 
     return (
-        <div className="space-y-6">
-            <FormField
-                control={control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Deployment Name <RequiredBadge /></FormLabel>
-                        <FormControl>
-                            <Input placeholder="Deployment name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
-                    control={control}
-                    name="replicas"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Replicas</FormLabel>
-                            <FormControl>
-                                <Input type="number" {...field} onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : 1)} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={control}
-                    name="paused"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-8">
-                            <div className="space-y-0.5">
-                                <FormLabel>Paused</FormLabel>
-                                <FormDescription>Pause the deployment</FormDescription>
-                            </div>
-                            <FormControl>
-                                <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-                <FormField
-                    control={control}
-                    name="min_ready_seconds"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Min Ready Secs</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="0" {...field} onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={control}
-                    name="revision_history_limit"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Revision Limit</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="10" {...field} onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={control}
-                    name="progress_deadline_seconds"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Progress Deadline</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="600" {...field} onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-
-            <div className="space-y-4">
-                <FormLabel>Selector Profile <RequiredBadge /></FormLabel>
-                <ProfileSelector
-                    profileType="deployment_selector"
-                    namespace={namespace}
-                    selectedIds={selectedSelector ? [selectedSelector] : []}
-                    onChange={(ids) => setValue("selector_id", ids[0])}
-                    multiple={false}
-                    label="Select Label Selector"
-                />
-            </div>
-
-            <div className="space-y-4">
-                <FormLabel>Derived Pod <RequiredBadge /></FormLabel>
-                <ProfileSelector
-                    profileType="pod"
-                    namespace={namespace}
-                    selectedIds={selectedPod ? [selectedPod] : []}
-                    onChange={(ids) => setValue("pod_id", ids[0])}
-                    multiple={false}
-                    label="Select Pod Template"
-                />
-            </div>
-
-            <div className="space-y-4 border-t pt-4">
-                <div>
-                    <FormLabel className="text-sm font-bold text-foreground">
-                        Profile
-                    </FormLabel>
-                    <FormDescription className="text-xs text-muted-foreground font-medium mt-1">
-                        Configure deployment specifications to attach
-                    </FormDescription>
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Basic Configuration */}
+            <div className="space-y-4 p-4 rounded-xl border bg-muted/20">
+                <div className="flex items-center gap-2 mb-2">
+                    <List className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-black">Basic Configuration</h3>
                 </div>
+
+                <div className="space-y-4">
+                    <FormField
+                        control={control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                                    <Tag className="h-3.5 w-3.5 opacity-60" /> Deployment Name <RequiredBadge />
+                                </FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Deployment name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control={control}
+                            name="replicas"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                                        <Layers className="h-3.5 w-3.5 opacity-60" /> Replicas <RequiredBadge />
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input type="number" {...field} onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : 1)} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={control}
+                            name="namespace"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                                        <Globe className="h-3.5 w-3.5 opacity-60" /> Namespace <RequiredBadge />
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input {...field} value={namespace} disabled />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control={control}
+                            name="paused"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-xl border bg-background/50 p-2.5 shadow-sm h-10">
+                                    <div className="space-y-0.5">
+                                        <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 leading-none">Paused Status</FormLabel>
+                                    </div>
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                            control={control}
+                            name="min_ready_seconds"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/60 leading-none mb-1.5 flex items-center gap-1">
+                                        Min Ready Secs
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input type="number" placeholder="0" {...field} className="h-8 text-xs" onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={control}
+                            name="revision_history_limit"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/60 leading-none mb-1.5 flex items-center gap-1">
+                                        Revision Limit
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input type="number" placeholder="10" {...field} className="h-8 text-xs" onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={control}
+                            name="progress_deadline_seconds"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/60 leading-none mb-1.5 flex items-center gap-1">
+                                        Progress Deadline
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input type="number" placeholder="600" {...field} className="h-8 text-xs" onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Composition */}
+            <div className="space-y-4 p-4 rounded-xl border bg-muted/20">
+                <div className="flex items-center gap-2 mb-2">
+                    <Puzzle className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-black">Composition</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                            <Target className="h-3.5 w-3.5 opacity-60" /> Selector Profile <RequiredBadge />
+                        </FormLabel>
+                        <ProfileSelector
+                            profileType="deployment_selector"
+                            namespace={namespace}
+                            selectedIds={selectedSelector ? [selectedSelector] : []}
+                            onChange={(ids) => setValue("selector_id", ids[0])}
+                            multiple={false}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                            <Box className="h-3.5 w-3.5 opacity-60" /> Derived Pod <RequiredBadge />
+                        </FormLabel>
+                        <ProfileSelector
+                            profileType="pod"
+                            namespace={namespace}
+                            selectedIds={selectedPod ? [selectedPod] : []}
+                            onChange={(ids) => setValue("pod_id", ids[0])}
+                            multiple={false}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Advanced Configuration (Dynamic Attributes) */}
+            <div className="space-y-4 p-4 rounded-xl border bg-muted/20">
+                <div className="flex items-center gap-2 mb-2">
+                    <Cpu className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground font-black">Advanced Profiles</h3>
+                </div>
+                <p className="text-xs text-muted-foreground font-medium pb-2">
+                    Attach additional specifications from Deployment Profiles under specific keys in <code>spec</code>.
+                </p>
 
                 {Object.keys(dynamicAttr).length > 0 && (
                     <div className="p-4 rounded-xl border border-border/40 bg-muted/20 space-y-3">
-                        <div className="flex items-center gap-2 pb-2 border-b border-border/30">
-                            <Layers className="h-4 w-4 text-primary" />
-                            <span className="text-xs font-bold text-foreground uppercase tracking-widest">
-                                Configured profiles ({Object.keys(dynamicAttr).length})
-                            </span>
-                        </div>
                         <div className="flex flex-wrap gap-2">
                             {Object.keys(dynamicAttr).map((key) => (
                                 <Badge
@@ -223,7 +266,7 @@ export const DeploymentForm = ({ control, setValue, watch, namespace }: { contro
                     </div>
                 )}
 
-                <div className="flex items-end justify-between w-full gap-4">
+                <div className="flex items-end justify-between w-full gap-4 pt-2">
                     <div className="flex flex-1 gap-2">
                         <div className="relative flex-1">
                             <Info className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -231,7 +274,7 @@ export const DeploymentForm = ({ control, setValue, watch, namespace }: { contro
                                 placeholder="Attribute Name (e.g., strategy)"
                                 value={attributeInput}
                                 onChange={(e) => setAttributeInput(e.target.value)}
-                                className="h-10 pl-10 bg-muted/30 border-border/40 focus-visible:ring-primary/20 rounded-xl"
+                                className="h-10 pl-10 bg-muted/30 border-border/40 focus-visible:ring-primary/20"
                             />
                         </div>
 
@@ -252,9 +295,16 @@ export const DeploymentForm = ({ control, setValue, watch, namespace }: { contro
                         className="h-10 px-4 gap-2 font-semibold hover:bg-primary/10 hover:text-primary hover:border-primary/20"
                     >
                         <Plus className="h-4 w-4" />
-                        Add Profile
+                        Add Attribute
                     </Button>
                 </div>
+
+                {Object.keys(dynamicAttr).length === 0 && (
+                    <div className="p-6 rounded-xl border-2 border-dashed border-border/40 bg-muted/10 text-center">
+                        <Box className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-muted-foreground">No advanced profiles configured yet</p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -505,7 +555,7 @@ export const DeploymentAdvancedConfig = ({ control, watch, namespace }: { contro
                         <ResourceDetailView data={structuredData} type="deployment" />
                     )
                 ) : (
-                    <div className="h-full rounded-2xl overflow-hidden border border-border/30">
+                    <div className="h-full rounded-xl overflow-hidden border border-border/30">
                         <Editor
                             height="100%"
                             width="100%"

@@ -47,23 +47,24 @@ const fetchImageConfig = async (image: string, configDigest: string) => {
 const RegistryImage = () => {
   const { image } = useParams()
   const navigate = useNavigate()
-  const [tags, setTags] = useState([])
+  const [tags, setTags] = useState<any[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
 
   const fetchTags = async () => {
     setDetailLoading(true)
     const res = await DefaultService.apiDockerRegistryGet({ "imageName": image }).catch(err => {
       toast.error("Failed to fetch tags")
-    })
-    if (res.tags) {
+      return null
+    }) as any
+    if (res && res.tags) {
       // Use fetchImageManifest and Promise.all to get all manifests for the tags
       if (Array.isArray((res as any).tags)) {
         const tagsArray = (res as any).tags as string[];
         // For each tag, fetch manifest, then fetch config using manifest.config.digest
         const allPromises = tagsArray.map(async tag => {
-          const manifest = await fetchImageManifest(image as string, tag);
+          const manifest = await fetchImageManifest(image as string, tag) as any;
           let config = null;
-          if (manifest && manifest.config && manifest.config.digest) {
+          if (manifest && typeof manifest === 'object' && manifest.config && manifest.config.digest) {
             config = await fetchImageConfig(image as string, manifest.config.digest);
           }
           return {
@@ -156,7 +157,7 @@ const RegistryImage = () => {
                         : []
                     }))
                 }
-                onViewDetails={(row) => navigate(`/settings/docker/registry/${image}/${row.rawTag}`)}
+                onViewDetails={(row) => navigate(`/cee/docker/registry/${image}/${row.rawTag}`)}
                 className="shadow-none"
               />
             )}

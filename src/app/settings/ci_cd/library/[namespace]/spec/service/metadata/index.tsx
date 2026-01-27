@@ -103,7 +103,7 @@ export default function ServiceMetadataList() {
         label: 'Configuration',
         description: 'Manage labels and annotations',
         longDescription: 'Define reusable metadata sets for your services using JSON/YAML.',
-        component: (props: any) => <PodProfileForm {...props} title="Metadata Profile" />
+        component: (props: any) => <PodProfileForm {...props} namespace={selectedNamespace} title="Metadata Profile" />
     }], []);
 
     return (

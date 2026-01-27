@@ -26,6 +26,8 @@ type TSteps<T extends FieldValues> = {
   hideSectionHeader?: boolean;
   hideActions?: boolean;
   canNavigateNext?: (form: UseFormReturn<T>) => { can: boolean; message?: string };
+  allowSubmit?: boolean;
+  submitOnNext?: boolean;
 };
 
 type THeading = {
@@ -89,11 +91,26 @@ export const FormWizard = <T extends FieldValues>({
 
   const handleSubmit = async (data: T) => {
     setIsSubmitting(true)
-    await onSubmit(data);
-    setIsSubmitting(false)
+    try {
+      await onSubmit(data);
+
+      // If this step has submitOnNext or is handled via next, move forward
+      if (currentStepData.submitOnNext && currentStepIndex < steps.length - 1) {
+        const nextIndex = currentStepIndex + 1;
+        setCurrentStep(steps[nextIndex].id);
+      }
+    } catch (error) {
+      // Error handled by the caller/onSubmit usually via toast
+    } finally {
+      setIsSubmitting(false)
+    }
   };
 
-  const handleNext = () => {
+  const handleNext = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (currentStepData.canNavigateNext) {
       const { can, message } = currentStepData.canNavigateNext(form);
       if (!can) {
@@ -231,6 +248,22 @@ export const FormWizard = <T extends FieldValues>({
                 {(!hideActions && !currentStepData.hideActions) && (
                   // {/* Footer: Sticky, Standard sized buttons, right-aligned */}
                   <div className="py-3 px-8 bg-background/95 backdrop-blur-xl border-t border-border/40 flex justify-end items-center z-20 gap-3 shrink-0">
+                    {(currentStepData.allowSubmit || (steps.length === 2 && currentStepIndex === 0)) && currentStepIndex < steps.length - 1 && (
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        variant="gradient"
+                        className="h-9 px-8 rounded-lg shadow-sm font-semibold flex items-center gap-2"
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          SubmitIcon && <SubmitIcon className="h-4 w-4" />
+                        )}
+                        {submitLabel}
+                      </Button>
+                    )}
+
                     {currentStepIndex > 0 && (
                       <Button
                         type="button"
@@ -241,12 +274,13 @@ export const FormWizard = <T extends FieldValues>({
                         Back
                       </Button>
                     )}
+
                     {currentStepIndex < steps.length - 1 ? (
                       <Button
-                        type="button"
+                        type={currentStepData.submitOnNext ? "submit" : "button"}
                         variant="secondary"
                         className="h-9 px-6 rounded-lg font-medium text-sm"
-                        onClick={handleNext}
+                        onClick={currentStepData.submitOnNext ? undefined : handleNext}
                       >
                         Next Step
                       </Button>

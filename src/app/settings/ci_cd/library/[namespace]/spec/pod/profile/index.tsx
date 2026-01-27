@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -21,15 +21,7 @@ const profileSchema = z.object({
     config: z.any().optional()
 });
 
-const steps = [
-    {
-        id: 'config',
-        label: 'Add Profile',
-        description: 'Create Configuration',
-        longDescription: 'Configure the profile name, type, and JSON configuration.',
-        component: PodProfileForm,
-    }
-];
+
 
 function PodProfiles() {
     const { selectedNamespace } = useContext(NamespaceContext);
@@ -57,6 +49,16 @@ function PodProfiles() {
     });
 
     const { highlightedId, resourceType, focusId, autoOpen, clearFocus } = useResourceLink();
+
+    const steps = useMemo(() => [
+        {
+            id: 'config',
+            label: 'Add Profile',
+            description: 'Create Configuration',
+            longDescription: 'Configure the profile name, type, and JSON configuration.',
+            component: (props: any) => <PodProfileForm {...props} namespace={selectedNamespace} />,
+        }
+    ], [selectedNamespace]);
 
     useEffect(() => {
         fetchPodProfiles();

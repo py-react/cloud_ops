@@ -105,7 +105,7 @@ export default function ServiceSelectorList() {
         label: 'Configuration',
         description: 'Configure pod match labels',
         longDescription: 'Define which pods this service should target using JSON/YAML matchLabels.',
-        component: (props: any) => <PodProfileForm {...props} title="Selector Profile" />
+        component: (props: any) => <PodProfileForm {...props} namespace={selectedNamespace} title="Selector Profile" />
     }], []);
 
     return (

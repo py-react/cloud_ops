@@ -58,6 +58,14 @@ export const $DeploymentConfigType = {
 	type: 'null',
 }],
 },
+		service_id: {
+	type: 'any-of',
+	contains: [{
+	type: 'number',
+}, {
+	type: 'null',
+}],
+},
 		replicas: {
 	type: 'any-of',
 	contains: [{

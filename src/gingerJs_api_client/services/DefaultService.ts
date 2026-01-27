@@ -5,6 +5,7 @@ import type { CreatePATRequest } from '../models/CreatePATRequest';
 import type { CreateQueueJob } from '../models/CreateQueueJob';
 import type { DeploymentConfigType } from '../models/DeploymentConfigType';
 import type { DeploymentRunType } from '../models/DeploymentRunType';
+import type { DockerConfigType } from '../models/DockerConfigType';
 import type { GetContainerResponse } from '../models/GetContainerResponse';
 import type { InfraCreateUpdateRequest } from '../models/InfraCreateUpdateRequest';
 import type { InfraDeleteResponse } from '../models/InfraDeleteResponse';
@@ -56,6 +57,16 @@ export type TDataProxyApiDockerHubPathGet = {
             }
 export type TDataApiPackgesPost = {
                 requestBody: RunImage
+            }
+export type TDataApiSettingsDockerConfigPost = {
+                requestBody: DockerConfigType
+            }
+export type TDataApiSettingsDockerConfigPut = {
+                id: number
+requestBody: DockerConfigType
+            }
+export type TDataApiSettingsDockerConfigDelete = {
+                id: number
             }
 export type TDataApiSwarmInitPost = {
                 requestBody: SwarmInitParams
@@ -552,6 +563,79 @@ requestBody,
 			url: '/api/packges',
 			body: requestBody,
 			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiSettingsDockerConfigGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/settings/docker/config',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiSettingsDockerConfigPost(data: TDataApiSettingsDockerConfigPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/settings/docker/config',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiSettingsDockerConfigPut(data: TDataApiSettingsDockerConfigPut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/settings/docker/config',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiSettingsDockerConfigDelete(data: TDataApiSettingsDockerConfigDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/settings/docker/config',
+			query: {
+				id
+			},
 			errors: {
 				422: `Validation Error`,
 			},
@@ -3309,32 +3393,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static settingsDockerRegistryGet(): CancelablePromise<string> {
+	public static settingsDockerConfigGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/settings/docker/registry',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static settingsDockerRegistryImageGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/settings/docker/registry/{image}',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static settingsDockerRegistryImageTagGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/settings/docker/registry/{image}/{tag}',
+			url: '/settings/docker/config',
 		});
 	}
 
@@ -4029,6 +4091,39 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/cee/docker/packages',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeDockerRegistryGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee/docker/registry',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeDockerRegistryImageGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee/docker/registry/{image}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static ceeDockerRegistryImageTagGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cee/docker/registry/{image}/{tag}',
 		});
 	}
 
