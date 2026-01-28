@@ -1,34 +1,45 @@
 import React, { useState } from "react";
-import { ContainerIcon } from "lucide-react";
 import { ContainerRunnerUpdate } from "./ContainerRunnerUpdate";
-import { Container } from "@/types/container";
-import { DockerConfig } from "@/gingerJs_api_client";
+import { ContainerRunnerForm } from "./ContainerRunnerForm";
+import { ContainerInfo, DockerConfig } from "@/gingerJs_api_client";
 
 interface ContainerRunnerUpdateModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (data: DockerConfig) => Promise<void>;
-  data: Container;
+  isWizardOpen: boolean;
+  setIsWizardOpen: (open: boolean) => void;
+  onSubmitHandler: (data: DockerConfig) => Promise<void>;
+  editingContainer: ContainerInfo | null;
 }
 
 export function ContainerRunnerUpdateModal({
-  open,
-  onClose,
-  onSubmit,
-  data,
+  isWizardOpen,
+  setIsWizardOpen,
+  onSubmitHandler,
+  editingContainer,
 }: ContainerRunnerUpdateModalProps) {
   const [submitting, setSubmitting] = useState(false);
 
+  // If we are editing, use the Update form (resource configuration)
+  if (editingContainer) {
+    return (
+      <ContainerRunnerUpdate
+        data={editingContainer as any}
+        onSubmitHandler={onSubmitHandler}
+        submitting={submitting}
+        setSubmitting={setSubmitting}
+        isWizardOpen={isWizardOpen}
+        setIsWizardOpen={setIsWizardOpen}
+      />
+    );
+  }
+
+  // If we are not editing, use the Create form (full configuration)
   return (
-    <ContainerRunnerUpdate
-      data={data}
-      onSubmitHandler={onSubmit}
+    <ContainerRunnerForm
+      onSubmitHandler={onSubmitHandler}
       submitting={submitting}
       setSubmitting={setSubmitting}
-      isWizardOpen={open}
-      setIsWizardOpen={(val) => {
-        if (!val) onClose();
-      }}
+      isWizardOpen={isWizardOpen}
+      setIsWizardOpen={setIsWizardOpen}
     />
   );
 }

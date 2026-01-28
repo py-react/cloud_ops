@@ -13,6 +13,7 @@ import ResourceCard from "@/components/kubernetes/dashboard/resourceCard";
 import { PodProfileForm } from "@/components/ciCd/library/podSpec/forms/PodProfileForm";
 import { ProfileAdvancedConfig } from "@/components/ciCd/library/podSpec/forms/ProfileAdvancedConfig";
 import { DeleteDependencyDialog } from "@/components/ciCd/library/podSpec/DeleteDependencyDialog";
+import PageLayout from "@/components/PageLayout";
 
 const selectorSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -85,8 +86,6 @@ export default function ServiceSelectorList() {
     const handleEdit = (row: any) => {
         setEditMode(true);
         setEditingId(row.id);
-        // Rename 'selector' to 'config' temporarily for PodProfileForm compatibility, or edit PodProfileForm
-        // Actually ServiceSelectorProfile uses 'selector'.
         const initial = { ...row, config: typeof row.selector === 'object' ? JSON.stringify(row.selector, null, 2) : row.selector };
         setInitialValues(initial);
         setActiveTab("config");
@@ -106,22 +105,18 @@ export default function ServiceSelectorList() {
         description: 'Configure pod match labels',
         longDescription: 'Define which pods this service should target using JSON/YAML matchLabels.',
         component: (props: any) => <PodProfileForm {...props} namespace={selectedNamespace} title="Selector Profile" />
-    }], []);
+    }], [selectedNamespace]);
 
     return (
-        <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-            <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-                <div className="flex items-center gap-4 mb-1 p-1">
-                    <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-                        <Target className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-black text-foreground uppercase tracking-widest">Service Selectors</h1>
-                        <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                            Manage reusable pod selectors in <span className="text-primary font-bold">{selectedNamespace}</span>.
-                        </p>
-                    </div>
-                </div>
+        <PageLayout
+            title="Service Selectors"
+            subtitle={
+                <>
+                    Manage reusable pod selectors in <span className="text-primary font-bold">{selectedNamespace}</span>.
+                </>
+            }
+            icon={Target}
+            actions={
                 <div className="flex items-center gap-2 mb-1">
                     <NamespaceSelector />
                     <Button variant="outline" onClick={fetchProfiles}>
@@ -138,8 +133,8 @@ export default function ServiceSelectorList() {
                         <Plus className="w-3.5 h-3.5 mr-1" /> New Profile
                     </Button>
                 </div>
-            </div>
-
+            }
+        >
             <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
                 <ResourceCard
                     title="Total Selector Profiles"
@@ -237,6 +232,6 @@ export default function ServiceSelectorList() {
                 resourceType={conflictDialog.resourceType}
                 dependents={conflictDialog.dependents}
             />
-        </div>
+        </PageLayout>
     );
 }

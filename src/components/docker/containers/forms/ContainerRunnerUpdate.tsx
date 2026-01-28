@@ -26,7 +26,7 @@ export const ContainerRunnerUpdate = ({
   isWizardOpen,
   setIsWizardOpen,
 }: {
-  data: Container;
+  data: Container | null;
   onSubmitHandler: (data: DockerConfig) => Promise<void>;
   submitting: boolean;
   setSubmitting: (submitting: boolean) => void;
@@ -34,7 +34,7 @@ export const ContainerRunnerUpdate = ({
   setIsWizardOpen: (open: boolean) => void;
 }) => {
   const [activeTab, setActiveTab] = useState(steps[0].id);
-  const { stats, loading: statsLoading } = useContainerStats(data.id);
+  const { stats, loading: statsLoading } = useContainerStats(data?.id || null);
 
   const onSubmit = async (formData: any) => {
     try {
@@ -47,6 +47,7 @@ export const ContainerRunnerUpdate = ({
     }
   };
 
+  if (!data) return null;
   if (statsLoading) return null;
 
   return (
@@ -60,11 +61,11 @@ export const ContainerRunnerUpdate = ({
       schema={z.any()}
       initialValues={{
         image: data.image,
-        memory: data.host_config.Memory ? formatBytesForForm(data.host_config.Memory) :
+        memory: data.host_config?.Memory ? formatBytesForForm(data.host_config.Memory) :
           stats?.memory_stats?.limit ? formatBytesForForm(stats.memory_stats.limit) : "",
-        cpuShares: data.host_config.CpuShares ? String(data.host_config.CpuShares) : undefined,
-        memoryReservation: data.host_config.MemoryReservation ? formatBytesForForm(data.host_config.MemoryReservation) : "",
-        memorySwap: data.host_config.MemorySwap ? formatBytesForForm(data.host_config.MemorySwap) : ""
+        cpuShares: data.host_config?.CpuShares ? String(data.host_config.CpuShares) : undefined,
+        memoryReservation: data.host_config?.MemoryReservation ? formatBytesForForm(data.host_config.MemoryReservation) : "",
+        memorySwap: data.host_config?.MemorySwap ? formatBytesForForm(data.host_config.MemorySwap) : ""
       }}
       onSubmit={onSubmit}
       submitLabel="Update Container"

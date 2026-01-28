@@ -14,27 +14,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import PageLayout from "@/components/PageLayout";
 
 function replaceDockerWithSystem(text: string) {
-  // Define the regex pattern to match 'docker' or 'Docker' as a whole word, case-insensitive
-  const pattern = /\bdocker\b/gi;  // Matches 'docker' as a whole word, case-insensitive
-
-  // Replace all occurrences of 'docker' with 'system', and 'Docker' with 'System'.
-  return text.replace(pattern, (match: string, p1: string) => {
-    // If it's 'docker' (lowercase), replace with 'system'
+  const pattern = /\bdocker\b/gi;
+  return text.replace(pattern, (match: string) => {
     if (match === 'docker') {
       return 'system';
     }
-    // If it's 'Docker' (uppercase), replace with 'System'
     else {
       return 'System';
     }
   });
 }
 
-
-
-// Helper component for loading overlay
 const LoadingOverlay = () => (
   <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl transition-all duration-200">
     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -58,19 +51,11 @@ export default function SystemInfo({
   }
 
   return (
-    <div className="container mx-aut p-0 space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-b border-border/100 pb-2 mb-2">
-        <div className="flex items-center gap-4 mb-1 p-1">
-          <div className="p-2.5 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-            <DockIcon className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">System Information</h1>
-            <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-0 mt-2">
-              Monitor your system resources, network activity, and container status in real-time.
-            </p>
-          </div>
-        </div>
+    <PageLayout
+      title="System Information"
+      subtitle="Monitor your system resources, network activity, and container status in real-time."
+      icon={DockIcon}
+      actions={
         <Button
           variant="outline"
           onClick={onRefresh}
@@ -80,14 +65,14 @@ export default function SystemInfo({
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
-      </div>
-
+      }
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 !mt-4">
         <MemroryStatsDetail data={systemInfo.system_stats?.memory} isLoading={loadingStates?.["memory_usage"]} />
         <NetworkStatsDetail data={systemInfo.system_stats?.network} isLoading={loadingStates?.["network_io"]} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         <Card className="relative overflow-hidden">
           {loadingStates?.["general"] && <LoadingOverlay />}
           <CardHeader>
@@ -303,7 +288,7 @@ export default function SystemInfo({
                     <span className="text-muted-foreground">Option {index + 1}:</span>
                     <span>{option}</span>
                   </div>
-                  {index < systemInfo.SecurityOptions.length - 1 && <Separator className="my-2" />}
+                  {index < (systemInfo.SecurityOptions?.length || 0) - 1 && <Separator className="my-2" />}
                 </li>
               ))}
             </ul>
@@ -328,7 +313,7 @@ export default function SystemInfo({
                     <span className="text-muted-foreground">{key}:</span>
                     <span>{value}</span>
                   </div>
-                  {index < systemInfo.DriverStatus.length - 1 && <Separator className="my-2" />}
+                  {index < (systemInfo.DriverStatus?.length || 0) - 1 && <Separator className="my-2" />}
                 </li>
               ))}
             </ul>
@@ -413,7 +398,6 @@ export default function SystemInfo({
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   )
 }
-

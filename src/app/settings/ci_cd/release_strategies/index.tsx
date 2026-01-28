@@ -1,15 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { FileCog, ListTree, Orbit } from 'lucide-react';
+import React, { useState } from 'react';
+import { ListTree, Orbit } from 'lucide-react';
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
-import RouteDescription from '@/components/route-description';
 import { TooltipWrapper } from '@/components/ui/tooltip';
+import PageLayout from '@/components/PageLayout';
 
 interface DeploymentStrategy {
   id: number;
@@ -91,25 +84,12 @@ const DeploymentStrategyPage = ({ strategies }: DeploymentStrategyPageProps) => 
   });
 
   return (
-    <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-      {/* Page Header */}
-      <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-        <div>
-          <div className="flex items-center gap-4 mb-1 p-1">
-            <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-              <Orbit className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Release Strategies</h1>
-              <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                Kubernetes offers multiple deployment strategies to control how updates are rolled out.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 min-h-0 mt-10">
+    <PageLayout
+      title="Release Strategies"
+      subtitle="Kubernetes offers multiple deployment strategies to control how updates are rolled out."
+      icon={Orbit}
+    >
+      <div className="flex-1 min-h-0 mt-2">
         <ResourceTable
           title="Available Strategies"
           description="Reference these strategy IDs when configuring your deployments. Hover over strategy description to see more details."
@@ -119,8 +99,8 @@ const DeploymentStrategyPage = ({ strategies }: DeploymentStrategyPageProps) => 
           className="mt-4"
         />
       </div>
-    </div>
+    </PageLayout>
   );
 };
 
-export default DeploymentStrategyPage; 
+export default DeploymentStrategyPage;

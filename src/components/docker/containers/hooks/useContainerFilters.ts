@@ -7,9 +7,9 @@ export function useContainerFilters(containers: Container[]) {
 
   const filteredContainers = useMemo(() => {
     return containers.filter(container => {
-      const matchesSearch = search === '' || 
-        container.name.toLowerCase().includes(search.toLowerCase()) ||
-        container.id.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = search === '' ||
+        container.name?.toLowerCase().includes(search.toLowerCase()) ||
+        container.id?.toLowerCase().includes(search.toLowerCase());
 
       const matchesStatus = statusFilter === '' || container.status === statusFilter;
 

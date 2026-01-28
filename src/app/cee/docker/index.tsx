@@ -94,14 +94,12 @@ const ContainerListPage: React.FC = () => {
   const isLoading = Object.values(loadingStates).some(state => state);
 
   return (
-    <div key="overview" className="w-full animate-fade-in">
-      <SystemInfo
-        systemInfo={systemInfo}
-        loadingStates={loadingStates}
-        onRefresh={refreshAll}
-        isRefreshing={isLoading || isGlobalRefreshing}
-      />
-    </div>
+    <SystemInfo
+      systemInfo={systemInfo}
+      loadingStates={loadingStates}
+      onRefresh={refreshAll}
+      isRefreshing={isLoading || isGlobalRefreshing}
+    />
   );
 };
 

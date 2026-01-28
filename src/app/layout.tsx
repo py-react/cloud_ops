@@ -7,7 +7,7 @@ import { CommandCenter } from '@/components/CommandCenter'
 import { NamespaceContextProvider } from '@/components/kubernetes/contextProvider/NamespaceContext'
 import { KubeContextProvider } from '@/components/kubernetes/contextProvider/KubeContext'
 import { NavigationHistoryProvider } from '@/libs/navigationHistory'
-import BackButton from '@/components/BackButton'
+
 
 function AppLayout() {
   useEffect(() => {
@@ -32,10 +32,7 @@ function AppLayout() {
               <AppSidebar />
               <CommandCenter />
               <main className='w-full p-6 overflow-auto'>
-                <BackButton />
-                <div className="animate-fade-in">
-                  <Outlet />
-                </div>
+                <Outlet />
               </main>
             </NamespaceContextProvider>
           </KubeContextProvider>

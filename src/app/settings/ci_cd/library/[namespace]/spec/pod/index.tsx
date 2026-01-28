@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Box, RefreshCw, Layout, Settings } from "lucide-react";
+import { Plus, Box, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
@@ -12,10 +12,10 @@ import { PodProfileForm } from "@/components/ciCd/library/podSpec/forms/PodProfi
 import { PodForm, PodAdvancedConfig } from "@/components/ciCd/library/podSpec/forms/PodForm";
 import { PodSettingsForm } from "@/components/ciCd/library/podSpec/forms/PodSettingsForm";
 import { ViewProfileList } from "@/components/ciCd/library/podSpec/forms/ViewProfileList";
-import { ProfileAdvancedConfig } from "@/components/ciCd/library/podSpec/forms/ProfileAdvancedConfig";
 import { DefaultService } from "@/gingerJs_api_client";
 import { useResourceLink } from "@/hooks/useResourceLink";
 import { DeleteDependencyDialog } from "@/components/ciCd/library/podSpec/DeleteDependencyDialog";
+import PageLayout from "@/components/PageLayout";
 
 const profileSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -42,33 +42,10 @@ const podSchema = z.object({
     share_process_namespace: z.boolean().optional()
 });
 
-const profileStepsRaw = [
-    {
-        id: 'list',
-        label: 'View List',
-        description: 'View All Profiles',
-        longDescription: 'View all configured profiles in this namespace.',
-        component: ViewProfileList,
-        hideSectionHeader: true,
-        hideActions: true,
-    },
-    {
-        id: 'config',
-        label: 'Add Profile',
-        description: 'Create Configuration',
-        longDescription: 'Configure the profile name, type, and JSON configuration.',
-        component: PodProfileForm,
-    }
-];
-
 function PodLibrary() {
     const { selectedNamespace } = useContext(NamespaceContext);
     const [pods, setPods] = useState<any[]>([]);
-    const [podProfiles, setPodProfiles] = useState<any[]>([]);
-    const [metadataProfiles, setMetadataProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [loadingProfiles, setLoadingProfiles] = useState(false);
-    const [loadingMetadata, setLoadingMetadata] = useState(false);
 
     // Dialog states
     const [podDialogOpen, setPodDialogOpen] = useState(false);
@@ -182,12 +159,17 @@ function PodLibrary() {
     };
 
     const handleViewDetails = (row: any) => {
+        setEditMode(false)
         setViewPodInitialValues({
             name: row.name,
             namespace: row.namespace,
             containers: parseJson(row.containers, []),
             dynamic_attr: parseJson(row.dynamic_attr, {}),
-            metadata_profile_id: row.metadata_profile_id
+            metadata_profile_id: row.metadata_profile_id,
+            service_account_name: row.service_account_name,
+            image_pull_secrets: parseJson(row.image_pull_secrets, []),
+            node_selector: parseJson(row.node_selector, {}),
+            tolerations: parseJson(row.tolerations, [])
         });
         setViewPodStep("view");
         setViewPodDialogOpen(true);
@@ -252,21 +234,15 @@ function PodLibrary() {
 
 
     return (
-        <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-            <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-                <div>
-                    <div className="flex items-center gap-4 mb-1 p-1">
-                        <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-                            <Box className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black text-foreground uppercase tracking-widest">Derived Pods</h1>
-                            <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                                Define pod-level configurations composed from profiles and containers in <span className="text-primary font-bold">{selectedNamespace}</span>.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <PageLayout
+            title="Derived Pods"
+            subtitle={
+                <>
+                    Define pod-level configurations composed from profiles and containers in <span className="text-primary font-bold">{selectedNamespace}</span>.
+                </>
+            }
+            icon={Box}
+            actions={
                 <div className="flex items-center gap-2 mb-1">
                     <NamespaceSelector />
                     <Button variant="outline" onClick={fetchPods}>
@@ -289,8 +265,8 @@ function PodLibrary() {
                         Derived Pod
                     </Button>
                 </div>
-            </div>
-
+            }
+        >
             <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
                 <ResourceCard
                     title="Derived Pods"
@@ -361,7 +337,7 @@ function PodLibrary() {
                 resourceType={conflictDialog.resourceType}
                 dependents={conflictDialog.dependents}
             />
-        </div>
+        </PageLayout>
     );
 }
 

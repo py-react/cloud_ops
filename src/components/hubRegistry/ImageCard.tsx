@@ -90,7 +90,7 @@ export function ImageCard({ image }: ImageCardProps) {
             <div className="flex items-center gap-1.5">
               <Download className="w-3.5 h-3.5 text-blue-500/80" />
               <span>
-                {image.rate_plans[0].repositories[0].pull_count.toLocaleString()} pulls
+                {image.rate_plans?.[0]?.repositories?.[0]?.pull_count?.toLocaleString() || "0"} pulls
               </span>
             </div>
           </div>
