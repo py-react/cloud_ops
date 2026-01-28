@@ -43,7 +43,7 @@ class DeploymentComposer:
 
         # Overwrite/Merge basic fields
         # Replicas from release config takes priority
-        result["replicas"] = release_config.replicas if release_config.replicas is not None else lib_deployment.replicas
+        result["replicas"] = lib_deployment.replicas
         
         # Inherit Kind from library deployment
         result["kind"] = lib_deployment.kind or "Deployment"
