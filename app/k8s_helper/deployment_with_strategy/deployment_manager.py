@@ -596,12 +596,12 @@ class DeploymentManager:
         )
         self.session.add(lib_deployment)
         self.session.flush()
+        self.session.commit()
 
         return {
             "status": "success",
             "message": f"Deployment '{name}' imported successfully",
             "data": {
-                "deployment_config_id": config.id,
                 "library_deployment_id": lib_deployment.id
             }
         }
