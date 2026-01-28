@@ -1,14 +1,19 @@
-import useNavigate from "@/libs/navigate"
-import { useEffect, useContext } from "react"
-import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext'
+import React, { useContext, useEffect } from "react";
+import useNavigate from "@/libs/navigate";
+import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
+import RedirectPage from "@/components/RedirectPage";
 
-function Kubernetes() {
-    const navigate = useNavigate()
+const LibraryPage = () => {
     const { selectedNamespace } = useContext(NamespaceContext)
+    const navigate = useNavigate()
+
     useEffect(() => {
         navigate(`/settings/ci_cd/library/${selectedNamespace}/spec/container`)
     }, [])
-    return "redirecting..."
-}
 
-export default Kubernetes
+    return (
+        <RedirectPage />
+    );
+};
+
+export default LibraryPage;

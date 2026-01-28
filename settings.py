@@ -16,6 +16,7 @@ REGISTRY_HOST="registry.docker.localhome.com"
 LOG_LEVEL="DEBUG"
 UVICORN_WORKERS="1"
 GITHUB_PAT_ENCRYPTION_KEY = os.getenv("GITHUB_PAT_ENCRYPTION_KEY", "")
+# python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 SCM_POLLING_ENABLED="false"
 SCM_POLL_INTERVAL_SECONDS="300"
 PAT = os.getenv("PAT", "")

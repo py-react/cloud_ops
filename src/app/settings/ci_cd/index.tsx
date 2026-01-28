@@ -1,12 +1,15 @@
 import useNavigate from "@/libs/navigate"
-import { useEffect } from "react"
+import React, { useEffect } from "react"
+import RedirectPage from "@/components/RedirectPage";
 
 function Kubernetes() {
   const navigate = useNavigate()
-  useEffect(()=>{
-    navigate("/settings/ci_cd/source_control_settings")
-  },[])
-  return "redirecting..."
+  useEffect(() => {
+    navigate("/settings/ci_cd/source_control")
+  }, [])
+  return (
+    <RedirectPage />
+  );
 }
 
 export default Kubernetes

@@ -218,7 +218,7 @@ export const FormWizard = <T extends FieldValues>({
                 <ScrollArea className="flex-1">
                   <div className={cn("px-8 py-8 space-y-8 pb-12")}>
                     {/* Header styled after Overview cards */}
-                    {!currentStepData.hideSectionHeader && (
+                    {/* {!currentStepData.hideSectionHeader && (
                       <div className={cn("flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-300")}>
                         <div className="bg-primary/10 p-3 rounded-2xl text-primary ring-1 ring-primary/20">
                           <Icon className="h-5 w-5" />
@@ -230,7 +230,7 @@ export const FormWizard = <T extends FieldValues>({
                           </p>
                         </div>
                       </div>
-                    )}
+                    )} */}
 
                     {/* Main Form Area */}
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
