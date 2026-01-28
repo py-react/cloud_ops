@@ -30,7 +30,11 @@ async def PUT(request: Request, id: int, body: K8sDeployment):
 async def DELETE(request: Request, id: int):
     with get_session() as session:
         # Dependency check - check if any release config uses this derived deployment
-        stmt = select(DeploymentConfig).where(DeploymentConfig.derived_deployment_id == id)
+        # Only block if it is NOT hard-deleted
+        stmt = select(DeploymentConfig).where(
+            DeploymentConfig.derived_deployment_id == id,
+            DeploymentConfig.hard_delete == False
+        )
         dependents = session.exec(stmt).all()
         
         if dependents:

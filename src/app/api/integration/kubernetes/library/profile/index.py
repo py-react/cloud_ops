@@ -30,22 +30,29 @@ from app.db_client.models.kubernetes_profiles.container import K8sContainerProfi
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from app.db_client.models.kubernetes_profiles.deployment import K8sDeployment
+from app.db_client.models.kubernetes_profiles.service import K8sService
+
 async def DELETE(request: Request, id: int):
     with get_session() as session:
-        # Check for dependencies in K8sContainerProfile
-        # Container Specs are used in Derived Containers. 
-        # But wait, looking at pod.py earlier, containers were IDs of K8sContainerProfile.
-        # So we check if anyone uses this entity profile.
+        all_dependents = []
         
-        # Check against K8sContainerProfile.dynamic_attr (JSONB)
-        # and K8sContainerProfile itself if linked.
-        # Actually, ContainerSpecs are the "Profiles" used by Derived Containers.
+        # 1. Check K8sContainerProfile dynamic_attr
+        all_containers = session.exec(select(K8sContainerProfile)).all()
+        container_deps = [c for c in all_containers if any(val == id for val in (c.dynamic_attr or {}).values())]
+        all_dependents.extend([{"id": c.id, "name": c.name, "type": "container"} for c in container_deps])
         
-        all_derived = session.exec(select(K8sContainerProfile)).all()
-        dependents = [c for c in all_derived if any(val == id for val in (c.dynamic_attr or {}).values())]
+        # 2. Check K8sDeployment dynamic_attr
+        all_deployments = session.exec(select(K8sDeployment)).all()
+        deployment_deps = [d for d in all_deployments if any(val == id for val in (d.dynamic_attr or {}).values())]
+        all_dependents.extend([{"id": d.id, "name": d.name, "type": "deployment"} for d in deployment_deps])
+
+        # 3. Check K8sService dynamic_attr
+        all_services = session.exec(select(K8sService)).all()
+        service_deps = [s for s in all_services if any(val == id for val in (s.dynamic_attr or {}).values())]
+        all_dependents.extend([{"id": s.id, "name": s.name, "type": "service"} for s in service_deps])
         
-        if dependents:
-            dependent_data = [{"id": c.id, "name": c.name, "type": "container"} for c in dependents]
-            return JSONResponse(status_code=409, content={"detail": {"dependents": dependent_data}})
+        if all_dependents:
+            return JSONResponse(status_code=409, content={"detail": {"dependents": all_dependents}})
             
         return delete_profile(session, id)

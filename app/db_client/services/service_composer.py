@@ -56,7 +56,31 @@ class ServiceComposer:
                 if profile and profile.config:
                     profile_config = self._parse_json(profile.config)
                     
-                    # Special handling for ports to ensure list format
-                    result["spec"][key] = profile_config
+                    if key == "spec":
+                        if isinstance(profile_config, dict):
+                            result["spec"].update(profile_config)
+                    else:
+                        result["spec"][key] = profile_config
+
+        # 4. Advanced Fields Mapping
+        advanced_fields = [
+            "type", "cluster_ip", "ip_family_policy", "session_affinity",
+            "internal_traffic_policy", "external_traffic_policy",
+            "publish_not_ready_addresses", "load_balancer_ip",
+            "health_check_node_port", "allocate_load_balancer_node_ports",
+            "load_balancer_class", "external_name"
+        ]
+        
+        for field in advanced_fields:
+            val = getattr(service, field, None)
+            if val is not None:
+                # Convert snake_case back to camelCase for the generator/spec
+                parts = field.split('_')
+                camel_key = parts[0] + ''.join(p.capitalize() for p in parts[1:])
+                # Special cases for acronyms
+                if camel_key == "clusterIp": camel_key = "clusterIP"
+                if camel_key == "loadBalancerIp": camel_key = "loadBalancerIP"
+                
+                result["spec"][camel_key] = val
 
         return result

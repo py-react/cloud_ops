@@ -22,6 +22,20 @@ const serviceSchema = z.object({
     metadata_profile_id: z.number().nullable().optional(),
     selector_profile_id: z.number().nullable().optional(),
     dynamic_attr: z.any().optional(),
+
+    // Advanced Spec Fields
+    type: z.string().nullable().optional(),
+    cluster_ip: z.string().nullable().optional(),
+    ip_family_policy: z.string().nullable().optional(),
+    session_affinity: z.string().nullable().optional(),
+    internal_traffic_policy: z.string().nullable().optional(),
+    external_traffic_policy: z.string().nullable().optional(),
+    publish_not_ready_addresses: z.boolean().nullable().optional(),
+    load_balancer_ip: z.string().nullable().optional(),
+    health_check_node_port: z.number().nullable().optional(),
+    allocate_load_balancer_node_ports: z.boolean().nullable().optional(),
+    load_balancer_class: z.string().nullable().optional(),
+    external_name: z.string().nullable().optional(),
 });
 
 const default_value = {
@@ -30,6 +44,18 @@ const default_value = {
     metadata_profile_id: null,
     selector_profile_id: null,
     dynamic_attr: {},
+    type: "ClusterIP",
+    cluster_ip: null,
+    ip_family_policy: "SingleStack",
+    session_affinity: "None",
+    internal_traffic_policy: "Cluster",
+    external_traffic_policy: "Cluster",
+    publish_not_ready_addresses: false,
+    load_balancer_ip: null,
+    health_check_node_port: null,
+    allocate_load_balancer_node_ports: true,
+    load_balancer_class: null,
+    external_name: null,
 };
 
 export default function DerivedServiceList() {

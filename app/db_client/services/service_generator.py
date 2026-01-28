@@ -31,14 +31,41 @@ class ServiceGenerator:
                     node_port=p.get("nodePort")
                 ))
 
-        spec = client.V1ServiceSpec(
-            selector=spec_data.get("selector", {}),
-            ports=ports if ports else None,
-            type=spec_data.get("type", "ClusterIP"),
-            cluster_ip=spec_data.get("clusterIP"),
-            load_balancer_ip=spec_data.get("loadBalancerIP"),
-            external_name=spec_data.get("externalName")
-        )
+        svc_type = spec_data.get("type", "ClusterIP")
+        
+        spec_kwargs = {
+            "selector": spec_data.get("selector", {}),
+            "ports": ports if ports else None,
+            "type": svc_type,
+            "cluster_ip": spec_data.get("clusterIP"),
+            "ip_family_policy": spec_data.get("ipFamilyPolicy"),
+            "session_affinity": spec_data.get("sessionAffinity"),
+            "publish_not_ready_addresses": spec_data.get("publishNotReadyAddresses"),
+        }
+
+        # Type-specific field filtering to avoid Kubernetes validation errors
+        
+        # 1. External Traffic Policy (NodePort, LoadBalancer only)
+        if svc_type in ["NodePort", "LoadBalancer"]:
+            spec_kwargs["external_traffic_policy"] = spec_data.get("externalTrafficPolicy")
+            # Internal Traffic Policy is generally fine for ClusterIP too, but let's be safe
+            spec_kwargs["internal_traffic_policy"] = spec_data.get("internalTrafficPolicy")
+        
+        # 2. LoadBalancer specific fields
+        if svc_type == "LoadBalancer":
+            spec_kwargs["load_balancer_ip"] = spec_data.get("loadBalancerIP")
+            spec_kwargs["load_balancer_class"] = spec_data.get("loadBalancerClass")
+            spec_kwargs["allocate_load_balancer_node_ports"] = spec_data.get("allocateLoadBalancerNodePorts")
+            
+            # Health Check Node Port (LoadBalancer only, and usually with ExternalTrafficPolicy=Local)
+            if spec_data.get("externalTrafficPolicy") == "Local":
+                spec_kwargs["health_check_node_port"] = spec_data.get("healthCheckNodePort")
+        
+        # 3. ExternalName specific fields
+        if svc_type == "ExternalName":
+            spec_kwargs["external_name"] = spec_data.get("externalName")
+
+        spec = client.V1ServiceSpec(**spec_kwargs)
 
         # 3. Object Construction
         service_obj = client.V1Service(
