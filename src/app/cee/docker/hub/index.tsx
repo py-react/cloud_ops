@@ -1,13 +1,13 @@
-import React from "react";
-import { ErrorMessage } from '@/components/hubRegistry/ErrorMessage';
-import { useDockerImages } from '@/components/hubRegistry/hooks/useDockerImages';
+import React, { useState } from 'react';
+import { LayoutGrid, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ImageList } from '@/components/hubRegistry/ImageList';
-import { Pagination } from '@/components/hubRegistry/pagination';
 import { SearchBar } from '@/components/hubRegistry/SearchBar';
-import { Loader2, LayoutGrid } from 'lucide-react';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import PageLayout from '@/components/PageLayout';
+import { useDockerImages } from '@/components/hubRegistry/hooks/useDockerImages';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
-function ContainerListPage({ }) {
+const ContainerListPage = () => {
   const {
     images,
     loading,
@@ -20,68 +20,79 @@ function ContainerListPage({ }) {
     setCurrentPage,
   } = useDockerImages();
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  if (error) {
-    return <ErrorMessage message={error} />;
-  }
-
   return (
-    <div key="hub" className="w-full h-[calc(100vh-4rem)] flex flex-col animate-in fade-in overflow-hidden pr-1">
-      {/* Main Header & Search */}
-      <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-        <div className="flex-1">
-          <div className="flex items-center gap-4 mb-1 p-1">
-            <div className="p-2.5 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-              <LayoutGrid className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest leading-none">Hub Images</h1>
-              <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl mt-2 px-1">
-                Explore millions of container images. Browse official releases and pull directly to your registry.
-              </p>
-            </div>
+    <PageLayout
+      title="Hub Images"
+      subtitle="Explore millions of container images. Browse official releases and pull directly to your registry."
+      icon={LayoutGrid}
+      actions={
+        <div className="flex items-center gap-4 mb-1">
+          <div className="w-full md:w-[400px] shrink-0">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          </div>
+          <div className="flex items-center gap-2 border-l border-border/50 pl-4">
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={!hasPrevious || loading}
+              onClick={() => setCurrentPage(p => p - 1)}
+              className="h-9 w-9"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-xs font-bold tabular-nums w-8 text-center text-muted-foreground">
+              {currentPage}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={!hasNext || loading}
+              onClick={() => setCurrentPage(p => p + 1)}
+              className="h-9 w-9"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-
-        <div className="w-full md:w-[400px] shrink-0 mb-1">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col min-h-0 pt-2 relative">
-        {loading ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div className="p-4 rounded-full">
-              <Loader2 className="w-8 h-8 animate-spin text-primary/60 outline-none" />
+      }
+    >
+      <div className="flex-1 mt-4 overflow-y-auto pr-1">
+        {error ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="p-4 rounded-full bg-destructive/10 text-destructive mb-4">
+              <RefreshCw className="h-8 w-8" />
             </div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest animate-pulse">Fetching global registry data...</p>
+            <h3 className="text-lg font-bold text-foreground">Failed to load images</h3>
+            <p className="text-muted-foreground mt-2 max-w-sm">{error}</p>
+          </div>
+        ) : loading ? (
+          <div className="grid gap-6">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="bg-background border border-border/40 rounded-xl overflow-hidden animate-pulse">
+                <div className="flex items-stretch gap-0">
+                  <div className="w-40 bg-muted/30 p-8 shrink-0 border-r border-border/10 h-40" />
+                  <div className="flex-1 p-6 flex flex-col justify-between">
+                    <div className="space-y-3">
+                      <Skeleton className="h-6 w-1/3" />
+                      <Skeleton className="h-4 w-1/4" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                    <div className="flex gap-4">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <>
-            <ScrollArea className="flex-1 pr-1">
-              <div className="p-0 space-y-8 pb-10">
-                <ImageList images={images} />
-              </div>
-            </ScrollArea>
-
-            {/* Sticky Footer for Pagination */}
-            <div className="flex-none py-1.5 px-6 border-t border-border/40 bg-background/95 backdrop-blur-xl z-10">
-              <Pagination
-                currentPage={currentPage}
-                hasNext={hasNext}
-                hasPrevious={hasPrevious}
-                onPageChange={handlePageChange}
-              />
-            </div>
-          </>
-        )}
+          <ImageList images={images} />
+        )
+        }
       </div>
-    </div>
+    </PageLayout>
   );
-}
+};
 
 export default ContainerListPage;

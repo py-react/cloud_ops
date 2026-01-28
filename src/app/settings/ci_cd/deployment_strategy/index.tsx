@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
 import { FileCog } from 'lucide-react';
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
-import RouteDescription from '@/components/route-description';
 import { TooltipWrapper } from '@/components/ui/tooltip';
+import PageLayout from '@/components/PageLayout';
 
 interface DeploymentStrategy {
   id: number;
@@ -65,8 +58,8 @@ interface DeploymentStrategyPageProps {
 }
 
 const DeploymentStrategyPage = ({ strategies }: DeploymentStrategyPageProps) => {
-  const [deploymentStrategies, setDeploymentStrategies] = useState<TransformedDeploymentStrategy[]>(() => {
-    return strategies.map((item: string) => {
+  const transformStrategies = (items: string[]) => {
+    return items.map((item: string) => {
       const strategy: DeploymentStrategy = JSON.parse(item);
       return {
         id: strategy.id,
@@ -88,52 +81,20 @@ const DeploymentStrategyPage = ({ strategies }: DeploymentStrategyPageProps) => 
         description: <div className="max-w-md">{strategy.description}</div>
       };
     });
-  });
+  };
+
+  const [deploymentStrategies, setDeploymentStrategies] = useState<TransformedDeploymentStrategy[]>(() => transformStrategies(strategies));
 
   useEffect(() => {
-    setDeploymentStrategies(strategies.map((item: string) => {
-      const strategy: DeploymentStrategy = JSON.parse(item);
-      return {
-        id: strategy.id,
-        type: (
-          <TooltipWrapper
-            content={
-              <div className="space-y-2">
-                <ul className="list-disc list-inside text-xs">
-                  {getStrategyDetails(strategy.type).map((detail, index) => (
-                    <li key={index}>{detail}</li>
-                  ))}
-                </ul>
-              </div>
-            }
-          >
-            <span className="cursor-help">{strategy.type}</span>
-          </TooltipWrapper>
-        ),
-        description: <div className="max-w-md">{strategy.description}</div>
-      };
-    }));
+    setDeploymentStrategies(transformStrategies(strategies));
   }, [strategies]);
 
   return (
-    <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-      {/* Page Header */}
-      <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-        <div>
-          <div className="flex items-center gap-4 mb-1 p-1">
-            <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-              <FileCog className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Deployment Strategies</h1>
-              <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                Available deployment strategies for your services. Reference these ID's when configuring your deployments.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <PageLayout
+      title="Deployment Strategies"
+      subtitle="Available deployment strategies for your services. Reference these ID's when configuring your deployments."
+      icon={FileCog}
+    >
       <div className="flex-1 min-h-0 mt-10">
         <ResourceTable
           title="Available Strategies"
@@ -144,8 +105,8 @@ const DeploymentStrategyPage = ({ strategies }: DeploymentStrategyPageProps) => 
           className="mt-4"
         />
       </div>
-    </div>
+    </PageLayout>
   );
 };
 
-export default DeploymentStrategyPage; 
+export default DeploymentStrategyPage;

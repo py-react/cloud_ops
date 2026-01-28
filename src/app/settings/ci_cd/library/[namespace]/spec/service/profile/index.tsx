@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { PodProfileForm } from "@/components/ciCd/library/podSpec/forms/PodProfileForm";
 import { ProfileAdvancedConfig } from "@/components/ciCd/library/podSpec/forms/ProfileAdvancedConfig";
 import { DeleteDependencyDialog } from "@/components/ciCd/library/podSpec/DeleteDependencyDialog";
+import PageLayout from "@/components/PageLayout";
 
 const profileSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -113,24 +114,18 @@ export default function ServiceProfileList() {
         description: 'Configure service ports and type',
         longDescription: 'Define the service type and port mappings using JSON/YAML.',
         component: (props: any) => <PodProfileForm {...props} namespace={selectedNamespace} title="Service Profile" />
-    }], []);
+    }], [selectedNamespace]);
 
     return (
-        <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-            <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-                <div>
-                    <div className="flex items-center gap-4 mb-1 p-1">
-                        <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-                            <Settings2 className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black text-foreground uppercase tracking-widest">Service Profiles</h1>
-                            <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                                Define reusable service specifications (ports, types) for <span className="text-primary font-bold">{selectedNamespace}</span>.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <PageLayout
+            title="Service Profiles"
+            subtitle={
+                <>
+                    Define reusable service specifications (ports, types) for <span className="text-primary font-bold">{selectedNamespace}</span>.
+                </>
+            }
+            icon={Settings2}
+            actions={
                 <div className="flex items-center gap-2 mb-1">
                     <NamespaceSelector />
                     <Button variant="outline" onClick={fetchProfiles}>
@@ -148,8 +143,8 @@ export default function ServiceProfileList() {
                         New Profile
                     </Button>
                 </div>
-            </div>
-
+            }
+        >
             <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
                 <ResourceCard
                     title="Total Service Profiles"
@@ -255,6 +250,6 @@ export default function ServiceProfileList() {
                 resourceType={conflictDialog.resourceType}
                 dependents={conflictDialog.dependents}
             />
-        </div>
+        </PageLayout>
     );
 }

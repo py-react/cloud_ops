@@ -30,6 +30,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
 
 interface PATItem {
     id: number;
@@ -108,10 +109,6 @@ const PatsManagementPage = () => {
         try {
             const res = await DefaultService.apiIntegrationGithubPatGet();
             setPats(res as any || []);
-            // Keep verification status on refresh or reset?
-            // Let's NOT reset it completely if we want to persist known state, but if list changes...
-            // User requested "initially when not verified it will say verification needed".
-            // So reset is fine.
             setVerificationStatus({});
         } catch (err: any) {
             toast.error(err.message || String(err));
@@ -196,13 +193,11 @@ const PatsManagementPage = () => {
 
     const handleVerifyAll = async () => {
         const toastId = toast.loading("Verifying all tokens...");
-        // Mark all as loading that are not already loading
         const newStatus: any = {};
         pats.forEach(p => newStatus[p.id] = 'loading');
         setVerificationStatus(prev => ({ ...prev, ...newStatus }));
 
         try {
-            // Run in parallel
             await Promise.all(pats.map(p => handleVerify(p.id, true)));
             toast.success("Verification complete", { id: toastId });
         } catch (err) {
@@ -289,43 +284,34 @@ const PatsManagementPage = () => {
     ];
 
     return (
-        <div className="w-full h-full flex flex-col animate-fade-in space-y-6 overflow-hidden pr-1">
-            {/* Page Header */}
-            <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border/100 pb-4">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-2xl bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-                        <Lock className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-black tracking-tight text-foreground uppercase tracking-widest">Personal Access Tokens</h1>
-                        <p className="text-muted-foreground text-sm font-medium mt-1">
-                            Securely manage GitHub credentials for source control polling and repository interaction.
-                        </p>
-                    </div>
-                </div>
+        <PageLayout
+            title="Personal Access Tokens"
+            subtitle="Securely manage GitHub credentials for source control polling and repository interaction."
+            icon={Lock}
+            actions={
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-background">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-background mb-1">
                         <div className={`w-2 h-2 rounded-full ${pollingEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
                         <span className="text-xs font-bold mr-2">Polling: {pollingEnabled ? 'Active' : 'Stopped'}</span>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleTogglePolling}>
                             <RefreshCw className="h-3 w-3" />
                         </Button>
                     </div>
-                    <Button variant="outline" onClick={handleVerifyAll} disabled={loading || pats.length === 0} className="gap-2">
+                    <Button variant="outline" onClick={handleVerifyAll} disabled={loading || pats.length === 0} className="gap-2 mb-1">
                         <ShieldCheck size={14} />
                         Verify All
                     </Button>
-                    <Button variant="outline" onClick={fetchPats} disabled={loading} className="gap-2">
+                    <Button variant="outline" onClick={fetchPats} disabled={loading} className="gap-2 mb-1">
                         <RefreshCw className={loading ? "animate-spin" : ""} size={14} />
                         Refresh
                     </Button>
-                    <Button variant="gradient" onClick={() => setIsWizardOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
+                    <Button variant="gradient" onClick={() => setIsWizardOpen(true)} className="gap-2 shadow-lg shadow-primary/20 mb-1">
                         <Plus size={14} />
                         Provision Token
                     </Button>
                 </div>
-            </div>
-
+            }
+        >
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-none">
                 <ResourceCard
@@ -446,7 +432,7 @@ const PatsManagementPage = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
+        </PageLayout>
     );
 };
 

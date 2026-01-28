@@ -13,6 +13,7 @@ import { DefaultService } from "@/gingerJs_api_client";
 import { useResourceLink } from "@/hooks/useResourceLink";
 import { DeleteDependencyDialog } from "@/components/ciCd/library/podSpec/DeleteDependencyDialog";
 import { ProfileAdvancedConfig } from "@/components/ciCd/library/podSpec/forms/ProfileAdvancedConfig";
+import PageLayout from "@/components/PageLayout";
 
 const profileSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -130,21 +131,15 @@ function MetadataProfiles() {
     };
 
     return (
-        <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-            <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-                <div>
-                    <div className="flex items-center gap-4 mb-1 p-1">
-                        <div className="p-2 rounded-md bg-purple-500/10 text-purple-600 shadow-sm ring-1 ring-purple-500/20">
-                            <Layout className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black text-foreground uppercase tracking-widest">Metadata Profiles</h1>
-                            <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                                Manage reusable metadata configuration profiles in <span className="text-primary font-bold">{selectedNamespace}</span>.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <PageLayout
+            title="Metadata Profiles"
+            subtitle={
+                <>
+                    Manage reusable metadata configuration profiles in <span className="text-primary font-bold">{selectedNamespace}</span>.
+                </>
+            }
+            icon={Layout}
+            actions={
                 <div className="flex items-center gap-2 mb-1">
                     <NamespaceSelector />
                     <Button variant="outline" onClick={fetchMetadataProfiles}>
@@ -165,7 +160,8 @@ function MetadataProfiles() {
                         New Metadata
                     </Button>
                 </div>
-            </div>
+            }
+        >
             <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
                 <ResourceCard
                     title="Total Metadata Profiles"
@@ -244,7 +240,7 @@ function MetadataProfiles() {
                 resourceType={conflictDialog.resourceType}
                 dependents={conflictDialog.dependents}
             />
-        </div>
+        </PageLayout>
     );
 }
 

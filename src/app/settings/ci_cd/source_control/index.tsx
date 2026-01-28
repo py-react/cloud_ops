@@ -9,10 +9,10 @@ import {
     ShieldCheck,
     ExternalLink,
     Trash2,
-    AlertCircle,
     Eye,
     MessageSquare,
-    Settings2
+    Settings2,
+    Key
 } from 'lucide-react';
 import { DefaultService } from '@/gingerJs_api_client';
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
@@ -26,19 +26,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription
-} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import useNavigate from '@/libs/navigate';
-import { Key } from 'lucide-react';
-// Final cleanup of index.tsx - removing AddRepositoryForm import
 import { FormWizard } from '@/components/wizard/form-wizard';
 import * as z from 'zod';
+import PageLayout from '@/components/PageLayout';
 
 // Step sections
 import BasicRepoConfig from '@/components/ciCd/sourceControl/github/forms/sections/BasicConfig';
@@ -86,8 +78,6 @@ const SourceControlPage = () => {
     const repoInitialValues: RepoFormData = editingRepo ? {
         name: editingRepo.name,
         branches: editingRepo.branches.map(b => ({ value: b })),
-        // Use the existing pat_id from editingRepo. 
-        // Note: editingRepo.pat_id might be null/undefined which is fine.
         pat_id: editingRepo.pat_id
     } : {
         name: '',
@@ -128,7 +118,6 @@ const SourceControlPage = () => {
             const res = await DefaultService.apiIntegrationGithubPollingGet();
             setData(res);
 
-            // Auto-fetch detailed permissions for unique repos
             if (res.allowed_branches) {
                 const uniqueRepos = Object.keys(res.allowed_branches);
                 uniqueRepos.forEach(repo => fetchDetailedPermissions(repo));
@@ -153,7 +142,6 @@ const SourceControlPage = () => {
 
     useEffect(() => {
         fetchData();
-        // Fetch PATs to display status/names
         DefaultService.apiIntegrationGithubPatGet().then((res: any) => setPats(res)).catch(console.error);
     }, []);
 
@@ -181,7 +169,6 @@ const SourceControlPage = () => {
     };
 
     const handleBulkDelete = async (selectedItems: FlatMappedRepo[]) => {
-        // Group selected branches by repository
         const selectionByRepo: Record<string, string[]> = {};
         selectedItems.forEach(item => {
             if (!selectionByRepo[item.repository]) {
@@ -193,7 +180,6 @@ const SourceControlPage = () => {
         const repos = Object.keys(selectionByRepo);
         if (repos.length === 0) return;
 
-        // Calculate operations
         const operations: { type: 'delete' | 'update', repo: string, branches?: string[] }[] = [];
         let totalBranchesToRemove = 0;
         let fullRepoDeletions = 0;
@@ -201,9 +187,6 @@ const SourceControlPage = () => {
         repos.forEach(repo => {
             const selectedBranches = selectionByRepo[repo];
             const allBranches = data.allowed_branches[repo] || [];
-
-            // If all branches are selected, it's a full delete
-            // Using set for robust comparison
             const selectedSet = new Set(selectedBranches);
             const remainingBranches = allBranches.filter((b: string) => !selectedSet.has(b));
 
@@ -253,7 +236,6 @@ const SourceControlPage = () => {
     };
 
     const handleEditRepo = (repoName: string) => {
-        // Get all branches for this repository
         const branches = data.allowed_branches[repoName] || [];
         const currentPatId = data.repo_pats ? data.repo_pats[repoName] : null;
         setEditingRepo({ name: repoName, branches, pat_id: currentPatId });
@@ -416,23 +398,12 @@ const SourceControlPage = () => {
     ];
 
     return (
-        <div className="w-full h-full flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-            {/* Page Header */}
-            <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-                <div>
-                    <div className="flex items-center gap-4 mb-1 p-1">
-                        <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-                            <Plug className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Source Control</h1>
-                            <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                                Manage repositories and their allowed branches to trigger Continuous Integration (CI) workflows via SCM polling.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 mb-1">
+        <PageLayout
+            title="Source Control"
+            subtitle="Manage repositories and their allowed branches to trigger Continuous Integration (CI) workflows via SCM polling."
+            icon={Plug}
+            actions={
+                <div className="flex items-center gap-2">
                     <Button variant="outline" onClick={fetchData} disabled={loading} className="text-xs">
                         <RefreshCw className={`w-3.5 h-3.5 mr-2 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
@@ -446,8 +417,8 @@ const SourceControlPage = () => {
                         Add Repository
                     </Button>
                 </div>
-            </div>
-
+            }
+        >
             {/* Hero Stats Section */}
             <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
                 <ResourceCard
@@ -508,7 +479,6 @@ const SourceControlPage = () => {
                 />
             </div>
 
-            {/* Modals */}
             <FormWizard
                 name="add-repository-wizard"
                 isWizardOpen={isAddRepoOpen}
@@ -529,7 +499,7 @@ const SourceControlPage = () => {
                 submitLabel={editingRepo ? 'Save Changes' : 'Add Repository'}
                 submitIcon={Plug}
             />
-        </div >
+        </PageLayout>
     );
 };
 

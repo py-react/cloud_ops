@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileText, Monitor, Loader2, ArrowLeft, Eye, Package, Clock, Tag, Layers, Settings, ChevronDown, ChevronRight, FolderOpen } from 'lucide-react'
+import { FileText, Monitor, Loader2, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import { DefaultService } from '@/gingerJs_api_client'
-import RouteDescription from '@/components/route-description'
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable'
 import useNavigate from '@/libs/navigate'
-
-
+import PageLayout from '@/components/PageLayout'
 
 // Define columns for ResourceTable
 const repositoryColumns = [
@@ -23,7 +21,6 @@ const Registry = () => {
   const [repositories, setRepositories] = useState<string[]>([])
   const [isRegistryInitialized, setIsRegistryInitialized] = useState(false)
 
-  // API methods and helper functions will be added here in the next step
   const fetchRegistryStatus = async () => {
     try {
       setLoading(true)
@@ -58,7 +55,6 @@ const Registry = () => {
     }
   }
 
-
   const handleCreateRegistry = () => {
     toast.info('Registry creation feature coming soon')
   }
@@ -79,7 +75,6 @@ const Registry = () => {
     fetchRegistryStatus()
   }, [])
 
-  // Loading state
   if (loading) {
     return (
       <div className="h-[80vh] flex items-center justify-center p-4 w-full">
@@ -92,30 +87,19 @@ const Registry = () => {
     )
   }
 
-  // Error state
   if (error && !isRegistryInitialized) {
     return (
-      <div title="Docker Registry">
+      <PageLayout
+        title="Docker Registry"
+        subtitle="Manage your Docker images and container registry"
+        icon={FileText}
+      >
         <div className="space-y-6">
-          <RouteDescription
-            title={
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    Docker Registry
-                  </h2>
-                  <p className="text-base text-slate-500">
-                    Manage your Docker images and container registry
-                  </p>
-                </div>
-              </div>
-            }
-            shortDescription=""
-            description="A Docker registry is a storage and distribution system for named Docker images. It allows you to push and pull container images, making it easy to share and deploy applications across different environments."
-          />
+          <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-6">
+            <p className="text-sm text-muted-foreground">
+              A Docker registry is a storage and distribution system for named Docker images. It allows you to push and pull container images, making it easy to share and deploy applications across different environments.
+            </p>
+          </div>
 
           <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
             <CardContent className="text-center space-y-6 py-12">
@@ -138,34 +122,23 @@ const Registry = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </PageLayout>
     )
   }
 
-  // Empty registry state
   if (isRegistryInitialized && repositories.length === 0) {
     return (
-      <div title="Docker Registry">
+      <PageLayout
+        title="Docker Registry"
+        subtitle="Manage your Docker images and container registry"
+        icon={Monitor}
+      >
         <div className="space-y-6">
-          <RouteDescription
-            title={
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <Monitor className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    Docker Registry
-                  </h2>
-                  <p className="text-base text-slate-500">
-                    Manage your Docker images and container registry
-                  </p>
-                </div>
-              </div>
-            }
-            shortDescription=""
-            description="Your Docker registry is ready! Push your first container image to get started. You can use docker push commands or integrate with your CI/CD pipeline."
-          />
+          <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-6">
+            <p className="text-sm text-muted-foreground">
+              Your Docker registry is ready! Push your first container image to get started. You can use docker push commands or integrate with your CI/CD pipeline.
+            </p>
+          </div>
 
           <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
             <CardContent className="text-center space-y-6 py-12">
@@ -188,11 +161,10 @@ const Registry = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </PageLayout>
     )
   }
 
-  // Default repositories view
   const repositoryData = repositories.map(repo => ({
     name: repo,
     type: 'Docker Repository',
@@ -204,32 +176,22 @@ const Registry = () => {
   }))
 
   return (
-    <div title="Docker Registry">
+    <PageLayout
+      title="Docker Registry"
+      subtitle="Manage your Docker images and container registry"
+      icon={Package}
+    >
       <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <FileText className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  Docker Registry
-                </h2>
-                <p className="text-base text-slate-500">
-                  Manage your Docker images and container registry
-                </p>
-              </div>
-            </div>
-          }
-          shortDescription=""
-          description="Browse and manage your Docker repositories and images. View image details, inspect layers, and explore the contents of your container images."
-        />
+        <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-6">
+          <p className="text-sm text-muted-foreground">
+            Browse and manage your Docker repositories and images. View image details, inspect layers, and explore the contents of your container images.
+          </p>
+        </div>
 
         <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-500" />
+              <Package className="w-5 h-5 text-blue-500" />
               Repositories ({repositories.length})
             </CardTitle>
             <CardDescription>
@@ -246,8 +208,8 @@ const Registry = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   )
 }
 
-export default Registry 
+export default Registry

@@ -9,19 +9,15 @@ import { DefaultService } from '@/gingerJs_api_client';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import RouteDescription from '@/components/route-description';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { PackageRunnerForm } from '@/components/docker/packages/forms/PackagePullerForm';
 import { PackageCreatorForm } from '@/components/docker/packages/forms/PackageCreatorForm';
+import PageLayout from "@/components/PageLayout";
 
 const fetchPackages = async () => {
   const response: any = await DefaultService.apiDockerPackagesGet();
-  // Map Package_Info to PackageInfo shape if needed
   return response.packages.map((pkg: any) => ({
     id: pkg.id,
     name: Array.isArray(pkg.name) ? pkg.name[0] : pkg.name,
@@ -44,17 +40,15 @@ const PackagesPage = () => {
   const [createSubmitting, setCreateSubmitting] = useState(false);
 
   const [packages, setPackages] = useState<PackageInfo[]>([]);
-  const [error, setError] = useState<any>(null);
 
   useEffect(() => {
     fetchPackages().then((res) => {
       setPackages(res)
     }).catch(error => {
-      setError(error)
+      console.error(error);
     })
   }, []);
 
-  // Play handler
   const handlePlay = async (row: PackageTableData) => {
     const pkg = row.package;
     try {
@@ -78,11 +72,10 @@ const PackagesPage = () => {
     }
   };
 
-  // Delete handler
   const handleDelete = async (row: PackageTableData) => {
     const pkg = row.package;
     try {
-      const responseData = await DefaultService.apiDockerPackagesPost({
+      await DefaultService.apiDockerPackagesPost({
         requestBody: {
           action: 'remove',
           packageId: pkg.id,
@@ -158,83 +151,69 @@ const PackagesPage = () => {
   };
 
   return (
-    <>
-      <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-        {/* Page Header */}
-        <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-b border-border/100 pb-2 mb-2">
-          <div>
-            <div className="flex items-center gap-4 mb-1 p-1">
-              <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-                <ContainerIcon className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Packages</h1>
-                <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-0 mt-2">
-                  Pull templates, build custom packages, and monitor storage.
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 mb-1">
-            <Button variant="outline" onClick={() => fetchPackages().then(setPackages)}>
-              <RefreshCw className="w-3.5 h-3.5 mr-2" />
-              Refresh
+    <PageLayout
+      title="Packages"
+      subtitle="Pull templates, build custom packages, and monitor storage."
+      icon={ContainerIcon}
+      actions={
+        <div className="flex items-center gap-2 mb-1">
+          <Button variant="outline" onClick={() => fetchPackages().then(setPackages)}>
+            <RefreshCw className="w-3.5 h-3.5 mr-2" />
+            Refresh
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setShowPackagePullModal(true)}>
+              <ArrowDownToLineIcon className="w-3.5 h-3.5 mr-2" />
+              Pull
             </Button>
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => setShowPackagePullModal(true)}>
-                <ArrowDownToLineIcon className="w-3.5 h-3.5 mr-2" />
-                Pull
-              </Button>
-              <Button variant="gradient" onClick={() => setShowPackageCreateModal(true)}>
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                Create
-              </Button>
-            </div>
+            <Button variant="gradient" onClick={() => setShowPackageCreateModal(true)}>
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Create
+            </Button>
           </div>
         </div>
-
-        {/* Hero Stats Section */}
-        <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
-          <ResourceCard
-            title="Total"
-            count={stats.total}
-            icon={<ContainerIcon className="w-4 h-4" />}
-            color="bg-primary"
-            className="border-primary/20 bg-primary/5 shadow-none hover:border-primary/30 transition-all"
-          />
-          <ResourceCard
-            title="Storage"
-            count={formatSize(stats.totalSize).split(' ')[0]}
-            unit={formatSize(stats.totalSize).split(' ')[1]}
-            icon={<HardDrive className="w-4 h-4" />}
-            color="bg-blue-500"
-            className="border-blue-500/20 bg-blue-500/5 shadow-none hover:border-blue-500/30 transition-all"
-          />
-          <ResourceCard
-            title="Unused"
-            count={stats.unused}
-            icon={<Trash2 className="w-4 h-4" />}
-            color="bg-orange-500"
-            className="border-orange-500/20 bg-orange-500/5 shadow-none hover:border-orange-500/30 transition-all"
-          />
-        </div>
-
-        <div className="flex-1 min-h-0 mt-10">
-          <PackagesList
-            packages={packages}
-            onPlay={handlePlay}
-            onDelete={handleDelete}
-            onPush={handlePush}
-            onBulkPlay={handleBulkPlay}
-            onBulkDelete={handleBulkDelete}
-            title="Image Registry"
-            description="Local container image storage and management"
-            icon={<HardDrive className="h-4 w-4" />}
-          />
-        </div>
+      }
+    >
+      {/* Hero Stats Section */}
+      <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
+        <ResourceCard
+          title="Total"
+          count={stats.total}
+          icon={<ContainerIcon className="w-4 h-4" />}
+          color="bg-primary"
+          className="border-primary/20 bg-primary/5 shadow-none hover:border-primary/30 transition-all"
+        />
+        <ResourceCard
+          title="Storage"
+          count={formatSize(stats.totalSize).split(' ')[0]}
+          unit={formatSize(stats.totalSize).split(' ')[1]}
+          icon={<HardDrive className="w-4 h-4" />}
+          color="bg-blue-500"
+          className="border-blue-500/20 bg-blue-500/5 shadow-none hover:border-blue-500/30 transition-all"
+        />
+        <ResourceCard
+          title="Unused"
+          count={stats.unused}
+          icon={<Trash2 className="w-4 h-4" />}
+          color="bg-orange-500"
+          className="border-orange-500/20 bg-orange-500/5 shadow-none hover:border-orange-500/30 transition-all"
+        />
       </div>
 
-      {/* Pull Package Dialog */}
+      <div className="flex-1 min-h-0 mt-10">
+        <PackagesList
+          packages={packages}
+          onPlay={handlePlay}
+          onDelete={handleDelete}
+          onPush={handlePush}
+          onBulkPlay={handleBulkPlay}
+          onBulkDelete={handleBulkDelete}
+          title="Image Registry"
+          description="Local container image storage and management"
+          icon={<HardDrive className="h-4 w-4" />}
+        />
+      </div>
+
       <PackageRunnerForm
         isWizardOpen={showPackagePullModal}
         setIsWizardOpen={setShowPackagePullModal}
@@ -266,7 +245,6 @@ const PackagesPage = () => {
         setSubmitting={setPullSubmitting}
       />
 
-      {/* Create Package Dialog */}
       <PackageCreatorForm
         isWizardOpen={showPackageCreateModal}
         setIsWizardOpen={setShowPackageCreateModal}
@@ -295,7 +273,6 @@ const PackagesPage = () => {
         setSubmitting={setCreateSubmitting}
       />
 
-      {/* Success Confetti Dialog */}
       <Dialog open={showConfettiModal} onOpenChange={setShowConfettiModal}>
         <DialogContent className="flex flex-col items-center justify-center">
           <div className="absolute inset-0 pointer-events-none z-10">
@@ -317,7 +294,7 @@ const PackagesPage = () => {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </PageLayout>
   );
 };
 

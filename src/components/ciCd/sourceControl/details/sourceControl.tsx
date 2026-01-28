@@ -25,6 +25,7 @@ import {
   GitBranch,
 } from "lucide-react";
 import React, { useState } from "react";
+import PageLayout from "@/components/PageLayout";
 
 function formatUtcToLocal(dateString: string) {
   // dateString is in UTC
@@ -404,7 +405,22 @@ export const SourceControlDetailedInfo: React.FC<SourceControlDetailedInfoProps>
   }
 
   return (
-    <div className="min-h-screen w-full">
+    <PageLayout
+      title="Repository Overview"
+      subtitle={
+        <>
+          Build status and repository information for <span className="text-primary font-bold">{branch}</span>.
+        </>
+      }
+      icon={GitBranch}
+      actions={
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/50 px-2 py-1 rounded border border-border/40">
+            Created: {data && (data as any).creation_timestamp ? new Date((data as any).creation_timestamp).toLocaleDateString() : "Unknown"}
+          </span>
+        </div>
+      }
+    >
       {loading ? (
         <div className="bg-white rounded-xl border border-border/40 p-6 animate-pulse mb-8 overflow-hidden shadow-sm">
           <div className="flex items-center justify-between mb-6">
@@ -424,29 +440,7 @@ export const SourceControlDetailedInfo: React.FC<SourceControlDetailedInfoProps>
           </div>
         </div>
       ) : (
-        <div className="animate-fade-in space-y-4">
-          {/* Header */}
-          <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-            <div>
-              <div className="flex items-center gap-4 mb-1 p-1">
-                <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-                  <GitBranch className="h-5 w-5" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Repository Overview</h1>
-                  <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                    Build status and repository information for <span className="text-primary font-bold">{branch}</span>.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/50 px-2 py-1 rounded border border-border/40">
-                Created: {data && (data as any).creation_timestamp ? new Date((data as any).creation_timestamp).toLocaleDateString() : "Unknown"}
-              </span>
-            </div>
-          </div>
-
+        <div className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
               <div className="flex items-center gap-3 mb-4 border-b border-border/30 pb-3">
@@ -586,6 +580,6 @@ export const SourceControlDetailedInfo: React.FC<SourceControlDetailedInfoProps>
           )}
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };

@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { FileCode, Upload, X } from 'lucide-react'
+import PageLayout from '@/components/PageLayout'
 
 const dockerConfigSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -216,7 +217,7 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
         } catch (error) {
             toast.error("Failed to fetch Docker configurations")
         } finally {
-            setLoading(false)
+            !engineInfo && setLoading(false)
         }
     }
 
@@ -250,25 +251,19 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
     ]
 
     return (
-        <div className="w-full h-[calc(100vh-4rem)] flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-            <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-                <div>
-                    <div className="flex items-center gap-4 mb-1 p-1">
-                        <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-                            <Settings className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-black text-foreground uppercase tracking-widest">Docker Configuration</h1>
-                            <div className="flex items-center gap-4 mt-2">
-                                <DetailItem label="Version" value={engineInfo?.ServerVersion} />
-                                <div className="w-px h-6 bg-border/50" />
-                                <DetailItem label="Root Dir" value={engineInfo?.DockerRootDir} />
-                                <div className="w-px h-6 bg-border/50" />
-                                <DetailItem label="Arch" value={engineInfo?.Architecture} />
-                            </div>
-                        </div>
-                    </div>
+        <PageLayout
+            title="Docker Configuration"
+            subtitle={
+                <div className="flex items-center gap-4 mt-2">
+                    <DetailItem label="Version" value={engineInfo?.ServerVersion} />
+                    <div className="w-px h-6 bg-border/50" />
+                    <DetailItem label="Root Dir" value={engineInfo?.DockerRootDir} />
+                    <div className="w-px h-6 bg-border/50" />
+                    <DetailItem label="Arch" value={engineInfo?.Architecture} />
                 </div>
+            }
+            icon={Settings}
+            actions={
                 <div className="flex items-center gap-2 mb-1">
                     <Button variant="outline" onClick={fetchConfigs}>
                         <RefreshCw className="w-3.5 h-3.5 mr-2" />
@@ -279,8 +274,8 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
                         Create Config
                     </Button>
                 </div>
-            </div>
-
+            }
+        >
             <div className="flex-1 min-h-0 bg-white rounded-xl border border-border/50 overflow-hidden shadow-sm">
                 <ResourceTable
                     title="Engine Registry"
@@ -338,7 +333,7 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
                     icon: Server
                 }}
             />
-        </div>
+        </PageLayout>
     )
 }
 

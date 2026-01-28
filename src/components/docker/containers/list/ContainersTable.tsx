@@ -109,7 +109,7 @@ export function ContainersTable({
       containerStatus: container.status,
       id: (
         <code className="text-xs font-mono bg-muted/50 px-1.5 py-0.5 rounded border border-border/50 text-muted-foreground">
-          {container.id.substring(0, 12)}
+          {container.id?.substring(0, 12) || 'N/A'}
         </code>
       ),
       image: (
