@@ -48,6 +48,7 @@ import { K8sContainer } from "@/components/ciCd/releaseConfig/forms/type";
 import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable"; // Added
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
+import PageLayout from "@/components/PageLayout";
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const getStatusColor = (status: string) => {
@@ -571,22 +572,15 @@ const ReleaseConfigDetailedInfo = () => {
   // }
 
   return (
-    <div className="w-full h-full flex flex-col animate-fade-in space-y-4 overflow-hidden pr-1">
-      {/* Page Header */}
-      <div className="flex-none flex flex-col md:flex-row md:items-end justify-between gap-2 border-b border-border/100 pb-2 mb-2">
-        <div>
-          <div className="flex items-center gap-4 mb-1 p-1">
-            <div className="p-2 rounded-md bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
-              <FileCog className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black tracking-tight text-foreground uppercase tracking-widest">Configuration Details</h1>
-              <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1 mt-2">
-                Deployment parameters and environment settings for <span className="text-primary font-bold">{config_name}</span>.
-              </p>
-            </div>
-          </div>
-        </div>
+    <PageLayout
+      title="Configuration Details"
+      subtitle={
+        <>
+          Deployment parameters and environment settings for <span className="text-primary font-bold">{config_name}</span>.
+        </>
+      }
+      icon={FileCog}
+      actions={
         <div className="flex items-center gap-2 mb-1">
           <Button variant="outline" onClick={fetchConfigData}>
             <RefreshCw className="w-3.5 h-3.5 mr-2" />
@@ -594,7 +588,7 @@ const ReleaseConfigDetailedInfo = () => {
           </Button>
           <Button
             variant="gradient"
-            onClick={() => toggleRunModal(true)} // Changed to toggleRunModal
+            onClick={() => toggleRunModal(true)}
             disabled={configData?.status !== "active"}
             title={configData?.status !== "active" ? "Configuration must be 'active' to run a release" : ""}
             className={configData?.status !== "active" ? "opacity-50 cursor-not-allowed grayscale" : ""}
@@ -603,7 +597,8 @@ const ReleaseConfigDetailedInfo = () => {
             Run Release
           </Button>
         </div>
-      </div>
+      }
+    >
 
       <div className="flex-1 overflow-auto space-y-6 pt-6">
         {/* Config Summary Card */}
@@ -1093,7 +1088,7 @@ const ReleaseConfigDetailedInfo = () => {
           defaultValues={rerunValues}
         />
       )}
-    </div >
+    </PageLayout>
   );
 };
 
