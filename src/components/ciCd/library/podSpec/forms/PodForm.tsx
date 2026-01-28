@@ -312,6 +312,16 @@ export const PodAdvancedConfig = ({ control, namespace }: { control: any; namesp
                 containers: []
             }
         };
+
+        const parseConfig = (config: any) => {
+            if (!config) return {};
+            if (typeof config === 'object') return config;
+            try {
+                return JSON.parse(config);
+            } catch (e) {
+                return { error: "Failed to parse config", raw: config };
+            }
+        };
         console.log("selectedMetadataId", selectedMetadataId);
         console.log("selectedContainerIds", selectedContainerIds);
         // 1. Handle Metadata Profile
@@ -346,7 +356,7 @@ export const PodAdvancedConfig = ({ control, namespace }: { control: any; namesp
                     Object.entries(container.dynamic_attr).forEach(([key, value]: [string, any]) => {
                         // In real scenario, we'd need to fetch these sub-profiles too if we want full preview,
                         // but for now we follow the existing pattern in DerivedContainerForm
-                        cSpec[key] = JSON.parse(profiles[value].config);
+                        cSpec[key] = parseConfig(profiles[value].config);
                     });
                 }
                 result.spec.containers.push(cSpec);

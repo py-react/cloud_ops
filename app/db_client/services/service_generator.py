@@ -65,6 +65,20 @@ class ServiceGenerator:
         if svc_type == "ExternalName":
             spec_kwargs["external_name"] = spec_data.get("externalName")
 
+        if svc_type == "ExternalName":
+            spec_kwargs["external_name"] = spec_data.get("externalName")
+
+        # Map dynamic attributes
+        dynamic_kwargs = self._map_dynamic_attrs(spec_data, client.V1ServiceSpec, exclude=[
+            "ports", "selector", "type", "cluster_ip", "ip_family_policy", 
+            "session_affinity", "publish_not_ready_addresses", "external_traffic_policy",
+            "internal_traffic_policy", "load_balancer_ip", "load_balancer_class", 
+            "allocate_load_balancer_node_ports", "health_check_node_port", "external_name"
+        ])
+        
+        # Merge dynamic kwargs into spec_kwargs (dynamic takes precedence if not excluded, but we excluded manual ones)
+        spec_kwargs.update(dynamic_kwargs)
+
         spec = client.V1ServiceSpec(**spec_kwargs)
 
         # 3. Object Construction
@@ -76,4 +90,35 @@ class ServiceGenerator:
         )
 
         # 4. Serialization
+        # 4. Serialization
         return client.ApiClient().sanitize_for_serialization(service_obj)
+
+    def _to_snake_case(self, name: str) -> str:
+        import re
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+    def _map_dynamic_attrs(self, data: Dict[str, Any], target_class: Any, exclude: List[str] = []) -> Dict[str, Any]:
+        """
+        Dynamically maps keys from data (often camelCase) to target_class snake_case arguments.
+        Skips keys in exclude list.
+        """
+        mapped_args = {}
+        
+        if not hasattr(target_class, 'attribute_map'):
+            return {}
+            
+        json_to_attr = {v: k for k, v in target_class.attribute_map.items()}
+        
+        for key, value in data.items():
+            snake_key = self._to_snake_case(key)
+            if key in exclude or snake_key in exclude:
+                continue
+                
+            if key in json_to_attr:
+                attr_name = json_to_attr[key]
+                mapped_args[attr_name] = value
+            elif snake_key in target_class.attribute_map:
+                 mapped_args[snake_key] = value
+
+        return mapped_args

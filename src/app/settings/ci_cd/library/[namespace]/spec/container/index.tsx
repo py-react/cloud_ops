@@ -170,7 +170,8 @@ function ContainerSpec() {
             args: Array.isArray(row.args) ? row.args : [],
             command: Array.isArray(row.command) ? row.command : [],
             profile: Object.keys(dynamic_attr).reduce((acc, key) => {
-                acc[key] = profiles.find(p => p.id === dynamic_attr[key]);
+                const found = profiles.find(p => p.id === dynamic_attr[key]);
+                if (found) acc[key] = found;
                 return acc;
             }, {} as any)
         }
@@ -190,7 +191,8 @@ function ContainerSpec() {
             args: new Set(Array.isArray(row.args) ? row.args : []),
             command: new Set(Array.isArray(row.command) ? row.command : []),
             profile: Object.keys(dynamic_attr).reduce((acc, key) => {
-                acc[key] = profiles.find(p => p.id === dynamic_attr[key]);
+                const found = profiles.find(p => p.id === dynamic_attr[key]);
+                if (found) acc[key] = found;
                 return acc;
             }, {} as any)
         }
