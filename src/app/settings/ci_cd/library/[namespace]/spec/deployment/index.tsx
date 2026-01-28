@@ -13,6 +13,8 @@ import { DefaultService } from "@/gingerJs_api_client";
 import { useResourceLink } from "@/hooks/useResourceLink";
 import { DeleteDependencyDialog } from "@/components/ciCd/library/podSpec/DeleteDependencyDialog";
 import PageLayout from "@/components/PageLayout";
+import { YAMLImportForm } from "@/components/kubernetes/YAMLImportForm";
+import { FileUp } from "lucide-react";
 
 const deploymentSchema = z.object({
     name: z.string().min(1, "Deployment name is required"),
@@ -25,6 +27,10 @@ const deploymentSchema = z.object({
     progress_deadline_seconds: z.number().nullable().optional(),
     paused: z.boolean().default(false),
     dynamic_attr: z.any().optional(),
+});
+
+const yamlImportSchema = z.object({
+    manifest: z.string().min(1, "YAML manifest is required"),
 });
 
 const parseJson = (data: any, defaultValue: any = {}) => {
@@ -67,6 +73,7 @@ const _default_value = {
 function DerivedDeployment() {
     const { selectedNamespace } = useContext(NamespaceContext);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [yamlImportOpen, setYamlImportOpen] = useState(false);
     const [deployments, setDeployments] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("setup");
@@ -135,6 +142,19 @@ function DerivedDeployment() {
         }
     };
 
+    const handleYAMLImport = async (values: any) => {
+        try {
+            await DefaultService.apiIntegrationKubernetesImportYamlPost({ requestBody: { manifest: values.manifest } });
+            toast.success("Deployment imported successfully");
+            setYamlImportOpen(false);
+            fetchDeployments();
+        } catch (error: any) {
+            console.error("Import error:", error);
+            const detail = error.body?.detail || error.message || "Unknown error";
+            toast.error(`Import failed: ${detail}`);
+        }
+    };
+
     const handleDelete = async (row: any) => {
         try {
             await DefaultService.apiIntegrationKubernetesLibraryDeploymentDelete({ id: row.id });
@@ -183,6 +203,16 @@ function DerivedDeployment() {
         },
     ], [selectedNamespace]);
 
+    const yamlImportSteps = useMemo(() => [
+        {
+            id: 'import',
+            label: 'Import YAML',
+            description: 'Paste Kubernetes YAML',
+            longDescription: 'Paste your Deployment or StatefulSet YAML manifest here. Image names will be ignored during import.',
+            component: YAMLImportForm,
+        },
+    ], []);
+
     const handleEdit = (row: any) => {
         setEditMode(true);
         setEditingId(row.id);
@@ -221,6 +251,10 @@ function DerivedDeployment() {
                     }}>
                         <Plus className="w-3.5 h-3.5 mr-1" />
                         Derived Deployment
+                    </Button>
+                    <Button variant="outline" onClick={() => setYamlImportOpen(true)}>
+                        <FileUp className="w-3.5 h-3.5 mr-2" />
+                        Import YAML
                     </Button>
                 </div>
             }
@@ -263,6 +297,25 @@ function DerivedDeployment() {
                     primary: editMode ? "Edit Derived Deployment" : "Create Derived Deployment",
                     secondary: editMode ? "Update composed deployment configuration" : "Define a new deployment by linking pod templates and selecting selectors",
                     icon: Layers,
+                }}
+            />
+
+            <FormWizard
+                name="yaml-import-wizard"
+                isWizardOpen={yamlImportOpen}
+                setIsWizardOpen={setYamlImportOpen}
+                currentStep="import"
+                setCurrentStep={() => { }}
+                steps={yamlImportSteps}
+                schema={yamlImportSchema}
+                initialValues={{ manifest: "" }}
+                onSubmit={handleYAMLImport}
+                submitLabel="Import Deployment"
+                submitIcon={FileUp}
+                heading={{
+                    primary: "Import from YAML",
+                    secondary: "Create a new deployment configuration by parsing a Kubernetes manifest",
+                    icon: FileUp,
                 }}
             />
 

@@ -17,6 +17,17 @@ from app.db_client.services.deployment_composer import DeploymentComposer
 from app.db_client.services.service_composer import ServiceComposer
 from app.db_client.services.service_generator import ServiceGenerator
 from ...db_client.models.kubernetes_profiles.service import K8sService
+from ...db_client.models.kubernetes_profiles.deployment import K8sDeployment
+from ...db_client.models.kubernetes_profiles.pod import K8sPod
+from ...db_client.models.kubernetes_profiles.container import K8sContainerProfile
+from ...db_client.models.kubernetes_profiles.pod_metadata_profile import K8sPodMetaDataProfile
+from ...db_client.models.kubernetes_profiles.pod_profile import K8sPodProfile
+from ...db_client.models.kubernetes_profiles.service_metadata_profile import K8sServiceMetadataProfile
+from ...db_client.models.kubernetes_profiles.service_selector_profile import K8sServiceSelectorProfile
+from ...db_client.models.kubernetes_profiles.deployment_selector import K8sDeploymentSelectorProfile
+from ...db_client.models.kubernetes_profiles.service_profile import K8sServiceProfile
+from ...db_client.models.kubernetes_profiles.profile import K8sEntityProfile
+import json
 
 
 class DeploymentManager:
@@ -395,4 +406,292 @@ class DeploymentManager:
             
             return {"message": "; ".join(result_messages)}
         except Exception as e:
-            raise Exception(f"Unexpected error deleting deployment and service: {str(e)}") 
+            raise Exception(f"Unexpected error deleting deployment and service: {str(e)}")
+
+    def import_from_yaml(self, yaml_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Parses a Kubernetes Deployment or Service YAML and creates DB entries.
+        """
+        kind = yaml_data.get("kind")
+        if not kind:
+            raise ValueError("YAML data must contain a 'kind' field")
+
+        if kind in ["Deployment", "StatefulSet", "ReplicaSet"]:
+            return self._import_deployment(yaml_data)
+        elif kind == "Service":
+            return self._import_service(yaml_data)
+        else:
+            raise ValueError(f"Unsupported resource kind: {kind}")
+
+    def _import_deployment(self, yaml: Dict[str, Any]) -> Dict[str, Any]:
+        metadata = yaml.get("metadata", {})
+        spec = yaml.get("spec", {})
+        template = spec.get("template", {})
+        pod_metadata = template.get("metadata", {})
+        pod_spec = template.get("spec", {})
+
+        namespace = metadata.get("namespace", "default")
+        name = metadata.get("name")
+        if not name:
+            raise ValueError("Deployment must have a name in metadata")
+
+        # 1. Create Pod Metadata Profile
+        pod_meta_config = {
+            "labels": pod_metadata.get("labels", {}),
+            "annotations": pod_metadata.get("annotations", {})
+        }
+        pod_meta_profile = K8sPodMetaDataProfile(
+            name=f"{name}-pod-meta",
+            namespace=namespace,
+            type="pod_metadata",
+            config=pod_meta_config
+        )
+        self.session.add(pod_meta_profile)
+        self.session.flush()
+
+        # 2. Create Container Profiles
+        container_ids = []
+        for c_data in pod_spec.get("containers", []):
+            c_name = c_data.get("name")
+            
+            # Define explicit columns that map directly to K8sContainerProfile fields
+            # These will be skipped in dynamic_attr loop
+            exclude_cols = {
+                "name", "image", "imagePullPolicy", "command", "args", 
+                "workingDir", "tty", "stdin"
+            }
+            
+            # Additional mappings for camelCase -> snake_case transformation in model
+            # We handle these explicitly in the model creation, so we skip them in dynamic_attr
+            # Note: image_pull_policy is handled via .get("imagePullPolicy")
+            
+            dynamic_attr = {}
+            normalized_ports = []
+
+            # Helper to create EntityProfile
+            def create_entity(key, config):
+                # EntityProfile config must be a dict (JSONB object)
+                # Wrap primitives (str, int, bool) to ensure they are stored correctly
+                final_config = config
+                if not isinstance(config, (dict, list)):
+                    final_config = {"__wrapped_primitive__": config}
+                
+                profile = K8sEntityProfile(
+                    name=f"{name}-{c_name}-{key}",
+                    namespace=namespace,
+                    type=key,
+                    config=final_config
+                )
+                self.session.add(profile)
+                self.session.flush()
+                return profile.id
+            
+            # Iterate over ALL keys in container spec to catch everything
+            for key, value in c_data.items():
+                if key in exclude_cols:
+                    continue
+                
+                # Special handling for ports to normalize them
+                if key == "ports":
+                    for p in value:
+                        p_entry = {
+                            "containerPort": p.get("containerPort"),
+                            "protocol": p.get("protocol", "TCP")
+                        }
+                        if p.get("name"):
+                            p_entry["name"] = p["name"]
+                        normalized_ports.append(p_entry)
+                    dynamic_attr["ports"] = create_entity("ports", normalized_ports)
+                
+                # Special handling: map keys that need to be preserved exactly as is
+                else:
+                    # Create generic entity profile for this attribute (env, resources, securityContext, etc.)
+                    dynamic_attr[key] = create_entity(key, value)
+
+            c_profile = K8sContainerProfile(
+                name=c_name,
+                namespace=namespace,
+                image="imported-placeholder", 
+                image_pull_policy=c_data.get("imagePullPolicy", "IfNotPresent"),
+                command=c_data.get("command"),
+                args=c_data.get("args"),
+                working_dir=c_data.get("workingDir"),
+                tty=c_data.get("tty", False),
+                stdin=c_data.get("stdin", False),
+                dynamic_attr=dynamic_attr
+            )
+            self.session.add(c_profile)
+            self.session.flush()
+            container_ids.append(c_profile.id)
+
+        # 3. Create Pod Profile (for other generic pod attributes)
+        pod_dynamic_attr = {}
+        
+        # Explicit pod columns to exclude from dynamic attr
+        pod_exclude_cols = {
+             "metadata", "spec", "containers", "serviceAccountName", 
+             "terminationGracePeriodSeconds", "volumes" # volumes handled explicitly below
+        }
+
+        # 3a. Handle Volumes explicitly as it maps to a specific EntityProfile
+        if pod_spec.get("volumes"):
+            vol_profile = K8sEntityProfile(
+                name=f"{name}-volumes",
+                namespace=namespace,
+                type="volumes",
+                config=pod_spec["volumes"]
+            )
+            self.session.add(vol_profile)
+            self.session.flush()
+            pod_dynamic_attr["volumes"] = vol_profile.id
+
+        # 3b. Handle all other pod spec attributes (nodeSelector, affinity, restartPolicy, etc.)
+        for key, value in pod_spec.items():
+            if key not in pod_exclude_cols:
+                final_config = value
+                if not isinstance(value, (dict, list)):
+                    final_config = {"__wrapped_primitive__": value}
+
+                profile = K8sEntityProfile(
+                    name=f"{name}-pod-{key}",
+                    namespace=namespace,
+                    type=key,
+                    config=final_config
+                )
+                self.session.add(profile)
+                self.session.flush()
+                pod_dynamic_attr[key] = profile.id
+
+        # 4. Create Pod
+        pod = K8sPod(
+            name=f"{name}-pod",
+            namespace=namespace,
+            service_account_name=pod_spec.get("serviceAccountName"),
+            termination_grace_period_seconds=pod_spec.get("terminationGracePeriodSeconds"),
+            metadata_profile_id=pod_meta_profile.id,
+            containers=container_ids,
+            dynamic_attr=pod_dynamic_attr
+        )
+        self.session.add(pod)
+        self.session.flush()
+
+        # 5. Create Selector Profile
+        selector_data = spec.get("selector", {"matchLabels": {"app": name}})
+        selector_profile = K8sDeploymentSelectorProfile(
+            name=f"{name}-selector",
+            namespace=namespace,
+            config=selector_data
+        )
+        self.session.add(selector_profile)
+        self.session.flush()
+
+        # 6. Create K8sDeployment (Library)
+        lib_deployment = K8sDeployment(
+            name=name,
+            namespace=namespace,
+            kind=yaml.get("kind", "Deployment"),
+            replicas=spec.get("replicas", 1),
+            pod_id=pod.id,
+            selector_id=selector_profile.id
+        )
+        self.session.add(lib_deployment)
+        self.session.flush()
+
+        return {
+            "status": "success",
+            "message": f"Deployment '{name}' imported successfully",
+            "data": {
+                "deployment_config_id": config.id,
+                "library_deployment_id": lib_deployment.id
+            }
+        }
+
+    def _import_service(self, yaml: Dict[str, Any]) -> Dict[str, Any]:
+        metadata = yaml.get("metadata", {})
+        spec = yaml.get("spec", {})
+
+        namespace = metadata.get("namespace", "default")
+        name = metadata.get("name")
+        if not name:
+            raise ValueError("Service must have a name in metadata")
+
+        # 1. Create Service Metadata Profile
+        meta_config = {
+            "labels": metadata.get("labels", {}),
+            "annotations": metadata.get("annotations", {})
+        }
+        meta_profile = K8sServiceMetadataProfile(
+            name=f"{name}-meta",
+            namespace=namespace,
+            type="service_metadata",
+            config=meta_config
+        )
+        self.session.add(meta_profile)
+        self.session.flush()
+
+        # 2. Create Service Selector Profile
+        selector_profile = K8sServiceSelectorProfile(
+            name=f"{name}-selector",
+            namespace=namespace,
+            selector=spec.get("selector", {})
+        )
+        self.session.add(selector_profile)
+        self.session.flush()
+
+        # 3. Create Service Profile for ports and spec-level attributes
+        # Capture all spec fields that aren't mapped to specific columns
+        svc_profile_config = {}
+        
+        # Columns mapped to K8sService model
+        exclude_service_cols = {
+            "selector", # Handled in Selector Profile
+            "type", "clusterIP", "ipFamilyPolicy", "sessionAffinity", 
+            "internalTrafficPolicy", "externalTrafficPolicy", 
+            "publishNotReadyAddresses", "loadBalancerIP", "healthCheckNodePort",
+            "allocateLoadBalancerNodePorts", "loadBalancerClass", "externalName"
+        }
+        
+        for key, value in spec.items():
+            if key not in exclude_service_cols:
+                svc_profile_config[key] = value
+        
+        svc_profile = K8sServiceProfile(
+            name=f"{name}-spec",
+            namespace=namespace,
+            type="service_spec",
+            config=svc_profile_config
+        )
+        self.session.add(svc_profile)
+        self.session.flush()
+
+        # 4. Create K8sService
+        # Map advanced fields from spec to model fields
+        service = K8sService(
+            name=name,
+            namespace=namespace,
+            metadata_profile_id=meta_profile.id,
+            selector_profile_id=selector_profile.id,
+            dynamic_attr={"spec": svc_profile.id},
+            type=spec.get("type", "ClusterIP"),
+            cluster_ip=spec.get("clusterIP"),
+            ip_family_policy=spec.get("ipFamilyPolicy"),
+            session_affinity=spec.get("sessionAffinity"),
+            internal_traffic_policy=spec.get("internalTrafficPolicy"),
+            external_traffic_policy=spec.get("externalTrafficPolicy"),
+            publish_not_ready_addresses=spec.get("publishNotReadyAddresses"),
+            load_balancer_ip=spec.get("loadBalancerIP"),
+            health_check_node_port=spec.get("healthCheckNodePort"),
+            allocate_load_balancer_node_ports=spec.get("allocateLoadBalancerNodePorts"),
+            load_balancer_class=spec.get("loadBalancerClass"),
+            external_name=spec.get("externalName")
+        )
+        self.session.add(service)
+        self.session.commit()
+
+        return {
+            "status": "success",
+            "message": f"Service '{name}' imported successfully",
+            "data": {
+                "service_id": service.id
+            }
+        }

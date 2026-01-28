@@ -45,7 +45,16 @@ class DeploymentGenerator:
         
         # Common fields
         replicas = data.get("replicas", 1)
-        selector = client.V1LabelSelector(match_labels={"app": deployment_name})
+        
+        custom_selector = data.get("selector")
+        if custom_selector:
+             # Map the selector object (which might have matchLabels, matchExpressions)
+             selector = client.V1LabelSelector(
+                 match_labels=custom_selector.get("matchLabels"),
+                 match_expressions=custom_selector.get("matchExpressions")
+             )
+        else:
+             selector = client.V1LabelSelector(match_labels={"app": deployment_name})
         
         if kind == "StatefulSet":
             spec = client.V1StatefulSetSpec(
@@ -107,13 +116,19 @@ class DeploymentGenerator:
         affinity_data = data.get("affinity")
         affinity = client.V1Affinity(**affinity_data) if affinity_data else None
 
+        # Map dynamic attributes (dnsPolicy, restartPolicy, etc.)
+        dynamic_kwargs = self._map_dynamic_attrs(data, client.V1PodSpec, exclude=[
+             "containers", "volumes", "service_account_name", "affinity", "node_selector", "tolerations"
+        ])
+
         return client.V1PodSpec(
             containers=containers,
             volumes=volumes if volumes else None,
             service_account_name=data.get("service_account_name"),
             affinity=affinity,
             node_selector=data.get("node_selector"),
-            tolerations=data.get("tolerations")
+            tolerations=data.get("tolerations"),
+            **dynamic_kwargs
         )
 
     def _build_container(self, c_data: Dict[str, Any]) -> client.V1Container:
@@ -148,7 +163,12 @@ class DeploymentGenerator:
             ports=[client.V1ContainerPort(container_port=p["containerPort"], name=p.get("name"), protocol=p.get("protocol", "TCP")) for p in c_data.get("ports", [])] if c_data.get("ports") else None,
             volume_mounts=[client.V1VolumeMount(name=vm["name"], mount_path=vm["mountPath"], read_only=vm.get("readOnly", False)) for vm in c_data.get("volumeMounts", [])] if c_data.get("volumeMounts") else None,
             tty=c_data.get("tty"),
-            stdin=c_data.get("stdin")
+            stdin=c_data.get("stdin"),
+            **self._map_dynamic_attrs(c_data, client.V1Container, exclude=[
+                "name", "image", "image_pull_policy", "command", "args", "working_dir", 
+                "resources", "liveness_probe", "readiness_probe", "startup_probe", 
+                "env", "ports", "volume_mounts", "tty", "stdin"
+            ])
         )
 
     def _build_env(self, env_data):
@@ -218,3 +238,38 @@ class DeploymentGenerator:
         import re
         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+    def _map_dynamic_attrs(self, data: Dict[str, Any], target_class: Any, exclude: List[str] = []) -> Dict[str, Any]:
+        """
+        Dynamically maps keys from data (often camelCase) to target_class snake_case arguments.
+        Skips keys in exclude list.
+        """
+        mapped_args = {}
+        
+        # Get list of valid arguments for the target class __init__
+        # K8s client models usually store this in attribute_map (snake_case -> json_key)
+        # But we need to know what __init__ accepts.
+        # Most k8s models use swagger_types or attribute_map. 
+        # Reverse the attribute_map to get json_key -> snake_case_attr
+        
+        if not hasattr(target_class, 'attribute_map'):
+            return {}
+            
+        json_to_attr = {v: k for k, v in target_class.attribute_map.items()}
+        
+        for key, value in data.items():
+            # Skip if explicitly handled
+            # We need to account for both camelCase key and snake_case derived key in exclusion
+            snake_key = self._to_snake_case(key)
+            if key in exclude or snake_key in exclude:
+                continue
+                
+            # Check if this key maps to a valid attribute in the class
+            if key in json_to_attr:
+                attr_name = json_to_attr[key]
+                mapped_args[attr_name] = value
+            elif snake_key in target_class.attribute_map:
+                 # Direct snake_case match
+                 mapped_args[snake_key] = value
+
+        return mapped_args

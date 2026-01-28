@@ -5562,6 +5562,43 @@
         }
       }
     },
+    "/api/integration/kubernetes/import/yaml": {
+      "post": {
+        "summary": "",
+        "description": "Import Kubernetes resources from a YAML manifest.\nExpected body: { \"manifest\": \"...\" }",
+        "operationId": "_api_integration_kubernetes_import_yaml_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/YAMLImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/queue": {
       "get": {
         "summary": "",
@@ -13051,6 +13088,19 @@
           "podAffinityTerm"
         ],
         "title": "WeightedPodAffinityTerm"
+      },
+      "YAMLImportRequest": {
+        "properties": {
+          "manifest": {
+            "type": "string",
+            "title": "Manifest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "manifest"
+        ],
+        "title": "YAMLImportRequest"
       },
       "nodes___node_id___NodeSpec": {
         "properties": {

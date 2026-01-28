@@ -109,6 +109,7 @@ export type { VolumeActionEnum } from './models/VolumeActionEnum';
 export type { VolumeActionRequest } from './models/VolumeActionRequest';
 export type { VolumeMount } from './models/VolumeMount';
 export type { WeightedPodAffinityTerm } from './models/WeightedPodAffinityTerm';
+export type { YAMLImportRequest } from './models/YAMLImportRequest';
 
 export { $AddVolumeData } from './schemas/$AddVolumeData';
 export { $ApplyBody } from './schemas/$ApplyBody';
@@ -215,5 +216,6 @@ export { $VolumeActionEnum } from './schemas/$VolumeActionEnum';
 export { $VolumeActionRequest } from './schemas/$VolumeActionRequest';
 export { $VolumeMount } from './schemas/$VolumeMount';
 export { $WeightedPodAffinityTerm } from './schemas/$WeightedPodAffinityTerm';
+export { $YAMLImportRequest } from './schemas/$YAMLImportRequest';
 
 export { DefaultService } from './services/DefaultService';

@@ -436,7 +436,7 @@ export function ResourceTable<T>({
 }
 
 function renderCellContent(type: string, value: any) {
-  if (typeof value === "object" && ("props" in value)) {
+  if (value !== null && typeof value === "object" && ("props" in value)) {
     return value
   }
 
@@ -497,7 +497,7 @@ function renderCellContent(type: string, value: any) {
     );
   }
 
-  if (typeof value === "object" && !("props" in value)) {
+  if (value !== null && typeof value === "object" && !("props" in value)) {
     return <code className="text-xs bg-muted px-1.5 rounded">{JSON.stringify(value)}</code>
   }
 

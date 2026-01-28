@@ -12,6 +12,8 @@ import { DeleteDependencyDialog } from "@/components/ciCd/library/podSpec/Delete
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import { Input } from "@/components/ui/input";
 import PageLayout from "@/components/PageLayout";
+import { YAMLImportForm } from "@/components/kubernetes/YAMLImportForm";
+import { FileUp } from "lucide-react";
 
 // Placeholder for the form component (Refactored below)
 import DerivedServiceForm from "../../../../../../../components/ciCd/library/serviceSpec/forms/DerivedServiceForm";
@@ -39,6 +41,10 @@ const serviceSchema = z.object({
     external_name: z.string().nullable().optional(),
 });
 
+const yamlImportSchema = z.object({
+    manifest: z.string().min(1, "YAML manifest is required"),
+});
+
 const default_value = {
     name: "",
     namespace: "",
@@ -62,6 +68,7 @@ const default_value = {
 export default function DerivedServiceList() {
     const { selectedNamespace } = useContext(NamespaceContext);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [yamlImportOpen, setYamlImportOpen] = useState(false);
     const [services, setServices] = useState<K8sService[]>([]);
     const [filteredServices, setFilteredServices] = useState<K8sService[]>([]);
     const [loading, setLoading] = useState(false);
@@ -108,6 +115,19 @@ export default function DerivedServiceList() {
         }
     };
 
+    const handleYAMLImport = async (values: any) => {
+        try {
+            await DefaultService.apiIntegrationKubernetesImportYamlPost({ requestBody: { manifest: values.manifest } });
+            toast.success("Service imported successfully");
+            setYamlImportOpen(false);
+            fetchServices();
+        } catch (error: any) {
+            console.error("Import error:", error);
+            const detail = error.body?.detail || error.message || "Unknown error";
+            toast.error(`Import failed: ${detail}`);
+        }
+    };
+
     const handleDelete = async (row: any) => {
         try {
             await DefaultService.apiIntegrationKubernetesLibraryServiceDelete({ id: row.id! });
@@ -145,6 +165,16 @@ export default function DerivedServiceList() {
         // We'll use a separate view wizard or just a different state
         setViewDialogOpen(true);
     };
+
+    const yamlImportSteps = useMemo(() => [
+        {
+            id: 'import',
+            label: 'Import YAML',
+            description: 'Paste Kubernetes YAML',
+            longDescription: 'Paste your Service YAML manifest here.',
+            component: YAMLImportForm,
+        },
+    ], []);
 
     const serviceSteps = useMemo(() => [
         {
@@ -199,6 +229,10 @@ export default function DerivedServiceList() {
                     }}>
                         <Plus className="w-3.5 h-3.5 mr-1" />
                         New Service
+                    </Button>
+                    <Button variant="outline" onClick={() => setYamlImportOpen(true)}>
+                        <FileUp className="w-3.5 h-3.5 mr-2" />
+                        Import YAML
                     </Button>
                 </div>
             }
@@ -271,6 +305,25 @@ export default function DerivedServiceList() {
                     primary: editMode ? "Edit Derived Service" : "Create Derived Service",
                     secondary: editMode ? "Update service specification" : "Define a new service by composing profiles",
                     icon: Layers,
+                }}
+            />
+
+            <FormWizard
+                name="yaml-import-wizard"
+                isWizardOpen={yamlImportOpen}
+                setIsWizardOpen={setYamlImportOpen}
+                currentStep="import"
+                setCurrentStep={() => { }}
+                steps={yamlImportSteps}
+                schema={yamlImportSchema}
+                initialValues={{ manifest: "" }}
+                onSubmit={handleYAMLImport}
+                submitLabel="Import Service"
+                submitIcon={FileUp}
+                heading={{
+                    primary: "Import from YAML",
+                    secondary: "Create a new service configuration by parsing a Kubernetes manifest",
+                    icon: FileUp,
                 }}
             />
 

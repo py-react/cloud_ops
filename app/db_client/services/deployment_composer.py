@@ -7,6 +7,7 @@ from ..models.kubernetes_profiles.pod import K8sPod
 from ..models.kubernetes_profiles.container import K8sContainerProfile
 from ..models.kubernetes_profiles.pod_metadata_profile import K8sPodMetaDataProfile
 from ..models.kubernetes_profiles.pod_profile import K8sPodProfile
+from ..models.kubernetes_profiles.deployment_selector import K8sDeploymentSelectorProfile
 from ..models.kubernetes_profiles.profile import K8sEntityProfile
 
 class DeploymentComposer:
@@ -52,6 +53,12 @@ class DeploymentComposer:
             pod = self.session.get(K8sPod, lib_deployment.pod_id)
             if pod:
                 self._resolve_pod_details(pod, result)
+        
+        # Resolve Selector
+        if lib_deployment.selector_id:
+            selector_profile = self.session.get(K8sDeploymentSelectorProfile, lib_deployment.selector_id)
+            if selector_profile:
+                result["selector"] = self._parse_json(selector_profile.config)
         
         # 4. Resolve Library-level Dynamic Attributes (Deployment Profiles)
         lib_dynamic_attr = self._parse_json(lib_deployment.dynamic_attr)
@@ -120,8 +127,11 @@ class DeploymentComposer:
                             if "serviceAccountName" in profile_config:
                                 result["service_account_name"] = profile_config["serviceAccountName"]
                         else:
-                            # Map key directly (e.g., volumes)
-                            result[key] = self._normalize_attribute(key, profile_config)
+                            # Unwrap primitives if wrapped
+                            if isinstance(profile_config, dict) and "__wrapped_primitive__" in profile_config:
+                                result[key] = self._normalize_attribute(key, profile_config["__wrapped_primitive__"])
+                            else:
+                                result[key] = self._normalize_attribute(key, profile_config)
 
         # Use pod's own service account if specified and not yet overridden
         if pod.service_account_name and not result.get("service_account_name"):
@@ -146,7 +156,11 @@ class DeploymentComposer:
                 if entity_profile:
                     entity_config = self._parse_json(entity_profile.config)
                     if entity_config is not None:
-                        container[key] = self._normalize_attribute(key, entity_config)
+                         # Unwrap primitives if wrapped
+                        if isinstance(entity_config, dict) and "__wrapped_primitive__" in entity_config:
+                            container[key] = self._normalize_attribute(key, entity_config["__wrapped_primitive__"])
+                        else:
+                            container[key] = self._normalize_attribute(key, entity_config)
         
         return container
 

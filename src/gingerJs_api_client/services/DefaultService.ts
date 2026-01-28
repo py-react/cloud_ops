@@ -48,6 +48,7 @@ import type { SwarmUpdateSpec } from '../models/SwarmUpdateSpec';
 import type { SystemInfo } from '../models/SystemInfo';
 import type { UpdatePATRequest } from '../models/UpdatePATRequest';
 import type { VolumeActionRequest } from '../models/VolumeActionRequest';
+import type { YAMLImportRequest } from '../models/YAMLImportRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -501,6 +502,9 @@ status: string
             }
 export type TDataApiIntegrationKubernetesServiceAccountGet = {
                 namespace: string
+            }
+export type TDataApiIntegrationKubernetesImportYamlPost = {
+                requestBody: YAMLImportRequest
             }
 export type TDataApiQueuePost = {
                 requestBody: RunQueue
@@ -3219,6 +3223,27 @@ namespace,
 			query: {
 				namespace
 			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Import Kubernetes resources from a YAML manifest.
+ * Expected body: { "manifest": "..." }
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesImportYamlPost(data: TDataApiIntegrationKubernetesImportYamlPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/import/yaml',
+			body: requestBody,
+			mediaType: 'application/json',
 			errors: {
 				422: `Validation Error`,
 			},
