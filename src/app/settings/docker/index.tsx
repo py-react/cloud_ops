@@ -1,12 +1,17 @@
-import useNavigate from "@/libs/navigate"
-import { useEffect } from "react"
+import useNavigate from "@/libs/navigate";
+import React, { useEffect } from "react";
+import RedirectPage from "@/components/RedirectPage";
 
-function Docker() {
+const DockerPage = () => {
   const navigate = useNavigate()
-  useEffect(() => {
-    navigate("/settings/docker/config")
-  }, [])
-  return "redirecting..."
-}
 
-export default Docker
+  useEffect(() => {
+    navigate(`/settings/docker/config`)
+  }, [])
+
+  return (
+    <RedirectPage />
+  );
+};
+
+export default DockerPage;

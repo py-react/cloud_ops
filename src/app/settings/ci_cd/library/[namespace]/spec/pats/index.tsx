@@ -224,9 +224,6 @@ const PatsManagementPage = () => {
             accessor: 'name',
             cell: (row: PATItem) => (
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                        <Key className="w-4 h-4" />
-                    </div>
                     <span className="font-bold text-foreground">{row.name}</span>
                 </div>
             )
