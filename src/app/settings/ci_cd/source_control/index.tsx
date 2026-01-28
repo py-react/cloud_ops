@@ -403,7 +403,7 @@ const SourceControlPage = () => {
             subtitle="Manage repositories and their allowed branches to trigger Continuous Integration (CI) workflows via SCM polling."
             icon={Plug}
             actions={
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2">
                     <Button variant="outline" onClick={fetchData} disabled={loading} className="text-xs">
                         <RefreshCw className={`w-3.5 h-3.5 mr-2 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
