@@ -19,6 +19,23 @@ export const ServiceAdvancedConfig = ({ watch, namespace }: { watch: any; namesp
     const dynamicAttr = watch("dynamic_attr") || {};
     const dynamicAttrStr = JSON.stringify(dynamicAttr);
 
+    // Watch Advanced Fields
+    const advancedFields = {
+        type: watch("type"),
+        clusterIP: watch("cluster_ip"),
+        ipFamilyPolicy: watch("ip_family_policy"),
+        sessionAffinity: watch("session_affinity"),
+        internalTrafficPolicy: watch("internal_traffic_policy"),
+        externalTrafficPolicy: watch("external_traffic_policy"),
+        publishNotReadyAddresses: watch("publish_not_ready_addresses"),
+        loadBalancerIP: watch("load_balancer_ip"),
+        healthCheckNodePort: watch("health_check_node_port"),
+        allocateLoadBalancerNodePorts: watch("allocate_load_balancer_node_ports"),
+        loadBalancerClass: watch("load_balancer_class"),
+        externalName: watch("external_name"),
+    };
+    const advancedFieldsStr = JSON.stringify(advancedFields);
+
     useEffect(() => {
         const fetchData = async () => {
             if (!metadataProfileId && !selectorProfileId && !Object.keys(dynamicAttr).length) {
@@ -99,17 +116,56 @@ export const ServiceAdvancedConfig = ({ watch, namespace }: { watch: any; namesp
             if (profile && profile.config) {
                 try {
                     const config = typeof profile.config === 'string' ? JSON.parse(profile.config) : profile.config;
-                    // If it's a dynamic attribute, we often want to merge it or nest it
-                    // Usually it's nested under the key provided
-                    result.spec[key] = config;
+                    if (key === "spec") {
+                        if (config && typeof config === 'object') {
+                            result.spec = { ...result.spec, ...config };
+                        }
+                    } else {
+                        result.spec[key] = config;
+                    }
                 } catch (e) {
                     result.spec[key] = { error: `Failed to parse ${key} config` };
                 }
             }
         });
 
+        // 5. Advanced Fields merging (Override if specified)
+        const svcType = advancedFields.type || "ClusterIP";
+        result.spec.type = svcType;
+
+        const setField = (key: string, val: any) => {
+            if (val !== undefined && val !== null && val !== "") {
+                result.spec[key] = val;
+            }
+        };
+
+        setField("clusterIP", advancedFields.clusterIP);
+        setField("ipFamilyPolicy", advancedFields.ipFamilyPolicy);
+        setField("sessionAffinity", advancedFields.sessionAffinity);
+        setField("publishNotReadyAddresses", advancedFields.publishNotReadyAddresses);
+
+        // Type-specific field filtering
+        if (svcType === "NodePort" || svcType === "LoadBalancer") {
+            setField("externalTrafficPolicy", advancedFields.externalTrafficPolicy);
+            setField("internalTrafficPolicy", advancedFields.internalTrafficPolicy);
+        }
+
+        if (svcType === "LoadBalancer") {
+            setField("loadBalancerIP", advancedFields.loadBalancerIP);
+            setField("loadBalancerClass", advancedFields.loadBalancerClass);
+            setField("allocateLoadBalancerNodePorts", advancedFields.allocateLoadBalancerNodePorts);
+
+            if (advancedFields.externalTrafficPolicy === "Local") {
+                setField("healthCheckNodePort", advancedFields.healthCheckNodePort);
+            }
+        }
+
+        if (svcType === "ExternalName") {
+            setField("externalName", advancedFields.externalName);
+        }
+
         return yaml.dump(result, { sortKeys: false });
-    }, [loading, name, namespace, metadataProfile, selectorProfile, dynamicAttr, dynamicProfiles]);
+    }, [loading, name, namespace, metadataProfile, selectorProfile, dynamicAttr, dynamicProfiles, advancedFieldsStr]);
 
     const structuredData = useMemo(() => {
         if (loading) return null;
@@ -119,13 +175,25 @@ export const ServiceAdvancedConfig = ({ watch, namespace }: { watch: any; namesp
             service_profile: undefined,
             metadata_profile: metadataProfile,
             selector_profile: selectorProfile,
+            service_type: advancedFields.type,
+            cluster_ip: advancedFields.clusterIP,
+            ip_family_policy: advancedFields.ipFamilyPolicy,
+            session_affinity: advancedFields.sessionAffinity,
+            internal_traffic_policy: advancedFields.internalTrafficPolicy,
+            external_traffic_policy: advancedFields.externalTrafficPolicy,
+            publish_not_ready_addresses: advancedFields.publishNotReadyAddresses,
+            load_balancer_ip: advancedFields.loadBalancerIP,
+            health_check_node_port: advancedFields.healthCheckNodePort,
+            allocate_load_balancer_node_ports: advancedFields.allocateLoadBalancerNodePorts,
+            load_balancer_class: advancedFields.loadBalancerClass,
+            external_name: advancedFields.externalName,
             dynamic_attr: Object.entries(dynamicAttr).reduce((acc, [key, id]) => {
                 const profile = dynamicProfiles[id as number];
                 if (profile) acc[key] = profile;
                 return acc;
             }, {} as any),
         };
-    }, [loading, name, namespace, metadataProfile, selectorProfile, dynamicAttr, dynamicProfiles]);
+    }, [loading, name, namespace, metadataProfile, selectorProfile, dynamicAttr, dynamicProfiles, advancedFields]);
 
     return (
         <div className="flex-1 h-[440px] flex flex-col">

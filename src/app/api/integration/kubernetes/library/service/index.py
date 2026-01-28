@@ -28,8 +28,22 @@ async def PUT(request: Request, id: int, body: K8sService):
             return JSONResponse(status_code=404, content={"detail": "Service not found"})
         return spec.dict()
 
+from app.db_client.models.deployment_config.deployment_config import DeploymentConfig
+from sqlmodel import select
+
 async def DELETE(request: Request, id: int):
     with get_session() as session:
+        # Dependency check - check if any release config uses this derived service
+        stmt = select(DeploymentConfig).where(
+            DeploymentConfig.service_id == id,
+            DeploymentConfig.hard_delete == False
+        )
+        dependents = session.exec(stmt).all()
+        
+        if dependents:
+            dependent_data = [{"id": d.id, "name": d.deployment_name, "type": "release_config"} for d in dependents]
+            return JSONResponse(status_code=409, content={"detail": {"dependents": dependent_data}})
+
         success = delete_service(session, id)
         if not success:
              return JSONResponse(status_code=404, content={"detail": "Service not found"})

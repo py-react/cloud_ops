@@ -10,6 +10,9 @@ import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { FileCode, Upload, X } from 'lucide-react'
 
 const dockerConfigSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -21,44 +24,89 @@ const dockerConfigSchema = z.object({
     status: z.string().default("active"),
 })
 
+const CertificateUploadField = ({
+    label,
+    value,
+    onChange,
+    description
+}: {
+    label: string,
+    value?: string,
+    onChange: (val: string) => void,
+    description?: string
+}) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        const reader = new FileReader()
+        reader.onload = (event) => {
+            const content = event.target?.result as string
+            onChange(content)
+        }
+        reader.readAsText(file)
+    }
+
+    return (
+        <FormItem className="flex flex-col space-y-2">
+            <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                {label}
+                {value && (
+                    <Badge variant="success" className="h-4 px-1 text-[8px] uppercase">Uploaded</Badge>
+                )}
+            </FormLabel>
+            <FormControl>
+                <div className="relative group">
+                    {value ? (
+                        <div className="flex items-center justify-between p-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 text-xs font-mono">
+                            <div className="flex items-center gap-2 truncate text-emerald-700">
+                                <FileCode className="h-3.5 w-3.5" />
+                                <span className="truncate">PEM Certificate Loaded</span>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-emerald-600 hover:text-red-500 hover:bg-red-50"
+                                onClick={() => onChange("")}
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept=".pem,.crt,.key,.cert"
+                                onChange={handleFileChange}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className="flex items-center gap-2 p-2 rounded-md border border-dashed border-input bg-background group-hover:border-primary/50 transition-colors">
+                                <Upload className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground italic">Click to upload .pem file</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </FormControl>
+            {description && <p className="text-[10px] text-muted-foreground">{description}</p>}
+            <FormMessage />
+        </FormItem>
+    )
+}
+
 const DockerConfigForm = ({ control }: { control: any }) => {
     return (
-        <div className="space-y-4">
-            <FormField
-                control={control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Config Name</FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g. Remote Hive" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={control}
-                name="base_url"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Base URL</FormLabel>
-                        <FormControl>
-                            <Input placeholder="tcp://host:port" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                     control={control}
-                    name="client_cert"
+                    name="name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Client Certificate Path</FormLabel>
+                            <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Config Name</FormLabel>
                             <FormControl>
-                                <Input placeholder="/path/to/cert.pem" {...field} />
+                                <Input placeholder="e.g. Remote Hive" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -66,38 +114,69 @@ const DockerConfigForm = ({ control }: { control: any }) => {
                 />
                 <FormField
                     control={control}
-                    name="client_key"
+                    name="base_url"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Client Key Path</FormLabel>
+                            <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Base URL</FormLabel>
                             <FormControl>
-                                <Input placeholder="/path/to/key.pem" {...field} />
+                                <Input placeholder="tcp://host:port" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
             </div>
-            <FormField
-                control={control}
-                name="ca_cert"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CA Certificate Path</FormLabel>
-                        <FormControl>
-                            <Input placeholder="/path/to/ca.pem" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+
+            <div className="space-y-4 pt-4 border-t border-border/50">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">TLS Certificates</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                        control={control}
+                        name="client_cert"
+                        render={({ field }) => (
+                            <CertificateUploadField
+                                label="Client Certificate"
+                                value={field.value}
+                                onChange={field.onChange}
+                                description="Client side PEM certificate"
+                            />
+                        )}
+                    />
+                    <FormField
+                        control={control}
+                        name="client_key"
+                        render={({ field }) => (
+                            <CertificateUploadField
+                                label="Client Key"
+                                value={field.value}
+                                onChange={field.onChange}
+                                description="Client side private key"
+                            />
+                        )}
+                    />
+                </div>
+                <FormField
+                    control={control}
+                    name="ca_cert"
+                    render={({ field }) => (
+                        <CertificateUploadField
+                            label="CA Certificate"
+                            value={field.value}
+                            onChange={field.onChange}
+                            description="Server side CA certificate"
+                        />
+                    )}
+                />
+            </div>
+
             <FormField
                 control={control}
                 name="verify"
                 render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-none">
+                    <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/60 bg-muted/5 p-4">
                         <div className="space-y-0.5">
-                            <FormLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Verify TLS</FormLabel>
+                            <FormLabel className="text-xs font-bold uppercase tracking-wider text-foreground">Verify TLS</FormLabel>
+                            <p className="text-[10px] text-muted-foreground italic tracking-tight">Enable strict certificate validation</p>
                         </div>
                         <FormControl>
                             <Checkbox
@@ -123,7 +202,17 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
         setLoading(true)
         try {
             const data = await (DefaultService as any).apiSettingsDockerConfigGet()
-            setConfigs(data || [])
+            const defaultEntry = {
+                id: 'default',
+                name: 'Local Engine (Default)',
+                base_url: 'unix:///var/run/docker.sock',
+                verify: false,
+                status: 'active',
+                is_default: true,
+                showEdit: false,
+                showDelete: false
+            }
+            setConfigs([defaultEntry, ...(data || [])])
         } catch (error) {
             toast.error("Failed to fetch Docker configurations")
         } finally {
@@ -155,6 +244,7 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
             id: 'setup',
             label: 'Configuration',
             description: 'Docker Engine Setup',
+            longDescription: 'Configure the connection details and TLS certificates for the Docker engine.',
             component: (props: any) => <DockerConfigForm {...props} />,
         }
     ]
@@ -204,7 +294,7 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
                         {
                             header: "TLS",
                             accessor: "verify",
-                            render: (row: any) => (
+                            cell: (row: any) => (
                                 <span className={row.verify ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>
                                     {row.verify ? "Verified" : "Unverified"}
                                 </span>

@@ -9672,6 +9672,145 @@
             "title": "Dynamic Attr",
             "description": "Maps profile type to K8sServiceProfile ID or other attributes",
             "default": {}
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type",
+            "description": "ClusterIP, NodePort, LoadBalancer, ExternalName",
+            "default": "ClusterIP"
+          },
+          "cluster_ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Ip",
+            "description": "Static IP for ClusterIP service"
+          },
+          "ip_family_policy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Family Policy",
+            "description": "SingleStack, PreferDualStack, RequireDualStack"
+          },
+          "session_affinity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Affinity",
+            "description": "None, ClientIP"
+          },
+          "internal_traffic_policy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Internal Traffic Policy",
+            "description": "Cluster, Local"
+          },
+          "external_traffic_policy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Traffic Policy",
+            "description": "Cluster, Local"
+          },
+          "publish_not_ready_addresses": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publish Not Ready Addresses"
+          },
+          "load_balancer_ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Load Balancer Ip"
+          },
+          "health_check_node_port": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Health Check Node Port"
+          },
+          "allocate_load_balancer_node_ports": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allocate Load Balancer Node Ports"
+          },
+          "load_balancer_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Load Balancer Class"
+          },
+          "external_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Name"
           }
         },
         "type": "object",

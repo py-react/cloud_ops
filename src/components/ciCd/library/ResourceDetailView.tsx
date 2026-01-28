@@ -61,6 +61,18 @@ interface ResourceDetailViewProps {
         // Service Specific
         service_profile?: ProfileInfo;
         selector_profile?: ProfileInfo;
+        service_type?: string;
+        cluster_ip?: string;
+        ip_family_policy?: string;
+        session_affinity?: string;
+        internal_traffic_policy?: string;
+        external_traffic_policy?: string;
+        publish_not_ready_addresses?: boolean;
+        load_balancer_ip?: string;
+        health_check_node_port?: number;
+        allocate_load_balancer_node_ports?: boolean;
+        load_balancer_class?: string;
+        external_name?: string;
     };
     type: "pod" | "container" | "deployment" | "service";
 }
@@ -380,6 +392,34 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                                 </div>
                             </>
                         )}
+
+                        <SectionHeader icon={Settings} title="Advanced Specifications" />
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                            <InfoItem label="Service Type" value={data.service_type} icon={Layout} />
+                            <InfoItem label="Cluster IP" value={data.cluster_ip} icon={Network} />
+                            <InfoItem label="IP Family Policy" value={data.ip_family_policy} icon={Globe} />
+                            <InfoItem label="Session Affinity" value={data.session_affinity} icon={User} />
+                            <InfoItem label="Internal Traffic" value={data.internal_traffic_policy} icon={Target} />
+                            <InfoItem label="External Traffic" value={data.external_traffic_policy} icon={Globe} />
+                            <InfoItem label="LB IP" value={data.load_balancer_ip} icon={Network} />
+                            <InfoItem label="LB Class" value={data.load_balancer_class} icon={Layers} />
+                            <InfoItem label="External Name" value={data.external_name} icon={Globe} />
+                            <InfoItem label="Health Check Port" value={data.health_check_node_port} icon={Zap} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 pb-6">
+                            <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-background/40 border border-border/20 self-center">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Publish Not Ready:</span>
+                                <Badge variant={data.publish_not_ready_addresses ? "success" : "secondary"} className="h-5 text-[9px] px-2 font-bold uppercase tracking-wider">
+                                    {data.publish_not_ready_addresses ? "Yes" : "No"}
+                                </Badge>
+                            </div>
+                            <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-background/40 border border-border/20 self-center">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Allocate LB Ports:</span>
+                                <Badge variant={data.allocate_load_balancer_node_ports ? "success" : "secondary"} className="h-5 text-[9px] px-2 font-bold uppercase tracking-wider">
+                                    {data.allocate_load_balancer_node_ports ? "Yes" : "No"}
+                                </Badge>
+                            </div>
+                        </div>
                     </>
                 )}
 
