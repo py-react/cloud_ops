@@ -538,6 +538,7 @@ export const AdvancedConfig = ({ control, setValue, watch, form, canEdit = true 
     }, [setValue, control._formValues, canEdit, profileKeys, originalProfileData, knownEditableFields]);
 
     const structuredData = useMemo(() => {
+        console.log(control._formValues, "control._formValues")
         return {
             name: (control._formValues.name as string) || "Unnamed Container",
             description: control._formValues.description as string,
