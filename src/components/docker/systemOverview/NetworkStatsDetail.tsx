@@ -29,15 +29,18 @@ const chartConfig = {
 }
 
 const LoadingOverlay = () => (
-  <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl transition-all duration-200">
+  <div className="absolute inset-0 bg-background/50 backdrop-blur-md flex items-center justify-center z-10 rounded-xl transition-all duration-200">
     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
   </div>
 );
 
 
 export function NetworkStatsDetail({ data, isLoading }: { data: ISystemInfo["system_stats"]["network"], isLoading?: boolean }) {
+  const ChartContainerAny = ChartContainer as any;
+  const ChartTooltipContentAny = ChartTooltipContent as any;
   if (!data) return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col h-full relative">
+      {isLoading && <LoadingOverlay />}
       <CardHeader>
         <CardTitle className="text-base font-medium flex items-center">
           <div className="bg-primary/10 p-2 rounded-lg mr-3">
@@ -77,7 +80,7 @@ export function NetworkStatsDetail({ data, isLoading }: { data: ISystemInfo["sys
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 pb-4">
-        <ChartContainer config={chartConfig} className="h-[180px] w-full">
+        <ChartContainerAny config={chartConfig} className="h-[180px] w-full">
           <BarChart
             accessibilityLayer
             data={chartData}
@@ -95,7 +98,7 @@ export function NetworkStatsDetail({ data, isLoading }: { data: ISystemInfo["sys
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={<ChartTooltipContentAny hideLabel />}
             />
             <Bar dataKey="value" radius={8}>
               {chartData.map((entry, index) => (
@@ -110,8 +113,8 @@ export function NetworkStatsDetail({ data, isLoading }: { data: ISystemInfo["sys
               />
             </Bar>
           </BarChart>
-        </ChartContainer>
+        </ChartContainerAny>
       </CardContent>
-    </Card>
+    </Card >
   )
 }

@@ -14,6 +14,7 @@ import { z } from "zod";
 import { Button } from "../ui/button";
 import { cn } from "@/libs/utils";
 import { toast } from "sonner";
+import { TooltipWrapper } from "@/components/ui/tooltip";
 
 type TSteps<T extends FieldValues> = {
   id: string;
@@ -195,12 +196,12 @@ export const FormWizard = <T extends FieldValues>({
                               : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                           )}
                         >
-                          <div className={cn(
+                          {/* <div className={cn(
                             "p-1.5 rounded-lg transition-colors",
                             isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground group-hover:bg-background"
                           )}>
                             <StepIcon className="h-4 w-4" />
-                          </div>
+                          </div> */}
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-semibold truncate leading-none mb-1">{step.label}</div>
                             <div className="text-[11px] opacity-70 truncate leading-none font-medium">{step.description}</div>
@@ -218,19 +219,27 @@ export const FormWizard = <T extends FieldValues>({
                 <ScrollArea className="flex-1">
                   <div className={cn("px-8 py-8 space-y-8 pb-12")}>
                     {/* Header styled after Overview cards */}
-                    {/* {!currentStepData.hideSectionHeader && (
-                      <div className={cn("flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-300")}>
-                        <div className="bg-primary/10 p-3 rounded-2xl text-primary ring-1 ring-primary/20">
-                          <Icon className="h-5 w-5" />
+                    {!currentStepData.hideSectionHeader && (
+                      <div className={cn("flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300")}>
+                        <div className="bg-primary/10 p-2 rounded-2xl text-primary ring-1 ring-primary/20">
+                          <Icon className="h-4 w-4" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-foreground tracking-tight">{currentStepData.label}</h3>
-                          <p className="text-sm text-muted-foreground font-medium mt-1 leading-relaxed">
-                            {currentStepData.longDescription}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-foreground tracking-tight">{currentStepData.label}</h3>
+                            <TooltipWrapper
+                              content={
+                                <div className="max-w-[300px]">
+                                  <p className="text-xs leading-relaxed">{currentStepData.longDescription}</p>
+                                </div>
+                              }
+                            >
+                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipWrapper>
+                          </div>
                         </div>
                       </div>
-                    )} */}
+                    )}
 
                     {/* Main Form Area */}
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">

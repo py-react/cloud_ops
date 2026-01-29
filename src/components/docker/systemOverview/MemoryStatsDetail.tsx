@@ -34,12 +34,14 @@ const chartConfig = {
 }
 
 const LoadingOverlay = () => (
-  <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl transition-all duration-200">
+  <div className="absolute inset-0 bg-background/50 backdrop-blur-md flex items-center justify-center z-10 rounded-xl transition-all duration-200">
     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
   </div>
 );
 
 export function MemroryStatsDetail({ data, isLoading }: { data: ISystemInfo["system_stats"]["memory"], isLoading?: boolean }) {
+  const ChartContainerAny = ChartContainer as any;
+  const ChartTooltipContentAny = ChartTooltipContent as any;
 
   if (!data) return (
     <Card className="flex flex-col relative">
@@ -87,15 +89,15 @@ export function MemroryStatsDetail({ data, isLoading }: { data: ISystemInfo["sys
 
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer
+        <ChartContainerAny
           config={chartConfig}
           className="mx-auto aspect-square max-h-[180px]"
         >
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent labelFormatter={(value, payload) => {
-                return `${payload[0].name} ${formatBytes(payload[0].value)}`
+              content={<ChartTooltipContentAny labelFormatter={(value: any, payload: any) => {
+                return `${payload[0]?.name} ${formatBytes(payload[0]?.value)}`
               }} />}
             />
             <Pie
@@ -136,8 +138,8 @@ export function MemroryStatsDetail({ data, isLoading }: { data: ISystemInfo["sys
               />
             </Pie>
           </PieChart>
-        </ChartContainer>
+        </ChartContainerAny>
       </CardContent>
-    </Card>
+    </Card >
   )
 }

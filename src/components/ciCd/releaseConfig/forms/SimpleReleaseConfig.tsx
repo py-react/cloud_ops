@@ -88,7 +88,7 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                     <div className="p-2 rounded-xl bg-primary/10 text-primary">
                         <Settings className="h-5 w-5" />
                     </div>
-                    <h4 className="text-sm font-bold uppercase tracking-widest text-foreground">Release Configuration</h4>
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-foreground">Basic Configuration</h4>
                 </div>
                 <div className="flex gap-2 items-center">
                     <FormField
