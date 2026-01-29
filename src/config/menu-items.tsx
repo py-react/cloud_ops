@@ -28,6 +28,7 @@ import {
     Braces,
     Layout,
     Key,
+    Activity,
 } from "lucide-react";
 
 export const getMenuItems = (selectedNamespace: string = "default") => ({
@@ -304,6 +305,25 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                     title: "Manager",
                     url: "/manager",
                     icon: WaypointsIcon,
+                    items: [],
+                },
+            ],
+        },
+        productionEssentials: {
+            title: "Production Essentials",
+            url: "",
+            color: "orange",
+            childs: [
+                {
+                    title: "Monitoring",
+                    url: "/monitoring",
+                    icon: Activity,
+                    items: [],
+                },
+                {
+                    title: "Database",
+                    url: "/db",
+                    icon: Database,
                     items: [],
                 },
             ],
