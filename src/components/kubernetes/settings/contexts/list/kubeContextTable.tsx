@@ -1,6 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
   Search,
+  Layers,
+  Server,
+  Users,
+  Folder,
 } from 'lucide-react';
 import {
   Card,
@@ -27,6 +31,7 @@ export const KubeContextTable = () => {
   const {
     isLoading: isKubeContextLoading,
     config: kubeConfig,
+    currentKubeContext,
   } = useContext(KubeContext);
 
   const [contexts, setContexts] = useState([]);
@@ -48,7 +53,29 @@ export const KubeContextTable = () => {
     <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
       <CardHeader className="flex flex-row items-center justify-between pb-6">
         <div>
-          <CardTitle className="text-lg">Available Contexts</CardTitle>
+          <div className="flex items-center gap-3 mb-1">
+            <CardTitle className="text-lg">Available Contexts</CardTitle>
+            {currentKubeContext && (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary uppercase tracking-wider">
+                  <Layers className="h-3 w-3" />
+                  {currentKubeContext.name}
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[10px] font-medium text-blue-600">
+                  <Server className="h-3 w-3" />
+                  {currentKubeContext.context.cluster}
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-green-500/10 border border-green-500/20 text-[10px] font-medium text-green-600">
+                  <Users className="h-3 w-3" />
+                  {currentKubeContext.context.user}
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/20 text-[10px] font-medium text-orange-600">
+                  <Folder className="h-3 w-3" />
+                  {currentKubeContext.context.namespace || "default"}
+                </div>
+              </div>
+            )}
+          </div>
           <CardDescription>All configured Kubernetes contexts</CardDescription>
         </div>
         <div className="flex items-center gap-3">

@@ -1,32 +1,16 @@
 import React, { useState } from "react";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs-v2";
 import { Badge } from "@/components/ui/badge";
-import { Layers, FolderPlus, Settings, Search, Users } from "lucide-react";
+import { Folder, Settings, Shield, Info, Clock, Tag } from "lucide-react";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import ResourceQuota from "@/components/kubernetes/settings/resource-quota/common/resourceQuota";
+import FormWizard from "@/components/wizard/form-wizard";
+import * as z from "zod";
 
 export interface ResourceLimit {
   cpu?: string;
@@ -134,25 +118,6 @@ export const transformLimitRange = (
   };
 };
 
-// Navigation items with icons
-const navigationItems = [
-  {
-    id: "basic",
-    title: "Basic",
-    icon: <FolderPlus className="h-5 w-5" />,
-  },
-  {
-    id: "quota",
-    title: "Resources Quota",
-    icon: <Settings className="h-5 w-5" />,
-  },
-  {
-    id: "limitRange",
-    title: "Limit Range",
-    icon: <FolderPlus className="h-5 w-5" />,
-  },
-];
-
 const formatValue = (value: string): string => {
   if (value.endsWith("Gi")) {
     return value;
@@ -163,243 +128,253 @@ const formatValue = (value: string): string => {
   }
 };
 
+// --- Wizard Step Components ---
+
+const BasicsStep = ({ data }: { data: any, control?: any }) => (
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card className="p-4 shadow-none bg-muted/20 border-border/40">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            <Info className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-1">Namespace Name</div>
+            <div className="text-sm font-semibold text-foreground">{data?.metadata?.name || "N/A"}</div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-4 shadow-none bg-muted/20 border-border/40">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            <Clock className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-1">Creation Time</div>
+            <div className="text-sm font-semibold text-foreground">
+              {data?.metadata?.creation_timestamp
+                ? new Date(data.metadata.creation_timestamp).toLocaleString()
+                : "Unknown"}
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+
+    <Card className="shadow-none bg-muted/10 border-border/40">
+      <CardHeader className="py-3 px-4 border-b border-border/20">
+        <div className="flex items-center gap-2">
+          <Tag className="h-4 w-4 text-primary" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Labels</h3>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4">
+        <div className="flex flex-wrap gap-2">
+          {Object.keys(data?.labels || {}).length > 0 ? (
+            Object.entries(data.labels || {}).map(([key, value]) => (
+              <Badge key={key} variant="secondary" className="px-2 py-0.5 text-[11px] font-medium bg-background border-border/50">
+                {key}: <span className="text-primary ml-1">{value as string}</span>
+              </Badge>
+            ))
+          ) : (
+            <div className="text-sm text-muted-foreground italic py-2">No labels configured</div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+const QuotaStep = ({ quotas }: { quotas: any[], control?: any }) => (
+  <div className="space-y-6">
+    {quotas && quotas.length > 0 ? (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {quotas.map((quota, idx) => (
+          <Card key={idx} className="p-0 shadow-none bg-white border border-border/40 overflow-hidden">
+            <div className="bg-muted/30 px-4 py-2 border-b border-border/20 flex items-center justify-between">
+              <span className="text-xs font-bold text-foreground truncate max-w-[150px]">{quota.name}</span>
+              <span className="text-[10px] text-muted-foreground font-medium">
+                {quota.creation_timestamp ? new Date(quota.creation_timestamp).toLocaleDateString() : 'N/A'}
+              </span>
+            </div>
+            <CardContent className="p-4 space-y-3">
+              {quota.status.hard["requests.cpu"] && (
+                <ResourceQuota
+                  title="CPU Requests"
+                  used={quota.status.used["requests.cpu"] as any || "0"}
+                  limit={quota.status.hard["requests.cpu"] as any}
+                  icon={<></>}
+                />
+              )}
+              {quota.status.hard["limits.cpu"] && (
+                <ResourceQuota
+                  title="CPU Limits"
+                  used={quota.status.used["limits.cpu"] as any || "0"}
+                  limit={quota.status.hard["limits.cpu"] as any}
+                  icon={<></>}
+                />
+              )}
+              {quota.status.hard["requests.memory"] && (
+                <ResourceQuota
+                  title="Memory Requests"
+                  used={formatValue(quota.status.used["requests.memory"] || "0") as any}
+                  limit={formatValue(quota.status.hard["requests.memory"]) as any}
+                  icon={<></>}
+                />
+              )}
+              {quota.status.hard["limits.memory"] && (
+                <ResourceQuota
+                  title="Memory Limits"
+                  used={formatValue(quota.status.used["limits.memory"] || "0") as any}
+                  limit={formatValue(quota.status.hard["limits.memory"]) as any}
+                  icon={<></>}
+                />
+              )}
+              {Object.keys(quota.status.hard).map((item) => {
+                if (["limits.memory", "requests.memory", "limits.cpu", "requests.cpu"].includes(item)) return null;
+                return (
+                  <ResourceQuota
+                    key={item}
+                    title={item}
+                    used={formatValue(quota.status.used[item] || "0") as any}
+                    limit={formatValue(quota.status.hard[item]) as any}
+                    icon={<></>}
+                  />
+                );
+              })}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    ) : (
+      <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/10 rounded-2xl border border-dashed border-border/40">
+        <div className="p-3 bg-muted rounded-full mb-3 text-muted-foreground">
+          <Settings className="h-6 w-6" />
+        </div>
+        <h3 className="text-sm font-semibold text-foreground">No Resource Quotas</h3>
+        <p className="text-xs text-muted-foreground mt-1">No resource quotas are defined for this namespace.</p>
+      </div>
+    )}
+  </div>
+);
+
+const LimitRangeStep = ({ limitRanges }: { limitRanges: any[], control?: any }) => (
+  <div className="space-y-6">
+    {limitRanges && limitRanges.length > 0 ? (
+      <div className="space-y-6">
+        {limitRanges.map((limitRange: LimitRange, idx) => {
+          const transformed = transformLimitRange(limitRange);
+          return (
+            <Card key={idx} className="p-0 shadow-none bg-white border border-border/40 overflow-hidden">
+              <div className="bg-muted/30 px-4 py-2 border-b border-border/20 flex items-center justify-between">
+                <span className="text-xs font-bold text-foreground">{transformed.name}</span>
+                <span className="text-[10px] text-muted-foreground font-medium">
+                  {transformed.creationTimestamp ? new Date(transformed.creationTimestamp).toLocaleDateString() : 'N/A'}
+                </span>
+              </div>
+              <CardContent className="p-0">
+                {transformed.limits.map((limit, lIdx) => (
+                  <div key={lIdx} className="p-4 space-y-4 border-b last:border-b-0 border-border/10">
+                    <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      {limit.type} Limits
+                    </h4>
+                    <ResourceTable
+                      className="p-0 border-none shadow-none"
+                      columns={[
+                        { header: "Resource", accessor: "name" },
+                        { header: "Min", accessor: "min" },
+                        { header: "Max", accessor: "max" },
+                        { header: "Default", accessor: "default" },
+                        { header: "Default Req.", accessor: "defaultRequest" },
+                      ]}
+                      data={limit.resources as any}
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    ) : (
+      <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/10 rounded-2xl border border-dashed border-border/40">
+        <div className="p-3 bg-muted rounded-full mb-3 text-muted-foreground">
+          <Shield className="h-6 w-6" />
+        </div>
+        <h3 className="text-sm font-semibold text-foreground">No Limit Ranges</h3>
+        <p className="text-xs text-muted-foreground mt-1">No limit ranges are configured for this namespace.</p>
+      </div>
+    )}
+  </div>
+);
+
+// --- Main Component ---
+
 export const NamespaceDetailsModel = ({
   open,
   onClose,
   viewNamespaceData,
   filteredQuotas,
   filteredLimitRange,
+}: {
+  open: boolean;
+  onClose: (open: boolean) => void;
+  viewNamespaceData: any;
+  filteredQuotas: any[];
+  filteredLimitRange: any[];
 }) => {
-  const [activeSection, setActiveSection] = useState("basic");
+  const [currentStep, setCurrentStep] = useState("basics");
+
+  const steps = [
+    {
+      id: "basics",
+      label: "Basic Info",
+      description: "Namespace details",
+      longDescription: "View basic information about the namespace, including its labels and creation time.",
+      icon: Folder,
+      component: BasicsStep,
+      props: { data: viewNamespaceData },
+    },
+    {
+      id: "quota",
+      label: "Resource Quotas",
+      description: "Usage limits",
+      longDescription: "Monitor resource quotas and usage for CPU, memory, and other Kubernetes resources.",
+      icon: Settings,
+      component: QuotaStep,
+      props: { quotas: filteredQuotas },
+    },
+    {
+      id: "limitRange",
+      label: "Limit Ranges",
+      description: "Default constraints",
+      longDescription: "View default resource requests and limits for containers and pods within this namespace.",
+      icon: Shield,
+      component: LimitRangeStep,
+      props: { limitRanges: filteredLimitRange },
+    },
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="min-w-[786px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl">
-            {viewNamespaceData?.metadata?.name}
-          </DialogTitle>
-          <DialogDescription>
-            Configure namespace in a Kubernetes cluster in current context
-          </DialogDescription>
-        </DialogHeader>
-        <Tabs
-          value={activeSection}
-          onValueChange={setActiveSection}
-          className="space-y-6  min-h-[500px] max-h-[500px]"
-        >
-          <TabsList className="bg-white rounded-[0.5rem] h-auto p-1.5 mb-8 flex w-full shadow-sm border border-gray-100">
-            {navigationItems.map((item) => (
-              <TabsTrigger
-                key={item.id}
-                value={item.id}
-                className="flex-1 py-2.5 px-4 flex flex-col items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-[calc(0.5rem-2px)] transition-all duration-200"
-              >
-                {item.icon}
-                <span className="font-medium">{item.title}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="basic" className="mt-0 overflow-y-auto max-h-[376px]">
-            <Card className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4 border border-gray-200">
-              <div>
-                <h3 className="font-semibold text-sm mb-2">Name</h3>
-                <p className="text-xs">{viewNamespaceData?.metadata?.name}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm mb-2">Creation Time</h3>
-                <p className="text-xs">
-                  {viewNamespaceData?.metadata.creation_timestamp
-                    ? new Date(
-                      viewNamespaceData.metadata.creation_timestamp
-                    ).toLocaleString()
-                    : "Unknown"}
-                </p>
-              </div>
-              <div className="col-span-2">
-                <h3 className="font-semibold text-sm mb-2">Labels</h3>
-                <div className="flex flex-wrap gap-2">
-                  {Object.keys(viewNamespaceData?.labels || {}).length > 0 ? (
-                    Object.entries(viewNamespaceData.labels || {}).map(
-                      ([key, value]) => (
-                        <Badge
-                          key={key}
-                          variant="outline"
-                          className="px-2 py-1 text-xs"
-                        >
-                          {key}: {value}
-                        </Badge>
-                      )
-                    )
-                  ) : (
-                    <span className="text-gray-500 text-xs">No labels</span>
-                  )}
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-          <TabsContent value="quota" className="mt-0 overflow-y-auto max-h-[376px]">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 ">
-              {filteredQuotas?.map((quota) => {
-                return (
-                  <Card className="p-0 shadow-none bg-white border border-gray-200 w-full">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-extrabold flex items-center justify-between">
-                        <Badge variant="outline" className="!font-extrabold">
-                          {quota.name}
-                        </Badge>
-                        <span className="text-xs">
-                          {quota.creation_timestamp
-                            ? new Date(
-                              quota.creation_timestamp
-                            ).toLocaleString()
-                            : "Unknown"}
-                        </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {quota.status.hard["requests.cpu"] && (
-                        <ResourceQuota
-                          title="CPU Requests"
-                          used={quota.status.used["requests.cpu"] || "0"}
-                          limit={quota.status.hard["requests.cpu"]}
-                          icon={<></>}
-                        />
-                      )}
-
-                      {quota.status.hard["limits.cpu"] && (
-                        <ResourceQuota
-                          title="CPU Limits"
-                          used={quota.status.used["limits.cpu"] || "0"}
-                          limit={quota.status.hard["limits.cpu"]}
-                          icon={<></>}
-                        />
-                      )}
-
-                      {quota.status.hard["requests.memory"] && (
-                        <ResourceQuota
-                          title="Memory Requests"
-                          used={formatValue(
-                            quota.status.used["requests.memory"] || "0"
-                          )}
-                          limit={formatValue(
-                            quota.status.hard["requests.memory"]
-                          )}
-                          icon={<></>}
-                        />
-                      )}
-
-                      {quota.status.hard["limits.memory"] && (
-                        <ResourceQuota
-                          title="Memory Limits"
-                          used={formatValue(
-                            quota.status.used["limits.memory"] || "0"
-                          )}
-                          limit={formatValue(
-                            quota.status.hard["limits.memory"]
-                          )}
-                          icon={<></>}
-                        />
-                      )}
-                      {Object.keys(quota.status.hard).map((item) => {
-                        if (
-                          [
-                            "limits.memory",
-                            "requests.memory",
-                            "limits.cpu",
-                            "requests.cpu",
-                          ].includes(item)
-                        )
-                          return null;
-                        return (
-                          <ResourceQuota
-                            title={item}
-                            used={formatValue(quota.status.used[item] || "0")}
-                            limit={formatValue(quota.status.hard[item])}
-                            icon={<></>}
-                          />
-                        );
-                      })}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-            {!filteredQuotas.length ? (
-              <p className="font-semibold text-center text-sm">No Resource Quota found for this namespace</p>
-            ) : null}
-          </TabsContent>
-          <TabsContent value="limitRange" className="mt-0 overflow-y-auto max-h-[376px]">
-            <div className="space-y-6">
-              {!!filteredLimitRange.length ? filteredLimitRange.map((limitRange: LimitRange) => {
-                const newLimitRange = transformLimitRange(limitRange);
-                return (
-                  <Card className="p-0 shadow-none bg-white border border-gray-200 w-full">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-extrabold flex items-center justify-between mb-2">
-                        <Badge variant="outline" className="!font-extrabold">
-                          {newLimitRange.name}
-                        </Badge>
-                        <span className="text-xs">
-                          {newLimitRange.creationTimestamp
-                            ? new Date(
-                              newLimitRange.creationTimestamp
-                            ).toLocaleString()
-                            : "Unknown"}
-                        </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      {newLimitRange.limits.map((limit) => {
-                        const resources = limit.resources;
-                        return (
-                          <div>
-                            <h2 className="text-lg font-semibold mb-2">
-                              {limit.type} Limits
-                            </h2>
-                            <ResourceTable
-                              className="p-0"
-                              columns={[
-                                {
-                                  header: "Resource",
-                                  accessor: "name",
-                                },
-                                {
-                                  header: "Min",
-                                  accessor: "min",
-                                },
-                                {
-                                  header: "Max",
-                                  accessor: "max",
-                                },
-                                {
-                                  header: "Default",
-                                  accessor: "default",
-                                },
-                                {
-                                  header: "Default Request",
-                                  accessor: "defaultRequest",
-                                },
-                                {
-                                  header: "Max Limit/Request Ratio",
-                                  accessor: "maxLimitRequestRatio",
-                                },
-                              ]}
-                              data={resources}
-                            />
-                          </div>
-                        );
-                      })}
-                    </CardContent>
-                  </Card>
-                );
-              }) : (
-                <p className="font-semibold text-center text-sm">No Limit range found for this namespace</p>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+    <FormWizard
+      name="view-namespace-details"
+      isWizardOpen={open}
+      setIsWizardOpen={onClose}
+      currentStep={currentStep}
+      setCurrentStep={setCurrentStep}
+      steps={steps}
+      schema={z.any()}
+      initialValues={{}}
+      onSubmit={async () => { }} // No-op for viewing
+      hideActions={true} // View-only
+      heading={{
+        primary: viewNamespaceData?.metadata?.name || "Namespace Details",
+        secondary: "Detailed configuration and resource constraints for the namespace",
+        icon: Folder,
+      }}
+    />
   );
 };
 

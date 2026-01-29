@@ -92,19 +92,7 @@ export const Namespaces = () => {
   return (
     <PageLayout
       title="Kubernetes Namespaces"
-      subtitle={
-        <div className="flex flex-col gap-2">
-          <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1">
-            Manage your Kubernetes namespaces—add new ones, view details, or remove existing namespaces.
-          </p>
-          <div className="flex flex-wrap items-center gap-2 mt-1">
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[11px] font-bold text-blue-600 uppercase tracking-wider">
-              <Folder className="h-3 w-3" />
-              {selectedNamespace || "default"}
-            </div>
-          </div>
-        </div>
-      }
+      subtitle="Manage your Kubernetes namespaces—add new ones, view details, or remove existing namespaces."
       icon={Folder}
       actions={
         <div className="flex items-center gap-2 mb-1">
@@ -132,7 +120,13 @@ export const Namespaces = () => {
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between pb-6">
             <div>
-              <CardTitle className="text-lg">Available Namespaces</CardTitle>
+              <div className="flex items-center gap-3 mb-1">
+                <CardTitle className="text-lg">Available Namespaces</CardTitle>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary uppercase tracking-wider">
+                  <Folder className="h-3 w-3" />
+                  {selectedNamespace || "default"}
+                </div>
+              </div>
               <CardDescription>
                 All configured Kubernetes namespaces for the current context
               </CardDescription>
