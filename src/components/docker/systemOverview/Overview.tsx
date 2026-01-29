@@ -29,7 +29,7 @@ function replaceDockerWithSystem(text: string) {
 }
 
 const LoadingOverlay = () => (
-  <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl transition-all duration-200">
+  <div className="absolute inset-0 bg-background/50 backdrop-blur-md flex items-center justify-center z-10 rounded-xl transition-all duration-200">
     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
   </div>
 );
