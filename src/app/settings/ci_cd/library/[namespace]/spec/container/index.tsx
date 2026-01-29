@@ -167,8 +167,8 @@ function ContainerSpec() {
         const dynamic_attr = parseDynamicAttr(row.dynamic_attr);
         const transformedContainer = {
             ...row,
-            args: Array.isArray(row.args) ? row.args : [],
-            command: Array.isArray(row.command) ? row.command : [],
+            args: Array.isArray(row.args.props.list) ? row.args.props.list : [],
+            command: Array.isArray(row.command.props.list) ? row.command.props.list : [],
             profile: Object.keys(dynamic_attr).reduce((acc, key) => {
                 const found = profiles.find(p => p.id === dynamic_attr[key]);
                 if (found) acc[key] = found;
@@ -188,8 +188,8 @@ function ContainerSpec() {
         const dynamic_attr = parseDynamicAttr(row.dynamic_attr);
         const transformedContainer = {
             ...row,
-            args: new Set(Array.isArray(row.args) ? row.args : []),
-            command: new Set(Array.isArray(row.command) ? row.command : []),
+            args: new Set(Array.isArray(row.args.props.list) ? row.args.props.list : []),
+            command: new Set(Array.isArray(row.command.props.list) ? row.command.props.list : []),
             profile: Object.keys(dynamic_attr).reduce((acc, key) => {
                 const found = profiles.find(p => p.id === dynamic_attr[key]);
                 if (found) acc[key] = found;
@@ -332,26 +332,29 @@ function ContainerSpec() {
 
             />
 
+            {dialogContainerViewOpen && (
+                <FormWizard
+                    name="show-container-details"
+                    isWizardOpen={dialogContainerViewOpen}
+                    setIsWizardOpen={setDialogContainerViewOpen}
+                    currentStep={containerViewactiveTab}
+                    setCurrentStep={setContainerViewactiveTab}
+                    steps={container_view_steps}
+                    schema={createContainerProfileSchema as z.ZodSchema<any>}
+                    initialValues={container_view_initial_values}
 
-            <FormWizard
-                name="show-container-details"
-                isWizardOpen={dialogContainerViewOpen}
-                setIsWizardOpen={setDialogContainerViewOpen}
-                currentStep={containerViewactiveTab}
-                setCurrentStep={setContainerViewactiveTab}
-                steps={container_view_steps}
-                schema={createContainerProfileSchema as z.ZodSchema<any>}
-                initialValues={container_view_initial_values}
-                onSubmit={() => { }}
-                submitLabel="View Container"
-                submitIcon={Container}
-                heading={{
-                    primary: "Derived Container Details",
-                    secondary: "View derived container details",
-                    icon: Container,
-                }}
-                hideActions={true}
-            />
+                    onSubmit={() => { }}
+                    submitLabel="View Container"
+                    submitIcon={Container}
+                    heading={{
+                        primary: "Derived Container Details",
+                        secondary: "View derived container details",
+                        icon: Container,
+                    }}
+                    hideActions={true}
+                />
+
+            )}
 
             <FormWizard
                 name="view-profile-details"
