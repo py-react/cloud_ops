@@ -45,21 +45,9 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar";
 import CustomLink from "@/libs/Link";
+import { cn } from "@/libs/utils";
 import { ShuffleIcon } from "@radix-ui/react-icons";
 import { NamespaceContext } from "./kubernetes/contextProvider/NamespaceContext";
 import { getMenuItems } from "@/config/menu-items";
@@ -97,8 +85,96 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     // }
   };
 
+  // Track current path for active state and auto-expansion
+  const [currentPath, setCurrentPath] = React.useState("");
+
+  React.useEffect(() => {
+    // Set initial path once on client side
+    if (typeof window !== "undefined") {
+      setCurrentPath(window.location.pathname);
+    }
+
+    const handleLocationChange = () => {
+      if (typeof window !== "undefined") {
+        setCurrentPath(window.location.pathname);
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("popstate", handleLocationChange);
+      // Also listen for our custom trackNavigation event if applicable
+      window.addEventListener("trackNavigation", handleLocationChange);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("popstate", handleLocationChange);
+        window.removeEventListener("trackNavigation", handleLocationChange);
+      }
+    };
+  }, []);
+
   // Track expanded state for sidebar children
   const [expandedMenus, setExpandedMenus] = React.useState<{ [key: string]: boolean }>({});
+
+  // Menu items.
+  const items = React.useMemo(() => getMenuItems(selectedNamespace), [selectedNamespace]);
+
+  // Auto-expand parents of the active item
+  React.useEffect(() => {
+    const newExpandedMenus: { [key: string]: boolean } = { ...expandedMenus };
+    let changed = false;
+
+    Object.entries(items.items).forEach(([groupKey, group]) => {
+      if (!group) return;
+      group.childs.forEach((item) => {
+        const itemKey = group.url + item.url;
+        const itemFullPath = (group.url + item.url).replace(/\/\//g, '/');
+
+        // Check if this item is the active one
+        if (currentPath === itemFullPath) {
+          if (!newExpandedMenus[itemKey]) {
+            // No auto-expand for top level if it's the target? 
+            // Actually, if it has children, we might want to expand it if a child is active.
+          }
+        }
+
+        if (item.items) {
+          item.items.forEach((subItem) => {
+            const subItemKey = itemKey + subItem.url;
+            const subItemFullPath = (group.url + item.url + subItem.url).replace(/\/\//g, '/');
+
+            if (currentPath === subItemFullPath || currentPath.startsWith(subItemFullPath + '/')) {
+              if (!newExpandedMenus[itemKey]) {
+                newExpandedMenus[itemKey] = true;
+                changed = true;
+              }
+            }
+
+            if ((subItem as any).items) {
+              ((subItem as any).items as any[]).forEach((subSubItem) => {
+                const subSubItemFullPath = (group.url + item.url + subItem.url + subSubItem.url).replace(/\/\//g, '/');
+                if (currentPath === subSubItemFullPath) {
+                  if (!newExpandedMenus[itemKey]) {
+                    newExpandedMenus[itemKey] = true;
+                    changed = true;
+                  }
+                  if (!newExpandedMenus[subItemKey]) {
+                    newExpandedMenus[subItemKey] = true;
+                    changed = true;
+                  }
+                }
+              });
+            }
+          });
+        }
+      });
+    });
+
+    if (changed) {
+      setExpandedMenus(newExpandedMenus);
+    }
+  }, [currentPath, items]);
 
   // Toggle expand/collapse for a given menu key
   const handleToggleMenu = (key: string) => {
@@ -108,8 +184,29 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     }));
   };
 
-  // Menu items.
-  const items = React.useMemo(() => getMenuItems(selectedNamespace), [selectedNamespace]);
+  const isBranchActive = (itemPath: string) => {
+    if (!itemPath) return false;
+    const normalizedItemPath = itemPath.replace(/\/\//g, '/');
+    if (normalizedItemPath === '/') return currentPath === '/';
+    return currentPath === normalizedItemPath || currentPath.startsWith(normalizedItemPath + '/');
+  };
+
+  const isItemActive = (itemPath: string, hasChildren: boolean = false) => {
+    if (!itemPath) return false;
+    const normalizedItemPath = itemPath.replace(/\/\//g, '/');
+    if (normalizedItemPath === '/') return currentPath === '/';
+
+    // If it's an exact match, it's definitely active
+    if (currentPath === normalizedItemPath) return true;
+
+    // If it has children, we only highlight if it's an exact match 
+    // (parents shouldn't highlight if a child is active)
+    if (hasChildren) return false;
+
+    // For leaf nodes, we highlight if the path starts with the item path
+    // (handles sub-routes like /edit/123 that aren't in the sidebar)
+    return currentPath.startsWith(normalizedItemPath + '/');
+  };
 
   return (
     <>
@@ -149,7 +246,11 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                           {hasSubItems ? (
                             <SidebarMenuButton
                               asChild
-                              className="hover:bg-sidebar-accent transition-colors duration-200 group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!w-full"
+                              isActive={isItemActive(value.url + item.url, hasSubItems)}
+                              className={cn(
+                                "hover:bg-sidebar-accent transition-colors duration-200 group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!w-full h-auto p-2",
+                                isItemActive(value.url + item.url, hasSubItems) && "bg-sidebar-accent/80 dark:bg-sidebar-accent/40 shadow-sm"
+                              )}
                             >
                               <div className="flex items-center gap-1 cursor-pointer select-none w-full min-w-0">
                                 <span
@@ -185,7 +286,11 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                           ) : (
                             <SidebarMenuButton
                               asChild
-                              className="hover:bg-sidebar-accent transition-colors duration-200 group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!w-full"
+                              isActive={isItemActive(value.url + item.url, hasSubItems)}
+                              className={cn(
+                                "hover:bg-sidebar-accent transition-colors duration-200 group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!w-full h-auto p-2",
+                                isItemActive(value.url + item.url, hasSubItems) && "bg-sidebar-accent/80 dark:bg-sidebar-accent/40 shadow-sm"
+                              )}
                             >
                               <div className="flex items-center gap-1 w-full min-w-0">
                                 <div className="w-6 h-6 shrink-0 group-data-[collapsible=icon]:hidden" /> {/* Placeholder for alignment */}
@@ -223,7 +328,11 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                                     >
                                       <SidebarMenuSubButton
                                         asChild
-                                        className="hover:bg-sidebar-accent transition-colors duration-200"
+                                        isActive={isItemActive(value.url + item.url + subItem.url, hasSubSubItems)}
+                                        className={cn(
+                                          "hover:bg-sidebar-accent transition-colors duration-200 h-auto p-2",
+                                          isItemActive(value.url + item.url + subItem.url, hasSubSubItems) && "bg-sidebar-accent/60 dark:bg-sidebar-accent/30 shadow-sm"
+                                        )}
                                       >
                                         <div className="flex items-center gap-1 cursor-pointer select-none w-full min-w-0">
                                           {hasSubSubItems ? (
@@ -269,8 +378,8 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                                               const subSubItemKey = subItemKey + subSubItem.url;
                                               return (
                                                 <SidebarMenuSubItem key={subSubItemKey}>
-                                                  <SidebarMenuSubButton asChild className="hover:bg-sidebar-accent transition-colors duration-200 px-2 py-1.5 h-auto">
-                                                    <CustomLink href={(value.url + item.url + subItem.url + subSubItem.url).replace(/\/\//g, '/')} className="min-w-0 overflow-hidden">
+                                                  <SidebarMenuSubButton asChild isActive={isItemActive(value.url + item.url + subItem.url + subSubItem.url, false)} className={cn("hover:bg-sidebar-accent transition-colors duration-200 px-2 py-2.25 h-auto", isItemActive(value.url + item.url + subItem.url + subSubItem.url, false) && "bg-sidebar-accent/60 dark:bg-sidebar-accent/30 shadow-sm")}>
+                                                    <CustomLink href={(value.url + item.url + subItem.url + subSubItem.url).replace(/\/\//g, '/')} className="min-w-0 overflow-hidden p-2">
                                                       <div className="flex items-center gap-2 min-w-0">
                                                         <div className="w-1 h-1 rounded-full bg-muted-foreground/40 flex-shrink-0" />
                                                         <span className="text-sm text-sidebar-foreground/90 font-normal truncate">{subSubItem.title}</span>

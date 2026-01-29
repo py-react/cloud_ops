@@ -31,33 +31,7 @@ function KubernetesSettings() {
   return (
     <PageLayout
       title="Kubernetes Contexts"
-      subtitle={
-        <div className="flex flex-col gap-2">
-          <p className="text-muted-foreground text-[13px] font-medium leading-tight max-w-2xl px-1">
-            Manage your Kubernetes contexts—view, edit, and switch between different cluster configurations.
-          </p>
-          {currentKubeContext && (
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[11px] font-bold text-purple-600 uppercase tracking-wider">
-                <Layers className="h-3 w-3" />
-                {currentKubeContext.name}
-              </div>
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[11px] font-medium text-blue-600">
-                <Server className="h-3 w-3" />
-                {currentKubeContext.context.cluster}
-              </div>
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-green-500/10 border border-green-500/20 text-[11px] font-medium text-green-600">
-                <Users className="h-3 w-3" />
-                {currentKubeContext.context.user}
-              </div>
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/20 text-[11px] font-medium text-orange-600">
-                <Folder className="h-3 w-3" />
-                {currentKubeContext.context.namespace || "default"}
-              </div>
-            </div>
-          )}
-        </div>
-      }
+      subtitle="Manage your Kubernetes contexts—view, edit, and switch between different cluster configurations."
       icon={Layers}
       actions={
         <div className="flex items-center gap-2 mb-1">
