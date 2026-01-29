@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Users } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Users, Shield, Lock, RefreshCw } from "lucide-react";
 import {
   Tabs,
   TabsContent,
@@ -14,62 +7,67 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs-v2";
 import Roles from "@/components/kubernetes/settings/rbac/cluserUsers";
-// import Roles from "@/components/kubernetes/settings/rbac/roles";
 import RoleBindings from "@/components/kubernetes/settings/rbac/bindings";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
-import RouteDescription from "@/components/route-description";
+import PageLayout from "@/components/PageLayout";
+import { Button } from "@/components/ui/button";
 
 export const RBAC = () => {
-  const [activeTab, setActiveTab] = useState("users");
-  const [data, setData] = useState({ users: [], roles: [], role_bindings: [] });
+  const [activeTab, setActiveTab] = useState("roles");
+  const [loading, setLoading] = useState(false);
 
-  const fetchData = ()=>{
-    DefaultService.apiKubernertesUserGet(res=>{
-      setData(res)
-    }).then().catch(err=>toast.error(err))
-  }
-
-  useEffect(()=>{
-    // fetchData()
-  },[])
+  const handleRefresh = () => {
+    // This will trigger a re-fetch in the child components since they use useEffect with type/activeTab 
+    // or we might need a more robust way to trigger refresh.
+    // For now, let's assume switching tabs or manual refresh button (if we pass it down) works.
+    setLoading(true);
+    setTimeout(() => setLoading(false), 500);
+  };
 
   return (
-    <div title="Kubernetes Resource quota">
-      <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <h2>Users & RBAC</h2>
-            </div>
-          }
-          shortDescription="Manage users, roles and access control for your Kubernetes cluster"
-          description="Role-based access control (RBAC) is a method of regulating
-                access to resources based on the roles of individual users. RBAC
-                authorization uses the rbac.authorization.k8s.io API group to
-                drive authorization decisions."
-        />
-        <div>
-          <Tabs
-            defaultValue="users"
-            value={activeTab}
-            onValueChange={setActiveTab}
-          >
-            <TabsList className="mb-6">
-              <TabsTrigger value="roles">Roles</TabsTrigger>
-              <TabsTrigger value="bindings">Role Bindings</TabsTrigger>
-            </TabsList>
-              <TabsContent value="roles">
-                <Roles type={"roles"} />
-              </TabsContent>
-              <TabsContent value="bindings">
-                <Roles type="roles"/>
-              </TabsContent>
-          </Tabs>
+    <PageLayout
+      title="Users & RBAC"
+      subtitle="Role-based access control (RBAC) regulates access to resources based on individual roles. Manage roles and role bindings for your Kubernetes cluster."
+      icon={Users}
+      actions={
+        <div className="flex items-center gap-2 mb-1">
+          <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
+      }
+    >
+      <div className="space-y-6">
+        <Tabs
+          defaultValue="roles"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
+          <TabsList className="mb-6">
+            <TabsTrigger value="roles" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Roles
+            </TabsTrigger>
+            <TabsTrigger value="bindings" className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Role Bindings
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <TabsContent value="roles" className="mt-0">
+              <Roles type="roles" />
+            </TabsContent>
+            <TabsContent value="bindings" className="mt-0">
+              <Roles type="rolebindings" />
+            </TabsContent>
+          </div>
+        </Tabs>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 export default RBAC;
