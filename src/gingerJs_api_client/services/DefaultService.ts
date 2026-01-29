@@ -56,6 +56,46 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
+export type TDataMonitoringProxyClusterProxyServiceNamespacePathDelete = {
+                namespace: string
+path: string
+service: string
+            }
+export type TDataMonitoringProxyClusterProxyServiceNamespacePathDelete1 = {
+                namespace: string
+path: string
+service: string
+            }
+export type TDataMonitoringProxyClusterProxyServiceNamespacePathDelete2 = {
+                namespace: string
+path: string
+service: string
+            }
+export type TDataMonitoringProxyClusterProxyServiceNamespacePathDelete3 = {
+                namespace: string
+path: string
+service: string
+            }
+export type TDataMonitoringProxyClusterProxyServiceNamespaceDelete = {
+                namespace: string
+path?: string
+service: string
+            }
+export type TDataMonitoringProxyClusterProxyServiceNamespaceDelete1 = {
+                namespace: string
+path?: string
+service: string
+            }
+export type TDataMonitoringProxyClusterProxyServiceNamespaceDelete2 = {
+                namespace: string
+path?: string
+service: string
+            }
+export type TDataMonitoringProxyClusterProxyServiceNamespaceDelete3 = {
+                namespace: string
+path?: string
+service: string
+            }
 export type TDataApiPackgesPost = {
                 requestBody: RunImage
             }
@@ -512,6 +552,15 @@ export type TDataApiQueuePost = {
 export type TDataApiQueueDelete = {
                 requestBody: StopQueue
             }
+export type TDataApiMonitoringInstallGet = {
+                component?: string
+            }
+export type TDataApiMonitoringInstallPost = {
+                component?: string
+            }
+export type TDataApiMonitoringInstallDelete = {
+                component?: string
+            }
 export type TDataApiSystemsPost = {
                 requestBody: SystemInfo
             }
@@ -535,6 +584,218 @@ path,
 			method: 'GET',
 			url: '/api/docker/hub/{path}',
 			path: {
+				path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Monitoring Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static monitoringProxyClusterProxyServiceNamespacePathDelete(data: TDataMonitoringProxyClusterProxyServiceNamespacePathDelete): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Monitoring Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static monitoringProxyClusterProxyServiceNamespacePathDelete1(data: TDataMonitoringProxyClusterProxyServiceNamespacePathDelete1): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Monitoring Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static monitoringProxyClusterProxyServiceNamespacePathDelete2(data: TDataMonitoringProxyClusterProxyServiceNamespacePathDelete2): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Monitoring Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static monitoringProxyClusterProxyServiceNamespacePathDelete3(data: TDataMonitoringProxyClusterProxyServiceNamespacePathDelete3): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Monitoring Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static monitoringProxyClusterProxyServiceNamespaceDelete(data: TDataMonitoringProxyClusterProxyServiceNamespaceDelete): CancelablePromise<unknown> {
+		const {
+namespace,
+path = '',
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/cluster/proxy/{service}/{namespace}/',
+			path: {
+				service, namespace
+			},
+			query: {
+				path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Monitoring Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static monitoringProxyClusterProxyServiceNamespaceDelete1(data: TDataMonitoringProxyClusterProxyServiceNamespaceDelete1): CancelablePromise<unknown> {
+		const {
+namespace,
+path = '',
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cluster/proxy/{service}/{namespace}/',
+			path: {
+				service, namespace
+			},
+			query: {
+				path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Monitoring Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static monitoringProxyClusterProxyServiceNamespaceDelete2(data: TDataMonitoringProxyClusterProxyServiceNamespaceDelete2): CancelablePromise<unknown> {
+		const {
+namespace,
+path = '',
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/cluster/proxy/{service}/{namespace}/',
+			path: {
+				service, namespace
+			},
+			query: {
+				path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Monitoring Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static monitoringProxyClusterProxyServiceNamespaceDelete3(data: TDataMonitoringProxyClusterProxyServiceNamespaceDelete3): CancelablePromise<unknown> {
+		const {
+namespace,
+path = '',
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/cluster/proxy/{service}/{namespace}/',
+			path: {
+				service, namespace
+			},
+			query: {
 				path
 			},
 			errors: {
@@ -3311,6 +3572,69 @@ requestBody,
 	}
 
 	/**
+	 * Check if a specific monitoring component is installed in the 'monitoring' namespace.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiMonitoringInstallGet(data: TDataApiMonitoringInstallGet = {}): CancelablePromise<Record<string, unknown>> {
+		const {
+component = 'prometheus',
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/monitoring/install',
+			query: {
+				component
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Deploy either Prometheus or Grafana.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiMonitoringInstallPost(data: TDataApiMonitoringInstallPost = {}): CancelablePromise<Record<string, unknown>> {
+		const {
+component = 'prometheus',
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/monitoring/install',
+			query: {
+				component
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Delete resources for a specific component.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiMonitoringInstallDelete(data: TDataApiMonitoringInstallDelete = {}): CancelablePromise<Record<string, unknown>> {
+		const {
+component = 'prometheus',
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/monitoring/install',
+			query: {
+				component
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
@@ -4050,6 +4374,17 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/queues',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static monitoringGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/monitoring',
 		});
 	}
 
