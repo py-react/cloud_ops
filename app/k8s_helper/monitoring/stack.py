@@ -206,6 +206,18 @@ datasources:
   uid: prometheus
 """
 
+DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG = """apiVersion: 1
+providers:
+- name: 'default'
+  orgId: 1
+  folder: ''
+  type: file
+  disableDeletion: false
+  editable: true
+  options:
+    path: /var/lib/grafana/dashboards/default
+"""
+
 DEFAULT_NODE_EXPORTER_CONFIG = """# Node Exporter Configuration
 # These are the CLI arguments passed to the daemon.
 - --path.procfs=/host/proc
@@ -231,7 +243,22 @@ def get_namespace_manifest(namespace):
         "metadata": {"name": namespace}
     }
 
-def get_alertmanager_manifests(namespace="monitoring"):
+def get_pvc_manifest(name, namespace, size="2Gi"):
+    """
+    Returns a PersistentVolumeClaim manifest for data persistence.
+    """
+    return {
+        "apiVersion": "v1",
+        "kind": "PersistentVolumeClaim",
+        "metadata": {"name": name, "namespace": namespace},
+        "spec": {
+            "accessModes": ["ReadWriteOnce"],
+            "resources": {"requests": {"storage": size}}
+            # implicit storageClassName: standard/default
+        }
+    }
+
+def get_alertmanager_manifests(namespace="alerting"):
     """
     Returns a list of Kubernetes manifests for Alertmanager.
     Alertmanager v0.25.0 enables reload API by default; lifecycle flag is NOT supported.
@@ -246,6 +273,8 @@ def get_alertmanager_manifests(namespace="monitoring"):
                 "alertmanager.yml": DEFAULT_ALERTMANAGER_CONFIG
             }
         },
+        # Alertmanager PVC
+        get_pvc_manifest("alertmanager-storage", namespace, "1Gi"),
         # Alertmanager Deployment
         {
             "apiVersion": "apps/v1",
@@ -270,22 +299,11 @@ def get_alertmanager_manifests(namespace="monitoring"):
                                     {"name": "config-volume", "mountPath": "/etc/alertmanager"},
                                     {"name": "storage-volume", "mountPath": "/alertmanager"}
                                 ]
-                            },
-                            {
-                                "name": "config-reloader",
-                                "image": "jimmidyson/configmap-reload:v0.5.0",
-                                "args": [
-                                    "--volume-dir=/etc/alertmanager",
-                                    "--webhook-url=http://127.0.0.1:9093/-/reload"
-                                ],
-                                "volumeMounts": [
-                                    {"name": "config-volume", "mountPath": "/etc/alertmanager"}
-                                ]
                             }
                         ],
                         "volumes": [
                             {"name": "config-volume", "configMap": {"name": "alertmanager-config"}},
-                            {"name": "storage-volume", "emptyDir": {}}
+                            {"name": "storage-volume", "persistentVolumeClaim": {"claimName": "alertmanager-storage"}}
                         ]
                     }
                 }
@@ -357,6 +375,8 @@ def get_prometheus_manifests(namespace="monitoring"):
                 "prometheus.yml": DEFAULT_PROMETHEUS_CONFIG
             }
         },
+        # Prometheus PVC
+        get_pvc_manifest("prometheus-storage", namespace, "5Gi"),
         # Prometheus Deployment
         {
             "apiVersion": "apps/v1",
@@ -375,30 +395,18 @@ def get_prometheus_manifests(namespace="monitoring"):
                                 "image": "prom/prometheus:v2.45.0",
                                 "args": [
                                     "--config.file=/etc/prometheus/prometheus.yml",
-                                    "--storage.tsdb.path=/prometheus/",
-                                    "--web.enable-lifecycle"
+                                    "--storage.tsdb.path=/prometheus/"
                                 ],
                                 "ports": [{"containerPort": 9090}],
                                 "volumeMounts": [
                                     {"name": "prometheus-config-volume", "mountPath": "/etc/prometheus/"},
                                     {"name": "prometheus-storage-volume", "mountPath": "/prometheus/"}
                                 ]
-                            },
-                            {
-                                "name": "config-reloader",
-                                "image": "jimmidyson/configmap-reload:v0.5.0",
-                                "args": [
-                                    "--volume-dir=/etc/prometheus",
-                                    "--webhook-url=http://127.0.0.1:9090/-/reload"
-                                ],
-                                "volumeMounts": [
-                                    {"name": "prometheus-config-volume", "mountPath": "/etc/prometheus"}
-                                ]
                             }
                         ],
                         "volumes": [
                             {"name": "prometheus-config-volume", "configMap": {"name": "prometheus-server-conf"}},
-                            {"name": "prometheus-storage-volume", "emptyDir": {}}
+                            {"name": "prometheus-storage-volume", "persistentVolumeClaim": {"claimName": "prometheus-storage"}}
                         ]
                     }
                 }
@@ -508,18 +516,7 @@ def get_grafana_manifests(namespace="monitoring"):
             "kind": "ConfigMap",
             "metadata": {"name": "grafana-dashboards-provider", "namespace": namespace},
             "data": {
-                "dashboards.yaml": """
-apiVersion: 1
-providers:
-- name: 'default'
-  orgId: 1
-  folder: ''
-  type: file
-  disableDeletion: false
-  editable: true
-  options:
-    path: /var/lib/grafana/dashboards/default
-"""
+                "dashboards.yaml": DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG
             }
         },
         # Grafana ConfigMap: Kubernetes Dashboard JSON
@@ -729,8 +726,9 @@ def get_monitoring_manifests(namespace="monitoring"):
     Returns a combined list of manifests.
     """
     return [get_namespace_manifest(namespace)] + \
+           [get_namespace_manifest("alerting")] + \
            get_prometheus_manifests(namespace) + \
            get_grafana_manifests(namespace) + \
            get_node_exporter_manifests(namespace) + \
-           get_alertmanager_manifests(namespace) + \
+           get_alertmanager_manifests("alerting") + \
            get_kube_state_metrics_manifests(namespace)

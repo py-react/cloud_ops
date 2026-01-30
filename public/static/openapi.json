@@ -44,10 +44,10 @@
       }
     },
     "/cluster/proxy/{service}/{namespace}/{path}": {
-      "get": {
+      "put": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -101,7 +101,7 @@
       "post": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -152,10 +152,10 @@
           }
         }
       },
-      "put": {
+      "get": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -209,7 +209,7 @@
       "delete": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -6988,6 +6988,60 @@
         }
       }
     },
+    "/addons": {
+      "get": {
+        "summary": "",
+        "operationId": "_addons_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/addons/alerting": {
+      "get": {
+        "summary": "",
+        "operationId": "_addons_alerting_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/addons/monitoring": {
+      "get": {
+        "summary": "",
+        "operationId": "_addons_monitoring_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/orchestration": {
       "get": {
         "summary": "",
@@ -7424,24 +7478,6 @@
       "get": {
         "summary": "",
         "operationId": "_queues_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/monitoring": {
-      "get": {
-        "summary": "",
-        "operationId": "_monitoring_get",
         "responses": {
           "200": {
             "description": "Successful Response",

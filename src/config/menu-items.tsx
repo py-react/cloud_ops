@@ -29,6 +29,7 @@ import {
     Layout,
     Key,
     Activity,
+    AlertCircle,
 } from "lucide-react";
 
 export const getMenuItems = (selectedNamespace: string = "default") => ({
@@ -296,22 +297,9 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                 },
             ],
         },
-        infraManager: {
-            title: "Infra",
-            url: "/infra",
-            color: "purple",
-            childs: [
-                {
-                    title: "Manager",
-                    url: "/manager",
-                    icon: WaypointsIcon,
-                    items: [],
-                },
-            ],
-        },
         productionEssentials: {
-            title: "Production Essentials",
-            url: "",
+            title: "1-Click",
+            url: "/addons",
             color: "orange",
             childs: [
                 {
@@ -321,9 +309,28 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                     items: [],
                 },
                 {
+                    title: "Alerting",
+                    url: "/alerting",
+                    icon: AlertCircle,
+                    items: [],
+                },
+                {
                     title: "Database",
                     url: "/db",
                     icon: Database,
+                    items: [],
+                },
+            ],
+        },
+        infraManager: {
+            title: "Infra",
+            url: "/infra",
+            color: "purple",
+            childs: [
+                {
+                    title: "Manager",
+                    url: "/manager",
+                    icon: WaypointsIcon,
                     items: [],
                 },
             ],

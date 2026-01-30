@@ -15,14 +15,15 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
         if component == "metrics-server":
             namespace = "kube-system"
             deploy_name = "metrics-server"
+        elif component == "alertmanager":
+            namespace = "alerting"
+            deploy_name = "alertmanager"
         else:
             namespace = "monitoring"
             if component == "prometheus":
                 deploy_name = "prometheus-deployment"
             elif component == "grafana":
                 deploy_name = "grafana"
-            elif component == "alertmanager":
-                deploy_name = "alertmanager"
             else:
                 deploy_name = "prometheus-deployment"
 
@@ -60,17 +61,22 @@ async def POST(request: Request, component: str = "prometheus") -> dict:
     Deploy monitoring components.
     """
     try:
-        namespace = "monitoring"
         k8s_helper = KubernetesResourceHelper()
         
-        if component == "prometheus":
-            manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace) + get_kube_state_metrics_manifests(namespace)
-        elif component == "grafana":
-            manifests = get_grafana_manifests(namespace)
+        if component == "metrics-server":
+            namespace = "kube-system"
+            manifests = get_metrics_server_manifests(namespace)
         elif component == "alertmanager":
+            namespace = "alerting"
             manifests = get_alertmanager_manifests(namespace)
         else:
-            manifests = get_metrics_server_manifests("kube-system")
+            namespace = "monitoring"
+            if component == "prometheus":
+                manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace) + get_kube_state_metrics_manifests(namespace)
+            elif component == "grafana":
+                manifests = get_grafana_manifests(namespace)
+            else:
+                return {"success": False, "message": f"Unknown component: {component}"}
         
         # 1. Create namespace if it doesn't exist
         try:
@@ -100,18 +106,22 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
     Delete resources for a specific component.
     """
     try:
-        namespace = "monitoring"
         k8s_helper = KubernetesResourceHelper()
         
-        if component == "prometheus":
-            manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace) + get_kube_state_metrics_manifests(namespace)
-        elif component == "grafana":
-            manifests = get_grafana_manifests(namespace)
-        elif component == "alertmanager":
-            manifests = get_alertmanager_manifests(namespace)
-        else:
+        if component == "metrics-server":
             namespace = "kube-system"
             manifests = get_metrics_server_manifests(namespace)
+        elif component == "alertmanager":
+            namespace = "alerting"
+            manifests = get_alertmanager_manifests(namespace)
+        else:
+            namespace = "monitoring"
+            if component == "prometheus":
+                manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace) + get_kube_state_metrics_manifests(namespace)
+            elif component == "grafana":
+                manifests = get_grafana_manifests(namespace)
+            else:
+                return {"success": False, "message": f"Unknown component: {component}"}
             
         results = []
         for manifest in manifests:
@@ -121,6 +131,15 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
             except Exception as e:
                 logger.warning(f"Failed to delete {manifest['kind']}: {str(e)}")
                 results.append({"kind": manifest["kind"], "name": manifest["metadata"]["name"], "status": "failed", "error": str(e)})
+
+        # Explicitly delete the dedicated namespace for Alertmanager to ensure PVC/PV cleanup
+        if component == "alertmanager":
+            try:
+                k8s_helper.delete_namespace("alerting")
+                results.append({"kind": "Namespace", "name": "alerting", "status": "deleted"})
+            except Exception as e:
+                # It might already be deleting or gone, just log warning
+                logger.warning(f"Failed to delete namespace 'alerting': {str(e)}")
 
         return {"success": True, "details": results}
     except Exception as e:
