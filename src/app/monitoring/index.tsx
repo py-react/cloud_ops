@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Activity, Rocket, CheckCircle2, AlertCircle, Loader2, ExternalLink, ActivityIcon, PlusIcon, Database, LayoutDashboard, Trash2 } from 'lucide-react'
+import { Activity, Rocket, CheckCircle2, AlertCircle, Loader2, ExternalLink, ActivityIcon, PlusIcon, Database, LayoutDashboard, Trash2, LineChart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { DefaultService } from '@/gingerJs_api_client'
@@ -16,6 +16,8 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import PageLayout from '@/components/PageLayout'
+import AddonCard from '@/components/AddonCard'
 
 interface MonitoringCardProps {
     title: string;
@@ -88,142 +90,111 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
         }
     }
 
-    return (
-        <div className="space-y-6">
-            <Card className={cn(
-                "relative overflow-hidden border-2 transition-all duration-300 flex flex-col h-full",
-                installed ? "border-green-500/20 shadow-green-500/5" :
-                    deleting ? "border-amber-500/20 shadow-amber-500/5 bg-amber-500/5" :
-                        "border-primary/20 shadow-primary/5 hover:border-primary/40"
-            )}>
-                <CardHeader>
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-primary/10 rounded-2xl">
-                            {icon}
-                        </div>
-                        {installed && (
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-600 rounded-full text-xs font-semibold">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                Installed
-                            </div>
-                        )}
-                        {deleting && (
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-600 rounded-full text-xs font-semibold">
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                Deleting...
-                            </div>
-                        )}
-                    </div>
-                    <CardTitle className="text-2xl">{title}</CardTitle>
-                    <CardDescription className="text-base min-h-[3rem]">
-                        {description}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 flex-grow">
-                    <div className="space-y-2">
-                        {features.map((feature, i) => (
-                            <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                <span>{feature}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    {installed && proxyUrl && (
-                        <div className="pt-4 mt-4 border-t border-dashed">
-                            <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
-                                <span className="text-sm font-medium">Dashboard</span>
-                                <a
-                                    href={proxyUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <Button variant="ghost" size="sm" className="h-8 gap-1.5">
-                                        Open UI <ExternalLink className="w-3 h-3" />
-                                    </Button>
-                                </a>
-                            </div>
-                        </div>
+    const footerActions = (
+        <div className="flex flex-col gap-2 w-full">
+            {deleting ? (
+                <Button
+                    className="w-full h-9 text-xs bg-amber-500 hover:bg-amber-600 text-white"
+                    disabled
+                >
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    Deleting...
+                </Button>
+            ) : !installed ? (
+                <Button
+                    className="w-full h-9 text-xs shadow-sm shadow-primary/10 transition-all active:scale-[0.98]"
+                    onClick={handleDeploy}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    ) : (
+                        <Rocket className="mr-2 h-3 w-3" />
                     )}
-                </CardContent>
-                <CardFooter className="flex flex-col gap-3 pt-4">
-                    {deleting ? (
+                    {loading ? `Deploying...` : `Deploy`}
+                </Button>
+            ) : (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
                         <Button
-                            className="w-full h-11 text-base shadow-lg shadow-amber-500/10 transition-all bg-amber-500 hover:bg-amber-600 text-white"
-                            disabled
-                        >
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Deleting Component...
-                        </Button>
-                    ) : !installed ? (
-                        <Button
-                            className="w-full h-11 text-base shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
-                            onClick={handleDeploy}
+                            variant="outline"
+                            className="w-full h-9 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
                             disabled={loading}
                         >
                             {loading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                             ) : (
-                                <Rocket className="mr-2 h-4 w-4" />
+                                <Trash2 className="mr-2 h-3 w-3" />
                             )}
-                            {loading ? `Deploying...` : `Deploy ${title}`}
+                            Remove
                         </Button>
-                    ) : (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button
-                                    variant="destructive"
-                                    className="w-full h-11 shadow-lg shadow-red-500/10 transition-all active:scale-[0.98]"
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                    )}
-                                    {loading ? `Deleting...` : `Delete ${title}`}
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will remove the <strong>{title}</strong> resources from the cluster.
-                                        Any transient data associated with this component will be lost.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={handleDelete}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                        Continue Deletion
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-                </CardFooter>
-            </Card>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Remove {title}?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-sm">
+                                This will remove all <strong>{title}</strong> resources from the cluster.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel className="h-9 text-xs">Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={handleDelete}
+                                className="h-9 text-xs bg-destructive text-white hover:bg-destructive/90"
+                            >
+                                Remove Now
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+        </div>
+    )
+
+    const actions = installed && proxyUrl ? (
+        <div className="pt-3 mt-3 border-t border-dashed border-primary/10">
+            <a
+                href={proxyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full"
+            >
+                <Button variant="secondary" size="sm" className="w-full h-8 text-xs gap-1.5 bg-secondary/50 hover:bg-secondary">
+                    Open Dashboard <ExternalLink className="w-3 h-3" />
+                </Button>
+            </a>
+        </div>
+    ) : null
+
+    return (
+        <div className="space-y-4 h-full">
+            <AddonCard
+                title={title}
+                description={description}
+                icon={React.cloneElement(icon as React.ReactElement, { className: "w-5 h-5 text-primary" })}
+                status={installed ? 'installed' : deleting ? 'deleting' : 'available'}
+                features={features}
+                actions={actions}
+                footerActions={footerActions}
+            />
 
             {logs.length > 0 && (
-                <Card className="border-primary/20 bg-primary/5">
-                    <CardHeader className="py-3 px-4">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                            <ActivityIcon className="w-4 h-4" />
-                            {title} Logs
+                <Card className="border-primary/10 bg-primary/5 mt-2">
+                    <CardHeader className="py-2 px-3">
+                        <CardTitle className="text-[10px] uppercase tracking-wider flex items-center gap-2 text-muted-foreground font-bold">
+                            <ActivityIcon className="w-3 h-3" />
+                            Recent activity
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="py-2 px-4">
-                        <div className="grid gap-1">
-                            {logs.map((res, i) => (
-                                <div key={i} className="flex items-center justify-between py-1 italic text-xs">
-                                    <span className="font-mono text-muted-foreground">{res.kind}/{res.name}</span>
+                    <CardContent className="py-1 px-3">
+                        <div className="grid gap-0.5">
+                            {logs.slice(0, 3).map((res, i) => (
+                                <div key={i} className="flex items-center justify-between py-1 text-[10px]">
+                                    <span className="font-mono text-muted-foreground truncate max-w-[120px]">{res.name}</span>
                                     {res.status === 'success' || res.status === 'deleted' ? (
-                                        <span className="text-green-600 font-semibold">{res.status}</span>
+                                        <span className="text-green-600 uppercase font-bold">{res.status}</span>
                                     ) : (
-                                        <span className="text-red-600 font-semibold">{res.error || 'failed'}</span>
+                                        <span className="text-red-600 uppercase font-bold">Error</span>
                                     )}
                                 </div>
                             ))}
@@ -237,24 +208,22 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
 
 function Monitoring() {
     return (
-        <div className="container mx-auto p-8 max-w-6xl">
-            <div className="flex flex-col gap-10">
-                <div>
-                    <h1 className="text-4xl font-extrabold tracking-tight mb-3">Production Essentials</h1>
-                    <p className="text-xl text-muted-foreground">Premium infrastructure components for professional workloads.</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 items-start">
+        <PageLayout
+            title="Monitoring Essentials"
+            subtitle="Lightweight, 1-click infrastructure addons for your cluster."
+            icon={LineChart}
+        >
+            <div className="flex flex-col gap-6 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch">
                     <MonitoringCard
                         title="Prometheus"
                         description="Professional-grade time series database and monitoring server."
                         component="prometheus"
-                        icon={<Database className="w-8 h-8 text-primary" />}
+                        icon={<Database />}
                         features={[
                             "Prometheus Server (v2.45.0)",
                             "Kubernetes API Scraping",
-                            "Node Exporter Ready",
-                            "Alerting Integration"
+                            "Node Exporter Ready"
                         ]}
                         proxyUrl="/cluster/proxy/prometheus-service/monitoring/"
                     />
@@ -263,12 +232,11 @@ function Monitoring() {
                         title="Grafana"
                         description="Beautiful anomaly detection and performance visualization dashboards."
                         component="grafana"
-                        icon={<LayoutDashboard className="w-8 h-8 text-primary" />}
+                        icon={<LayoutDashboard />}
                         features={[
                             "Grafana Dashboard (v10.0.0)",
                             "Anonymous Admin Access",
-                            "Pre-built Dashboards",
-                            "Plugin Support included"
+                            "Pre-built Dashboards"
                         ]}
                         proxyUrl="/cluster/proxy/grafana/monitoring/"
                     />
@@ -277,27 +245,28 @@ function Monitoring() {
                         title="Metrics Server"
                         description="Cluster-wide aggregator of resource usage data."
                         component="metrics-server"
-                        icon={<Activity className="w-8 h-8 text-primary" />}
+                        icon={<Activity />}
                         features={[
                             "Resource Metrics API",
-                            "Enables Horizontal Pod Autoscaler",
-                            "Support for 'kubectl top'",
-                            "Lightweight (v0.6.4)"
+                            "Enables Pod Autoscaler",
+                            "kubectl top support"
                         ]}
                     />
-                </div>
 
-                <Card className="border-2 border-dashed border-gray-200 bg-gray-50/50 flex flex-col items-center justify-center p-10 text-center opacity-70">
-                    <div className="p-4 bg-gray-100 rounded-full mb-5">
-                        <PlusIcon className="w-10 h-10 text-gray-400" />
+                    <div className="h-full">
+                        <Card className="border border-dashed border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-6 text-center hover:bg-primary/10 transition-all cursor-pointer group h-full min-h-[280px]">
+                            <div className="p-3 bg-white/50 rounded-full mb-3 group-hover:scale-110 transition-transform shadow-sm">
+                                <PlusIcon className="w-6 h-6 text-primary/40" />
+                            </div>
+                            <CardTitle className="text-sm font-bold text-primary/60">More coming</CardTitle>
+                            <CardDescription className="text-[10px] mt-1">
+                                ELK, Jaeger, and DB tools in development.
+                            </CardDescription>
+                        </Card>
                     </div>
-                    <CardTitle className="text-xl text-gray-500">More Tools Coming Soon</CardTitle>
-                    <CardDescription className="text-base max-w-md mx-auto mt-2">
-                        We're currently building 1-click deployments for ELK Stack, Jaeger Tracing, and database management tools.
-                    </CardDescription>
-                </Card>
+                </div>
             </div>
-        </div>
+        </PageLayout>
     )
 }
 
