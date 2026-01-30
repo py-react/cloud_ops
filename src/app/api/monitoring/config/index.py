@@ -7,16 +7,20 @@ from pydantic import BaseModel
 from app.k8s_helper.monitoring.stack import (
     DEFAULT_ALERTMANAGER_CONFIG, 
     DEFAULT_PROMETHEUS_CONFIG,
-    DEFAULT_GRAFANA_DATASOURCES
+    DEFAULT_GRAFANA_DATASOURCES,
+    DEFAULT_NODE_EXPORTER_CONFIG,
+    DEFAULT_METRICS_SERVER_CONFIG
 )
 
 logger = logging.getLogger(__name__)
 
-# Mapping component to (ConfigMap name, data key, default config)
+# Mapping component to (ConfigMap name, data key, default config, namespace)
 COMPONENT_MAP = {
-    "alertmanager": ("alertmanager-config", "alertmanager.yml", DEFAULT_ALERTMANAGER_CONFIG),
-    "prometheus": ("prometheus-server-conf", "prometheus.yml", DEFAULT_PROMETHEUS_CONFIG),
-    "grafana": ("grafana-datasources", "datasources.yaml", DEFAULT_GRAFANA_DATASOURCES),
+    "alertmanager": ("alertmanager-config", "alertmanager.yml", DEFAULT_ALERTMANAGER_CONFIG, "monitoring"),
+    "prometheus": ("prometheus-server-conf", "prometheus.yml", DEFAULT_PROMETHEUS_CONFIG, "monitoring"),
+    "grafana": ("grafana-datasources", "datasources.yaml", DEFAULT_GRAFANA_DATASOURCES, "monitoring"),
+    "node-exporter": ("node-exporter-conf", "config.yml", DEFAULT_NODE_EXPORTER_CONFIG, "monitoring"),
+    "metrics-server": ("metrics-server-config", "config.yml", DEFAULT_METRICS_SERVER_CONFIG, "kube-system"),
 }
 async def GET(request: Request, component: str = Query("alertmanager")) -> dict:
     """
@@ -31,9 +35,8 @@ async def GET(request: Request, component: str = Query("alertmanager")) -> dict:
             logger.warning(f"Unsupported component requested: {comp}")
             return {"success": False, "message": f"Unsupported component: {comp}"}
             
-        cm_name, data_key, default_config = COMPONENT_MAP[comp]
-        logger.info(f"Using ConfigMap: {cm_name}, Key: {data_key}")
-        namespace = "monitoring"
+        cm_name, data_key, default_config, namespace = COMPONENT_MAP[comp]
+        logger.info(f"Using ConfigMap: {cm_name}, Key: {data_key}, Namespace: {namespace}")
         k8s_helper = KubernetesResourceHelper()
         
         # Get ConfigMap
@@ -41,7 +44,13 @@ async def GET(request: Request, component: str = Query("alertmanager")) -> dict:
         cm = next((c for c in config_maps if c.get("metadata", {}).get("name") == cm_name), None)
         
         if not cm:
-            raise HTTPException(status_code=404, detail=f"ConfigMap {cm_name} not found.")
+            logger.info(f"ConfigMap {cm_name} not found, returning default configuration.")
+            return {
+                "success": True, 
+                "config": default_config,
+                "isOpinionated": True,
+                "isDeployed": False
+            }
             
         current_config = cm.get("data", {}).get(data_key, "")
         
@@ -51,7 +60,8 @@ async def GET(request: Request, component: str = Query("alertmanager")) -> dict:
         return {
             "success": True, 
             "config": current_config,
-            "isOpinionated": is_opinionated
+            "isOpinionated": is_opinionated,
+            "isDeployed": True
         }
     except Exception as e:
         logger.error(f"Error fetching {component} config: {str(e)}")
@@ -81,8 +91,7 @@ async def POST(request: Request, body: ConfigUpdate) -> dict:
         except Exception as ye:
             return {"success": False, "message": f"Invalid YAML: {str(ye)}"}
             
-        cm_name, data_key, _ = COMPONENT_MAP[component]
-        namespace = "monitoring"
+        cm_name, data_key, _, namespace = COMPONENT_MAP[component]
         k8s_helper = KubernetesResourceHelper()
         
         # 2. Get existing ConfigMap
@@ -100,19 +109,9 @@ async def POST(request: Request, body: ConfigUpdate) -> dict:
         # 4. Apply update
         k8s_helper.apply_resource(cm)
         
-        # 5. Trigger reload (Hot-reload)
-        try:
-            if component == "alertmanager":
-                reload_url = "http://alertmanager-service.monitoring.svc.cluster.local/-/reload"
-                requests.post(reload_url, timeout=5)
-            elif component == "prometheus":
-                reload_url = "http://prometheus-service.monitoring.svc.cluster.local/-/reload"
-                requests.post(reload_url, timeout=5)
-            # Grafana often needs a pod restart for provisioning CM changes if not using sidecars
-            
-            logger.info(f"{component} configuration updated and reload triggered")
-        except Exception as re:
-            logger.warning(f"Failed to trigger hot-reload for {component}: {str(re)}")
+        # 5. Hot-reload is now handled automatically by internal config-reloader sidecars
+        # We no longer need to trigger it via external requests, which avoids DNS issues.
+        logger.info(f"{component} configuration updated; internal sidecar will trigger hot-reload")
         
         return {"success": True, "message": f"{component.capitalize()} configuration updated successfully"}
     except Exception as e:
