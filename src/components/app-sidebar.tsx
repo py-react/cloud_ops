@@ -1,46 +1,7 @@
 import * as React from "react";
 import {
-  LayoutDashboard,
-  DockIcon as Docker,
-  Box,
-  Database,
-  Network,
-  Cpu,
-  Server,
-  ChevronLeft,
   ChevronRight,
-  Computer,
-  BoxIcon,
-  ShieldIcon,
-  HandCoinsIcon,
-  FileKeyIcon,
-  BadgeIcon as Certificate,
-  WaypointsIcon,
-  NetworkIcon,
-  RocketIcon,
-  ListIcon,
-  Layers,
-  Settings,
-  Users,
-  Globe,
-  Folder,
-  Plug,
-  Cog,
-  FileCog,
-  Unplug,
-  Orbit,
   ChevronDown,
-  ChevronUp,
-  Book,
-  Activity,
-  Zap,
-  Calendar,
-  Container,
-  Boxes,
-  SquareTerminal,
-  Braces,
-  Layout,
-  Key,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
@@ -48,7 +9,6 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar";
 import CustomLink from "@/libs/Link";
 import { cn } from "@/libs/utils";
-import { ShuffleIcon } from "@radix-ui/react-icons";
 import { NamespaceContext } from "./kubernetes/contextProvider/NamespaceContext";
 import { getMenuItems } from "@/config/menu-items";
 
@@ -182,13 +142,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       ...prev,
       [key]: !prev[key],
     }));
-  };
-
-  const isBranchActive = (itemPath: string) => {
-    if (!itemPath) return false;
-    const normalizedItemPath = itemPath.replace(/\/\//g, '/');
-    if (normalizedItemPath === '/') return currentPath === '/';
-    return currentPath === normalizedItemPath || currentPath.startsWith(normalizedItemPath + '/');
   };
 
   const isItemActive = (itemPath: string, hasChildren: boolean = false) => {

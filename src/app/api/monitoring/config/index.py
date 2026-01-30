@@ -7,18 +7,24 @@ from pydantic import BaseModel
 from app.k8s_helper.monitoring.stack import (
     DEFAULT_ALERTMANAGER_CONFIG, 
     DEFAULT_PROMETHEUS_CONFIG,
+    DEFAULT_PROMETHEUS_RULES,
     DEFAULT_GRAFANA_DATASOURCES,
     DEFAULT_NODE_EXPORTER_CONFIG,
-    DEFAULT_METRICS_SERVER_CONFIG
+    DEFAULT_METRICS_SERVER_CONFIG,
+    DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG,
+    get_k8s_dashboard_json
 )
 
 logger = logging.getLogger(__name__)
 
 # Mapping component to (ConfigMap name, data key, default config, namespace)
 COMPONENT_MAP = {
-    "alertmanager": ("alertmanager-config", "alertmanager.yml", DEFAULT_ALERTMANAGER_CONFIG, "monitoring"),
+    "alertmanager": ("alertmanager-config", "alertmanager.yml", DEFAULT_ALERTMANAGER_CONFIG, "alerting"),
     "prometheus": ("prometheus-server-conf", "prometheus.yml", DEFAULT_PROMETHEUS_CONFIG, "monitoring"),
+    "prometheus-rules": ("prometheus-server-conf", "alert_rules.yml", DEFAULT_PROMETHEUS_RULES, "monitoring"),
     "grafana": ("grafana-datasources", "datasources.yaml", DEFAULT_GRAFANA_DATASOURCES, "monitoring"),
+    "grafana-dashboards": ("grafana-dashboard-k8s", "k8s-dashboard.json", get_k8s_dashboard_json(), "monitoring"),
+    "grafana-provider": ("grafana-dashboards-provider", "dashboards.yaml", DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG, "monitoring"),
     "node-exporter": ("node-exporter-conf", "config.yml", DEFAULT_NODE_EXPORTER_CONFIG, "monitoring"),
     "metrics-server": ("metrics-server-config", "config.yml", DEFAULT_METRICS_SERVER_CONFIG, "kube-system"),
 }
@@ -109,11 +115,61 @@ async def POST(request: Request, body: ConfigUpdate) -> dict:
         # 4. Apply update
         k8s_helper.apply_resource(cm)
         
-        # 5. Hot-reload is now handled automatically by internal config-reloader sidecars
-        # We no longer need to trigger it via external requests, which avoids DNS issues.
-        logger.info(f"{component} configuration updated; internal sidecar will trigger hot-reload")
+        # 5. Trigger Rollout Restart to ensure immediate reflection
+        # This bypasses the Kubelet volume sync delay (~60s) which confuses users.
+        await restart_rollout(k8s_helper, component, namespace)
         
-        return {"success": True, "message": f"{component.capitalize()} configuration updated successfully"}
+        logger.info(f"{component} configuration updated; triggered rollout restart for immediate effect.")
+        
+        return {"success": True, "message": f"{component.capitalize()} configuration updated. Pods are restarting to apply changes immediately."}
     except Exception as e:
         logger.error(f"Error updating {component} config: {str(e)}")
         return {"success": False, "message": str(e)}
+
+async def restart_rollout(k8s_helper, component: str, namespace: str):
+    """
+    Triggers a rollout restart by patching the deployment's annotations with a timestamp.
+    """
+    try:
+        from datetime import datetime
+        
+        # Map component to deployment info
+        deployment_map = {
+            "alertmanager": ("deployment", "alertmanager"),
+            "prometheus": ("deployment", "prometheus-deployment"),
+            "prometheus-rules": ("deployment", "prometheus-deployment"),
+            "grafana": ("deployment", "grafana"),
+            "grafana-dashboards": ("deployment", "grafana"),
+            "grafana-provider": ("deployment", "grafana"),
+            "node-exporter": ("daemonset", "node-exporter"),
+            "metrics-server": ("deployment", "metrics-server") # Usually managed by addon, but safe to restart
+        }
+        
+        if component not in deployment_map:
+            return
+
+        kind, name = deployment_map[component]
+        logger.info(f"Triggering {kind} restart for {name} in {namespace}")
+
+        # Use the dynamic client for generic patching
+        resource_client = k8s_helper.dyn_client.resources.get(api_version="apps/v1", kind=kind.capitalize())
+        
+        # Patch body: update annotation
+        patch = {
+            "spec": {
+                "template": {
+                    "metadata": {
+                        "annotations": {
+                            "kubectl.kubernetes.io/restartedAt": datetime.now().isoformat()
+                        }
+                    }
+                }
+            }
+        }
+        
+        resource_client.patch(name=name, namespace=namespace, body=patch)
+        
+    except Exception as e:
+        logger.error(f"Failed to trigger rollout restart for {component}: {e}")
+        # Build strict errors. We don't want to fail the whole config update if restart fails,
+        # but we should log it. The sidecar will eventually pick it up.
