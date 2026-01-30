@@ -56,22 +56,22 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
-export type TDataMonitoringProxyClusterProxyServiceNamespacePathGet = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPost = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataMonitoringProxyClusterProxyServiceNamespacePathGet1 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPost1 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataMonitoringProxyClusterProxyServiceNamespacePathGet2 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPost2 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataMonitoringProxyClusterProxyServiceNamespacePathGet3 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPost3 = {
                 namespace: string
 path: string
 service: string
@@ -573,63 +573,13 @@ path,
 	}
 
 	/**
-	 * Monitoring Proxy
+	 * Cluster Proxy
 	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
  * Handles authentication, URL construction, and content rewriting for assets.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static monitoringProxyClusterProxyServiceNamespacePathGet(data: TDataMonitoringProxyClusterProxyServiceNamespacePathGet): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'GET',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Monitoring Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static monitoringProxyClusterProxyServiceNamespacePathGet1(data: TDataMonitoringProxyClusterProxyServiceNamespacePathGet1): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'PUT',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Monitoring Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static monitoringProxyClusterProxyServiceNamespacePathGet2(data: TDataMonitoringProxyClusterProxyServiceNamespacePathGet2): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPost(data: TDataClusterProxyClusterProxyServiceNamespacePathPost): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -648,13 +598,13 @@ service,
 	}
 
 	/**
-	 * Monitoring Proxy
+	 * Cluster Proxy
 	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
  * Handles authentication, URL construction, and content rewriting for assets.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static monitoringProxyClusterProxyServiceNamespacePathGet3(data: TDataMonitoringProxyClusterProxyServiceNamespacePathGet3): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPost1(data: TDataClusterProxyClusterProxyServiceNamespacePathPost1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -662,6 +612,56 @@ service,
 } = data;
 		return __request(OpenAPI, {
 			method: 'DELETE',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathPost2(data: TDataClusterProxyClusterProxyServiceNamespacePathPost2): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathPost3(data: TDataClusterProxyClusterProxyServiceNamespacePathPost3): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
