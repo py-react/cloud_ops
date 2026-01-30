@@ -20,10 +20,10 @@ import {
 interface MonitoringCardProps {
     title: string;
     description: string;
-    component: "prometheus" | "grafana";
+    component: "prometheus" | "grafana" | "metrics-server";
     icon: React.ReactNode;
     features: string[];
-    proxyUrl: string;
+    proxyUrl?: string;
 }
 
 function MonitoringCard({ title, description, component, icon, features, proxyUrl }: MonitoringCardProps) {
@@ -129,7 +129,7 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
                         ))}
                     </div>
 
-                    {installed && (
+                    {installed && proxyUrl && (
                         <div className="pt-4 mt-4 border-t border-dashed">
                             <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
                                 <span className="text-sm font-medium">Dashboard</span>
@@ -271,6 +271,19 @@ function Monitoring() {
                             "Plugin Support included"
                         ]}
                         proxyUrl="/cluster/proxy/grafana/monitoring/"
+                    />
+
+                    <MonitoringCard
+                        title="Metrics Server"
+                        description="Cluster-wide aggregator of resource usage data."
+                        component="metrics-server"
+                        icon={<Activity className="w-8 h-8 text-primary" />}
+                        features={[
+                            "Resource Metrics API",
+                            "Enables Horizontal Pod Autoscaler",
+                            "Support for 'kubectl top'",
+                            "Lightweight (v0.6.4)"
+                        ]}
                     />
                 </div>
 

@@ -1,4 +1,8 @@
-from fastapi import FastAPI, Request
+import asyncio
+import ssl
+import websockets
+from fastapi import FastAPI, Request, WebSocket
+from starlette.websockets import WebSocketDisconnect
 import httpx
 from starlette.responses import Response
 from starlette.requests import Request
@@ -66,7 +70,17 @@ async def monitoring_proxy(request: Request, service: str, namespace: str, path:
         headers = dict(request.headers)
         headers.pop("Host", None)
         headers.pop("host", None)
-        headers.pop("content-length", None) 
+        headers.pop("content-length", None)
+        # Strip Origin/Referer to avoid Grafana "Origin not allowed" errors
+        # This forces the backend to treat it as a direct request or rely on its own internal handling
+        headers.pop("Origin", None)
+        headers.pop("origin", None)
+        headers.pop("Referer", None)
+        headers.pop("referer", None)
+        headers.pop("Cookie", None)
+        headers.pop("cookie", None)
+        headers.pop("Authorization", None)
+        headers.pop("authorization", None)
         
         # Add K8s Auth headers
         if configuration.api_key:
@@ -145,6 +159,97 @@ async def monitoring_proxy(request: Request, service: str, namespace: str, path:
         return Response(content=f"Proxy Error: {str(e)}", status_code=500)
 
 
+async def websocket_proxy(websocket: WebSocket):
+    """
+    Proxy WebSocket requests to Kubernetes pods/services (e.g. Grafana Live).
+    """
+    await websocket.accept()
+    
+    service = websocket.path_params["service"]
+    namespace = websocket.path_params["namespace"]
+    path = websocket.path_params.get("path", "")
+    
+    try:
+        config.load_config()
+        configuration = client.Configuration.get_default_copy()
+        api_server = configuration.host.replace("https://", "wss://").replace("http://", "ws://")
+        
+        service_port = 80
+        
+        # Ensure path starts with /
+        if path:
+            path = "/" + path.lstrip("/")
+        else:
+            path = "/"
+            
+        k8s_proxy_path = f"/api/v1/namespaces/{namespace}/services/{service}:{service_port}/proxy{path}"
+        target_url = f"{api_server}{k8s_proxy_path}"
+        
+        # Prepare Headers
+        headers = dict(websocket.headers)
+        headers.pop("Host", None)
+        headers.pop("host", None)
+        headers.pop("Origin", None) 
+        headers.pop("origin", None)
+        headers.pop("Sec-WebSocket-Extensions", None) # Avoid negotiation issues
+        
+        # Add K8s Auth headers
+        if configuration.api_key:
+            for key, value in configuration.api_key.items():
+                headers[key] = value
+        
+        if configuration.api_key_prefix:
+            for key, value in configuration.api_key_prefix.items():
+                if key in headers:
+                    headers[key] = f"{value} {headers[key]}"
+
+        # Prepare SSL Context
+        ssl_context = ssl.create_default_context()
+        if configuration.ssl_ca_cert:
+            ssl_context.load_verify_locations(cafile=configuration.ssl_ca_cert)
+        
+        if configuration.cert_file and configuration.key_file:
+            ssl_context.load_cert_chain(certfile=configuration.cert_file, keyfile=configuration.key_file)
+            
+        if not configuration.verify_ssl:
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
+        # Connect to Upstream
+        # Websockets 14.0+ renamed extra_headers to additional_headers
+        async with websockets.connect(target_url, ssl=ssl_context, additional_headers=headers) as upstream_ws:
+            
+            async def forward_client_to_upstream():
+                try:
+                    while True:
+                        data = await websocket.receive_text()
+                        await upstream_ws.send(data)
+                except WebSocketDisconnect:
+                    pass
+                except Exception as e:
+                    logger.error(f"WS Client->Upstream error: {e}")
+
+            async def forward_upstream_to_client():
+                try:
+                    while True:
+                        data = await upstream_ws.recv()
+                        # Grafana Live might send binary/text, starlette handle send_text/send_bytes
+                        await websocket.send_text(data) 
+                except Exception as e:
+                    logger.error(f"WS Upstream->Client error: {e}")
+
+            # Run both forwards concurrently
+            await asyncio.gather(
+                forward_client_to_upstream(),
+                forward_upstream_to_client(),
+                return_exceptions=True
+            )
+            
+    except Exception as e:
+        logger.error(f"WebSocket Proxy Error: {e}")
+        await websocket.close(code=1011)
+
+
 
 
 # Function to extend the app by adding routes (following your exact pattern)
@@ -176,6 +281,9 @@ def extend_app(app: FastAPI):
 
     app.router.routes.append(route1)
     app.router.routes.append(route2)
+    
+    # Add WebSocket Route
+    app.add_websocket_route("/cluster/proxy/{service}/{namespace}/{path:path}", websocket_proxy)
 
     @app.on_event("shutdown")
     def shutdown_event():

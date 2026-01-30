@@ -1,6 +1,7 @@
 from fastapi import Request
 from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
-from app.k8s_helper.monitoring.stack import get_prometheus_manifests, get_grafana_manifests
+from app.k8s_helper.monitoring.stack import get_prometheus_manifests, get_grafana_manifests, get_node_exporter_manifests
+from app.k8s_helper.monitoring.metrics_server import get_metrics_server_manifests
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,16 +11,25 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
     Check if a specific monitoring component is installed in the 'monitoring' namespace.
     """
     try:
-        namespace = "monitoring"
+        # Determine namespace based on component
+        if component == "metrics-server":
+            namespace = "kube-system"
+            deploy_name = "metrics-server"
+        else:
+            namespace = "monitoring"
+            deploy_name = "prometheus-deployment" if component == "prometheus" else "grafana"
+
         k8s_helper = KubernetesResourceHelper()
-        namespaces = k8s_helper.get_namespaces()
-        ns_exists = any(ns.get("metadata", {}).get("name") == namespace for ns in namespaces)
         
-        if not ns_exists:
-            return {"installed": False, "namespace": namespace}
+        # Only check if custom namespace exists (kube-system always exists)
+        if namespace != "kube-system":
+            namespaces = k8s_helper.get_namespaces()
+            ns_exists = any(ns.get("metadata", {}).get("name") == namespace for ns in namespaces)
+            
+            if not ns_exists:
+                return {"installed": False, "namespace": namespace}
         
         # Check specific deployment
-        deploy_name = "prometheus-deployment" if component == "prometheus" else "grafana"
         deployments = k8s_helper.get_resource_details("deployments", namespace=namespace)
         target = next((d for d in deployments if d.get("metadata", {}).get("name") == deploy_name), None)
         
@@ -49,9 +59,11 @@ async def POST(request: Request, component: str = "prometheus") -> dict:
         k8s_helper = KubernetesResourceHelper()
         
         if component == "prometheus":
-            manifests = get_prometheus_manifests(namespace)
-        else:
+            manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace)
+        elif component == "grafana":
             manifests = get_grafana_manifests(namespace)
+        else:
+            manifests = get_metrics_server_manifests("kube-system")
         
         # 1. Create namespace if it doesn't exist
         try:
@@ -85,13 +97,17 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
         k8s_helper = KubernetesResourceHelper()
         
         if component == "prometheus":
-            manifests = get_prometheus_manifests(namespace)
-        else:
+            manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace)
+        elif component == "grafana":
             manifests = get_grafana_manifests(namespace)
+        else:
+            manifests = get_metrics_server_manifests("kube-system")
             
         results = []
         for manifest in manifests:
             try:
+                # Use namespace from manifest if present, otherwise default to "monitoring"
+                # DELETE operation in resource_helper typically requires correct metadata
                 k8s_helper.delete_resource(manifest)
                 results.append({"kind": manifest["kind"], "name": manifest["metadata"]["name"], "status": "deleted"})
             except Exception as e:
