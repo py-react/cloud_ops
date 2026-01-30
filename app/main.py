@@ -40,7 +40,7 @@ async def proxy(path: str, request: Request, response: Response):
 import requests
 from starlette.concurrency import run_in_threadpool
 
-async def monitoring_proxy(request: Request, service: str, namespace: str, path: str = ""):
+async def cluster_proxy(request: Request, service: str, namespace: str, path: str = ""):
     """
     Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
     Handles authentication, URL construction, and content rewriting for assets.
@@ -159,7 +159,7 @@ async def monitoring_proxy(request: Request, service: str, namespace: str, path:
         return Response(content=f"Proxy Error: {str(e)}", status_code=500)
 
 
-async def websocket_proxy(websocket: WebSocket):
+async def cluster_websocket_proxy(websocket: WebSocket):
     """
     Proxy WebSocket requests to Kubernetes pods/services (e.g. Grafana Live).
     """
@@ -268,22 +268,16 @@ def extend_app(app: FastAPI):
 
     app.add_api_route("/api/docker/hub/{path:path}", methods=["GET"], endpoint=proxy)
 
-    route1 = APIRoute(
+    route = APIRoute(
         path="/cluster/proxy/{service}/{namespace}/{path:path}",
-        endpoint=monitoring_proxy,
-        methods=["GET", "POST", "PUT", "DELETE"],
-    )
-    route2 = APIRoute(
-        path="/cluster/proxy/{service}/{namespace}/",
-        endpoint=monitoring_proxy,
+        endpoint=cluster_proxy,
         methods=["GET", "POST", "PUT", "DELETE"],
     )
 
-    app.router.routes.append(route1)
-    app.router.routes.append(route2)
+    app.router.routes.append(route)
     
     # Add WebSocket Route
-    app.add_websocket_route("/cluster/proxy/{service}/{namespace}/{path:path}", websocket_proxy)
+    app.add_websocket_route("/cluster/proxy/{service}/{namespace}/{path:path}", cluster_websocket_proxy)
 
     @app.on_event("shutdown")
     def shutdown_event():

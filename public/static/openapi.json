@@ -44,118 +44,10 @@
       }
     },
     "/cluster/proxy/{service}/{namespace}/{path}": {
-      "delete": {
-        "summary": "Monitoring Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___path__delete",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "summary": "Monitoring Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___path__delete",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Monitoring Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___path__delete",
+        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -209,7 +101,7 @@
       "put": {
         "summary": "Monitoring Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___path__delete",
+        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -235,118 +127,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/cluster/proxy/{service}/{namespace}/": {
-      "delete": {
-        "summary": "Monitoring Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___delete",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "summary": "Monitoring Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___delete",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
               "title": "Path"
             }
           }
@@ -375,7 +155,7 @@
       "post": {
         "summary": "Monitoring Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___delete",
+        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -397,11 +177,10 @@
           },
           {
             "name": "path",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "default": "",
               "title": "Path"
             }
           }
@@ -427,10 +206,10 @@
           }
         }
       },
-      "put": {
+      "delete": {
         "summary": "Monitoring Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___delete",
+        "operationId": "monitoring_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -452,11 +231,10 @@
           },
           {
             "name": "path",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "default": "",
               "title": "Path"
             }
           }
