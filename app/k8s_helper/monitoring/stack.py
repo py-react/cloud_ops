@@ -9,6 +9,86 @@ def get_namespace_manifest(namespace):
         "metadata": {"name": namespace}
     }
 
+def get_alertmanager_manifests(namespace="monitoring"):
+    """
+    Returns a list of Kubernetes manifests for Alertmanager.
+    """
+    return [
+        # Alertmanager ConfigMap
+        {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {"name": "alertmanager-config", "namespace": namespace},
+            "data": {
+                "alertmanager.yml": """
+global:
+  resolve_timeout: 5m
+route:
+  group_by: ['alertname']
+  group_wait: 2s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'web.hook'
+receivers:
+- name: 'web.hook'
+  webhook_configs:
+  - url: 'http://127.0.0.1:5001/'
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']
+"""
+            }
+        },
+        # Alertmanager Deployment
+        {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "alertmanager", "namespace": namespace},
+            "spec": {
+                "replicas": 1,
+                "selector": {"matchLabels": {"app": "alertmanager"}},
+                "template": {
+                    "metadata": {"labels": {"app": "alertmanager"}},
+                    "spec": {
+                        "containers": [
+                            {
+                                "name": "alertmanager",
+                                "image": "prom/alertmanager:v0.25.0",
+                                "args": [
+                                    "--config.file=/etc/alertmanager/alertmanager.yml",
+                                    "--storage.path=/alertmanager/"
+                                ],
+                                "ports": [{"containerPort": 9093}],
+                                "volumeMounts": [
+                                    {"name": "config-volume", "mountPath": "/etc/alertmanager"},
+                                    {"name": "storage-volume", "mountPath": "/alertmanager"}
+                                ]
+                            }
+                        ],
+                        "volumes": [
+                            {"name": "config-volume", "configMap": {"name": "alertmanager-config"}},
+                            {"name": "storage-volume", "emptyDir": {}}
+                        ]
+                    }
+                }
+            }
+        },
+        # Alertmanager Service
+        {
+            "apiVersion": "v1",
+            "kind": "Service",
+            "metadata": {"name": "alertmanager-service", "namespace": namespace},
+            "spec": {
+                "selector": {"app": "alertmanager"},
+                "ports": [{"port": 80, "targetPort": 9093}],
+                "type": "ClusterIP"
+            }
+        }
+    ]
+
 def get_prometheus_manifests(namespace="monitoring"):
     """
     Returns a list of Kubernetes manifests for Prometheus.
@@ -52,15 +132,72 @@ def get_prometheus_manifests(namespace="monitoring"):
                 {"kind": "ServiceAccount", "name": "prometheus-server", "namespace": namespace}
             ]
         },
-        # Prometheus ConfigMap
+        # Prometheus ConfigMap (Config + Rules)
         {
             "apiVersion": "v1",
             "kind": "ConfigMap",
             "metadata": {"name": "prometheus-server-conf", "namespace": namespace},
             "data": {
+                "alert_rules.yml": """
+groups:
+- name: default_rules
+  rules:
+  - alert: NodeDown
+    expr: up{job="kubernetes-nodes"} == 0
+    for: 10s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Node {{ $labels.instance }} down"
+      description: "A node has been unreachable."
+
+  - alert: PodCrashLooping
+    expr: rate(kube_pod_container_status_restarts_total[1m]) * 60 > 0
+    for: 0s
+    labels:
+      severity: warning
+    annotations:
+      summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} crashing"
+      description: "Pod is restarting frequently."
+
+  - alert: HighCPUUsage
+    expr: sum(rate(container_cpu_usage_seconds_total{container!=""}[1m])) by (pod, namespace) > 0.8
+    for: 0s
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage on pod {{ $labels.namespace }}/{{ $labels.pod }}"
+      description: "CPU usage is above 80%."
+
+  - alert: HighMemoryUsage
+    expr: sum(container_memory_usage_bytes{container!=""}) by (pod, namespace) / sum(container_spec_memory_limit_bytes{container!=""}) by (pod, namespace) > 0.8
+    for: 0s
+    labels:
+      severity: warning
+    annotations:
+      summary: "High Memory usage on pod {{ $labels.namespace }}/{{ $labels.pod }}"
+      description: "Memory usage is above 80%."
+""",
                 "prometheus.yml": """
 global:
-  scrape_interval: 15s
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+rule_files:
+  - /etc/prometheus/alert_rules.yml
+
+alerting:
+  alertmanagers:
+  - kubernetes_sd_configs:
+    - role: service
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_service_name]
+      regex: alertmanager-service
+      action: keep
+    - source_labels: [__meta_kubernetes_namespace]
+      regex: monitoring
+      action: keep
+
 scrape_configs:
   - job_name: 'kubernetes-apiservers'
     kubernetes_sd_configs:
@@ -115,6 +252,10 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_endpoints_name]
         regex: 'node-exporter'
         action: keep
+
+  - job_name: 'kube-state-metrics'
+    static_configs:
+      - targets: ['kube-state-metrics:8080']
 """
             }
         },
@@ -343,6 +484,78 @@ providers:
         }
     ]
 
+def get_kube_state_metrics_manifests(namespace="monitoring"):
+    """
+    Returns manifests for kube-state-metrics.
+    Essential for many cluster-wide Prometheus alerting rules.
+    """
+    return [
+        {
+            "apiVersion": "v1",
+            "kind": "ServiceAccount",
+            "metadata": {"name": "kube-state-metrics", "namespace": namespace}
+        },
+        {
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "ClusterRole",
+            "metadata": {"name": "kube-state-metrics"},
+            "rules": [
+                {"apiGroups": [""], "resources": ["configmaps", "secrets", "nodes", "pods", "services", "resourcequotas", "replicationcontrollers", "limitranges", "persistentvolumeclaims", "persistentvolumes", "namespaces", "endpoints"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["extensions"], "resources": ["daemonsets", "deployments", "replicasets", "ingresses"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["apps"], "resources": ["statefulsets", "daemonsets", "deployments", "replicasets"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["batch"], "resources": ["cronjobs", "jobs"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["autoscaling"], "resources": ["horizontalpodautoscalers"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["authentication.k8s.io"], "resources": ["tokenreviews"], "verbs": ["create"]},
+                {"apiGroups": ["authorization.k8s.io"], "resources": ["subjectaccessreviews"], "verbs": ["create"]},
+                {"apiGroups": ["policy"], "resources": ["poddisruptionbudgets"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["certificates.k8s.io"], "resources": ["certificatesigningrequests"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["storage.k8s.io"], "resources": ["storageclasses", "volumeattachments"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["admissionregistration.k8s.io"], "resources": ["mutatingwebhookconfigurations", "validatingwebhookconfigurations"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["networking.k8s.io"], "resources": ["networkpolicies", "ingressclasses"], "verbs": ["list", "watch"]},
+                {"apiGroups": ["coordination.k8s.io"], "resources": ["leases"], "verbs": ["list", "watch"]}
+            ]
+        },
+        {
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "ClusterRoleBinding",
+            "metadata": {"name": "kube-state-metrics"},
+            "roleRef": {"apiGroup": "rbac.authorization.k8s.io", "kind": "ClusterRole", "name": "kube-state-metrics"},
+            "subjects": [{"kind": "ServiceAccount", "name": "kube-state-metrics", "namespace": namespace}]
+        },
+        {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "kube-state-metrics", "namespace": namespace},
+            "spec": {
+                "replicas": 1,
+                "selector": {"matchLabels": {"app": "kube-state-metrics"}},
+                "template": {
+                    "metadata": {"labels": {"app": "kube-state-metrics"}},
+                    "spec": {
+                        "serviceAccountName": "kube-state-metrics",
+                        "containers": [
+                            {
+                                "name": "kube-state-metrics",
+                                "image": "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.9.2",
+                                "ports": [{"containerPort": 8080, "name": "http-metrics"}],
+                                "readinessProbe": {"httpGet": {"path": "/", "port": 8081}, "initialDelaySeconds": 5, "timeoutSeconds": 5}
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Service",
+            "metadata": {"name": "kube-state-metrics", "namespace": namespace, "labels": {"app": "kube-state-metrics"}},
+            "spec": {
+                "ports": [{"port": 8080, "targetPort": 8080, "name": "http-metrics"}],
+                "selector": {"app": "kube-state-metrics"}
+            }
+        }
+    ]
+
 def get_node_exporter_manifests(namespace="monitoring"):
     """
     Returns manifests for Node Exporter DaemonSet and Service.
@@ -409,4 +622,6 @@ def get_monitoring_manifests(namespace="monitoring"):
     return [get_namespace_manifest(namespace)] + \
            get_prometheus_manifests(namespace) + \
            get_grafana_manifests(namespace) + \
-           get_node_exporter_manifests(namespace)
+           get_node_exporter_manifests(namespace) + \
+           get_alertmanager_manifests(namespace) + \
+           get_kube_state_metrics_manifests(namespace)

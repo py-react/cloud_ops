@@ -22,7 +22,7 @@ import AddonCard from '@/components/AddonCard'
 interface MonitoringCardProps {
     title: string;
     description: string;
-    component: "prometheus" | "grafana" | "metrics-server";
+    component: "prometheus" | "grafana" | "metrics-server" | "alertmanager";
     icon: React.ReactNode;
     features: string[];
     proxyUrl?: string;
@@ -207,6 +207,23 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
 }
 
 function Monitoring() {
+    const [prometheusInstalled, setPrometheusInstalled] = useState(false)
+
+    useEffect(() => {
+        const checkPrometheus = async () => {
+            try {
+                const response: any = await DefaultService.apiMonitoringInstallGet({ component: 'prometheus' })
+                setPrometheusInstalled(!!response.installed)
+            } catch (error) {
+                console.error("Error checking Prometheus status:", error)
+            }
+        }
+        checkPrometheus()
+        // Poll every 5 seconds to keep visibility in sync
+        const interval = setInterval(checkPrometheus, 5000)
+        return () => clearInterval(interval)
+    }, [])
+
     return (
         <PageLayout
             title="Monitoring Essentials"
@@ -252,6 +269,21 @@ function Monitoring() {
                             "kubectl top support"
                         ]}
                     />
+
+                    {prometheusInstalled && (
+                        <MonitoringCard
+                            title="Alerting"
+                            description="Professional-grade alerting with Alertmanager and opinionated rules."
+                            component="alertmanager"
+                            icon={<AlertCircle />}
+                            features={[
+                                "Alertmanager (v0.25.0)",
+                                "Node & Pod Health Rules",
+                                "Webhook Ready"
+                            ]}
+                            proxyUrl="/cluster/proxy/alertmanager-service/monitoring/"
+                        />
+                    )}
 
                     <div className="h-full">
                         <Card className="border border-dashed border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-6 text-center hover:bg-primary/10 transition-all cursor-pointer group h-full min-h-[280px]">
