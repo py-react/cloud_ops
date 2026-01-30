@@ -26,7 +26,7 @@ import { z } from 'zod'
 interface MonitoringCardProps {
     title: string;
     description: string;
-    component: "prometheus" | "grafana" | "metrics-server" | "alertmanager";
+    component: "prometheus" | "grafana" | "metrics-server" | "alertmanager" | "node-exporter";
     icon: React.ReactNode;
     features: string[];
     proxyUrl?: string;
@@ -37,7 +37,7 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
     const [installed, setInstalled] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [logs, setLogs] = useState<any[]>([])
-    const [configYaml, setConfigYaml] = useState('')
+    const [configs, setConfigs] = useState<Record<string, string>>({})
     const [isOpinionated, setIsOpinionated] = useState(true)
     const [isConfigOpen, setIsConfigOpen] = useState(false)
     const [configLoading, setConfigLoading] = useState(false)
@@ -115,16 +115,24 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
         setConfigLoading(true)
         console.log(`[MonitoringCard] Fetching config for: ${component}`)
         try {
-            // Explicitly pass component in query string for maximum reliability
-            const response = await fetch(`/api/monitoring/config?component=${component}`).then(res => res.json())
+            // Components to fetch configs for
+            const targets = component === 'prometheus' ? ['prometheus', 'node-exporter'] : [component]
+            const newConfigs: Record<string, string> = { ...configs }
 
-            console.log(`[MonitoringCard] Received config for ${component}:`, response)
-            if (response.success) {
-                setConfigYaml(response.config || '')
-                setIsOpinionated(response.isOpinionated ?? false)
-            } else {
-                toast.error(response.message || "Failed to fetch configuration")
+            for (const target of targets) {
+                const response = await fetch(`/api/monitoring/config?component=${target}`).then(res => res.json())
+                console.log(`[MonitoringCard] Received config for ${target}:`, response)
+                if (response.success) {
+                    newConfigs[target] = response.config || ''
+                    // Opinionated status usually matters for the primary component (e.g. AM or Prometheus)
+                    if (target === component) {
+                        setIsOpinionated(response.isOpinionated ?? false)
+                    }
+                } else {
+                    toast.error(response.message || `Failed to fetch ${target} configuration`)
+                }
             }
+            setConfigs(newConfigs)
         } catch (error) {
             toast.error("An error occurred while fetching configuration")
             console.error(error)
@@ -133,24 +141,49 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
         }
     }
 
-    const handleSaveConfig = async (data: { config: string }) => {
+    const handleSaveConfig = async (data: any) => {
         setConfigLoading(true)
         try {
+            // Determine which config we are saving based on currentStep
+            let targetComponent = component;
+            let targetConfig = data.config; // Default field
+
+            if (component === 'prometheus') {
+                if (currentStep === 'config') {
+                    targetComponent = 'prometheus';
+                    targetConfig = data.config;
+                } else if (currentStep === 'node-exporter') {
+                    targetComponent = 'node-exporter';
+                    targetConfig = data.node_exporter_config;
+                }
+            }
+
             // @ts-ignore
-            const response: any = await DefaultService.apiMonitoringConfigPost({ requestBody: { config: data.config, component } })
+            const response: any = await DefaultService.apiMonitoringConfigPost({
+                requestBody: {
+                    config: targetConfig,
+                    component: targetComponent
+                }
+            })
+
             if (response.success) {
-                toast.success("Configuration updated successfully!")
-                setIsConfigOpen(false)
-                // Refresh local state to update UI/Test button visibility
+                toast.success(`${targetComponent.charAt(0).toUpperCase() + targetComponent.slice(1)} configuration updated!`)
+
+                // If it's the last step or not prometheus, close it
+                if (component !== 'prometheus' || currentStep === 'node-exporter' || currentStep === 'logs') {
+                    setIsConfigOpen(false)
+                }
+
+                // Refresh local state
                 fetchConfig()
             } else {
                 toast.error(response.message || "Failed to update configuration")
-                throw new Error(response.message) // Rethrow for FormWizard
+                throw new Error(response.message)
             }
         } catch (error) {
             toast.error("An error occurred while updating configuration")
             console.error(error)
-            throw error // Rethrow for FormWizard
+            throw error
         } finally {
             setConfigLoading(false)
         }
@@ -204,6 +237,22 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
             fileName: 'datasources.yaml',
             configLabel: 'Ensure the datasource URLs match your cluster internal service names.',
             icon: LayoutDashboard
+        },
+        'metrics-server': {
+            label: 'Metrics Server Config',
+            description: 'Configure resource metrics aggregation.',
+            longDescription: 'Adjust the CLI arguments for the Metrics Server. This allows you to tune resolution, port, and security settings.',
+            fileName: 'config.yml',
+            configLabel: 'Invalid flags may prevent the Metrics Server from starting.',
+            icon: Activity
+        },
+        'node-exporter': {
+            label: 'Node Exporter Config',
+            description: 'Configure hardware and OS metric collection.',
+            longDescription: 'Adjust the CLI arguments for the Node Exporter DaemonSet. You can enable/disable specific collectors and paths.',
+            fileName: 'config.yml',
+            configLabel: 'Consult the Node Exporter documentation for available collector flags.',
+            icon: Database
         }
     }
 
@@ -215,15 +264,32 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
             label: currentMeta.label,
             description: currentMeta.description,
             longDescription: currentMeta.longDescription,
-            icon: Settings2Icon,
+            icon: currentMeta.icon || Settings2Icon,
+            submitOnNext: component === 'prometheus', // Save prometheus config before moving to node-exporter
             component: (props: any) => (
                 <MonitoringConfigStep
                     {...props}
                     fileName={currentMeta.fileName}
                     configLabel={currentMeta.configLabel}
+                    name="config"
                 />
             ),
         },
+        ...(component === 'prometheus' ? [{
+            id: 'node-exporter',
+            label: configMeta['node-exporter'].label,
+            description: configMeta['node-exporter'].description,
+            longDescription: configMeta['node-exporter'].longDescription,
+            icon: Database,
+            component: (props: any) => (
+                <MonitoringConfigStep
+                    {...props}
+                    fileName={configMeta['node-exporter'].fileName}
+                    configLabel={configMeta['node-exporter'].configLabel}
+                    name="node_exporter_config"
+                />
+            ),
+        }] : []),
         ...(component === 'alertmanager' && isOpinionatedConfig ? [{
             id: 'logs',
             label: 'Live Alert Stream',
@@ -259,7 +325,7 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
                 </Button>
             ) : (
                 <div className="flex flex-col gap-2">
-                    {['alertmanager', 'prometheus', 'grafana'].includes(component) && (
+                    {['alertmanager', 'prometheus', 'grafana', 'node-exporter'].includes(component) && (
                         <>
                             <div className="flex gap-2">
                                 <Button
@@ -295,8 +361,14 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
                                 isWizardOpen={isConfigOpen}
                                 setIsWizardOpen={setIsConfigOpen}
                                 steps={wizardSteps}
-                                initialValues={{ config: configYaml }}
-                                schema={z.object({ config: z.string().min(1, "Config cannot be empty") })}
+                                initialValues={{
+                                    config: configs[component] || '',
+                                    node_exporter_config: configs['node-exporter'] || ''
+                                }}
+                                schema={z.object({
+                                    config: z.string().min(1, "Config cannot be empty"),
+                                    node_exporter_config: z.string().optional()
+                                })}
                                 onSubmit={handleSaveConfig}
                                 currentStep={currentStep}
                                 setCurrentStep={setCurrentStep}

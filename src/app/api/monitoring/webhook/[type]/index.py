@@ -18,9 +18,17 @@ async def POST(request: Request, type: str) -> dict:
         data = await request.json()
         now = datetime.now().strftime("%H:%M:%S")
         
+        # Check X-Forwarded-For for accurate source when behind a proxy
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            client_host = forwarded_for.split(",")[0].strip()
+        else:
+            client_host = request.client.host if request.client else "unknown"
+        
         # 1. Print to terminal for instant dev feedback
         print("\n" + "="*60)
         print(f"🚨 ALERT RECEIVED - CATEGORY: {type.upper()}")
+        print(f"SOURCE: {client_host}")
         print(f"TIME: {now}")
         print(f"PAYLOAD: {json.dumps(data, indent=2)}")
         print("="*60 + "\n")
@@ -29,6 +37,7 @@ async def POST(request: Request, type: str) -> dict:
         alert_entry = {
             "id": f"{int(datetime.timestamp(datetime.now()) * 1000)}",
             "type": type,
+            "source": client_host,
             "time": now,
             "data": data,
             "status": data.get("status", "unknown")

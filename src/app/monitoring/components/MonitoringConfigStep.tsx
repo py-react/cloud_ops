@@ -2,14 +2,14 @@ import React from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
-export const MonitoringConfigStep = ({ control, setValue, watch, configLabel, fileName }: any) => {
-    const yamlValue = watch('config') || '';
+export const MonitoringConfigStep = ({ control, setValue, watch, configLabel, fileName, name = 'config' }: any) => {
+    const yamlValue = watch(name) || '';
 
     return (
         <div className="space-y-4 h-[450px]">
             <FormField
                 control={control}
-                name="config"
+                name={name}
                 render={({ field }) => (
                     <FormItem className="flex flex-col h-full">
                         <FormLabel className="text-muted-foreground font-medium mb-2">{fileName || 'config.yml'}</FormLabel>

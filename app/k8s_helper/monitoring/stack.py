@@ -206,6 +206,24 @@ datasources:
   uid: prometheus
 """
 
+DEFAULT_NODE_EXPORTER_CONFIG = """# Node Exporter Configuration
+# These are the CLI arguments passed to the daemon.
+- --path.procfs=/host/proc
+- --path.sysfs=/host/sys
+- --path.rootfs=/rootfs
+- --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($|/)
+"""
+
+DEFAULT_METRICS_SERVER_CONFIG = """# Metrics Server Configuration
+# These are the CLI arguments passed to the deployment.
+- --cert-dir=/tmp
+- --secure-port=4443
+- --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+- --kubelet-use-node-status-port
+- --metric-resolution=15s
+- --kubelet-insecure-tls
+"""
+
 def get_namespace_manifest(namespace):
     return {
         "apiVersion": "v1",
@@ -251,6 +269,17 @@ def get_alertmanager_manifests(namespace="monitoring"):
                                 "volumeMounts": [
                                     {"name": "config-volume", "mountPath": "/etc/alertmanager"},
                                     {"name": "storage-volume", "mountPath": "/alertmanager"}
+                                ]
+                            },
+                            {
+                                "name": "config-reloader",
+                                "image": "jimmidyson/configmap-reload:v0.5.0",
+                                "args": [
+                                    "--volume-dir=/etc/alertmanager",
+                                    "--webhook-url=http://127.0.0.1:9093/-/reload"
+                                ],
+                                "volumeMounts": [
+                                    {"name": "config-volume", "mountPath": "/etc/alertmanager"}
                                 ]
                             }
                         ],
@@ -353,6 +382,17 @@ def get_prometheus_manifests(namespace="monitoring"):
                                 "volumeMounts": [
                                     {"name": "prometheus-config-volume", "mountPath": "/etc/prometheus/"},
                                     {"name": "prometheus-storage-volume", "mountPath": "/prometheus/"}
+                                ]
+                            },
+                            {
+                                "name": "config-reloader",
+                                "image": "jimmidyson/configmap-reload:v0.5.0",
+                                "args": [
+                                    "--volume-dir=/etc/prometheus",
+                                    "--webhook-url=http://127.0.0.1:9090/-/reload"
+                                ],
+                                "volumeMounts": [
+                                    {"name": "prometheus-config-volume", "mountPath": "/etc/prometheus"}
                                 ]
                             }
                         ],
@@ -622,6 +662,14 @@ def get_node_exporter_manifests(namespace="monitoring"):
     Returns manifests for Node Exporter DaemonSet and Service.
     """
     return [
+        {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {"name": "node-exporter-conf", "namespace": namespace},
+            "data": {
+                "config.yml": DEFAULT_NODE_EXPORTER_CONFIG
+            }
+        },
         {
             "apiVersion": "apps/v1",
             "kind": "DaemonSet",

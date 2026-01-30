@@ -80,13 +80,19 @@ export const LiveAlertLogsStep = () => {
                                             {log.type} Alert
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                                        <Clock className="w-3 h-3" />
-                                        {log.time}
+                                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                        <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 border-muted-foreground/20 text-muted-foreground lowercase font-mono">
+                                            {log.source || 'unknown'}
+                                        </Badge>
+                                        <div className="flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />
+                                            {log.time}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <p className="text-xs font-medium text-foreground/80 leading-relaxed">
+                                        <span className="text-muted-foreground font-mono mr-1.5">[{log.source || 'unknown'}]</span>
                                         {log.data?.commonAnnotations?.summary || log.data?.alerts?.[0]?.annotations?.summary || "Alert received"}
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
