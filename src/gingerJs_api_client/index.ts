@@ -6,6 +6,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { AddVolumeData } from './models/AddVolumeData';
 export type { ApplyBody } from './models/ApplyBody';
+export type { ConfigUpdate } from './models/ConfigUpdate';
 export type { ContainerConfig } from './models/ContainerConfig';
 export type { ContainerInfo } from './models/ContainerInfo';
 export type { ContainerPortConfig } from './models/ContainerPortConfig';
@@ -113,6 +114,7 @@ export type { YAMLImportRequest } from './models/YAMLImportRequest';
 
 export { $AddVolumeData } from './schemas/$AddVolumeData';
 export { $ApplyBody } from './schemas/$ApplyBody';
+export { $ConfigUpdate } from './schemas/$ConfigUpdate';
 export { $ContainerConfig } from './schemas/$ContainerConfig';
 export { $ContainerInfo } from './schemas/$ContainerInfo';
 export { $ContainerPortConfig } from './schemas/$ContainerPortConfig';

@@ -2,6 +2,210 @@ import requests
 import json
 import logging
 
+DEFAULT_ALERTMANAGER_CONFIG = """global:
+  resolve_timeout: 30s
+
+route:
+  group_by: ['alertname', 'instance']
+  group_wait: 1s
+  group_interval: 5s
+  repeat_interval: 1m
+  receiver: 'default-webhook'
+
+  routes:
+    - matchers:
+        - severity="info"
+      receiver: 'info-webhook'
+
+    - matchers:
+        - severity="warning"
+      receiver: 'warning-webhook'
+
+    - matchers:
+        - severity="critical"
+      receiver: 'critical-webhook'
+
+receivers:
+  - name: 'default-webhook'
+    webhook_configs:
+      - url: 'http://host.docker.internal:5001/api/monitoring/webhook/default'
+
+  - name: 'info-webhook'
+    webhook_configs:
+      - url: 'http://host.docker.internal:5001/api/monitoring/webhook/info'
+
+  - name: 'warning-webhook'
+    webhook_configs:
+      - url: 'http://host.docker.internal:5001/api/monitoring/webhook/warning'
+
+  - name: 'critical-webhook'
+    webhook_configs:
+      - url: 'http://host.docker.internal:5001/api/monitoring/webhook/critical'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']
+"""
+
+DEFAULT_PROMETHEUS_CONFIG = """global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+rule_files:
+  - /etc/prometheus/alert_rules.yml
+
+alerting:
+  alertmanagers:
+  - kubernetes_sd_configs:
+    - role: service
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_service_name]
+      regex: alertmanager-service
+      action: keep
+    - source_labels: [__meta_kubernetes_namespace]
+      regex: monitoring
+      action: keep
+
+scrape_configs:
+  - job_name: 'kubernetes-apiservers'
+    kubernetes_sd_configs:
+    - role: endpoints
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+      action: keep
+      regex: default;kubernetes;https
+
+  - job_name: 'kubernetes-nodes'
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    kubernetes_sd_configs:
+    - role: node
+    relabel_configs:
+    - action: labelmap
+      regex: __meta_kubernetes_node_label_(.+)
+    - target_label: __address__
+      replacement: kubernetes.default.svc:443
+    - source_labels: [__meta_kubernetes_node_name]
+      regex: (.+)
+      target_label: __metrics_path__
+      replacement: /api/v1/nodes/${1}/proxy/metrics
+
+  - job_name: 'kubernetes-cadvisor'
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    kubernetes_sd_configs:
+    - role: node
+    relabel_configs:
+    - action: labelmap
+      regex: __meta_kubernetes_node_label_(.+)
+    - target_label: __address__
+      replacement: kubernetes.default.svc:443
+    - source_labels: [__meta_kubernetes_node_name]
+      regex: (.+)
+      target_label: __metrics_path__
+      replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+
+  - job_name: 'node-exporter'
+    kubernetes_sd_configs:
+      - role: endpoints
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_endpoints_name]
+        regex: 'node-exporter'
+        action: keep
+
+  - job_name: 'kube-state-metrics'
+    static_configs:
+      - targets: ['kube-state-metrics:8080']
+"""
+
+DEFAULT_PROMETHEUS_RULES = """groups:
+- name: default_rules
+  rules:
+  - alert: NodeDown
+    expr: up{job="kubernetes-nodes"} == 0
+    for: 10s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Node {{ $labels.instance }} down"
+      description: "A node has been unreachable."
+
+  - alert: TestCritical
+    expr: kube_pod_status_phase{namespace="alertmanager-test", pod="deterministic-critical-pod", phase="Running"} > 0 or kube_pod_container_status_waiting{namespace="alertmanager-test", pod="deterministic-critical-pod"} > 0
+    for: 0s
+    labels:
+      severity: critical
+    annotations:
+      summary: "CRITICAL TEST: Pod {{ $labels.namespace }}/{{ $labels.pod }} detected"
+      description: "Deterministic critical alert triggered by pod presence."
+
+  - alert: TestWarning
+    expr: kube_pod_status_phase{namespace="alertmanager-test", pod="deterministic-warning-pod", phase="Running"} > 0 or kube_pod_container_status_waiting{namespace="alertmanager-test", pod="deterministic-warning-pod"} > 0
+    for: 0s
+    labels:
+      severity: warning
+    annotations:
+      summary: "WARNING TEST: Pod {{ $labels.namespace }}/{{ $labels.pod }} detected"
+      description: "Deterministic warning alert triggered by pod presence."
+
+  - alert: TestInfo
+    expr: kube_pod_status_phase{namespace="alertmanager-test", pod="deterministic-info-pod", phase="Running"} > 0
+    for: 0s
+    labels:
+      severity: info
+    annotations:
+      summary: "INFO TEST: Pod {{ $labels.namespace }}/{{ $labels.pod }} detected"
+      description: "Deterministic info alert triggered by pod presence."
+
+  - alert: PodCrashLooping
+    expr: rate(kube_pod_container_status_restarts_total{namespace!="alertmanager-test"}[1m]) * 60 > 0
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} crashing"
+      description: "Pod is restarting frequently."
+
+  - alert: HighCPUUsage
+    expr: sum(rate(container_cpu_usage_seconds_total{container!="", namespace!="alertmanager-test"}[1m])) by (pod, namespace) > 0.8
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage on pod {{ $labels.namespace }}/{{ $labels.pod }}"
+      description: "CPU usage is above 80%."
+
+  - alert: HighMemoryUsage
+    expr: sum(container_memory_usage_bytes{container!="", namespace!="alertmanager-test"}) by (pod, namespace) / sum(container_spec_memory_limit_bytes{container!="", namespace!="alertmanager-test"}) by (pod, namespace) > 0.8
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High Memory usage on pod {{ $labels.namespace }}/{{ $labels.pod }}"
+      description: "Memory usage is above 80%."
+"""
+
+DEFAULT_GRAFANA_DATASOURCES = """apiVersion: 1
+datasources:
+- name: Prometheus
+  type: prometheus
+  url: http://prometheus-service:80
+  access: proxy
+  isDefault: true
+  uid: prometheus
+"""
+
 def get_namespace_manifest(namespace):
     return {
         "apiVersion": "v1",
@@ -12,6 +216,7 @@ def get_namespace_manifest(namespace):
 def get_alertmanager_manifests(namespace="monitoring"):
     """
     Returns a list of Kubernetes manifests for Alertmanager.
+    Alertmanager v0.25.0 enables reload API by default; lifecycle flag is NOT supported.
     """
     return [
         # Alertmanager ConfigMap
@@ -20,26 +225,7 @@ def get_alertmanager_manifests(namespace="monitoring"):
             "kind": "ConfigMap",
             "metadata": {"name": "alertmanager-config", "namespace": namespace},
             "data": {
-                "alertmanager.yml": """
-global:
-  resolve_timeout: 5m
-route:
-  group_by: ['alertname']
-  group_wait: 2s
-  group_interval: 10s
-  repeat_interval: 1h
-  receiver: 'web.hook'
-receivers:
-- name: 'web.hook'
-  webhook_configs:
-  - url: 'http://127.0.0.1:5001/'
-inhibit_rules:
-  - source_match:
-      severity: 'critical'
-    target_match:
-      severity: 'warning'
-    equal: ['alertname', 'dev', 'instance']
-"""
+                "alertmanager.yml": DEFAULT_ALERTMANAGER_CONFIG
             }
         },
         # Alertmanager Deployment
@@ -138,125 +324,8 @@ def get_prometheus_manifests(namespace="monitoring"):
             "kind": "ConfigMap",
             "metadata": {"name": "prometheus-server-conf", "namespace": namespace},
             "data": {
-                "alert_rules.yml": """
-groups:
-- name: default_rules
-  rules:
-  - alert: NodeDown
-    expr: up{job="kubernetes-nodes"} == 0
-    for: 10s
-    labels:
-      severity: critical
-    annotations:
-      summary: "Node {{ $labels.instance }} down"
-      description: "A node has been unreachable."
-
-  - alert: PodCrashLooping
-    expr: rate(kube_pod_container_status_restarts_total[1m]) * 60 > 0
-    for: 0s
-    labels:
-      severity: warning
-    annotations:
-      summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} crashing"
-      description: "Pod is restarting frequently."
-
-  - alert: HighCPUUsage
-    expr: sum(rate(container_cpu_usage_seconds_total{container!=""}[1m])) by (pod, namespace) > 0.8
-    for: 0s
-    labels:
-      severity: warning
-    annotations:
-      summary: "High CPU usage on pod {{ $labels.namespace }}/{{ $labels.pod }}"
-      description: "CPU usage is above 80%."
-
-  - alert: HighMemoryUsage
-    expr: sum(container_memory_usage_bytes{container!=""}) by (pod, namespace) / sum(container_spec_memory_limit_bytes{container!=""}) by (pod, namespace) > 0.8
-    for: 0s
-    labels:
-      severity: warning
-    annotations:
-      summary: "High Memory usage on pod {{ $labels.namespace }}/{{ $labels.pod }}"
-      description: "Memory usage is above 80%."
-""",
-                "prometheus.yml": """
-global:
-  scrape_interval: 5s
-  evaluation_interval: 5s
-
-rule_files:
-  - /etc/prometheus/alert_rules.yml
-
-alerting:
-  alertmanagers:
-  - kubernetes_sd_configs:
-    - role: service
-    relabel_configs:
-    - source_labels: [__meta_kubernetes_service_name]
-      regex: alertmanager-service
-      action: keep
-    - source_labels: [__meta_kubernetes_namespace]
-      regex: monitoring
-      action: keep
-
-scrape_configs:
-  - job_name: 'kubernetes-apiservers'
-    kubernetes_sd_configs:
-    - role: endpoints
-    scheme: https
-    tls_config:
-      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-    relabel_configs:
-    - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-      action: keep
-      regex: default;kubernetes;https
-
-  - job_name: 'kubernetes-nodes'
-    scheme: https
-    tls_config:
-      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-    kubernetes_sd_configs:
-    - role: node
-    relabel_configs:
-    - action: labelmap
-      regex: __meta_kubernetes_node_label_(.+)
-    - target_label: __address__
-      replacement: kubernetes.default.svc:443
-    - source_labels: [__meta_kubernetes_node_name]
-      regex: (.+)
-      target_label: __metrics_path__
-      replacement: /api/v1/nodes/${1}/proxy/metrics
-
-  - job_name: 'kubernetes-cadvisor'
-    scheme: https
-    tls_config:
-      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-    kubernetes_sd_configs:
-    - role: node
-    relabel_configs:
-    - action: labelmap
-      regex: __meta_kubernetes_node_label_(.+)
-    - target_label: __address__
-      replacement: kubernetes.default.svc:443
-    - source_labels: [__meta_kubernetes_node_name]
-      regex: (.+)
-      target_label: __metrics_path__
-      replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
-
-  - job_name: 'node-exporter'
-    kubernetes_sd_configs:
-      - role: endpoints
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_endpoints_name]
-        regex: 'node-exporter'
-        action: keep
-
-  - job_name: 'kube-state-metrics'
-    static_configs:
-      - targets: ['kube-state-metrics:8080']
-"""
+                "alert_rules.yml": DEFAULT_PROMETHEUS_RULES,
+                "prometheus.yml": DEFAULT_PROMETHEUS_CONFIG
             }
         },
         # Prometheus Deployment
@@ -277,7 +346,8 @@ scrape_configs:
                                 "image": "prom/prometheus:v2.45.0",
                                 "args": [
                                     "--config.file=/etc/prometheus/prometheus.yml",
-                                    "--storage.tsdb.path=/prometheus/"
+                                    "--storage.tsdb.path=/prometheus/",
+                                    "--web.enable-lifecycle"
                                 ],
                                 "ports": [{"containerPort": 9090}],
                                 "volumeMounts": [
@@ -389,16 +459,7 @@ def get_grafana_manifests(namespace="monitoring"):
             "kind": "ConfigMap",
             "metadata": {"name": "grafana-datasources", "namespace": namespace},
             "data": {
-                "datasources.yaml": """
-apiVersion: 1
-datasources:
-- name: Prometheus
-  type: prometheus
-  url: http://prometheus-service:80
-  access: proxy
-  isDefault: true
-  uid: prometheus
-"""
+                "datasources.yaml": DEFAULT_GRAFANA_DATASOURCES
             }
         },
         # Grafana ConfigMap: Dashboard Provider

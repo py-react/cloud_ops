@@ -1,4 +1,5 @@
 import type { ApplyBody } from '../models/ApplyBody';
+import type { ConfigUpdate } from '../models/ConfigUpdate';
 import type { ContextPostData } from '../models/ContextPostData';
 import type { CreateNamespacePayload } from '../models/CreateNamespacePayload';
 import type { CreatePATRequest } from '../models/CreatePATRequest';
@@ -56,22 +57,22 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathGet = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathGet1 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete1 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathGet2 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete2 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathGet3 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete3 = {
                 namespace: string
 path: string
 service: string
@@ -532,6 +533,12 @@ export type TDataApiQueuePost = {
 export type TDataApiQueueDelete = {
                 requestBody: StopQueue
             }
+export type TDataApiMonitoringWebhookTypeGet = {
+                type: string
+            }
+export type TDataApiMonitoringWebhookTypePost = {
+                type: string
+            }
 export type TDataApiMonitoringInstallGet = {
                 component?: string
             }
@@ -540,6 +547,12 @@ export type TDataApiMonitoringInstallPost = {
             }
 export type TDataApiMonitoringInstallDelete = {
                 component?: string
+            }
+export type TDataApiMonitoringConfigGet = {
+                component?: string
+            }
+export type TDataApiMonitoringConfigPost = {
+                requestBody: ConfigUpdate
             }
 export type TDataApiSystemsPost = {
                 requestBody: SystemInfo
@@ -579,57 +592,7 @@ path,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathGet(data: TDataClusterProxyClusterProxyServiceNamespacePathGet): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'GET',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathGet1(data: TDataClusterProxyClusterProxyServiceNamespacePathGet1): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'PUT',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathGet2(data: TDataClusterProxyClusterProxyServiceNamespacePathGet2): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathDelete(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -654,7 +617,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathGet3(data: TDataClusterProxyClusterProxyServiceNamespacePathGet3): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathDelete1(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -662,6 +625,56 @@ service,
 } = data;
 		return __request(OpenAPI, {
 			method: 'POST',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathDelete2(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete2): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathDelete3(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete3): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -3440,6 +3453,48 @@ requestBody,
 	}
 
 	/**
+	 * Retrieve stored alert logs.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiMonitoringWebhookTypeGet(data: TDataApiMonitoringWebhookTypeGet): CancelablePromise<Record<string, unknown>> {
+		const {
+type,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/monitoring/webhook/{type}',
+			path: {
+				type
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Receives alerts, prints to terminal, and stores them in global memory.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiMonitoringWebhookTypePost(data: TDataApiMonitoringWebhookTypePost): CancelablePromise<Record<string, unknown>> {
+		const {
+type,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/monitoring/webhook/{type}',
+			path: {
+				type
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
 	 * Check if a specific monitoring component is installed in the 'monitoring' namespace.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
@@ -3499,6 +3554,61 @@ component = 'prometheus',
 			errors: {
 				422: `Validation Error`,
 			},
+		});
+	}
+
+	/**
+	 * Fetch the configuration for a specific component.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiMonitoringConfigGet(data: TDataApiMonitoringConfigGet = {}): CancelablePromise<Record<string, unknown>> {
+		const {
+component = 'alertmanager',
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/monitoring/config',
+			query: {
+				component
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Update the configuration for a specific component.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiMonitoringConfigPost(data: TDataApiMonitoringConfigPost): CancelablePromise<Record<string, unknown>> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/monitoring/config',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Triggers test alerts using two modes:
+ * 1. IMMEDIATE: Sends alerts directly to Alertmanager API (best-effort).
+ * 2. REAL-WORLD: Deploys failing pods in alertmanager-test namespace.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiMonitoringTestAlertsPost(): CancelablePromise<Record<string, unknown>> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/monitoring/test-alerts',
 		});
 	}
 

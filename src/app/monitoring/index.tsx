@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Activity, Rocket, CheckCircle2, AlertCircle, Loader2, ExternalLink, ActivityIcon, PlusIcon, Database, LayoutDashboard, Trash2, LineChart } from 'lucide-react'
+import { Activity, ActivityIcon, AlertCircle, AlertTriangle, CheckCircle2, ChevronRight, Database, ExternalLink, Gauge, Layout, LayoutDashboard, LineChart, Loader2, PlusIcon, RefreshCw, Rocket, Settings, Settings2Icon, Shield, Trash2, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { DefaultService } from '@/gingerJs_api_client'
@@ -18,6 +18,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import PageLayout from '@/components/PageLayout'
 import AddonCard from '@/components/AddonCard'
+import { FormWizard } from '@/components/wizard/form-wizard'
+import { MonitoringConfigStep } from './components/MonitoringConfigStep'
+import { LiveAlertLogsStep } from './components/LiveAlertLogsStep'
+import { z } from 'zod'
 
 interface MonitoringCardProps {
     title: string;
@@ -33,14 +37,26 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
     const [installed, setInstalled] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [logs, setLogs] = useState<any[]>([])
+    const [configYaml, setConfigYaml] = useState('')
+    const [isOpinionated, setIsOpinionated] = useState(true)
+    const [isConfigOpen, setIsConfigOpen] = useState(false)
+    const [configLoading, setConfigLoading] = useState(false)
+    const [currentStep, setCurrentStep] = useState('config')
+    const [isTestLoading, setIsTestLoading] = useState(false)
 
     // Check status on mount
     useEffect(() => {
         const checkStatus = async () => {
             try {
                 const response: any = await DefaultService.apiMonitoringInstallGet({ component })
-                setInstalled(!!response.installed)
+                const isInstalled = !!response.installed
+                setInstalled(isInstalled)
                 setDeleting(!!response.deleting)
+
+                // Proactively fetch config for alertmanager to enable the Test button
+                if (component === 'alertmanager' && isInstalled) {
+                    fetchConfig()
+                }
             } catch (error) {
                 console.error(`Error checking ${component} status:`, error)
             }
@@ -58,6 +74,11 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
                 setInstalled(true)
                 setDeleting(false)
                 setLogs((response.results as any[]) || [])
+
+                // Fetch config after deployment to enable Test button if applicable
+                if (component === 'alertmanager') {
+                    setTimeout(fetchConfig, 2000) // Small delay for ConfigMap to be ready
+                }
             } else {
                 toast.error(response.message || `Failed to deploy ${title}`)
             }
@@ -90,6 +111,129 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
         }
     }
 
+    const fetchConfig = async () => {
+        setConfigLoading(true)
+        console.log(`[MonitoringCard] Fetching config for: ${component}`)
+        try {
+            // Explicitly pass component in query string for maximum reliability
+            const response = await fetch(`/api/monitoring/config?component=${component}`).then(res => res.json())
+
+            console.log(`[MonitoringCard] Received config for ${component}:`, response)
+            if (response.success) {
+                setConfigYaml(response.config || '')
+                setIsOpinionated(response.isOpinionated ?? false)
+            } else {
+                toast.error(response.message || "Failed to fetch configuration")
+            }
+        } catch (error) {
+            toast.error("An error occurred while fetching configuration")
+            console.error(error)
+        } finally {
+            setConfigLoading(false)
+        }
+    }
+
+    const handleSaveConfig = async (data: { config: string }) => {
+        setConfigLoading(true)
+        try {
+            // @ts-ignore
+            const response: any = await DefaultService.apiMonitoringConfigPost({ requestBody: { config: data.config, component } })
+            if (response.success) {
+                toast.success("Configuration updated successfully!")
+                setIsConfigOpen(false)
+                // Refresh local state to update UI/Test button visibility
+                fetchConfig()
+            } else {
+                toast.error(response.message || "Failed to update configuration")
+                throw new Error(response.message) // Rethrow for FormWizard
+            }
+        } catch (error) {
+            toast.error("An error occurred while updating configuration")
+            console.error(error)
+            throw error // Rethrow for FormWizard
+        } finally {
+            setConfigLoading(false)
+        }
+    }
+
+    const handleTestAlert = async () => {
+        setIsTestLoading(true)
+        try {
+            // @ts-ignore - Endpoint may be new in client
+            const response: any = await DefaultService.apiMonitoringTestAlertsPost()
+            if (response.success) {
+                toast.success("Test sequence initiated! Opening Live Stream...")
+                // Auto-open the wizard to the logs step
+                setCurrentStep('logs')
+                setIsConfigOpen(true)
+            } else {
+                toast.error(response.message || "Failed to trigger test alerts")
+            }
+        } catch (error) {
+            toast.error("An error occurred while testing alerts")
+            console.error(error)
+        } finally {
+            setIsTestLoading(false)
+        }
+    }
+
+    // Opinionated config check now comes from backend
+    const isOpinionatedConfig = isOpinionated;
+
+    const configMeta: Record<string, { label: string, description: string, longDescription: string, fileName: string, configLabel: string, icon: any }> = {
+        alertmanager: {
+            label: 'Alerting Configuration',
+            description: 'Edit your alerting rules and receivers here.',
+            longDescription: 'Direct access to the Alertmanager configuration. You can configure how alerts are grouped, routed, and where notifications are sent.',
+            fileName: 'alertmanager.yml',
+            configLabel: 'Make sure to follow the Alertmanager specification for routes and receivers.',
+            icon: AlertCircle
+        },
+        prometheus: {
+            label: 'Prometheus Configuration',
+            description: 'Edit your scraping and global monitoring rules.',
+            longDescription: 'Direct access to the Prometheus configuration. You can configure scrape targets, intervals, and global evaluation rules.',
+            fileName: 'prometheus.yml',
+            configLabel: 'Make sure to follow the Prometheus specification for jobs and scrape configs.',
+            icon: Database
+        },
+        grafana: {
+            label: 'Grafana Data Sources',
+            description: 'Manage your observability data sources.',
+            longDescription: 'Configure how Grafana connects to Prometheus and other backends.',
+            fileName: 'datasources.yaml',
+            configLabel: 'Ensure the datasource URLs match your cluster internal service names.',
+            icon: LayoutDashboard
+        }
+    }
+
+    const currentMeta = configMeta[component] || configMeta.alertmanager
+
+    const wizardSteps = [
+        {
+            id: 'config',
+            label: currentMeta.label,
+            description: currentMeta.description,
+            longDescription: currentMeta.longDescription,
+            icon: Settings2Icon,
+            component: (props: any) => (
+                <MonitoringConfigStep
+                    {...props}
+                    fileName={currentMeta.fileName}
+                    configLabel={currentMeta.configLabel}
+                />
+            ),
+        },
+        ...(component === 'alertmanager' && isOpinionatedConfig ? [{
+            id: 'logs',
+            label: 'Live Alert Stream',
+            description: 'Watch alerts hit your webhooks in real-time.',
+            longDescription: 'This feed shows exactly what Alertmanager is sending to our categorization webhooks. Use the "Test Alert" button to see it in action.',
+            icon: Activity,
+            component: LiveAlertLogsStep,
+        }] : [])
+    ]
+
     const footerActions = (
         <div className="flex flex-col gap-2 w-full">
             {deleting ? (
@@ -114,39 +258,94 @@ function MonitoringCard({ title, description, component, icon, features, proxyUr
                     {loading ? `Deploying...` : `Deploy`}
                 </Button>
             ) : (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button
-                            variant="outline"
-                            className="w-full h-9 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                            ) : (
-                                <Trash2 className="mr-2 h-3 w-3" />
-                            )}
-                            Remove
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Remove {title}?</AlertDialogTitle>
-                            <AlertDialogDescription className="text-sm">
-                                This will remove all <strong>{title}</strong> resources from the cluster.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel className="h-9 text-xs">Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={handleDelete}
-                                className="h-9 text-xs bg-destructive text-white hover:bg-destructive/90"
+                <div className="flex flex-col gap-2">
+                    {['alertmanager', 'prometheus', 'grafana'].includes(component) && (
+                        <>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="flex-1 h-9 text-xs rounded-xl border-border/50"
+                                    onClick={async () => {
+                                        await fetchConfig()
+                                        setIsConfigOpen(true)
+                                    }}
+                                >
+                                    <Settings2Icon className="mr-2 h-3.5 w-3.5" />
+                                    Configure
+                                </Button>
+                                {component === 'alertmanager' && isOpinionatedConfig && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1 h-9 text-xs rounded-xl border-blue-200 bg-blue-50/30 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                                        onClick={handleTestAlert}
+                                        disabled={isTestLoading}
+                                    >
+                                        {isTestLoading ? (
+                                            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <Zap className="mr-2 h-3.5 w-3.5" />
+                                        )}
+                                        Test Alert
+                                    </Button>
+                                )}
+                            </div>
+                            <FormWizard
+                                isWizardOpen={isConfigOpen}
+                                setIsWizardOpen={setIsConfigOpen}
+                                steps={wizardSteps}
+                                initialValues={{ config: configYaml }}
+                                schema={z.object({ config: z.string().min(1, "Config cannot be empty") })}
+                                onSubmit={handleSaveConfig}
+                                currentStep={currentStep}
+                                setCurrentStep={setCurrentStep}
+                                heading={{
+                                    primary: currentMeta.label,
+                                    secondary: currentMeta.description,
+                                    icon: currentMeta.icon || Settings
+                                }}
+                                name={`${component}-config`}
+                                submitLabel="Save Configuration"
+                                submitIcon={CheckCircle2}
+                            />
+                        </>
+                    )}
+
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="w-full h-9 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+                                disabled={loading}
                             >
-                                Remove Now
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                                {loading ? (
+                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                ) : (
+                                    <Trash2 className="mr-2 h-3 w-3" />
+                                )}
+                                Uninstall
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Remove {title}?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-sm">
+                                    This will remove all <strong>{title}</strong> resources from the cluster.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel className="h-9 text-xs">Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={handleDelete}
+                                    className="h-9 text-xs bg-destructive text-white hover:bg-destructive/90"
+                                >
+                                    Remove Now
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
             )}
         </div>
     )
