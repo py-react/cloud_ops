@@ -1,6 +1,6 @@
 from fastapi import Request
 from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
-from app.k8s_helper.monitoring.stack import get_prometheus_manifests, get_grafana_manifests, get_node_exporter_manifests
+from app.k8s_helper.monitoring.stack import get_prometheus_manifests, get_grafana_manifests, get_node_exporter_manifests, get_alertmanager_manifests, get_kube_state_metrics_manifests
 from app.k8s_helper.monitoring.metrics_server import get_metrics_server_manifests
 import logging
 
@@ -17,7 +17,14 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
             deploy_name = "metrics-server"
         else:
             namespace = "monitoring"
-            deploy_name = "prometheus-deployment" if component == "prometheus" else "grafana"
+            if component == "prometheus":
+                deploy_name = "prometheus-deployment"
+            elif component == "grafana":
+                deploy_name = "grafana"
+            elif component == "alertmanager":
+                deploy_name = "alertmanager"
+            else:
+                deploy_name = "prometheus-deployment"
 
         k8s_helper = KubernetesResourceHelper()
         
@@ -37,8 +44,6 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
         is_deleting = False
         if target:
             is_deleting = target.get("metadata", {}).get("deletionTimestamp") is not None
-            # If it's deleting, we should treat it as 'not fully installed' for the main toggle
-            # but the frontend can use the 'deleting' flag for specific UI feedback.
         
         return {
             "installed": is_installed and not is_deleting, 
@@ -52,16 +57,18 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
 
 async def POST(request: Request, component: str = "prometheus") -> dict:
     """
-    Deploy either Prometheus or Grafana.
+    Deploy monitoring components.
     """
     try:
         namespace = "monitoring"
         k8s_helper = KubernetesResourceHelper()
         
         if component == "prometheus":
-            manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace)
+            manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace) + get_kube_state_metrics_manifests(namespace)
         elif component == "grafana":
             manifests = get_grafana_manifests(namespace)
+        elif component == "alertmanager":
+            manifests = get_alertmanager_manifests(namespace)
         else:
             manifests = get_metrics_server_manifests("kube-system")
         
@@ -97,17 +104,18 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
         k8s_helper = KubernetesResourceHelper()
         
         if component == "prometheus":
-            manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace)
+            manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace) + get_kube_state_metrics_manifests(namespace)
         elif component == "grafana":
             manifests = get_grafana_manifests(namespace)
+        elif component == "alertmanager":
+            manifests = get_alertmanager_manifests(namespace)
         else:
-            manifests = get_metrics_server_manifests("kube-system")
+            namespace = "kube-system"
+            manifests = get_metrics_server_manifests(namespace)
             
         results = []
         for manifest in manifests:
             try:
-                # Use namespace from manifest if present, otherwise default to "monitoring"
-                # DELETE operation in resource_helper typically requires correct metadata
                 k8s_helper.delete_resource(manifest)
                 results.append({"kind": manifest["kind"], "name": manifest["metadata"]["name"], "status": "deleted"})
             except Exception as e:
