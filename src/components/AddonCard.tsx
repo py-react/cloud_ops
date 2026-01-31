@@ -1,6 +1,7 @@
 import React from 'react'
-import { CheckCircle2, Loader2, LucideIcon } from 'lucide-react'
+import { CheckCircle2, Loader2, LucideIcon, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/libs/utils'
 
 interface AddonCardProps {
@@ -12,6 +13,7 @@ interface AddonCardProps {
     actions?: React.ReactNode
     className?: string
     footerActions?: React.ReactNode
+    dashboardUrl?: string
 }
 
 const AddonCard: React.FC<AddonCardProps> = ({
@@ -22,7 +24,8 @@ const AddonCard: React.FC<AddonCardProps> = ({
     features = [],
     actions,
     className,
-    footerActions
+    footerActions,
+    dashboardUrl
 }) => {
     return (
         <Card className={cn(
@@ -34,21 +37,33 @@ const AddonCard: React.FC<AddonCardProps> = ({
         )}>
             <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between mb-2">
-                    <div className="p-2 bg-primary/5 rounded-xl">
-                        {icon}
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-primary/5 rounded-xl">
+                            {icon}
+                        </div>
                     </div>
-                    {status === 'installed' && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-600 rounded-full text-[10px] font-bold">
-                            <CheckCircle2 className="w-3 h-3" />
-                            INSTALLED
-                        </div>
-                    )}
-                    {status === 'deleting' && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-600 rounded-full text-[10px] font-bold">
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            DELETING
-                        </div>
-                    )}
+
+                    <div className='flex gap-2 items-center'>
+                        {status === 'installed' && (
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-600 rounded-full text-[10px] font-bold">
+                                <CheckCircle2 className="w-3 h-3" />
+                                INSTALLED
+                            </div>
+                        )}
+                        {status === 'deleting' && (
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-600 rounded-full text-[10px] font-bold">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                DELETING
+                            </div>
+                        )}
+                        {dashboardUrl && (
+                            <a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
+                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-primary/10 text-primary">
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                </Button>
+                            </a>
+                        )}
+                    </div>
                 </div>
                 <CardTitle className="text-lg font-bold text-slate-900">{title}</CardTitle>
                 <CardDescription className="text-xs line-clamp-2 min-h-[2rem] text-slate-500">

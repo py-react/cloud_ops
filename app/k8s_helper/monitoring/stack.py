@@ -297,7 +297,9 @@ def get_alertmanager_manifests(namespace="alerting"):
                                 "image": "prom/alertmanager:v0.25.0",
                                 "args": [
                                     "--config.file=/etc/alertmanager/alertmanager.yml",
-                                    "--storage.path=/alertmanager/"
+                                    "--storage.path=/alertmanager/",
+                                    "--web.external-url=http://localhost:5001/cluster/proxy/alertmanager-service/alerting/",
+                                    "--web.route-prefix=/"
                                 ],
                                 "ports": [{"containerPort": 9093}],
                                 "volumeMounts": [
@@ -400,7 +402,9 @@ def get_prometheus_manifests(namespace="monitoring"):
                                 "image": "prom/prometheus:v2.45.0",
                                 "args": [
                                     "--config.file=/etc/prometheus/prometheus.yml",
-                                    "--storage.tsdb.path=/prometheus/"
+                                    "--storage.tsdb.path=/prometheus/",
+                                    "--web.external-url=http://localhost:5001/cluster/proxy/prometheus-service/monitoring/",
+                                    "--web.route-prefix=/"
                                 ],
                                 "ports": [{"containerPort": 9090}],
                                 "volumeMounts": [
@@ -524,27 +528,27 @@ def get_loki_dashboard_json(title='Loki: Unified Logs', uid='loki-logs'):
         dashboard["templating"]["list"] = [v for v in dashboard["templating"]["list"] if v.get('name') != 'agent']
         
         # Insert at the beginning so it shows up prominently in the UI header
-            dashboard["templating"]["list"].insert(0, {
-                "allValue": ".*",
-                "current": {"selected": True, "text": "All", "value": "$__all"},
-                "datasource": {"type": "loki", "uid": "loki"},
-                "definition": "label_values(agent)",
-                "hide": 0,
-                "includeAll": True,
+        dashboard["templating"]["list"].insert(0, {
+            "allValue": ".*",
+            "current": {"selected": True, "text": "All", "value": "$__all"},
+            "datasource": {"type": "loki", "uid": "loki"},
+            "definition": "label_values(agent)",
+            "hide": 0,
+            "includeAll": True,
+            "label": "agent",
+            "name": "agent",
+            "options": [],
+            "query": {
                 "label": "agent",
-                "name": "agent",
-                "options": [],
-                "query": {
-                    "label": "agent",
-                    "refId": "LokiVariableQuery",
-                    "stream": "",
-                    "type": 1
-                },
-                "refresh": 1,
-                "regex": "",
-                "sort": 1,
-                "type": "query"
-            })
+                "refId": "LokiVariableQuery",
+                "stream": "",
+                "type": 1
+            },
+            "refresh": 1,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+        })
 
         # Fix datasources and common query patterns
         def fix_loki_dashboard_logic(obj):

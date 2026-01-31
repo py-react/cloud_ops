@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { CheckCircle2, Loader2, Rocket, Settings, Settings2Icon, Trash2, FileSearch } from 'lucide-react'
+import { CheckCircle2, Loader2, Rocket, Settings, Settings2Icon, Trash2, FileSearch, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     AlertDialog,
@@ -240,15 +240,7 @@ export function MonitoringAddon({ title, description, component, icon, features,
                 status={installed ? 'installed' : deleting ? 'deleting' : 'available'}
                 features={features}
                 footerActions={footerActions}
-                actions={installed && proxyUrl ? (
-                    <div className="pt-3 mt-3 border-t border-dashed border-primary/10">
-                        <a href={proxyUrl} target="_blank" rel="noopener noreferrer" className="w-full">
-                            <Button variant="secondary" size="sm" className="w-full h-8 text-xs gap-1.5 bg-secondary/50 hover:bg-secondary">
-                                Open Dashboard
-                            </Button>
-                        </a>
-                    </div>
-                ) : null}
+                dashboardUrl={installed && proxyUrl ? proxyUrl : undefined}
             />
         </div>
     )

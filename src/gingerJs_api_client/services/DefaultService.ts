@@ -57,22 +57,22 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathDelete = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathDelete1 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet1 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathDelete2 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet2 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathDelete3 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet3 = {
                 namespace: string
 path: string
 service: string
@@ -592,7 +592,32 @@ path,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathDelete(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathGet(data: TDataClusterProxyClusterProxyServiceNamespacePathGet): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathGet1(data: TDataClusterProxyClusterProxyServiceNamespacePathGet1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -617,32 +642,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathDelete1(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete1): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'PUT',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathDelete2(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete2): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathGet2(data: TDataClusterProxyClusterProxyServiceNamespacePathGet2): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -667,14 +667,14 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathDelete3(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete3): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathGet3(data: TDataClusterProxyClusterProxyServiceNamespacePathGet3): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'GET',
+			method: 'PUT',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -4099,6 +4099,17 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/addons/alerting',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static addonsDashboardGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/addons/dashboard',
 		});
 	}
 

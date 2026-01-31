@@ -219,15 +219,8 @@ export function AlertingAddon({ title, description, component, icon, features, p
                 status={installed ? 'installed' : deleting ? 'deleting' : 'available'}
                 features={features}
                 footerActions={footerActions}
-                actions={installed && proxyUrl ? (
-                    <div className="pt-3 mt-3 border-t border-dashed border-primary/10">
-                        <a href={proxyUrl} target="_blank" rel="noopener noreferrer" className="w-full">
-                            <Button variant="secondary" size="sm" className="w-full h-8 text-xs gap-1.5 bg-secondary/50 hover:bg-secondary">
-                                Open Dashboard
-                            </Button>
-                        </a>
-                    </div>
-                ) : null}
+                footerActions={footerActions}
+                dashboardUrl={installed && proxyUrl ? proxyUrl : undefined}
             />
         </div>
     )

@@ -44,10 +44,10 @@
       }
     },
     "/cluster/proxy/{service}/{namespace}/{path}": {
-      "delete": {
+      "get": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -98,10 +98,10 @@
           }
         }
       },
-      "put": {
+      "delete": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -155,7 +155,7 @@
       "post": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -206,10 +206,10 @@
           }
         }
       },
-      "get": {
+      "put": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -7010,6 +7010,24 @@
       "get": {
         "summary": "",
         "operationId": "_addons_alerting_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/addons/dashboard": {
+      "get": {
+        "summary": "",
+        "operationId": "_addons_dashboard_get",
         "responses": {
           "200": {
             "description": "Successful Response",

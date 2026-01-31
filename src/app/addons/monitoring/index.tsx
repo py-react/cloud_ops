@@ -27,18 +27,7 @@ function Monitoring() {
                         proxyUrl="/cluster/proxy/prometheus-service/monitoring/"
                     />
 
-                    <MonitoringAddon
-                        title="Grafana"
-                        description="Beautiful anomaly detection and performance visualization dashboards."
-                        component="grafana"
-                        icon={<LayoutDashboard />}
-                        features={[
-                            // "Grafana Dashboard (v10.0.0)",
-                            // "Anonymous Admin Access",
-                            // "Pre-built Dashboards"
-                        ]}
-                        proxyUrl="/cluster/proxy/grafana/monitoring/"
-                    />
+
 
                     <MonitoringAddon
                         title="Metrics Server"
