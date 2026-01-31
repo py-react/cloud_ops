@@ -4,9 +4,9 @@ import { useParams } from 'react-router-dom';
 import { DefaultService } from '@/gingerJs_api_client';
 import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext';
 
-import {ResourceTable} from '@/components/kubernetes/resources/resourceTable';
+import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
 import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector';
-import RouteDescription from '@/components/route-description';
+import PageLayout from "@/components/PageLayout";
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 export default function ResourceTypePage() {
   const { resourceType } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
-  const {isLoading:isNamespacesLoading,selectedNamespace} = useContext(NamespaceContext)
+  const { isLoading: isNamespacesLoading, selectedNamespace } = useContext(NamespaceContext)
   const [resources, setResources] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,14 +27,14 @@ export default function ResourceTypePage() {
   useEffect(() => {
     const fetchResources = async () => {
       if (!resourceType || isNamespacesLoading) return;
-      
+
       setIsLoading(true);
       try {
         const result = await DefaultService.apiKubernertesResourcesTypeGet({
           type: resourceType,
           namespace: selectedNamespace
         });
-        
+
         setResources(Array.isArray(result) ? result : []);
       } catch (error) {
         console.error('Failed to fetch resources:', error);
@@ -46,21 +46,21 @@ export default function ResourceTypePage() {
     };
 
     fetchResources();
-  }, [resourceType,isNamespacesLoading,selectedNamespace]);
+  }, [resourceType, isNamespacesLoading, selectedNamespace]);
 
   const _columns = Object.keys((!isLoading && resources.length) ? resources[0].metadata : {}).reduce((acc, item) => {
-    if(["managedfields","labels","annotations","uid","resourceversion"].includes(item.toLowerCase())) return acc
-    acc.push({accessor:`metadata.${item}`,header:item.toUpperCase()})
+    if (["managedfields", "labels", "annotations", "uid", "resourceversion"].includes(item.toLowerCase())) return acc
+    acc.push({ accessor: `metadata.${item}`, header: item.toUpperCase() })
     return acc
-  },[] as {header: string; accessor: string}[])
+  }, [] as { header: string; accessor: string }[])
 
   const filteredResources =
-  resources?.filter(
+    resources?.filter(
       (resource) =>
         resource.metadata.name.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
-  if(error){
+  if (error) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-destructive">{error}</div>
@@ -69,20 +69,16 @@ export default function ResourceTypePage() {
   }
 
   return (
-    <div>
+    <PageLayout
+      title={`Resource Type: ${resourceType}`}
+      subtitle={`View and manage all ${resourceType} in your cluster.`}
+      actions={<NamespaceSelector />}
+    >
       <div className="space-y-6">
-        <RouteDescription
-          title={`Resource Type: ${resourceType}`}
-          shortDescription={`${resources.length} found`}
-          description={`View and manage all ${resourceType} in your cluster. Click on any resource to view detailed information including metadata, labels, and configuration.`}
-        />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">Your {resourceType}</CardTitle>
-            </div>
-            <div className="flex items-center gap-2">
-              <NamespaceSelector />
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
@@ -100,6 +96,6 @@ export default function ResourceTypePage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   );
 } 

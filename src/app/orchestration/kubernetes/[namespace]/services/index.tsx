@@ -8,7 +8,7 @@ import ResourceForm from "@/components/resource-form/resource-form";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { NetworkIcon } from "lucide-react";
-import RouteDescription from "@/components/route-description";
+import PageLayout from "@/components/PageLayout";
 import {
   Card,
   CardHeader,
@@ -66,7 +66,7 @@ export default function ServicesPage() {
   const transformedServices: ServiceData[] =
     services?.map((service: any) => {
       const ports = service.spec?.ports || [];
-      const portsDisplay = ports.map((port: any) => 
+      const portsDisplay = ports.map((port: any) =>
         `${port.port}${port.targetPort ? `:${port.targetPort}` : ''}`
       ).join(', ');
 
@@ -75,16 +75,16 @@ export default function ServicesPage() {
         namespace: service.metadata?.namespace || "",
         type: service.spec?.type || "ClusterIP",
         clusterIP: service.spec?.clusterIP || "None",
-        externalIP: service.status?.loadBalancer?.ingress?.[0]?.ip || 
-                   service.spec?.externalIPs?.[0] || 
-                   "N/A",
+        externalIP: service.status?.loadBalancer?.ingress?.[0]?.ip ||
+          service.spec?.externalIPs?.[0] ||
+          "N/A",
         ports: portsDisplay || "N/A",
-        age: service.metadata?.creationTimestamp 
+        age: service.metadata?.creationTimestamp
           ? new Date(service.metadata.creationTimestamp).toLocaleDateString()
           : "Unknown",
         last_applied: service.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
         fullData: service,
-        showViewDetails:true,
+        showViewDetails: true,
         showEdit: true,
         showDelete: true,
       };
@@ -99,18 +99,21 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="w-full">
+    <PageLayout
+      title="Services"
+      subtitle="Manage your Kubernetes Services—create, inspect, and control access to workloads running in your cluster."
+      icon={NetworkIcon}
+      actions={
+        <div className="flex items-center gap-2">
+          <NamespaceSelector />
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <NetworkIcon className="w-4 h-4 mr-2" />
+            Create Service
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center gap-2">
-              <NetworkIcon className="h-4 w-4" />
-              <h2>Services</h2>
-            </div>
-          }
-          shortDescription="Manage your Kubernetes Services—create, inspect, and control access to workloads running in your cluster."
-          description="Services in Kubernetes provide a stable network endpoint to expose applications running on a set of Pods. They abstract away Pod IPs and enable reliable communication within the cluster or to external consumers. Services support different types—ClusterIP, NodePort, LoadBalancer, and ExternalName—each suited for specific use cases."
-        />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -118,13 +121,6 @@ export default function ServicesPage() {
               <CardDescription>
                 {transformedServices.length} Services found
               </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <NamespaceSelector />
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <NetworkIcon className="w-4 h-4 mr-2" />
-                Create Service
-              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
@@ -137,8 +133,8 @@ export default function ServicesPage() {
                 setCurrentToEdit(res);
               }}
               onDelete={(data: ServiceData) => {
-                let manifest = data.last_applied 
-                  ? yaml.dump(JSON.parse(data.last_applied)) 
+                let manifest = data.last_applied
+                  ? yaml.dump(JSON.parse(data.last_applied))
                   : "";
                 if (!manifest) {
                   manifest = yaml.dump({
@@ -179,10 +175,10 @@ export default function ServicesPage() {
           rawYaml={
             currentToEdit
               ? yaml.dump(
-                  currentToEdit?.last_applied
-                    ? JSON.parse(currentToEdit?.last_applied)
-                    : currentToEdit.fullData
-                )
+                currentToEdit?.last_applied
+                  ? JSON.parse(currentToEdit?.last_applied)
+                  : currentToEdit.fullData
+              )
               : ""
           }
           resourceType="services"
@@ -211,7 +207,7 @@ export default function ServicesPage() {
           }}
         />
       )}
-    </div>
+    </PageLayout>
   );
 }
 

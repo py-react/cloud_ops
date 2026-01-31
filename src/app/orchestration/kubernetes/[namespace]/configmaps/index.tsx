@@ -8,7 +8,7 @@ import ResourceForm from "@/components/resource-form/resource-form"
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { ContainerIcon } from "lucide-react";
-import RouteDescription from "@/components/route-description";
+import PageLayout from "@/components/PageLayout";
 import {
   Card,
   CardHeader,
@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 
 const columns = [
   { header: "Name", accessor: "name" },
-  {header:"Namespace",accessor:"namespace"},
+  { header: "Namespace", accessor: "namespace" },
   { header: "Data Keys", accessor: "dataKeys" },
   { header: "Binary Data Keys", accessor: "binaryDataKeys" },
   { header: "Immutable", accessor: "immutable" },
@@ -73,12 +73,12 @@ export default function ConfigMapsPage() {
       labels: Object.entries(cm.metadata?.labels || {}).map(
         ([key, value]) => `${key}: ${value}`
       ),
-      age: cm.metadata?.creationTimestamp 
+      age: cm.metadata?.creationTimestamp
         ? new Date(cm.metadata.creationTimestamp).toLocaleDateString()
         : "Unknown",
       last_applied: cm.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
       fullData: cm,
-      showViewDetails:true,
+      showViewDetails: true,
       showEdit: true,
       showDelete: true,
     })) || [];
@@ -92,18 +92,21 @@ export default function ConfigMapsPage() {
   }
 
   return (
-    <div className="w-full">
+    <PageLayout
+      title="ConfigMaps"
+      subtitle="View and manage Kubernetes ConfigMaps—store and manage non-confidential configuration data."
+      icon={ContainerIcon}
+      actions={
+        <div className="flex items-center gap-2">
+          <NamespaceSelector />
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <ContainerIcon className="w-4 h-4 mr-2" />
+            Create ConfigMap
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center gap-2">
-              <ContainerIcon className="h-4 w-4" />
-              <h2>ConfigMaps</h2>
-            </div>
-          }
-          shortDescription="View and manage Kubernetes ConfigMaps—store and manage non-confidential configuration data."
-          description="ConfigMaps are used to store non-confidential configuration data in key-value pairs. They can be consumed by pods as environment variables, command-line arguments, or as configuration files in a volume. ConfigMaps are useful for storing configuration data that can be updated without rebuilding container images."
-        />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -111,13 +114,6 @@ export default function ConfigMapsPage() {
               <CardDescription>
                 {transformedConfigMaps.length} ConfigMaps found
               </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <NamespaceSelector />
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <ContainerIcon className="w-4 h-4 mr-2" />
-                Create ConfigMap
-              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
@@ -172,10 +168,10 @@ export default function ConfigMapsPage() {
           rawYaml={
             currentToEdit
               ? yaml.dump(
-                  currentToEdit?.last_applied
-                    ? JSON.parse(currentToEdit?.last_applied)
-                    : currentToEdit.fullData
-                )
+                currentToEdit?.last_applied
+                  ? JSON.parse(currentToEdit?.last_applied)
+                  : currentToEdit.fullData
+              )
               : ""
           }
           resourceType="configmaps"
@@ -195,8 +191,8 @@ export default function ConfigMapsPage() {
                   refetch();
                   setShowCreateDialog(false);
                 } else {
-                  
-                    toast.error(res.error);
+
+                  toast.error(res.error);
                 }
               })
               .catch((err) => {
@@ -205,6 +201,6 @@ export default function ConfigMapsPage() {
           }}
         />
       )}
-    </div>
+    </PageLayout>
   );
 }
