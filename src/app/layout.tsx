@@ -31,7 +31,7 @@ function AppLayout() {
             <NamespaceContextProvider>
               <AppSidebar />
               <CommandCenter />
-              <main className='w-full p-6 overflow-auto'>
+              <main className='w-full overflow-auto'>
                 <Outlet />
               </main>
             </NamespaceContextProvider>

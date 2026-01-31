@@ -95,7 +95,7 @@ const DeploymentStrategyPage = ({ strategies }: DeploymentStrategyPageProps) => 
       subtitle="Available deployment strategies for your services. Reference these ID's when configuring your deployments."
       icon={FileCog}
     >
-      <div className="flex-1 min-h-0 mt-10">
+      <div className="flex-1 min-h-0 mt-4">
         <ResourceTable
           title="Available Strategies"
           description="Reference these strategy IDs when configuring your deployments. Hover over strategy types to see more details."

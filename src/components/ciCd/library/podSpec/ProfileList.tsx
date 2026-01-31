@@ -67,7 +67,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
     const Icon = type === "pod_profile" ? Settings : Layout;
 
     return (
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 mt-6">
             <ResourceTable
                 className="pt-0"
                 loading={loading}

@@ -66,7 +66,7 @@ export const ContainerSpecList: React.FC<ContainerSpecListProps> = ({
     };
 
     return (
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 mt-4">
             <ResourceTable
                 className="pt-0"
                 loading={loading}

@@ -338,7 +338,7 @@ const PatsManagementPage = () => {
             </div>
 
             {/* Token List */}
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-h-0 mt-4">
                 <ResourceTable
                     data={pats}
                     columns={columns}

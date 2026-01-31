@@ -35,7 +35,7 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({
     }, [searchQuery, deployments]);
 
     return (
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 mt-6">
             <ResourceTable
                 className="pt-0"
                 loading={loading}

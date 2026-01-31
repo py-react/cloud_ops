@@ -20,7 +20,7 @@ const HeaderLayout: React.FC<HeaderLayoutProps> = ({
     className = "",
 }) => {
     return (
-        <div className={`flex-none flex flex-col md:flex-row md:items-start justify-between gap-2 border-b border-border/100 pb-2 mb-2 ${className}`}>
+        <div className={`flex-none flex px-6 pt-3 flex-col md:flex-row md:items-start justify-between gap-2 border-b border-border/100 pb-2 mb-2 ${className}`}>
             <div className="flex items-start gap-2">
                 {showBackButton && <BackButton className="mb-0 -ml-2 h-8 w-8" />}
                 <div className="flex items-start gap-4 mb-1 p-1">
