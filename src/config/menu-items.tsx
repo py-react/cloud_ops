@@ -299,7 +299,7 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
             ],
         },
         productionEssentials: {
-            title: "1-Click",
+            title: "Essentials",
             url: "/addons",
             color: "orange",
             childs: [

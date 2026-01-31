@@ -219,7 +219,6 @@ export function AlertingAddon({ title, description, component, icon, features, p
                 status={installed ? 'installed' : deleting ? 'deleting' : 'available'}
                 features={features}
                 footerActions={footerActions}
-                footerActions={footerActions}
                 dashboardUrl={installed && proxyUrl ? proxyUrl : undefined}
             />
         </div>
