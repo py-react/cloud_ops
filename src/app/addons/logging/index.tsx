@@ -6,7 +6,7 @@ import { MonitoringAddon } from '@/components/addons/monitoring/MonitoringAddon'
 function Logging() {
     return (
         <PageLayout
-            title="Logging Stack"
+            title="Logging"
             icon={FileText}
             subtitle="Centralized log aggregation and querying with Loki."
         >
@@ -17,11 +17,26 @@ function Logging() {
                         description="Horizontally-scalable, highly-available, multi-tenant log aggregation system."
                         component="loki"
                         icon={<Database />}
-                        proxyUrl="/cluster/proxy/grafana/monitoring/d/loki-logs/loki-unified-logs?orgId=1&refresh=1m&var-agent=$__all"
+                        // proxyUrl="/cluster/proxy/grafana/monitoring/d/loki-logs/loki-unified-logs?orgId=1&refresh=1m&var-agent=$__all"
                         features={[
                             // "High-Performance Storage",
                             // "JSON Labeling",
                             // "S3/FS Backend Support"
+                        ]}
+                    />
+
+
+
+                    <MonitoringAddon
+                        title="Promtail"
+                        description="Native log shipping agent that discovers targets and enriches logs with labels."
+                        component="promtail"
+                        icon={<FileSearch />}
+                        // proxyUrl="/cluster/proxy/grafana/monitoring/d/loki-logs/loki-unified-logs?orgId=1&refresh=1m&var-agent=promtail"
+                        features={[
+                            // "Fast & Native Ingestion",
+                            // "Automatic K8s Labeling",
+                            // "Low Resource Footprint"
                         ]}
                     />
 
@@ -30,24 +45,11 @@ function Logging() {
                         description="The universal, standard-compliant observability agent for modern clusters."
                         component="otel-collector"
                         icon={<Activity />}
-                        proxyUrl="/cluster/proxy/grafana/monitoring/d/loki-logs/loki-unified-logs?orgId=1&refresh=1m&var-agent=otel"
+                        // proxyUrl="/cluster/proxy/grafana/monitoring/d/loki-logs/loki-unified-logs?orgId=1&refresh=1m&var-agent=otel"
                         features={[
                             // "Universal Ingestion",
                             // "Rich Processing",
                             // "Metadata Enrichment"
-                        ]}
-                    />
-
-                    <MonitoringAddon
-                        title="Promtail"
-                        description="Native log shipping agent that discovers targets and enriches logs with labels."
-                        component="promtail"
-                        icon={<FileSearch />}
-                        proxyUrl="/cluster/proxy/grafana/monitoring/d/loki-logs/loki-unified-logs?orgId=1&refresh=1m&var-agent=promtail"
-                        features={[
-                            // "Fast & Native Ingestion",
-                            // "Automatic K8s Labeling",
-                            // "Low Resource Footprint"
                         ]}
                     />
                 </div>

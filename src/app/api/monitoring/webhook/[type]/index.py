@@ -10,12 +10,42 @@ logger = logging.getLogger(__name__)
 ALERT_LOGS = []
 MAX_LOGS = 50
 
+import re
+
+def rewrite_alert_urls(obj):
+    """
+    Recursively replaces internal pod/service URLs with cluster proxy paths
+    so that links in the UI are actually clickable/reachable.
+    """
+    if isinstance(obj, dict):
+        return {k: rewrite_alert_urls(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [rewrite_alert_urls(i) for i in obj]
+    if isinstance(obj, str):
+        # Handle Prometheus internal URLs (e.g., http://prometheus-deployment-...:9090/graph?...)
+        if "prometheus-deployment" in obj and ":9090" in obj:
+            match = re.search(r":9090(/.*)?$", obj)
+            path = match.group(1) if match and match.group(1) else "/"
+            return f"/cluster/proxy/prometheus-service/monitoring{path}"
+        # Handle Alertmanager internal URLs (e.g., http://alertmanager-...:9093/...)
+        if "alertmanager" in obj and ":9093" in obj:
+            match = re.search(r":9093(/.*)?$", obj)
+            path = match.group(1) if match and match.group(1) else "/"
+            return f"/cluster/proxy/alertmanager-service/alerting{path}"
+        # Handle cases where it already has the proxy path but might have a host prepended
+        if "/cluster/proxy/" in obj:
+            match = re.search(r"(/cluster/proxy/.*)$", obj)
+            if match:
+                return match.group(1)
+    return obj
+
 async def POST(request: Request, type: str) -> dict:
     """
     Receives alerts, prints to terminal, and stores them in global memory.
     """
     try:
-        data = await request.json()
+        raw_data = await request.json()
+        data = rewrite_alert_urls(raw_data)
         now = datetime.now().strftime("%H:%M:%S")
         
         # Check X-Forwarded-For for accurate source when behind a proxy

@@ -30,6 +30,7 @@ import {
     Key,
     Activity,
     AlertCircle,
+    FileText,
 } from "lucide-react";
 
 export const getMenuItems = (selectedNamespace: string = "default") => ({
@@ -303,6 +304,12 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
             color: "orange",
             childs: [
                 {
+                    title: "Dashboards",
+                    url: "/dashboard",
+                    icon: LayoutDashboard,
+                    items: [],
+                },
+                {
                     title: "Metrics",
                     url: "/monitoring",
                     icon: Activity,
@@ -317,15 +324,15 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                 {
                     title: "Logs",
                     url: "/logging",
-                    icon: Database,
+                    icon: FileText,
                     items: [],
                 },
-                {
-                    title: "Database",
-                    url: "/db",
-                    icon: Database,
-                    items: [],
-                },
+                // {
+                //     title: "Database",
+                //     url: "/db",
+                //     icon: Database,
+                //     items: [],
+                // },
             ],
         },
         infraManager: {
