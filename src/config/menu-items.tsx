@@ -335,18 +335,18 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                 // },
             ],
         },
-        infraManager: {
-            title: "Infra",
-            url: "/infra",
-            color: "purple",
-            childs: [
-                {
-                    title: "Manager",
-                    url: "/manager",
-                    icon: WaypointsIcon,
-                    items: [],
-                },
-            ],
-        },
+        // infraManager: {
+        //     title: "Infra",
+        //     url: "/infra",
+        //     color: "purple",
+        //     childs: [
+        //         {
+        //             title: "Manager",
+        //             url: "/manager",
+        //             icon: WaypointsIcon,
+        //             items: [],
+        //         },
+        //     ],
+        // },
     },
 });

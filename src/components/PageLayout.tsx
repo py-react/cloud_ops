@@ -26,7 +26,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
     contentClassName = "",
 }) => {
     return (
-        <div className={`w-full h-full flex item-start flex-col animate-fade-in space-y-4 overflow-hidden pr-1 ${className}`}>
+        <div className={`w-full h-full flex item-start flex-col animate-fade-in space-y-4 overflow-hidden pr-1 pb-6 ${className}`}>
             <HeaderLayout
                 title={title}
                 subtitle={subtitle}
@@ -35,7 +35,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
                 showBackButton={showBackButton}
                 className={headerClassName}
             />
-            <div className={`flex-1 min-h-0 flex flex-col ${contentClassName}`}>
+            <div className={`flex-1 px-6 min-h-0 flex flex-col ${contentClassName}`}>
                 {children}
             </div>
         </div>

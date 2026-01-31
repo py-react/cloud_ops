@@ -200,7 +200,7 @@ const PackagesPage = () => {
         />
       </div>
 
-      <div className="flex-1 min-h-0 mt-10">
+      <div className="flex-1 min-h-0 4">
         <PackagesList
           packages={packages}
           onPlay={handlePlay}

@@ -143,7 +143,7 @@ export default function StoragePage() {
         />
       </div>
 
-      <div className="flex-1 min-h-0 mt-10">
+      <div className="flex-1 min-h-0 mt-4">
         <StoragesList
           storages={filteredStorages}
           onDelete={handleDelete}

@@ -24,7 +24,7 @@ export const PodList: React.FC<PodListProps> = ({
     onRowClick
 }) => {
     return (
-        <div className="flex-1 min-h-0 mt-10">
+        <div className="flex-1 min-h-0 mt-6">
             <ResourceTable
                 title="Derived Pods"
                 description={`Defined derived pod configurations for deployments in ${selectedNamespace}.`}
