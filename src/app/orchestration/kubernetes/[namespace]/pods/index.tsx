@@ -8,7 +8,7 @@ import ResourceForm from "@/components/resource-form/resource-form";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { BoxIcon } from "lucide-react";
-import RouteDescription from "@/components/route-description";
+import PageLayout from "@/components/PageLayout";
 import {
   Card,
   CardHeader,
@@ -90,11 +90,11 @@ export default function PodsPage() {
         nodeName: pod.spec?.nodeName || "N/A",
         last_applied:
           pod.metadata?.annotations?.[
-            "kubectl.kubernetes.io/last-applied-configuration"
+          "kubectl.kubernetes.io/last-applied-configuration"
           ],
         fullData: pod,
-        showViewDetails:true,
-        showEdit:true,
+        showViewDetails: true,
+        showEdit: true,
         showDelete: true,
       };
     }) || [];
@@ -108,18 +108,21 @@ export default function PodsPage() {
   }
 
   return (
-    <div className="w-full">
+    <PageLayout
+      title="Pods"
+      subtitle="Manage your Kubernetes Pods—inspect status, view logs, restart, or delete running workloads."
+      icon={BoxIcon}
+      actions={
+        <div className="flex items-center gap-2">
+          <NamespaceSelector />
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <BoxIcon className="w-4 h-4 mr-2" />
+            Create Pod
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center gap-2">
-              <BoxIcon className="h-4 w-4" />
-              <h2>Pods</h2>
-            </div>
-          }
-          shortDescription="Manage your Kubernetes Pods—inspect status, view logs, restart, or delete running workloads."
-          description="Pods are the smallest and most fundamental compute units in Kubernetes. Each Pod encapsulates one or more containers that share the same network namespace and storage. They are designed to run a single instance of a process and are managed by higher-level controllers like Deployments."
-        />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -127,13 +130,6 @@ export default function PodsPage() {
               <CardDescription>
                 {transformedPods.length} Pods found
               </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <NamespaceSelector />
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <BoxIcon className="w-4 h-4 mr-2" />
-                Create Pod
-              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
@@ -188,19 +184,19 @@ export default function PodsPage() {
           rawYaml={
             currentToEdit
               ? yaml.dump(
-                  currentToEdit?.last_applied
-                    ? JSON.parse(currentToEdit?.last_applied)
-                    : (() => {
-                        const {
-                          managedFields,
-                          ...metadataWithoutManagedFields
-                        } = currentToEdit.fullData.metadata;
-                        return {
-                          ...currentToEdit.fullData,
-                          metadata: metadataWithoutManagedFields,
-                        };
-                      })()
-                )
+                currentToEdit?.last_applied
+                  ? JSON.parse(currentToEdit?.last_applied)
+                  : (() => {
+                    const {
+                      managedFields,
+                      ...metadataWithoutManagedFields
+                    } = currentToEdit.fullData.metadata;
+                    return {
+                      ...currentToEdit.fullData,
+                      metadata: metadataWithoutManagedFields,
+                    };
+                  })()
+              )
               : ""
           }
           resourceType="pods"
@@ -229,6 +225,6 @@ export default function PodsPage() {
           }}
         />
       )}
-    </div>
+    </PageLayout>
   );
 }

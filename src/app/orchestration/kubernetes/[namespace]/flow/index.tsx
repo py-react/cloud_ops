@@ -5,6 +5,8 @@ import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import CanvasViewer from "@/components/kubernetes/erd/canvas";
+import PageLayout from "@/components/PageLayout";
+import { Share2Icon } from "lucide-react";
 import React_Flow from "@/components/kubernetes/react-flow/flow";
 
 function DeploymentOverview() {
@@ -39,41 +41,22 @@ function DeploymentOverview() {
   };
 
   return (
-    <>
-      <>
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Deployment Overview</h1>
-          <div className="flex gap-2 items-center">
-            <NamespaceSelector />
-            {/* {!isLoading && selectedDeployment ? (
-                <div className="relative w-64">
-                  <select
-                    value={selectedDeployment}
-                    onChange={(e) => setSelectedDeployment(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 pr-8 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  >
-                    {Object.keys(deployments).map((deploymentKey) => (
-                      <option key={deploymentKey} value={deploymentKey}>
-                        {deployments[deploymentKey].deployment_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ):null} */}
-          </div>
-        </div>
-      </>
+    <PageLayout
+      title="Cluster Flow"
+      subtitle="Visual representation of your cluster resources and their relationships."
+      icon={Share2Icon}
+      actions={<NamespaceSelector />}
+    >
       {!isLoading ? (
-        <div className="w-full">
-          <React.Suspense fallback="Loading...">
+        <div className="w-full h-[calc(100vh-200px)]">
+          <React.Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
             <React_Flow
               data={deployments}
             />
           </React.Suspense>
         </div>
-      ) : 
-      null}
-    </>
+      ) : null}
+    </PageLayout>
   );
 }
 

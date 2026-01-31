@@ -8,7 +8,7 @@ import ResourceForm from "@/components/resource-form/resource-form"
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { RocketIcon, Box, Settings, Server, HardDrive, Network, Shield, Activity } from "lucide-react";
-import RouteDescription from "@/components/route-description";
+import PageLayout from "@/components/PageLayout";
 import {
   Card,
   CardHeader,
@@ -34,13 +34,13 @@ const columns = [
 
 export default function DeploymentsPage() {
   const navigate = useNavigate()
-  const {namespace,type} = useParams()
+  const { namespace, type } = useParams()
   const { selectedNamespace } = useContext(NamespaceContext);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [currentToEdit, setCurrentToEdit] = useState<any>(null);
-  
+
   const resourceType = type || "deployments";
-  
+
   const {
     resource: deployments,
     error,
@@ -93,7 +93,7 @@ export default function DeploymentsPage() {
         ),
         last_applied:
           dep.metadata?.annotations[
-            "kubectl.kubernetes.io/last-applied-configuration"
+          "kubectl.kubernetes.io/last-applied-configuration"
           ],
         fullData: dep,
         showEdit: true,
@@ -115,18 +115,21 @@ export default function DeploymentsPage() {
   }
 
   return (
-    <div className="w-full">
+    <PageLayout
+      title={resourceType.charAt(0).toUpperCase() + resourceType.slice(1)}
+      subtitle="View and manage Kubernetes Deployments—deploy and update your applications."
+      icon={RocketIcon}
+      actions={
+        <div className="flex items-center gap-2">
+          <NamespaceSelector />
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <RocketIcon className="w-4 h-4 mr-2" />
+            Create {resourceType.charAt(0).toUpperCase() + resourceType.slice(1)}
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center gap-2">
-              <RocketIcon className="h-4 w-4" />
-              <h2>{resourceType.charAt(0).toUpperCase() + resourceType.slice(1)}</h2>
-            </div>
-          }
-          shortDescription="View and manage Kubernetes Deployments—deploy and update your applications."
-          description="Deployments provide declarative updates for Pods and ReplicaSets. You describe a desired state in a Deployment, and the Deployment Controller changes the actual state to the desired state at a controlled rate."
-        />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -134,13 +137,6 @@ export default function DeploymentsPage() {
               <CardDescription>
                 {transformedDeployments.length} {resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} found
               </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <NamespaceSelector />
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <RocketIcon className="w-4 h-4 mr-2" />
-                Create {resourceType.charAt(0).toUpperCase() + resourceType.slice(1)}
-              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
@@ -185,7 +181,7 @@ export default function DeploymentsPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       {showCreateDialog && (
         <ResourceForm
           heading="Deployment resource"
@@ -194,10 +190,10 @@ export default function DeploymentsPage() {
           rawYaml={
             currentToEdit
               ? yaml.dump(
-                  currentToEdit?.last_applied
-                    ? JSON.parse(currentToEdit?.last_applied)
-                    : currentToEdit.fullData
-                )
+                currentToEdit?.last_applied
+                  ? JSON.parse(currentToEdit?.last_applied)
+                  : currentToEdit.fullData
+              )
               : ""
           }
           resourceType="deployments"
@@ -226,23 +222,23 @@ export default function DeploymentsPage() {
           }}
         />
       )}
-    </div>
+    </PageLayout>
   );
 }
 
 function inferStatus(status: any, resourceType: string, conditions?: any): string {
   // Handle case where conditions is not an array but a status object
-  if (["statefulsets","daemonsets","replicasets"].includes(resourceType)) {
+  if (["statefulsets", "daemonsets", "replicasets"].includes(resourceType)) {
     // This is likely a status object, not conditions array
     const statusObj = status;
-    
+
     // Handle different resource types based on their status patterns
     if (resourceType === "statefulsets") {
       // StatefulSet status logic
       const desiredReplicas = statusObj.replicas || 0;
       const readyReplicas = statusObj.readyReplicas || 0;
       const currentReplicas = statusObj.currentReplicas || 0;
-      
+
       if (readyReplicas === desiredReplicas && currentReplicas === desiredReplicas) {
         return "Running";
       } else if (readyReplicas > 0 && readyReplicas < desiredReplicas) {
@@ -251,20 +247,20 @@ function inferStatus(status: any, resourceType: string, conditions?: any): strin
         return "Pending";
       } else if (statusObj.conditions) {
         // Check conditions for more specific status
-        const failedCondition = statusObj.conditions.find((c: any) => 
+        const failedCondition = statusObj.conditions.find((c: any) =>
           c.type === "Failed" && c.status === "True"
         );
         if (failedCondition) return "Failed";
       }
       return "Pending";
     }
-    
+
     if (resourceType === "daemonsets") {
       // DaemonSet status logic
       const desired = statusObj.desiredNumberScheduled || 0;
       const ready = statusObj.numberReady || 0;
       const available = statusObj.numberAvailable || 0;
-      
+
       if (ready === desired && available === desired) {
         return "Running";
       } else if (ready > 0 && ready < desired) {
@@ -272,20 +268,20 @@ function inferStatus(status: any, resourceType: string, conditions?: any): strin
       } else if (ready === 0 && desired > 0) {
         return "Pending";
       } else if (statusObj.conditions) {
-        const failedCondition = statusObj.conditions.find((c: any) => 
+        const failedCondition = statusObj.conditions.find((c: any) =>
           c.type === "Failed" && c.status === "True"
         );
         if (failedCondition) return "Failed";
       }
       return "Pending";
     }
-    
+
     if (resourceType === "replicasets") {
       // ReplicaSet status logic
       const desiredReplicas = statusObj.replicas || 0;
       const readyReplicas = statusObj.readyReplicas || 0;
       const availableReplicas = statusObj.availableReplicas || 0;
-      console.log({desiredReplicas,readyReplicas,availableReplicas})
+      console.log({ desiredReplicas, readyReplicas, availableReplicas })
       if (readyReplicas === desiredReplicas && availableReplicas === desiredReplicas) {
         return "Running";
       } else if (readyReplicas > 0 && readyReplicas < desiredReplicas) {
@@ -295,28 +291,28 @@ function inferStatus(status: any, resourceType: string, conditions?: any): strin
       }
       return "Pending";
     }
-    
+
     // Default fallback for other resource types
     return "Unknown";
   }
 
   // Handle conditions array (for Deployments and other resources with conditions)
   if (!conditions || conditions.length === 0) return "Unknown";
-  
+
   const progressingCondition = conditions.find((c: any) => c.type === "Progressing");
   const availableCondition = conditions.find((c: any) => c.type === "Available");
   const readyCondition = conditions.find((c: any) => c.type === "Ready");
   const failedCondition = conditions.find((c: any) => c.type === "Failed");
-  
+
   // Check for failed state first
   if (failedCondition?.status === "True") {
     return "Failed";
   }
-  
+
   // Check for available/ready state
   const isAvailable = availableCondition?.status === "True" || readyCondition?.status === "True";
   const isProgressing = progressingCondition?.status === "True";
-  
+
   if (isAvailable) {
     return "Running";
   } else if (isProgressing) {
@@ -324,6 +320,6 @@ function inferStatus(status: any, resourceType: string, conditions?: any): strin
   } else if (availableCondition?.status === "False" || readyCondition?.status === "False") {
     return "Failed";
   }
-  
+
   return "Pending";
 }

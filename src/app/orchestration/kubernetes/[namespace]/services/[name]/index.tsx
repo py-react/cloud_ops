@@ -5,18 +5,21 @@ import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
+import PageLayout from "@/components/PageLayout";
+import { NetworkIcon } from "lucide-react";
+
 export default function DeploymentDetailPage() {
   const { name } = useParams();
   const { selectedNamespace } = useContext(NamespaceContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
+  const [error, setError] = useState<any>(null);
+  const [data, setData] = useState<any>(null);
 
   const fetchData = async () => {
     const response = await DefaultService.apiKubernertesServiceGet({
       namespace: selectedNamespace,
       serviceName: name,
-    }).catch((err) => {
+    }).catch((err: any) => {
       toast.error(err.message);
     });
     if (!response) return;
@@ -39,5 +42,13 @@ export default function DeploymentDetailPage() {
     }
   }, [selectedNamespace]);
 
-  return <ServiceDetailedInfo error={error} data={data} loading={isLoading} />;
+  return (
+    <PageLayout
+      title={name || "Service Details"}
+      subtitle="View detailed configuration and status for this Service."
+      icon={NetworkIcon}
+    >
+      <ServiceDetailedInfo error={error} data={data} loading={isLoading} />
+    </PageLayout>
+  );
 }

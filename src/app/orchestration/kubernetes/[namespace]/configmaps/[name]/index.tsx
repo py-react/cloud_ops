@@ -6,21 +6,24 @@ import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 
-export default function DeploymentDetailPage(){
+import PageLayout from "@/components/PageLayout";
+import { ContainerIcon } from "lucide-react";
+
+export default function DeploymentDetailPage() {
   const { name } = useParams();
   const { selectedNamespace } = useContext(NamespaceContext);
-  const [isLoading,setIsLoading] = useState(false)
-  const [error,setError] = useState(null)
-  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<any>(null)
+  const [data, setData] = useState<any>(null);
 
   const fetchData = async () => {
     const response = await DefaultService.apiKubernertesConfigmapsGet({
       namespace: selectedNamespace,
       configmapName: name,
-    }).catch((err) => {
+    }).catch((err: any) => {
       toast.error(err.message);
     });
-    if(!response) return
+    if (!response) return
     if (response.error) {
       setError(response.message)
       toast.error(response.message);
@@ -38,7 +41,15 @@ export default function DeploymentDetailPage(){
         setIsLoading(false)
       })();
     }
-  }, [ selectedNamespace]);
+  }, [selectedNamespace]);
 
-  return <ConfigDetailedInfo error={error} data={data} loading={isLoading}  />
+  return (
+    <PageLayout
+      title={name || "ConfigMap Details"}
+      subtitle="View configuration data details."
+      icon={ContainerIcon}
+    >
+      <ConfigDetailedInfo error={error} data={data} loading={isLoading} />
+    </PageLayout>
+  )
 }

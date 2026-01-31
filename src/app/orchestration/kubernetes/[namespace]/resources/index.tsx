@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { ListIcon, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import RouteDescription from "@/components/route-description";
+import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 import { useParams } from "react-router-dom";
@@ -26,13 +26,13 @@ export interface ResourceInfo {
 
 export default function KubernetesResourcesPage() {
   const navigate = useNavigate();
-  const {namespace} = useParams()
+  const { namespace } = useParams()
   const [searchTerm, setSearchTerm] = useState("");
   const [resources, setResources] = useState<ResourceInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  
+
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -53,12 +53,12 @@ export default function KubernetesResourcesPage() {
     fetchResources();
   }, []);
 
-  const handleQuickViewMatchResourceSelect = (resourceType: string)=>{
+  const handleQuickViewMatchResourceSelect = (resourceType: string) => {
     navigate(
       `/orchestration/kubernetes/${namespace}/${resourceType.toLowerCase()}`
     );
   }
-  const handleAnyDeploymentsSelect = (resourceType: string)=>{
+  const handleAnyDeploymentsSelect = (resourceType: string) => {
     navigate(
       `/orchestration/kubernetes/${namespace}/deployments/${resourceType.toLowerCase()}`
     );
@@ -80,11 +80,11 @@ export default function KubernetesResourcesPage() {
 
   const handleResourceSelect = (resourceType: string) => {
     const normalizedType = resourceType.toLowerCase();
-    
+
     if (normalizedType in resourceTypes) {
-      if(["deployments","replicasets","statefulsets","daemonsets"].includes(normalizedType)){
+      if (["deployments", "replicasets", "statefulsets", "daemonsets"].includes(normalizedType)) {
         handleAnyDeploymentsSelect(normalizedType);
-      }else{
+      } else {
         handleQuickViewMatchResourceSelect(resourceType);
       }
     } else {
@@ -111,26 +111,18 @@ export default function KubernetesResourcesPage() {
   }
 
   return (
-    <div className="w-full">
+    <PageLayout
+      title="Resources"
+      subtitle="Browse all available Kubernetes resources—click any resource type to view and manage its corresponding objects."
+      icon={ListIcon}
+      actions={<NamespaceSelector />}
+    >
       <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center gap-2">
-              <ListIcon className="h-4 w-4" />
-              <h2>Resources</h2>
-            </div>
-          }
-          shortDescription="Browse all available Kubernetes resources—click any resource type to view and manage its corresponding objects."
-          description="Resources are declarative objects that represent the desired state and configuration of your cluster. These include core components like Pods, Services, ConfigMaps, and more, each serving a specific role in the system. Resources are defined and managed through the Kubernetes API and reflect everything from workload execution to networking and configuration."
-        />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">Your Resources</CardTitle>
               <CardDescription>All resources</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <NamespaceSelector />
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none ">
@@ -151,6 +143,6 @@ export default function KubernetesResourcesPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   );
 }

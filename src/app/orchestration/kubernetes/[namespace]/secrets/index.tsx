@@ -8,7 +8,7 @@ import ResourceForm from "@/components/resource-form/resource-form";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { FileKeyIcon } from "lucide-react";
-import RouteDescription from "@/components/route-description";
+import PageLayout from "@/components/PageLayout";
 import {
   Card,
   CardHeader,
@@ -66,7 +66,7 @@ export default function SecretsPage() {
       labels: Object.entries(secret.metadata?.labels || {}).map(
         ([key, value]) => `${key}: ${value}`
       ),
-      age: secret.metadata?.creationTimestamp 
+      age: secret.metadata?.creationTimestamp
         ? new Date(secret.metadata.creationTimestamp).toLocaleDateString()
         : "Unknown",
       last_applied: secret.metadata?.annotations?.["kubectl.kubernetes.io/last-applied-configuration"],
@@ -76,9 +76,9 @@ export default function SecretsPage() {
       showDelete: true,
     })) || [];
 
-    const handleViewDetails = (secret: any) => {
-      navigate(`/orchestration/kubernetes/${secret.namespace}/secrets/${secret.name}`)
-    };
+  const handleViewDetails = (secret: any) => {
+    navigate(`/orchestration/kubernetes/${secret.namespace}/secrets/${secret.name}`)
+  };
 
   if (error) {
     return (
@@ -89,18 +89,21 @@ export default function SecretsPage() {
   }
 
   return (
-    <div className="w-full">
+    <PageLayout
+      title="Secrets"
+      subtitle="Manage your Kubernetes Secrets—create, edit, or delete sensitive data used by your applications."
+      icon={FileKeyIcon}
+      actions={
+        <div className="flex items-center gap-2">
+          <NamespaceSelector />
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <FileKeyIcon className="w-4 h-4 mr-2" />
+            Create Secret
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center gap-2">
-              <FileKeyIcon className="h-4 w-4" />
-              <h2>Secrets</h2>
-            </div>
-          }
-          shortDescription="Manage your Kubernetes Secrets—create, edit, or delete sensitive data used by your applications."
-          description="Secrets in Kubernetes are used to securely store and manage sensitive information such as passwords, tokens, SSH keys, and TLS certificates. Unlike ConfigMaps, Secrets are encoded and handled with tighter access controls to reduce the risk of exposure. They can be mounted into Pods as files or exposed as environment variables at runtime."
-        />
         <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -108,13 +111,6 @@ export default function SecretsPage() {
               <CardDescription>
                 {transformedSecrets.length} Secrets found
               </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <NamespaceSelector />
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <FileKeyIcon className="w-4 h-4 mr-2" />
-                Create Secret
-              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0 shadow-none">
@@ -169,10 +165,10 @@ export default function SecretsPage() {
           rawYaml={
             currentToEdit
               ? yaml.dump(
-                  currentToEdit?.last_applied
-                    ? JSON.parse(currentToEdit?.last_applied)
-                    : currentToEdit.fullData
-                )
+                currentToEdit?.last_applied
+                  ? JSON.parse(currentToEdit?.last_applied)
+                  : currentToEdit.fullData
+              )
               : ""
           }
           resourceType="secrets"
@@ -201,6 +197,6 @@ export default function SecretsPage() {
           }}
         />
       )}
-    </div>
+    </PageLayout>
   );
 }

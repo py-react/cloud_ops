@@ -458,7 +458,14 @@ const ReferencedPodRow: React.FC<{ pod: any }> = ({ pod }) => {
   );
 };
 
-export const SecretsDetailedInfo: React.FC = ({ data, loading, error }) => {
+interface SecretsDetailedInfoProps {
+  data: any;
+  loading: any;
+  error: any;
+  onRetry?: () => void;
+}
+
+export const SecretsDetailedInfo: React.FC<SecretsDetailedInfoProps> = ({ data, loading, error, onRetry }) => {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
   const toggleKeyExpansion = (key: string) => {
@@ -479,7 +486,7 @@ export const SecretsDetailedInfo: React.FC = ({ data, loading, error }) => {
           <h2 className="text-xl font-semibold text-slate-900 mb-2">Error Loading Secret</h2>
           <p className="text-slate-600 mb-4">{error}</p>
           <button
-            onClick={refetch}
+            onClick={onRetry}
             className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />

@@ -5,18 +5,21 @@ import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
+import PageLayout from "@/components/PageLayout";
+import { RouteIcon } from "lucide-react";
+
 export default function DeploymentDetailPage() {
   const { name } = useParams();
   const { selectedNamespace } = useContext(NamespaceContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
+  const [error, setError] = useState<any>(null);
+  const [data, setData] = useState<any>(null);
 
   const fetchData = async () => {
     const response = await DefaultService.apiKubernertesIngressGet({
       namespace: selectedNamespace,
       ingressName: name,
-    }).catch((err) => {
+    }).catch((err: any) => {
       toast.error(err.message);
     });
     if (!response) return;
@@ -39,5 +42,13 @@ export default function DeploymentDetailPage() {
     }
   }, [selectedNamespace]);
 
-  return <IngressDetailedInfo error={error} data={data} loading={isLoading} />;
+  return (
+    <PageLayout
+      title={name || "Ingress Details"}
+      subtitle="View ingress details and routing rules."
+      icon={RouteIcon}
+    >
+      <IngressDetailedInfo error={error} data={data} loading={isLoading} />
+    </PageLayout>
+  );
 }

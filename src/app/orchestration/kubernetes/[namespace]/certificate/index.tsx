@@ -1,5 +1,7 @@
 import React, { useContext } from 'react'
 import { Button } from "@/components/ui/button"
+import PageLayout from "@/components/PageLayout";
+import { Shield } from "lucide-react";
 
 import KubernetesCertificateList from '@/components/kubernetes/certificates'
 import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext'
@@ -8,13 +10,13 @@ import useKubernertesResources from '@/hooks/use-resource'
 
 
 export default function IngressPage() {
-  const {selectedNamespace} = useContext(NamespaceContext)
+  const { selectedNamespace } = useContext(NamespaceContext)
 
   const {
-    resource:certificates,
+    resource: certificates,
     isLoading,
     error
-  } = useKubernertesResources({nameSpace:selectedNamespace,type:"certificate"})
+  } = useKubernertesResources({ nameSpace: selectedNamespace, type: "certificate" })
 
 
   if (error) {
@@ -26,18 +28,21 @@ export default function IngressPage() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Certificate</h1>
+    <PageLayout
+      title="Certificate"
+      subtitle="Manage your Kubernetes Certificates."
+      icon={Shield}
+      actions={
         <div className="flex gap-2 items-center">
           <NamespaceSelector />
           <Button>Create Certificate</Button>
         </div>
-      </div>
+      }
+    >
       {!isLoading ? (
         <KubernetesCertificateList items={certificates as []} />
-      ):<div>Loading...</div>}
-    </div>
+      ) : <div>Loading...</div>}
+    </PageLayout>
   )
 }
 
