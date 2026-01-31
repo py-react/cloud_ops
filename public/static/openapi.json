@@ -44,10 +44,10 @@
       }
     },
     "/cluster/proxy/{service}/{namespace}/{path}": {
-      "post": {
+      "get": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -101,7 +101,7 @@
       "put": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -152,10 +152,10 @@
           }
         }
       },
-      "get": {
+      "post": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",
@@ -209,7 +209,7 @@
       "delete": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
         "parameters": [
           {
             "name": "service",

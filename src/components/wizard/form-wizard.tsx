@@ -175,7 +175,7 @@ export const FormWizard = <T extends FieldValues>({
         </DialogHeader>
 
         <Form {...form}>
-          <form id={name} onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col min-h-0 h-[620px]">
+          <form id={name} onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col min-h-0 h-[620px] max-h-[80vh]">
             <div className="flex shrink-0 min-h-0 overflow-hidden h-full">
               {/* Sidebar Navigation */}
               <div className="w-64 border-r border-border/30 bg-muted/20 flex flex-col shrink-0 relative z-30 max-w-64 overflow-hidden">
@@ -215,7 +215,7 @@ export const FormWizard = <T extends FieldValues>({
               </div>
 
               {/* Form Content Area */}
-              <div className="flex-1 flex flex-col bg-background min-w-0 relative overflow-hidden">
+              <div className="flex-1 flex flex-col bg-background min-w-0 overflow-hidden">
                 <ScrollArea className="flex-1">
                   <div className={cn("px-8 py-8 space-y-8 pb-12")}>
                     {/* Header styled after Overview cards */}

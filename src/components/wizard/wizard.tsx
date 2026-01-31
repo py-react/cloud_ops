@@ -92,7 +92,7 @@ export const Wizard = ({
   );
 
   const MainContent = () => (
-    <div className="flex-1 flex flex-col bg-background relative overflow-hidden min-h-0">
+    <div className="flex-1 flex flex-col bg-background overflow-hidden min-h-0">
       <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 pb-12">
         {/* Standardized Header */}
         <div className="flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -178,7 +178,7 @@ export const Wizard = ({
           </div>
         </DialogHeader>
 
-        <div className="flex h-[620px] min-h-0 overflow-hidden">
+        <div className="flex h-[620px] max-h-[80vh] min-h-0 overflow-hidden">
           <Sidebar />
           <MainContent />
         </div>
