@@ -66,7 +66,7 @@ alerting:
       regex: alertmanager-service
       action: keep
     - source_labels: [__meta_kubernetes_namespace]
-      regex: monitoring
+      regex: alerting
       action: keep
 
 scrape_configs:
@@ -160,7 +160,7 @@ DEFAULT_PROMETHEUS_RULES = """groups:
       description: "Deterministic warning alert triggered by pod presence."
 
   - alert: TestInfo
-    expr: kube_pod_status_phase{namespace="alertmanager-test", pod="deterministic-info-pod", phase="Running"} > 0
+    expr: kube_pod_status_phase{namespace="alertmanager-test", pod="deterministic-info-pod", phase="Running"} > 0 or kube_pod_container_status_waiting{namespace="alertmanager-test", pod="deterministic-info-pod"} > 0
     for: 0s
     labels:
       severity: info
@@ -500,9 +500,9 @@ def get_k8s_dashboard_json():
         return "{}"
 
 
-def get_loki_dashboard_json():
+def get_loki_dashboard_json(title='Loki: Unified Logs', uid='loki-logs'):
     """
-    Fetches a Loki Kubernetes Logs dashboard (ID 15141 or similar).
+    Fetches a Loki Kubernetes Logs dashboard and adds an 'agent' variable for agnostic viewing.
     """
     try:
         # Dashboard ID 12019 is a popular "Loki Logs" dashboard
@@ -512,26 +512,66 @@ def get_loki_dashboard_json():
         dashboard = response.json()
         
         dashboard.pop('__inputs', None)
-        dashboard['uid'] = 'loki-logs'
-        dashboard['title'] = 'Loki Kubernetes Logs'
+        dashboard['uid'] = uid
+        dashboard['title'] = title
         dashboard['overwrite'] = True
 
-        # Fix datasources based on input names
-        def fix_loki_datasource(obj):
+        # Ensure the templating section exists
+        if "templating" not in dashboard:
+            dashboard["templating"] = {"list": []}
+            
+        # Remove 'agent' variable if it exists to ensure we have the latest format
+        dashboard["templating"]["list"] = [v for v in dashboard["templating"]["list"] if v.get('name') != 'agent']
+        
+        # Insert at the beginning so it shows up prominently in the UI header
+            dashboard["templating"]["list"].insert(0, {
+                "allValue": ".*",
+                "current": {"selected": True, "text": "All", "value": "$__all"},
+                "datasource": {"type": "loki", "uid": "loki"},
+                "definition": "label_values(agent)",
+                "hide": 0,
+                "includeAll": True,
+                "label": "agent",
+                "name": "agent",
+                "options": [],
+                "query": {
+                    "label": "agent",
+                    "refId": "LokiVariableQuery",
+                    "stream": "",
+                    "type": 1
+                },
+                "refresh": 1,
+                "regex": "",
+                "sort": 1,
+                "type": "query"
+            })
+
+        # Fix datasources and common query patterns
+        def fix_loki_dashboard_logic(obj):
             if isinstance(obj, dict):
                 for k, v in obj.items():
                     if k == "datasource":
-                        if v == "${DS_LOKI}":
+                        if v == "${DS_LOKI}" or (isinstance(v, dict) and v.get("type") == "loki"):
                             obj[k] = {"type": "loki", "uid": "loki"}
-                        elif v == "${DS_PROMETHEUS}":
+                        elif v == "${DS_PROMETHEUS}" or (isinstance(v, dict) and v.get("type") == "prometheus"):
                             obj[k] = {"type": "prometheus", "uid": "prometheus"}
+                    elif k == "expr" and isinstance(v, str):
+                        # Inject agent label variable $agent
+                        if '{' in v and 'agent=' not in v:
+                            v = v.replace('{', '{agent=~"$agent", ')
+                        
+                        # Fix instance vs pod mismatch in some dashboards
+                        if 'instance=~"$pod"' in v:
+                            v = v.replace('instance=~"$pod"', 'pod=~"$pod"')
+                        
+                        obj[k] = v
                     else:
-                        fix_loki_datasource(v)
+                        fix_loki_dashboard_logic(v)
             elif isinstance(obj, list):
                 for item in obj:
-                    fix_loki_datasource(item)
+                    fix_loki_dashboard_logic(item)
         
-        fix_loki_datasource(dashboard)
+        fix_loki_dashboard_logic(dashboard)
         
         return json.dumps(dashboard)
     except Exception as e:
@@ -566,14 +606,14 @@ def get_grafana_manifests(namespace="monitoring"):
                 "dashboards.yaml": DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG
             }
         },
-        # Grafana ConfigMap: Kubernetes Dashboard JSON
+        # Grafana ConfigMap: Dashboards JSON
         {
             "apiVersion": "v1",
             "kind": "ConfigMap",
             "metadata": {"name": "grafana-dashboard-k8s", "namespace": namespace},
             "data": {
                 "k8s-dashboard.json": k8s_dashboard_json,
-                "loki-dashboard.json": loki_dashboard_json
+                "loki-logs.json": get_loki_dashboard_json(title="Loki: Unified Logs", uid="loki-logs")
             }
         },
         # Grafana Deployment

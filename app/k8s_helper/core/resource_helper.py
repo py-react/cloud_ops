@@ -86,6 +86,18 @@ class KubernetesResourceHelper:
         """Delete a namespace and all resources in it"""
         self.namespace_ops.delete_namespace(name)
 
+    def create_resource(self, resource: dict):
+        """
+        Create a resource directly.
+        """
+        api_version = resource.get('apiVersion')
+        kind = resource.get('kind')
+        name = resource.get('metadata', {}).get('name')
+        namespace = resource.get('metadata', {}).get('namespace', 'default')
+        
+        resource_client = self.dyn_client.resources.get(api_version=api_version, kind=kind)
+        return resource_client.create(body=resource, namespace=namespace)
+
     def apply_resource(self, resource: dict):
         """
         Create or patch a resource (apply semantics).

@@ -7,7 +7,6 @@ server:
   grpc_listen_port: 9096
 
 common:
-  instance_addr: 127.0.0.1
   path_prefix: /loki
   storage:
     filesystem:
@@ -27,9 +26,69 @@ schema_config:
       index:
         prefix: index_
         period: 24h
+    - from: 2023-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v12
+      index:
+        prefix: index_
+        period: 24h
 
 ruler:
   alertmanager_url: http://alertmanager-service.alerting.svc.cluster.local:80
+"""
+
+DEFAULT_OTEL_COLLECTOR_CONFIG = """receivers:
+  filelog:
+    include: [ /var/log/pods/*/*/*.log ]
+    include_file_path: true
+    operators:
+      - type: regex_parser
+        id: extract_metadata_from_path
+        parse_from: attributes["log.file.path"]
+        regex: '^/var/log/pods/(?P<namespace>[^_]+)_(?P<pod>[^_]+)_(?P<uid>[^_/]+)/(?P<container>[^/]+)/.*'
+      - type: move
+        from: attributes.namespace
+        to: resource["namespace"]
+      - type: move
+        from: attributes.pod
+        to: resource["pod"]
+      - type: move
+        from: attributes.container
+        to: resource["container"]
+      - type: regex_parser
+        id: cri_parser
+        regex: '^(?P<time>[^ ]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]+) (?P<msg>.*)$'
+      - type: move
+        from: attributes.msg
+        to: body
+
+processors:
+  batch:
+    send_batch_size: 1000
+    timeout: 5s
+  resource:
+    attributes:
+      - key: job
+        value: "kubernetes-pods"
+        action: upsert
+      - key: agent
+        value: "otel"
+        action: upsert
+      - key: loki.resource.labels
+        value: "namespace, pod, container, job, agent"
+        action: upsert
+
+exporters:
+  loki:
+    endpoint: "http://loki:3100/loki/api/v1/push"
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [batch, resource]
+      exporters: [loki]
 """
 
 DEFAULT_PROMTAIL_CONFIG = """server:
@@ -44,50 +103,39 @@ clients:
 
 scrape_configs:
   - job_name: kubernetes-pods
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_node_name]
-        target_label: __host__
-      - action: labelmap
-        regex: __meta_kubernetes_pod_label_(.+)
-      - action: replace
-        replacement: $1
-        separator: /
-        source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_name]
-        target_label: job
-      - action: replace
-        source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-      - action: replace
-        source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-      - action: replace
-        source_labels: [__meta_kubernetes_pod_container_name]
-        target_label: container
-      - replacement: /var/log/pods/*$1/*.log
-        separator: /
-        source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
-        target_label: __path__
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: kubernetes-pods
+          agent: promtail
+          __path__: /var/log/pods/*/*/*.log
+    pipeline_stages:
+      - docker: {}
+      - regex:
+          source: filename
+          expression: "^/var/log/pods/(?P<namespace>[^_]+)_(?P<pod>[^_]+)_(?P<uid>[a-z0-9-]+)/(?P<container>[^/]+)/.*"
+      - labels:
+          namespace:
+          pod:
+          container:
+      - template:
+          source: instance
+          template: '{{ .pod }}'
+      - labels:
+          instance:
 """
 
 def get_loki_manifests(namespace="logging"):
-    """
-    Returns manifests for Loki (Deployment, Service, PVC, ConfigMap).
-    """
+    """Returns manifests for Loki (Deployment, Service, PVC, ConfigMap)."""
     return [
-        # Loki ConfigMap
         {
             "apiVersion": "v1",
             "kind": "ConfigMap",
             "metadata": {"name": "loki-config", "namespace": namespace},
-            "data": {
-                "loki.yaml": DEFAULT_LOKI_CONFIG
-            }
+            "data": {"loki.yaml": DEFAULT_LOKI_CONFIG}
         },
-        # Loki PVC
         get_pvc_manifest("loki-storage", namespace, "5Gi"),
-        # Loki Deployment
         {
             "apiVersion": "apps/v1",
             "kind": "Deployment",
@@ -118,7 +166,6 @@ def get_loki_manifests(namespace="logging"):
                 }
             }
         },
-        # Loki Service
         {
             "apiVersion": "v1",
             "kind": "Service",
@@ -131,54 +178,90 @@ def get_loki_manifests(namespace="logging"):
         }
     ]
 
-def get_promtail_manifests(namespace="logging"):
-    """
-    Returns manifests for Promtail (DaemonSet, RBAC, ConfigMap).
-    """
+def get_otel_collector_manifests(namespace="logging"):
+    """Returns manifests for OTel Collector (DaemonSet, RBAC, ConfigMap)."""
     return [
-        # Promtail ServiceAccount
         {
             "apiVersion": "v1",
             "kind": "ServiceAccount",
-            "metadata": {"name": "promtail", "namespace": namespace}
+            "metadata": {"name": "otel-collector", "namespace": namespace}
         },
-        # Promtail ClusterRole (Needs access to pods/nodes for discovery)
+        {
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "ClusterRole",
+            "metadata": {"name": "otel-collector-role"},
+            "rules": [{"apiGroups": [""], "resources": ["pods", "namespaces", "nodes"], "verbs": ["get", "list", "watch"]}]
+        },
+        {
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "ClusterRoleBinding",
+            "metadata": {"name": "otel-collector-binding"},
+            "subjects": [{"kind": "ServiceAccount", "name": "otel-collector", "namespace": namespace}],
+            "roleRef": {"kind": "ClusterRole", "name": "otel-collector-role", "apiGroup": "rbac.authorization.k8s.io"}
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {"name": "otel-collector-config", "namespace": namespace},
+            "data": {"otel-collector-config.yaml": DEFAULT_OTEL_COLLECTOR_CONFIG}
+        },
+        {
+            "apiVersion": "apps/v1",
+            "kind": "DaemonSet",
+            "metadata": {"name": "otel-collector", "namespace": namespace},
+            "spec": {
+                "selector": {"matchLabels": {"app": "otel-collector"}},
+                "template": {
+                    "metadata": {"labels": {"app": "otel-collector"}},
+                    "spec": {
+                        "serviceAccountName": "otel-collector",
+                        "containers": [
+                            {
+                                "name": "otel-collector",
+                                "image": "otel/opentelemetry-collector-contrib:0.91.0",
+                                "args": ["--config=/etc/otelcol/otel-collector-config.yaml"],
+                                "securityContext": {"runAsUser": 0, "privileged": True},
+                                "volumeMounts": [
+                                    {"name": "config", "mountPath": "/etc/otelcol"},
+                                    {"name": "varlogpods", "mountPath": "/var/log/pods", "readOnly": True},
+                                    {"name": "varlibdockercontainers", "mountPath": "/var/lib/docker/containers", "readOnly": True}
+                                ]
+                            }
+                        ],
+                        "volumes": [
+                            {"name": "config", "configMap": {"name": "otel-collector-config"}},
+                            {"name": "varlogpods", "hostPath": {"path": "/var/log/pods"}},
+                            {"name": "varlibdockercontainers", "hostPath": {"path": "/var/lib/docker/containers"}}
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+
+def get_promtail_manifests(namespace="logging"):
+    """Returns manifests for Promtail (DaemonSet, RBAC, ConfigMap)."""
+    return [
+        {"apiVersion": "v1", "kind": "ServiceAccount", "metadata": {"name": "promtail", "namespace": namespace}},
         {
             "apiVersion": "rbac.authorization.k8s.io/v1",
             "kind": "ClusterRole",
             "metadata": {"name": "promtail-clusterrole"},
-            "rules": [
-                {
-                    "apiGroups": [""],
-                    "resources": ["nodes", "nodes/proxy", "services", "endpoints", "pods"],
-                    "verbs": ["get", "watch", "list"]
-                }
-            ]
+            "rules": [{"apiGroups": [""], "resources": ["nodes", "nodes/proxy", "services", "endpoints", "pods"], "verbs": ["get", "watch", "list"]}]
         },
-        # Promtail ClusterRoleBinding
         {
             "apiVersion": "rbac.authorization.k8s.io/v1",
             "kind": "ClusterRoleBinding",
             "metadata": {"name": "promtail-clusterrolebinding"},
-            "subjects": [
-                {"kind": "ServiceAccount", "name": "promtail", "namespace": namespace}
-            ],
-            "roleRef": {
-                "kind": "ClusterRole",
-                "name": "promtail-clusterrole",
-                "apiGroup": "rbac.authorization.k8s.io"
-            }
+            "subjects": [{"kind": "ServiceAccount", "name": "promtail", "namespace": namespace}],
+            "roleRef": {"kind": "ClusterRole", "name": "promtail-clusterrole", "apiGroup": "rbac.authorization.k8s.io"}
         },
-        # Promtail ConfigMap
         {
             "apiVersion": "v1",
             "kind": "ConfigMap",
             "metadata": {"name": "promtail-config", "namespace": namespace},
-            "data": {
-                "promtail.yaml": DEFAULT_PROMTAIL_CONFIG
-            }
+            "data": {"promtail.yaml": DEFAULT_PROMTAIL_CONFIG}
         },
-        # Promtail DaemonSet
         {
             "apiVersion": "apps/v1",
             "kind": "DaemonSet",
@@ -189,6 +272,7 @@ def get_promtail_manifests(namespace="logging"):
                     "metadata": {"labels": {"app": "promtail"}},
                     "spec": {
                         "serviceAccountName": "promtail",
+                        "securityContext": {"runAsUser": 0, "runAsGroup": 0},
                         "containers": [
                             {
                                 "name": "promtail",
@@ -197,8 +281,8 @@ def get_promtail_manifests(namespace="logging"):
                                 "volumeMounts": [
                                     {"name": "config", "mountPath": "/etc/promtail"},
                                     {"name": "run", "mountPath": "/run/promtail"},
-                                    {"name": "containers", "mountPath": "/var/lib/docker/containers", "readOnly": True},
-                                    {"name": "pods", "mountPath": "/var/log/pods", "readOnly": True}
+                                    {"name": "containers", "mountPath": "/var/lib/docker/containers", "readOnly": True, "mountPropagation": "HostToContainer"},
+                                    {"name": "pods", "mountPath": "/var/log/pods", "readOnly": True, "mountPropagation": "HostToContainer"}
                                 ]
                             }
                         ],
