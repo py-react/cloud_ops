@@ -23,7 +23,7 @@ import { Database, LayoutDashboard, Activity } from 'lucide-react'
 interface MonitoringAddonProps {
     title: string;
     description: string;
-    component: "prometheus" | "grafana" | "metrics-server" | "node-exporter";
+    component: "prometheus" | "grafana" | "metrics-server" | "node-exporter" | "loki" | "promtail";
     icon: React.ReactNode;
     features: string[];
     proxyUrl?: string;
@@ -68,7 +68,24 @@ export function MonitoringAddon({ title, description, component, icon, features,
             longDescription: 'Adjust the CLI arguments for the Node Exporter DaemonSet. You can enable/disable specific collectors and paths.',
             fileName: 'config.yml',
             configLabel: 'Consult the Node Exporter documentation for available collector flags.',
+
             icon: Database
+        },
+        loki: {
+            label: 'Loki Configuration',
+            description: 'Log aggregation system configuration.',
+            longDescription: 'Configure retention periods, storage backends, and limits in loki.yaml.',
+            fileName: 'loki.yaml',
+            configLabel: 'Ensure storage and schema configs match your persistence layer.',
+            icon: Database
+        },
+        promtail: {
+            label: 'Promtail Configuration',
+            description: 'Log shipping agent configuration.',
+            longDescription: 'Configure scrape configs and pipeline stages in promtail.yaml to parsing logs before sending to Loki.',
+            fileName: 'promtail.yaml',
+            configLabel: 'Define static labels and relabel configs here.',
+            icon: Activity
         }
     }
 
@@ -188,7 +205,7 @@ export function MonitoringAddon({ title, description, component, icon, features,
                 </Button>
             ) : (
                 <div className="flex flex-col gap-2">
-                    {['prometheus', 'grafana', 'node-exporter'].includes(component) && (
+                    {['prometheus', 'grafana', 'node-exporter', 'loki', 'promtail'].includes(component) && (
                         <>
                             <div className="flex gap-2">
                                 <Button

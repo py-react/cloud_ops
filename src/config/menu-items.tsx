@@ -303,15 +303,21 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
             color: "orange",
             childs: [
                 {
-                    title: "Monitoring",
+                    title: "Metrics",
                     url: "/monitoring",
                     icon: Activity,
                     items: [],
                 },
                 {
-                    title: "Alerting",
+                    title: "Alerts",
                     url: "/alerting",
                     icon: AlertCircle,
+                    items: [],
+                },
+                {
+                    title: "Logs",
+                    url: "/logging",
+                    icon: Database,
                     items: [],
                 },
                 {

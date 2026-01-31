@@ -12,8 +12,10 @@ from app.k8s_helper.monitoring.stack import (
     DEFAULT_NODE_EXPORTER_CONFIG,
     DEFAULT_METRICS_SERVER_CONFIG,
     DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG,
+    DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG,
     get_k8s_dashboard_json
 )
+from app.k8s_helper.monitoring.loki import DEFAULT_LOKI_CONFIG, DEFAULT_PROMTAIL_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,10 @@ COMPONENT_MAP = {
     "grafana-dashboards": ("grafana-dashboard-k8s", "k8s-dashboard.json", get_k8s_dashboard_json(), "monitoring"),
     "grafana-provider": ("grafana-dashboards-provider", "dashboards.yaml", DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG, "monitoring"),
     "node-exporter": ("node-exporter-conf", "config.yml", DEFAULT_NODE_EXPORTER_CONFIG, "monitoring"),
+    "node-exporter": ("node-exporter-conf", "config.yml", DEFAULT_NODE_EXPORTER_CONFIG, "monitoring"),
     "metrics-server": ("metrics-server-config", "config.yml", DEFAULT_METRICS_SERVER_CONFIG, "kube-system"),
+    "loki": ("loki-config", "loki.yaml", DEFAULT_LOKI_CONFIG, "logging"),
+    "promtail": ("promtail-config", "promtail.yaml", DEFAULT_PROMTAIL_CONFIG, "logging"),
 }
 async def GET(request: Request, component: str = Query("alertmanager")) -> dict:
     """
@@ -142,7 +147,9 @@ async def restart_rollout(k8s_helper, component: str, namespace: str):
             "grafana-dashboards": ("deployment", "grafana"),
             "grafana-provider": ("deployment", "grafana"),
             "node-exporter": ("daemonset", "node-exporter"),
-            "metrics-server": ("deployment", "metrics-server") # Usually managed by addon, but safe to restart
+            "metrics-server": ("deployment", "metrics-server"), # Usually managed by addon, but safe to restart
+            "loki": ("deployment", "loki"),
+            "promtail": ("daemonset", "promtail")
         }
         
         if component not in deployment_map:
