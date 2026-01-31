@@ -178,7 +178,7 @@ export const FormWizard = <T extends FieldValues>({
           <form id={name} onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col min-h-0 h-[620px]">
             <div className="flex shrink-0 min-h-0 overflow-hidden h-full">
               {/* Sidebar Navigation */}
-              <div className="w-64 border-r border-border/30 bg-muted/20 flex flex-col shrink-0">
+              <div className="w-64 border-r border-border/30 bg-muted/20 flex flex-col shrink-0 relative z-30 max-w-64 overflow-hidden">
                 <ScrollArea className="flex-1">
                   <div className="p-4 space-y-1">
                     {steps.map((step) => {
@@ -190,7 +190,7 @@ export const FormWizard = <T extends FieldValues>({
                           type="button"
                           onClick={() => handleTabChange(step.id)}
                           className={cn(
-                            "w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group text-left",
+                            "w-56 shrink-0 flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group text-left",
                             isActive
                               ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
                               : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"

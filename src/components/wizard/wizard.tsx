@@ -53,7 +53,7 @@ export const Wizard = ({
   const Icon = currentStepData.icon || Info;
 
   const Sidebar = () => (
-    <div className="w-64 border-r border-border/30 bg-muted/20 flex flex-col h-full">
+    <div className="w-64 border-r border-border/30 bg-muted/20 flex flex-col h-full relative z-30 max-w-64 overflow-hidden">
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-1">
           {steps.map((step) => {
@@ -64,7 +64,7 @@ export const Wizard = ({
                 key={step.id}
                 onClick={() => setCurrentStep(step.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group text-left",
+                  "w-56 shrink-0 flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group text-left",
                   isActive
                     ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
