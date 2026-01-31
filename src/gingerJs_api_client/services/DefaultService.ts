@@ -57,22 +57,22 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost1 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete1 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost2 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete2 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost3 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete3 = {
                 namespace: string
 path: string
 service: string
@@ -592,14 +592,14 @@ path,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost(data: TDataClusterProxyClusterProxyServiceNamespacePathPost): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathDelete(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'POST',
+			method: 'DELETE',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -617,7 +617,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost1(data: TDataClusterProxyClusterProxyServiceNamespacePathPost1): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathDelete1(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -642,14 +642,14 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost2(data: TDataClusterProxyClusterProxyServiceNamespacePathPost2): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathDelete2(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete2): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'GET',
+			method: 'POST',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -667,14 +667,14 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost3(data: TDataClusterProxyClusterProxyServiceNamespacePathPost3): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathDelete3(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete3): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'DELETE',
+			method: 'GET',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -3495,7 +3495,7 @@ type,
 	}
 
 	/**
-	 * Check if a specific monitoring component is installed in the 'monitoring' namespace.
+	 * Check if a specific monitoring component is installed.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */

@@ -1,28 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Database, LayoutDashboard, Activity, LineChart, PlusIcon } from 'lucide-react'
+import { Database, LayoutDashboard, Activity, LineChart, PlusIcon, FileSearch } from 'lucide-react'
 import { Card, CardTitle } from '@/components/ui/card'
 import { DefaultService } from '@/gingerJs_api_client'
 import PageLayout from '@/components/PageLayout'
 import { MonitoringAddon } from '@/components/addons/monitoring/MonitoringAddon'
 
 function Monitoring() {
-    const [prometheusInstalled, setPrometheusInstalled] = useState(false)
-
-    useEffect(() => {
-        const checkPrometheus = async () => {
-            try {
-                const response: any = await DefaultService.apiMonitoringInstallGet({ component: 'prometheus' })
-                setPrometheusInstalled(!!response.installed)
-            } catch (error) {
-                console.error("Error checking Prometheus status:", error)
-            }
-        }
-        checkPrometheus()
-        // Poll every 5 seconds to keep visibility in sync
-        const interval = setInterval(checkPrometheus, 5000)
-        return () => clearInterval(interval)
-    }, [])
-
     return (
         <PageLayout
             title="Monitoring"

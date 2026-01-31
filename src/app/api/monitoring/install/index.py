@@ -2,58 +2,44 @@ from fastapi import Request
 from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
 from app.k8s_helper.monitoring.stack import get_prometheus_manifests, get_grafana_manifests, get_node_exporter_manifests, get_alertmanager_manifests, get_kube_state_metrics_manifests
 from app.k8s_helper.monitoring.metrics_server import get_metrics_server_manifests
-from app.k8s_helper.monitoring.loki import get_loki_manifests, get_promtail_manifests
+from app.k8s_helper.monitoring.loki import get_loki_manifests, get_otel_collector_manifests, get_promtail_manifests
 import logging
 
 logger = logging.getLogger(__name__)
 
 async def GET(request: Request, component: str = "prometheus") -> dict:
     """
-    Check if a specific monitoring component is installed in the 'monitoring' namespace.
+    Check if a specific monitoring component is installed.
     """
     try:
-        # Determine namespace based on component
+        # Determine namespace and name for status check
         if component == "metrics-server":
-            namespace = "kube-system"
-            deploy_name = "metrics-server"
+            namespace, deploy_name, resource_type = "kube-system", "metrics-server", "deployments"
         elif component == "alertmanager":
-            namespace = "alerting"
-            deploy_name = "alertmanager"
-        elif component in ["loki", "promtail"]:
-            namespace = "logging"
-            deploy_name = component # loki is deployment, promtail is daemonset (handled by list check below)
+            namespace, deploy_name, resource_type = "alerting", "alertmanager", "deployments"
+        elif component == "loki":
+            namespace, deploy_name, resource_type = "logging", "loki", "deployments"
+        elif component == "otel-collector":
+            namespace, deploy_name, resource_type = "logging", "otel-collector", "daemonsets"
+        elif component == "promtail":
+            namespace, deploy_name, resource_type = "logging", "promtail", "daemonsets"
+        elif component == "node-exporter":
+            namespace, deploy_name, resource_type = "monitoring", "node-exporter", "daemonsets"
         else:
-            namespace = "monitoring"
-            if component == "prometheus":
-                deploy_name = "prometheus-deployment"
-            elif component == "grafana":
-                deploy_name = "grafana"
-            else:
-                deploy_name = "prometheus-deployment"
+            namespace, deploy_name, resource_type = "monitoring", component, "deployments"
+            if component == "prometheus": deploy_name = "prometheus-deployment"
 
         k8s_helper = KubernetesResourceHelper()
-        
-        # Only check if custom namespace exists (kube-system always exists)
         if namespace != "kube-system":
             namespaces = k8s_helper.get_namespaces()
-            ns_exists = any(ns.get("metadata", {}).get("name") == namespace for ns in namespaces)
-            
-            if not ns_exists:
+            if not any(ns.get("metadata", {}).get("name") == namespace for ns in namespaces):
                 return {"installed": False, "namespace": namespace}
-        
-        # Check specific resource (Deployment for most, DaemonSet for NodeExporter/Promtail)
-        target = None
-        if component in ["node-exporter", "promtail"]:
-            daemonsets = k8s_helper.get_resource_details("daemonsets", namespace=namespace)
-            target = next((d for d in daemonsets if d.get("metadata", {}).get("name") == deploy_name), None)
-        else:
-            deployments = k8s_helper.get_resource_details("deployments", namespace=namespace)
-            target = next((d for d in deployments if d.get("metadata", {}).get("name") == deploy_name), None)
+
+        resources = k8s_helper.get_resource_details(resource_type, namespace=namespace)
+        target = next((r for r in resources if r.get("metadata", {}).get("name") == deploy_name), None)
         
         is_installed = target is not None
-        is_deleting = False
-        if target:
-            is_deleting = target.get("metadata", {}).get("deletionTimestamp") is not None
+        is_deleting = target.get("metadata", {}).get("deletionTimestamp") is not None if target else False
         
         return {
             "installed": is_installed and not is_deleting, 
@@ -71,45 +57,34 @@ async def POST(request: Request, component: str = "prometheus") -> dict:
     """
     try:
         k8s_helper = KubernetesResourceHelper()
-        
         if component == "metrics-server":
-            namespace = "kube-system"
-            manifests = get_metrics_server_manifests(namespace)
+            namespace, manifests = "kube-system", get_metrics_server_manifests("kube-system")
         elif component == "alertmanager":
-            namespace = "alerting"
-            manifests = get_alertmanager_manifests(namespace)
+            namespace, manifests = "alerting", get_alertmanager_manifests("alerting")
         elif component == "loki":
-            namespace = "logging"
-            manifests = get_loki_manifests(namespace)
+            namespace, manifests = "logging", get_loki_manifests("logging")
+        elif component == "otel-collector":
+            namespace, manifests = "logging", get_otel_collector_manifests("logging")
         elif component == "promtail":
-            namespace = "logging"
-            manifests = get_promtail_manifests(namespace)
+            namespace, manifests = "logging", get_promtail_manifests("logging")
+        elif component == "prometheus":
+            namespace, manifests = "monitoring", get_prometheus_manifests("monitoring") + get_node_exporter_manifests("monitoring") + get_kube_state_metrics_manifests("monitoring")
+        elif component == "grafana":
+            namespace, manifests = "monitoring", get_grafana_manifests("monitoring")
         else:
-            namespace = "monitoring"
-            if component == "prometheus":
-                manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace) + get_kube_state_metrics_manifests(namespace)
-            elif component == "grafana":
-                manifests = get_grafana_manifests(namespace)
-            else:
-                return {"success": False, "message": f"Unknown component: {component}"}
-        
-        # 1. Create namespace if it doesn't exist
-        try:
-            k8s_helper.create_namespace(namespace)
-        except ValueError: # Already exists
-            pass
+            return {"success": False, "message": f"Unknown component: {component}"}
+
+        try: k8s_helper.create_namespace(namespace)
+        except ValueError: pass
             
-        # 2. Apply manifests
         results = []
         for manifest in manifests:
-            kind = manifest.get("kind")
-            name = manifest.get("metadata", {}).get("name")
             try:
                 k8s_helper.apply_resource(manifest)
-                results.append({"kind": kind, "name": name, "status": "success"})
+                results.append({"kind": manifest["kind"], "name": manifest["metadata"]["name"], "status": "success"})
             except Exception as e:
-                logger.error(f"Failed to apply {kind}/{name}: {str(e)}")
-                results.append({"kind": kind, "name": name, "status": "failed", "error": str(e)})
+                logger.error(f"Failed to apply {manifest['kind']}/{manifest['metadata']['name']}: {str(e)}")
+                results.append({"kind": manifest["kind"], "name": manifest['metadata']['name'], "status": "failed", "error": str(e)})
             
         return {"success": True, "message": f"{component.capitalize()} deployment initiated", "results": results}
     except Exception as e:
@@ -122,28 +97,23 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
     """
     try:
         k8s_helper = KubernetesResourceHelper()
-        
         if component == "metrics-server":
-            namespace = "kube-system"
-            manifests = get_metrics_server_manifests(namespace)
+            namespace, manifests = "kube-system", get_metrics_server_manifests("kube-system")
         elif component == "alertmanager":
-            namespace = "alerting"
-            manifests = get_alertmanager_manifests(namespace)
+            namespace, manifests = "alerting", get_alertmanager_manifests("alerting")
         elif component == "loki":
-            namespace = "logging"
-            manifests = get_loki_manifests(namespace)
+            namespace, manifests = "logging", get_loki_manifests("logging")
+        elif component == "otel-collector":
+            namespace, manifests = "logging", get_otel_collector_manifests("logging")
         elif component == "promtail":
-            namespace = "logging"
-            manifests = get_promtail_manifests(namespace)
+            namespace, manifests = "logging", get_promtail_manifests("logging")
+        elif component == "prometheus":
+            namespace, manifests = "monitoring", get_prometheus_manifests("monitoring") + get_node_exporter_manifests("monitoring") + get_kube_state_metrics_manifests("monitoring")
+        elif component == "grafana":
+            namespace, manifests = "monitoring", get_grafana_manifests("monitoring")
         else:
-            namespace = "monitoring"
-            if component == "prometheus":
-                manifests = get_prometheus_manifests(namespace) + get_node_exporter_manifests(namespace) + get_kube_state_metrics_manifests(namespace)
-            elif component == "grafana":
-                manifests = get_grafana_manifests(namespace)
-            else:
-                return {"success": False, "message": f"Unknown component: {component}"}
-            
+            return {"success": False, "message": f"Unknown component: {component}"}
+
         results = []
         for manifest in manifests:
             try:
@@ -153,22 +123,13 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
                 logger.warning(f"Failed to delete {manifest['kind']}: {str(e)}")
                 results.append({"kind": manifest["kind"], "name": manifest["metadata"]["name"], "status": "failed", "error": str(e)})
 
-        # Explicitly delete dedicated namespaces to cleanup PVCs
+        # Conditional namespace cleanup
         if component == "alertmanager":
-            try:
-                k8s_helper.delete_namespace("alerting")
-                results.append({"kind": "Namespace", "name": "alerting", "status": "deleted"})
-            except Exception as e:
-                logger.warning(f"Failed to delete namespace 'alerting': {str(e)}")
+            try: k8s_helper.delete_namespace("alerting"); results.append({"kind": "Namespace", "name": "alerting", "status": "deleted"})
+            except: pass
         
-        if component == "loki":
-             # Only delete logging namespace if we are deleting Loki (primary component)
-             # Promtail might be deleted independently, but Loki owns the storage so it acts as the namespace anchor
-            try:
-                k8s_helper.delete_namespace("logging")
-                results.append({"kind": "Namespace", "name": "logging", "status": "deleted"})
-            except Exception as e:
-                logger.warning(f"Failed to delete namespace 'logging': {str(e)}")
+        # We don't auto-delete 'logging' namespace here to allow Loki/OTel/Promtail to exist independently 
+        # unless specifically requested or if it's the last component (optional enhancement)
 
         return {"success": True, "details": results}
     except Exception as e:

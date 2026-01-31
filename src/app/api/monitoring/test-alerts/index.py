@@ -19,28 +19,6 @@ async def POST(request: Request) -> dict:
         namespace = "alertmanager-test"
         
         # --- MODE 1: IMMEDIATE API ALERTS ---
-        try:
-            am_url = "http://alertmanager-service.monitoring.svc.cluster.local/api/v2/alerts"
-            
-            immediate_alerts = [
-                {
-                    "labels": {
-                        "alertname": "DeterministicCritical",
-                        "severity": "critical",
-                        "instance": "ui-tester",
-                        "job": "manual-test"
-                    },
-                    "annotations": {
-                        "summary": "INSTANT CRITICAL: Webhook routing verified",
-                        "description": "Deterministic critical alert for stakeholder demonstration."
-                    }
-                }
-            ]
-            
-            am_resp = requests.post(am_url, json=immediate_alerts, timeout=2)
-            results["api_alerts"] = "success" if am_resp.status_code < 300 else f"error {am_resp.status_code}"
-        except Exception as api_e:
-            results["api_alerts"] = f"skipped/unreachable: {str(api_e)}"
 
         # --- MODE 2: REAL-WORLD POD DEPLOYMENT ---
         try:
@@ -54,13 +32,30 @@ async def POST(request: Request) -> dict:
             pod_names = ["deterministic-critical-pod", "deterministic-warning-pod", "deterministic-info-pod"]
             for name in pod_names:
                 try:
-                    k8s_helper.delete_resource("Pod", name, namespace)
+                    # Fix: delete_resource expects a dict
+                    resource_dict = {
+                        "apiVersion": "v1",
+                        "kind": "Pod",
+                        "metadata": {"name": name, "namespace": namespace}
+                    }
+                    k8s_helper.delete_resource(resource_dict)
+                except Exception as del_e:
+                    logger.warning(f"Failed to delete pod {name}: {del_e}")
+            
+            # Wait for deletion completion (polling up to 10s)
+            import time
+            for _ in range(10):
+                remaining_pods = 0
+                try:
+                    pods = k8s_helper.get_resource_details("pods", namespace=namespace)
+                    existing_names = [p.get("metadata", {}).get("name") for p in pods]
+                    remaining_pods = sum(1 for name in pod_names if name in existing_names)
                 except Exception:
                     pass
-            
-            # Give it a tiny moment to delete
-            import time
-            time.sleep(1)
+                
+                if remaining_pods == 0:
+                    break
+                time.sleep(1)
                 
             manifests = [
                 {
@@ -74,8 +69,8 @@ async def POST(request: Request) -> dict:
                     "spec": {
                         "containers": [{
                             "name": "crasher",
-                            "image": "busybox",
-                            "command": ["sh", "-c", "exit 1"]
+                            "image": "nginx:alpine",
+                            "command": ["sh", "-c", "echo 'CRITICAL_ERROR: System failure detected' && sleep 5 && exit 1"]
                         }],
                         "restartPolicy": "Always"
                     }
@@ -91,8 +86,8 @@ async def POST(request: Request) -> dict:
                     "spec": {
                         "containers": [{
                             "name": "loader",
-                            "image": "busybox",
-                            "command": ["sh", "-c", "echo 'Warning trigger' && exit 1"],
+                            "image": "nginx:alpine",
+                            "command": ["sh", "-c", "echo 'WARNING: High resource utilization' && sleep 3600"],
                             "resources": {"limits": {"cpu": "10m"}}
                         }],
                         "restartPolicy": "Always"
@@ -109,15 +104,19 @@ async def POST(request: Request) -> dict:
                     "spec": {
                         "containers": [{
                             "name": "reporter",
-                            "image": "busybox",
-                            "command": ["sh", "-c", "sleep 3600"]
+                            "image": "nginx:alpine",
+                            "command": ["sh", "-c", "echo 'INFO: Periodic system report generated' && sleep 3600"]
                         }]
                     }
                 }
             ]
             
             for manifest in manifests:
-                k8s_helper.apply_resource(manifest)
+                try:
+                    k8s_helper.create_resource(manifest)
+                except Exception as e:
+                    # If it already exists (e.g. terminating), log it and move on
+                    logger.warning(f"Could not create pod {manifest['metadata']['name']}: {e}")
             
             results["pod_deployment"] = "success"
         except Exception as pod_e:
