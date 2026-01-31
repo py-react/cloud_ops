@@ -204,6 +204,11 @@ datasources:
   access: proxy
   isDefault: true
   uid: prometheus
+- name: Loki
+  type: loki
+  url: http://loki.logging.svc.cluster.local:3100
+  access: proxy
+  uid: loki
 """
 
 DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG = """apiVersion: 1
@@ -494,11 +499,53 @@ def get_k8s_dashboard_json():
         logging.warning(f"Failed to fetch Kubernetes Dashboard: {e}")
         return "{}"
 
+
+def get_loki_dashboard_json():
+    """
+    Fetches a Loki Kubernetes Logs dashboard (ID 15141 or similar).
+    """
+    try:
+        # Dashboard ID 12019 is a popular "Loki Logs" dashboard
+        url = "https://grafana.com/api/dashboards/12019/revisions/latest/download"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        dashboard = response.json()
+        
+        dashboard.pop('__inputs', None)
+        dashboard['uid'] = 'loki-logs'
+        dashboard['title'] = 'Loki Kubernetes Logs'
+        dashboard['overwrite'] = True
+
+        # Fix datasources based on input names
+        def fix_loki_datasource(obj):
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    if k == "datasource":
+                        if v == "${DS_LOKI}":
+                            obj[k] = {"type": "loki", "uid": "loki"}
+                        elif v == "${DS_PROMETHEUS}":
+                            obj[k] = {"type": "prometheus", "uid": "prometheus"}
+                    else:
+                        fix_loki_datasource(v)
+            elif isinstance(obj, list):
+                for item in obj:
+                    fix_loki_datasource(item)
+        
+        fix_loki_datasource(dashboard)
+        
+        return json.dumps(dashboard)
+    except Exception as e:
+        logging.warning(f"Failed to fetch Loki Dashboard: {e}")
+        return "{}"
+
+
+
 def get_grafana_manifests(namespace="monitoring"):
     """
     Returns a list of Kubernetes manifests for Grafana, including auto-provisioning.
     """
-    dashboard_json = get_k8s_dashboard_json()
+    k8s_dashboard_json = get_k8s_dashboard_json()
+    loki_dashboard_json = get_loki_dashboard_json()
     
     return [
         # Grafana ConfigMap: Data Sources
@@ -525,7 +572,8 @@ def get_grafana_manifests(namespace="monitoring"):
             "kind": "ConfigMap",
             "metadata": {"name": "grafana-dashboard-k8s", "namespace": namespace},
             "data": {
-                "k8s-dashboard.json": dashboard_json
+                "k8s-dashboard.json": k8s_dashboard_json,
+                "loki-dashboard.json": loki_dashboard_json
             }
         },
         # Grafana Deployment

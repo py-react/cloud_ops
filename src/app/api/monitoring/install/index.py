@@ -2,6 +2,7 @@ from fastapi import Request
 from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
 from app.k8s_helper.monitoring.stack import get_prometheus_manifests, get_grafana_manifests, get_node_exporter_manifests, get_alertmanager_manifests, get_kube_state_metrics_manifests
 from app.k8s_helper.monitoring.metrics_server import get_metrics_server_manifests
+from app.k8s_helper.monitoring.loki import get_loki_manifests, get_promtail_manifests
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,9 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
         elif component == "alertmanager":
             namespace = "alerting"
             deploy_name = "alertmanager"
+        elif component in ["loki", "promtail"]:
+            namespace = "logging"
+            deploy_name = component # loki is deployment, promtail is daemonset (handled by list check below)
         else:
             namespace = "monitoring"
             if component == "prometheus":
@@ -37,9 +41,14 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
             if not ns_exists:
                 return {"installed": False, "namespace": namespace}
         
-        # Check specific deployment
-        deployments = k8s_helper.get_resource_details("deployments", namespace=namespace)
-        target = next((d for d in deployments if d.get("metadata", {}).get("name") == deploy_name), None)
+        # Check specific resource (Deployment for most, DaemonSet for NodeExporter/Promtail)
+        target = None
+        if component in ["node-exporter", "promtail"]:
+            daemonsets = k8s_helper.get_resource_details("daemonsets", namespace=namespace)
+            target = next((d for d in daemonsets if d.get("metadata", {}).get("name") == deploy_name), None)
+        else:
+            deployments = k8s_helper.get_resource_details("deployments", namespace=namespace)
+            target = next((d for d in deployments if d.get("metadata", {}).get("name") == deploy_name), None)
         
         is_installed = target is not None
         is_deleting = False
@@ -69,6 +78,12 @@ async def POST(request: Request, component: str = "prometheus") -> dict:
         elif component == "alertmanager":
             namespace = "alerting"
             manifests = get_alertmanager_manifests(namespace)
+        elif component == "loki":
+            namespace = "logging"
+            manifests = get_loki_manifests(namespace)
+        elif component == "promtail":
+            namespace = "logging"
+            manifests = get_promtail_manifests(namespace)
         else:
             namespace = "monitoring"
             if component == "prometheus":
@@ -114,6 +129,12 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
         elif component == "alertmanager":
             namespace = "alerting"
             manifests = get_alertmanager_manifests(namespace)
+        elif component == "loki":
+            namespace = "logging"
+            manifests = get_loki_manifests(namespace)
+        elif component == "promtail":
+            namespace = "logging"
+            manifests = get_promtail_manifests(namespace)
         else:
             namespace = "monitoring"
             if component == "prometheus":
@@ -132,14 +153,22 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
                 logger.warning(f"Failed to delete {manifest['kind']}: {str(e)}")
                 results.append({"kind": manifest["kind"], "name": manifest["metadata"]["name"], "status": "failed", "error": str(e)})
 
-        # Explicitly delete the dedicated namespace for Alertmanager to ensure PVC/PV cleanup
+        # Explicitly delete dedicated namespaces to cleanup PVCs
         if component == "alertmanager":
             try:
                 k8s_helper.delete_namespace("alerting")
                 results.append({"kind": "Namespace", "name": "alerting", "status": "deleted"})
             except Exception as e:
-                # It might already be deleting or gone, just log warning
                 logger.warning(f"Failed to delete namespace 'alerting': {str(e)}")
+        
+        if component == "loki":
+             # Only delete logging namespace if we are deleting Loki (primary component)
+             # Promtail might be deleted independently, but Loki owns the storage so it acts as the namespace anchor
+            try:
+                k8s_helper.delete_namespace("logging")
+                results.append({"kind": "Namespace", "name": "logging", "status": "deleted"})
+            except Exception as e:
+                logger.warning(f"Failed to delete namespace 'logging': {str(e)}")
 
         return {"success": True, "details": results}
     except Exception as e:
