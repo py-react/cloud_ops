@@ -75,11 +75,7 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                             url: "/hub",
                             icon: Computer,
                         },
-                        {
-                            title: "Local Registry",
-                            url: "/registry",
-                            icon: Folder,
-                        },
+
                     ],
                 },
             ],
@@ -135,6 +131,7 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                             url: `/${selectedNamespace}/ingresses`,
                             icon: Globe,
                         },
+
                     ],
                 },
             ],
@@ -205,6 +202,11 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                             title: "Config",
                             url: "/config",
                             icon: Settings,
+                        },
+                        {
+                            title: "Image Registry",
+                            url: "/registry",
+                            icon: Folder,
                         },
                     ],
                 },

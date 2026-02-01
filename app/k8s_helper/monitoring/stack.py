@@ -229,6 +229,7 @@ DEFAULT_NODE_EXPORTER_CONFIG = """# Node Exporter Configuration
 - --path.sysfs=/host/sys
 - --path.rootfs=/rootfs
 - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+)($|/)
+- --no-collector.nfsd
 """
 
 DEFAULT_METRICS_SERVER_CONFIG = """# Metrics Server Configuration

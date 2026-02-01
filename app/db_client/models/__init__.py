@@ -7,4 +7,5 @@ from .source_code_build import *
 from .github_pat.github_pat import *
 from .kubernetes_profiles import *
 from .docker_config import *
+from .registry_config import *
 

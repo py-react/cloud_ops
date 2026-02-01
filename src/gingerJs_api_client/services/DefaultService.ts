@@ -4,6 +4,7 @@ import type { ContextPostData } from '../models/ContextPostData';
 import type { CreateNamespacePayload } from '../models/CreateNamespacePayload';
 import type { CreatePATRequest } from '../models/CreatePATRequest';
 import type { CreateQueueJob } from '../models/CreateQueueJob';
+import type { CreateRegistryRequest } from '../models/CreateRegistryRequest';
 import type { DeploymentConfigType } from '../models/DeploymentConfigType';
 import type { DeploymentRunType } from '../models/DeploymentRunType';
 import type { DockerConfigType } from '../models/DockerConfigType';
@@ -57,22 +58,22 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost1 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet1 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost2 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet2 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost3 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet3 = {
                 namespace: string
 path: string
 service: string
@@ -154,15 +155,16 @@ export type TDataApiDockerPackagesPost = {
 export type TDataApiDockerRegistryGet = {
                 blob?: boolean | null
 imageName?: string | null
+mode?: string | null
 namespace?: string | null
+registryId?: number | null
 serviceName?: string | null
 servicePort?: number | null
 sha256Digest?: string | null
 tag?: string | null
             }
 export type TDataApiDockerRegistryPost = {
-                imageName: string
-sourceTag: string
+                requestBody: CreateRegistryRequest
             }
 export type TDataApiDockerRegistryExamineGet = {
                 /**
@@ -592,57 +594,7 @@ path,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost(data: TDataClusterProxyClusterProxyServiceNamespacePathPost): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost1(data: TDataClusterProxyClusterProxyServiceNamespacePathPost1): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'DELETE',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost2(data: TDataClusterProxyClusterProxyServiceNamespacePathPost2): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathGet(data: TDataClusterProxyClusterProxyServiceNamespacePathGet): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -667,7 +619,57 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost3(data: TDataClusterProxyClusterProxyServiceNamespacePathPost3): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathGet1(data: TDataClusterProxyClusterProxyServiceNamespacePathGet1): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathGet2(data: TDataClusterProxyClusterProxyServiceNamespacePathGet2): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathGet3(data: TDataClusterProxyClusterProxyServiceNamespacePathGet3): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -1244,7 +1246,9 @@ requestBody,
 		const {
 blob,
 imageName,
+mode,
 namespace,
+registryId,
 serviceName,
 servicePort,
 sha256Digest,
@@ -1254,7 +1258,7 @@ tag,
 			method: 'GET',
 			url: '/api/docker/registry',
 			query: {
-				namespace, service_name: serviceName, service_port: servicePort, image_name: imageName, tag, blob, sha256_digest: sha256Digest
+				namespace, service_name: serviceName, service_port: servicePort, image_name: imageName, tag, blob, sha256_digest: sha256Digest, registry_id: registryId, mode
 			},
 			errors: {
 				422: `Validation Error`,
@@ -1263,24 +1267,45 @@ tag,
 	}
 
 	/**
-	 * Push a Docker image to the private registry
+	 * Handle Registry Creation and Image Push
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
 	public static apiDockerRegistryPost(data: TDataApiDockerRegistryPost): CancelablePromise<unknown> {
 		const {
-imageName,
-sourceTag,
+requestBody,
 } = data;
 		return __request(OpenAPI, {
 			method: 'POST',
 			url: '/api/docker/registry',
-			query: {
-				image_name: imageName, source_tag: sourceTag
-			},
+			body: requestBody,
+			mediaType: 'application/json',
 			errors: {
 				422: `Validation Error`,
 			},
+		});
+	}
+
+	/**
+	 * Update Registry Details
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerRegistryPut(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/docker/registry',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiDockerRegistryDelete(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/docker/registry',
 		});
 	}
 
@@ -3731,6 +3756,39 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static settingsDockerRegistryGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/docker/registry',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsDockerRegistryImageGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/docker/registry/{image}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsDockerRegistryImageTagGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/docker/registry/{image}/{tag}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static settingsCiCdGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -4473,39 +4531,6 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/cee/docker/packages',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static ceeDockerRegistryGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/cee/docker/registry',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static ceeDockerRegistryImageGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/cee/docker/registry/{image}',
-		});
-	}
-
-	/**
-	 * @returns string Successful Response
-	 * @throws ApiError
-	 */
-	public static ceeDockerRegistryImageTagGet(): CancelablePromise<string> {
-				return __request(OpenAPI, {
-			method: 'GET',
-			url: '/cee/docker/registry/{image}/{tag}',
 		});
 	}
 
