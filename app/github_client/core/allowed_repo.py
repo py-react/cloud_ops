@@ -41,7 +41,7 @@ class AllowedRepoUtils:
         result = {}
     
         # Get all repos and branches
-        _, branches, _, _ = self.get_all()
+        _, branches, _, _, _ = self.get_all()
         for repo_name, branch_list in branches.items():
             result[repo_name] = {}
             for branch_name in branch_list:
@@ -87,12 +87,13 @@ class AllowedRepoUtils:
         
         # Build PAT map
         repo_pats = {r.name: r.pat_id for r in repos}
+        repo_registries = {r.name: r.registry_id for r in repos}
         
-        return result, branches, deployments, repo_pats
+        return result, branches, deployments, repo_pats, repo_registries
 
-    def add_repository(self, repo_name: str, repo_id: str, branches: List[str], pat_id: Optional[int] = None):
+    def add_repository(self, repo_name: str, repo_id: str, branches: List[str], pat_id: Optional[int] = None, registry_id: Optional[int] = None):
         # repo_id is ignored, as DB will auto-generate
-        repo = create_code_source_control(self.session, CodeSourceControlType(name=repo_name, pat_id=pat_id))
+        repo = create_code_source_control(self.session, CodeSourceControlType(name=repo_name, pat_id=pat_id, registry_id=registry_id))
         if not repo:
             raise Exception(f"Failed to create repository {repo_name}")
         if not repo.id:
@@ -103,21 +104,25 @@ class AllowedRepoUtils:
                 CodeSourceControlBranchType(code_source_control_id=repo.id, branch=branch)
             )
 
-    def update_branches(self, repo_name: str, branches: List[str], pat_id: Optional[int] = None):
+    def update_branches(self, repo_name: str, branches: List[str], pat_id: Optional[int] = None, registry_id: Optional[int] = None):
         repos = list_code_source_controls(self.session)
         repo = next((r for r in repos if r.name == repo_name), None)
         repo_id = repo.id if repo else None
         if not repo or not repo_id:
-            self.add_repository(repo_name=repo_name, repo_id=repo_name, branches=branches, pat_id=pat_id)
+            self.add_repository(repo_name=repo_name, repo_id=repo_name, branches=branches, pat_id=pat_id, registry_id=registry_id)
             return
 
-        # Update PAT ID if provided (allow unsetting if explicit logic needed, but for now assuming if provided we update)
-        # Note: If pat_id is None, we might not want to clear it if the user just edited branches. 
-        # But based on the request model, we receive pat_id. 
-        # Safe strategy: Only update if pat_id is logically meant to be updated. 
-        # Given the frontend sends whatever it has, we should probably update it.
+        # Update PAT ID and Registry ID if provided
+        updated = False
         if pat_id is not None:
              repo.pat_id = pat_id
+             updated = True
+             
+        if registry_id is not None:
+             repo.registry_id = registry_id
+             updated = True
+             
+        if updated:
              self.session.add(repo)
              self.session.commit()
              self.session.refresh(repo)

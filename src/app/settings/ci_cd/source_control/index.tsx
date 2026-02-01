@@ -12,7 +12,8 @@ import {
     Eye,
     MessageSquare,
     Settings2,
-    Key
+    Key,
+    Database
 } from 'lucide-react';
 import { DefaultService } from '@/gingerJs_api_client';
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
@@ -39,6 +40,7 @@ const repoSchema = z.object({
     name: z.string().min(1, 'Repository name is required'),
     branches: z.array(z.object({ value: z.string() })).min(1, 'At least one branch is required'),
     pat_id: z.number().nullable().optional(),
+    registry_id: z.number().nullable().optional(),
 });
 
 type RepoFormData = z.infer<typeof repoSchema>;
@@ -58,10 +60,11 @@ const SourceControlPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [refreshing, setRefreshing] = useState<Record<string, boolean>>({});
     const [detailedPermissions, setDetailedPermissions] = useState<Record<string, any>>({});
+    const [registries, setRegistries] = useState<any[]>([]);
 
     // Modal states
     const [isAddRepoOpen, setIsAddRepoOpen] = useState(false);
-    const [editingRepo, setEditingRepo] = useState<{ name: string; branches: string[]; pat_id?: number | null } | null>(null);
+    const [editingRepo, setEditingRepo] = useState<{ name: string; branches: string[]; pat_id?: number | null; registry_id?: number | null } | null>(null);
     const [currentStep, setCurrentStep] = useState('basic');
 
     const repoSteps = [
@@ -78,11 +81,13 @@ const SourceControlPage = () => {
     const repoInitialValues: RepoFormData = editingRepo ? {
         name: editingRepo.name,
         branches: editingRepo.branches.map(b => ({ value: b })),
-        pat_id: editingRepo.pat_id
+        pat_id: editingRepo.pat_id,
+        registry_id: editingRepo.registry_id
     } : {
         name: '',
         branches: [],
         pat_id: null,
+        registry_id: null,
     };
 
     const handleRepoSubmit = async (data: RepoFormData) => {
@@ -92,10 +97,10 @@ const SourceControlPage = () => {
 
             const res = isEdit
                 ? await DefaultService.apiIntegrationGithubReposPut({
-                    requestBody: { name: data.name, branches: allowed_branches, pat_id: data.pat_id ? data.pat_id : undefined }
+                    requestBody: { name: data.name, branches: allowed_branches, pat_id: data.pat_id ? data.pat_id : undefined, registry_id: data.registry_id ? data.registry_id : undefined } as any
                 })
                 : await DefaultService.apiIntegrationGithubReposPost({
-                    requestBody: { name: data.name, branches: allowed_branches, pat_id: data.pat_id ? data.pat_id : undefined }
+                    requestBody: { name: data.name, branches: allowed_branches, pat_id: data.pat_id ? data.pat_id : undefined, registry_id: data.registry_id ? data.registry_id : undefined } as any
                 });
 
             const body: any = res as any;
@@ -138,10 +143,24 @@ const SourceControlPage = () => {
         }
     };
 
+    const fetchRegistries = async () => {
+        try {
+            // Using list_mode=true param as per backend logic
+            const res = await DefaultService.apiDockerRegistryGet({ mode: 'list' } as any);
+            const data = res as any;
+            if (data && data.registries) {
+                setRegistries(data.registries);
+            }
+        } catch (err) {
+            console.error("Failed to fetch registries", err);
+        }
+    };
+
     const [pats, setPats] = useState<any[]>([]);
 
     useEffect(() => {
         fetchData();
+        fetchRegistries();
         DefaultService.apiIntegrationGithubPatGet().then((res: any) => setPats(res)).catch(console.error);
     }, []);
 
@@ -238,7 +257,8 @@ const SourceControlPage = () => {
     const handleEditRepo = (repoName: string) => {
         const branches = data.allowed_branches[repoName] || [];
         const currentPatId = data.repo_pats ? data.repo_pats[repoName] : null;
-        setEditingRepo({ name: repoName, branches, pat_id: currentPatId });
+        const currentRegistryId = data.repo_registries ? data.repo_registries[repoName] : null;
+        setEditingRepo({ name: repoName, branches, pat_id: currentPatId, registry_id: currentRegistryId });
         setIsAddRepoOpen(true);
     };
 
@@ -328,18 +348,47 @@ const SourceControlPage = () => {
             cell: (row: FlatMappedRepo) => row.permissionInfo
         },
         {
-            header: 'Credentials',
+            header: 'Credentials & Registry',
             accessor: 'credentials',
             cell: (row: FlatMappedRepo) => {
                 const patId = data?.repo_pats ? data.repo_pats[row.repository] : null;
-                if (!patId) return <Badge variant="outline" className="text-muted-foreground text-[10px]">Active PAT (Default)</Badge>;
+                const registryId = data?.repo_registries ? data.repo_registries[row.repository] : null;
 
                 const pat = pats.find(p => p.id === patId);
+
+                // Note: We don't have registry list here to look up name, but we can show ID or fetch it if needed.
+                // For now, let's just show if it's set or using default.
+
                 return (
-                    <div className="flex items-center gap-1.5">
-                        <Key className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-[11px] font-medium text-foreground">{pat ? pat.name : 'Unknown PAT'}</span>
-                        {pat && !pat.active && <Badge variant="destructive" className="h-4 px-1 text-[9px]">Inactive</Badge>}
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5">
+                            <Key className="h-3 w-3 text-muted-foreground" />
+                            {patId ? (
+                                <span className="text-[11px] font-medium text-foreground">{pat ? pat.name : 'Unknown PAT'}</span>
+                            ) : (
+                                <Badge variant="outline" className="text-muted-foreground text-[9px] h-4">Public/Default</Badge>
+                            )}
+                            {pat && !pat.active && <Badge variant="destructive" className="h-3.5 px-1 text-[8px] rounded-sm">Inactive</Badge>}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <Database className="h-3 w-3 text-muted-foreground" />
+                            {registryId ? (
+                                (() => {
+                                    const reg = registries.find(r => r.id === registryId);
+                                    return reg ? (
+                                        <Badge variant="outline" className="text-blue-600 bg-blue-500/10 border-blue-500/20 text-[9px] h-4">
+                                            {reg.name}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="text-muted-foreground bg-muted/10 border-border/50 text-[9px] h-4">
+                                            Unknown (#{registryId})
+                                        </Badge>
+                                    );
+                                })()
+                            ) : (
+                                <span className="text-[11px] text-muted-foreground">Default</span>
+                            )}
+                        </div>
                     </div>
                 )
             }

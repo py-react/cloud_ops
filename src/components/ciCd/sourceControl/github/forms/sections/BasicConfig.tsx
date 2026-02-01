@@ -10,7 +10,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useFieldArray } from 'react-hook-form';
-import { X, Plus, GitBranch, Key } from 'lucide-react';
+import { X, Plus, GitBranch, Key, Database } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/libs/utils';
 import {
@@ -45,6 +45,8 @@ const BasicConfig: React.FC<SectionProps> = ({ control }) => {
   const [branchInput, setBranchInput] = useState('');
   const [pats, setPats] = useState<any[]>([]);
   const [loadingPats, setLoadingPats] = useState(false);
+  const [registries, setRegistries] = useState<any[]>([]);
+  const [loadingRegistries, setLoadingRegistries] = useState(false);
 
   useEffect(() => {
     const fetchPats = async () => {
@@ -58,7 +60,23 @@ const BasicConfig: React.FC<SectionProps> = ({ control }) => {
         setLoadingPats(false);
       }
     };
+    const fetchRegistries = async () => {
+      setLoadingRegistries(true);
+      try {
+        // Using list_mode=true param as per backend logic
+        const res = await DefaultService.apiDockerRegistryGet({ mode: 'list' } as any);
+        const data = res as any;
+        if (data && data.registries) {
+          setRegistries(data.registries);
+        }
+      } catch (err) {
+        console.error("Failed to fetch registries", err);
+      } finally {
+        setLoadingRegistries(false);
+      }
+    };
     fetchPats();
+    fetchRegistries();
   }, []);
 
   const handleAddBranch = () => {
@@ -136,6 +154,49 @@ const BasicConfig: React.FC<SectionProps> = ({ control }) => {
                       <Key className="w-3.5 h-3.5 opacity-70" />
                       <span className="font-medium">{pat.name}</span>
                       {pat.active && <Badge variant="outline" className="text-[10px] h-5 px-1 py-0 border-emerald-500/30 text-emerald-600 bg-emerald-500/10">Active</Badge>}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Registry Selection */}
+      <FormField
+        control={control}
+        name="registry_id"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-sm font-bold text-foreground">
+              Docker Registry
+            </FormLabel>
+            <FormDescription className="text-xs text-muted-foreground font-medium">
+              Select the registry to push images to
+            </FormDescription>
+            <Select
+              onValueChange={(value) => field.onChange(value === "none" ? null : parseInt(value))}
+              defaultValue={field.value ? String(field.value) : undefined}
+            >
+              <FormControl>
+                <SelectTrigger className="h-10 bg-muted/30 border-border/40 focus-visible:ring-primary/20 rounded-xl">
+                  <SelectValue placeholder={loadingRegistries ? "Loading Registries..." : "Select a Registry (Optional)"} />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="none" className="text-muted-foreground italic">None (Default/Local)</SelectItem>
+                {registries.map((reg) => (
+                  <SelectItem key={reg.id} value={String(reg.id)}>
+                    <div className="flex items-center gap-2">
+                      <Database className="w-3.5 h-3.5 opacity-70" />
+                      <span className="font-medium">{reg.name}</span>
+                      {reg.is_remote ? (
+                        <Badge variant="outline" className="text-[10px] h-5 px-1 py-0 border-blue-500/30 text-blue-600 bg-blue-500/10">Remote</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] h-5 px-1 py-0 border-purple-500/30 text-purple-600 bg-purple-500/10">K8s</Badge>
+                      )}
                     </div>
                   </SelectItem>
                 ))}

@@ -37,6 +37,7 @@ class PollingStatusResponse(BaseModel):
     allowed_repositories: Dict[str, str] = Field(..., description="Allowed repositories map")
     allowed_branches: Dict[str, List[str]] = Field(..., description="Allowed branches per repo")
     repo_pats: Dict[str, Optional[int]] = Field(default={}, description="Map of repo name to PAT ID")
+    repo_registries: Dict[str, Optional[int]] = Field(default={}, description="Map of repo name to Registry ID")
     builds: Dict[str, Dict[str, Optional[SourceCodeBuildWithLogsType]]] = Field(..., description="Last builds per repo/branch")
     timestamp: str = Field(..., description="Current timestamp")
 
@@ -47,7 +48,7 @@ async def GET(request: Request) -> PollingStatusResponse:
     settings = load_settings()
     
     with get_session() as session:
-        ALLOWED_REPOSITORIES, ALLOWED_BRANCHES, DEPLOYMENTS, REPO_PATS = utils.get_all()
+        ALLOWED_REPOSITORIES, ALLOWED_BRANCHES, DEPLOYMENTS, REPO_PATS, REPO_REGISTRIES = utils.get_all()
         builds = utils.get_last_builds_for_all_repo_branches()
         enabled = settings.get('SCM_POLLING_ENABLED', 'false').lower() in ('1', 'true', 'yes')
         interval = int(settings.get('SCM_POLL_INTERVAL_SECONDS', '300'))
@@ -61,6 +62,7 @@ async def GET(request: Request) -> PollingStatusResponse:
             allowed_repositories=ALLOWED_REPOSITORIES,
             allowed_branches=ALLOWED_BRANCHES,
             repo_pats=REPO_PATS,
+            repo_registries=REPO_REGISTRIES,
             builds=builds,
             timestamp=datetime.now().isoformat()
         )

@@ -38,7 +38,7 @@ async def GET(request: Request, name: str = Query(..., description="full repo na
         # Let's update `AllowedRepoUtils.get_repository` first? No, let's just use what we have or query directly.
         # Or simpler:
         
-        _, _, _, repo_pats = utils.get_all()
+        _, _, _, repo_pats, _ = utils.get_all()
         pat_id = repo_pats.get(name)
         
         gh = get_github_client_from_pat(pat_id=pat_id)
