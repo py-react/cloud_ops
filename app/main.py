@@ -40,7 +40,7 @@ async def proxy(path: str, request: Request, response: Response):
 import requests
 from starlette.concurrency import run_in_threadpool
 
-async def cluster_proxy(request: Request, service: str, namespace: str, path: str = ""):
+async def cluster_proxy(request: Request, service: str, namespace: str, path: str = "", service_port: int = 80):
     """
     Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
     Handles authentication, URL construction, and content rewriting for assets.
@@ -52,8 +52,6 @@ async def cluster_proxy(request: Request, service: str, namespace: str, path: st
         api_server = configuration.host
         
         # Determine port - simplified for now (defaulting to 80 as per previous logic)
-        service_port = 80
-        
         # Construct K8s Proxy URL
         # Logic: /api/v1/namespaces/{namespace}/services/{service_name}:{port}/proxy/{path}
         
@@ -125,11 +123,32 @@ async def cluster_proxy(request: Request, service: str, namespace: str, path: st
         
         # 1. Fix Location header
         if "Location" in response_headers:
-            if k8s_prefix in response_headers["Location"]:
-                response_headers["Location"] = response_headers["Location"].replace(k8s_prefix, "")
+            location = response_headers["Location"]
+            
+            # If it's an absolute URL, make it relative to the proxy
+            if "://" in location:
+                from urllib.parse import urlparse
+                parsed = urlparse(location)
+                location = parsed.path
+                if parsed.query:
+                    location += f"?{parsed.query}"
+            
+            # If it's a K8s proxy path returned by API, strip it
+            if k8s_prefix in location:
+                location = location.replace(k8s_prefix, "")
+            
+            # If we are in the specialized V2 proxy, ensure the path reflects our route
+            # Downstream expects /v2/{service}/{namespace}/{path}
+            # Upstream might return /v2/{path}
+            if "/v2/" in location and not location.startswith(f"/v2/{service}/{namespace}/"):
+                if location.startswith("/v2/"):
+                    location = location.replace("/v2/", f"/v2/{service}/{namespace}/", 1)
+            
+            response_headers["Location"] = location
                 
         # 2. Fix Content
         content = proxy_res.content
+        
         content_type = response_headers.get("Content-Type", "")
         
         if any(x in content_type for x in ["text/html", "text/css", "javascript", "application/javascript", "application/json", "xml"]):
@@ -146,6 +165,10 @@ async def cluster_proxy(request: Request, service: str, namespace: str, path: st
         # Filter forbidden headers for response
         excluded_headers = {"content-encoding", "content-length", "transfer-encoding", "connection", "host"}
         final_headers = {k: v for k, v in response_headers.items() if k.lower() not in excluded_headers}
+        
+        # Add Docker-Distribution-API-Version for V2 API compatibility if we are in /v2/
+        if "/v2/" in target_url:
+            final_headers["Docker-Distribution-API-Version"] = "registry/2.0"
 
         return Response(
             content=content,
@@ -155,8 +178,33 @@ async def cluster_proxy(request: Request, service: str, namespace: str, path: st
         )
 
     except Exception as e:
-        logger.error(f"Monitoring proxy error: {str(e)}")
+        logger.error(f"Monitoring/Registry proxy error: {str(e)}")
         return Response(content=f"Proxy Error: {str(e)}", status_code=500)
+
+
+async def v2_proxy(request: Request, service: str, namespace: str, path: str = ""):
+    """
+    Specialized proxy for Docker Registry V2 API.
+    Always uses port 5000 and the /v2 prefix.
+    """
+    logger.info(f"V2 Proxy Request: {request.method} {request.url} -> {service}/{namespace}/{path}")
+    if path:
+        full_path = "/v2/" + path.lstrip("/")
+    else:
+        full_path = "/v2/"
+    
+    return await cluster_proxy(request, service, namespace, full_path, service_port=5000)
+
+async def v2_root(request: Request):
+    """
+    Handle Docker's initial 'GET /v2/' check.
+    """
+    logger.info("V2 Root Check")
+    headers = {
+        "Docker-Distribution-API-Version": "registry/2.0",
+        "X-Content-Type-Options": "nosniff"
+    }
+    return Response(content="{}", status_code=200, headers=headers, media_type="application/json")
 
 
 async def cluster_websocket_proxy(websocket: WebSocket):
@@ -271,10 +319,25 @@ def extend_app(app: FastAPI):
     route = APIRoute(
         path="/cluster/proxy/{service}/{namespace}/{path:path}",
         endpoint=cluster_proxy,
-        methods=["GET", "POST", "PUT", "DELETE"],
+        methods=["GET", "POST", "PUT", "DELETE", "HEAD", "PATCH"],
     )
 
     app.router.routes.append(route)
+
+    v2_route = APIRoute(
+        path="/v2/{service}/{namespace}/{path:path}",
+        endpoint=v2_proxy,
+        methods=["GET", "POST", "PUT", "DELETE", "HEAD", "PATCH"],
+    )
+    
+    app.router.routes.append(v2_route)
+
+    v2_root_route = APIRoute(
+        path="/v2/",
+        endpoint=v2_root,
+        methods=["GET"],
+    )
+    app.router.routes.append(v2_root_route)
     
     # Add WebSocket Route
     app.add_websocket_route("/cluster/proxy/{service}/{namespace}/{path:path}", cluster_websocket_proxy)

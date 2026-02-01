@@ -1,7 +1,10 @@
 import logging
+import asyncio
 import datetime
 from typing import Any, Optional
 from github import Github
+from app.github_client.helpers.utils import clone_repo
+from app.github_client.client.pat_client import _get_pat_from_db
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +65,8 @@ class PRService:
             build_id = None
             
             try:
-                dockerfile_content = self._get_dockerfile_from_repo(repo, branch_name)
+                # Use pr.head.sha for content retrieval to ensure we see the exact commit
+                dockerfile_content = await self._get_dockerfile_from_repo(repo, pr.head.sha)
                 
                 build_data = self._create_build_data(
                     repo, pr, build_start_time, user_login
@@ -105,33 +109,48 @@ class PRService:
             logger.error(f"Failed to process PR: {e}")
             raise Exception(f"PR service error: {str(e)}")
     
-    def _get_dockerfile_from_repo(self, repo: Any, branch_name: str) -> str:
+    async def _get_dockerfile_from_repo(self, repo: Any, ref: str) -> str:
         """Get Dockerfile content from repository."""
         possible_paths = [
             "Dockerfile", "dockerfile", "Dockerfile.txt", 
             "docker/Dockerfile", "build/Dockerfile"
         ]
         
+        logger.info(f"Searching for Dockerfile in {repo.full_name} at ref {ref}")
+        
         for path in possible_paths:
             try:
-                file_content = repo.get_contents(path, ref=branch_name)
+                file_content = await asyncio.to_thread(repo.get_contents, path, ref=ref)
                 if file_content.type == "file":
                     from app.github_client.helpers import decode_github_content
                     dockerfile_content = decode_github_content(file_content.content)
-                    logger.info(f"Found Dockerfile at {path} in branch {branch_name}")
+                    logger.info(f"Successfully found Dockerfile at {path} in {repo.full_name} at ref {ref}")
                     return dockerfile_content
-            except Exception:
+            except Exception as e:
+                # Log non-404 errors as they might indicate permission or other issues
+                if getattr(e, "status", None) != 404:
+                    logger.debug(f"Path {path} check failed with status {getattr(e, 'status', 'unknown')}: {e}")
                 continue
         
         try:
-            contents = repo.get_contents("", ref=branch_name)
+            logger.warning(f"Dockerfile not found in common paths for {repo.full_name}@{ref}. Listing root contents...")
+            contents = await asyncio.to_thread(repo.get_contents, "", ref=ref)
             files = [item.name for item in contents if item.type == "file"]
-            raise FileNotFoundError(
-                f"No Dockerfile found in branch {branch_name}. "
-                f"Available files in root: {files[:10]}..."
+            dirs = [item.name for item in contents if item.type == "dir"]
+            
+            error_msg = (
+                f"No Dockerfile found in {repo.full_name} at ref {ref}. "
+                f"Root files: {files[:15]}. Root dirs: {dirs[:10]}."
             )
-        except Exception:
-            raise FileNotFoundError(f"No Dockerfile found in branch {branch_name}")
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
+        except Exception as e:
+            if isinstance(e, FileNotFoundError):
+                raise
+            
+            detailed_error = f"Failed to list contents of {repo.full_name} at ref {ref}: {str(e)}"
+            logger.error(detailed_error)
+            raise FileNotFoundError(detailed_error)
     
     def _create_build_data(
         self, 
@@ -200,9 +219,14 @@ class PRService:
         }
         
         try:
-            image_name = await self.image_lifecycle_service.build_and_push(
-                dockerfile_content, base_image_name, labels
-            )
+            pat = _get_pat_from_db()
+            if not pat:
+                raise Exception("Failed to retrieve GitHub PAT for cloning")
+
+            with clone_repo(repo.full_name, pr.head.ref, pat) as context_path:
+                image_name = await self.image_lifecycle_service.build_and_push(
+                    dockerfile_content, base_image_name, labels, context_path=context_path
+                )
             
             self.build_repository.add_log(build_id, "Build and push completed successfully")
             self.build_repository.update_time_and_status(

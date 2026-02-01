@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { PackageRunnerForm } from '@/components/docker/packages/forms/PackagePullerForm';
 import { PackageCreatorForm } from '@/components/docker/packages/forms/PackageCreatorForm';
 import PageLayout from "@/components/PageLayout";
+import useNavigate from "@/libs/navigate";
+
 
 const fetchPackages = async () => {
   const response: any = await DefaultService.apiDockerPackagesGet();
@@ -32,6 +34,7 @@ const fetchPackages = async () => {
 };
 
 const PackagesPage = () => {
+  const navigate = useNavigate();
   const [showPackagePullModal, setShowPackagePullModal] = useState(false);
   const [showPackageCreateModal, setShowPackageCreateModal] = useState(false);
   const [showConfettiModal, setShowConfettiModal] = useState(false);
@@ -208,6 +211,7 @@ const PackagesPage = () => {
           onPush={handlePush}
           onBulkPlay={handleBulkPlay}
           onBulkDelete={handleBulkDelete}
+          onViewDetails={(row) => navigate(`/cee/docker/packages/${row.package.id}`)}
           title="Image Registry"
           description="Local container image storage and management"
           icon={<HardDrive className="h-4 w-4" />}

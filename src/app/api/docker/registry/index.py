@@ -23,6 +23,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+from app.utils.crypto import encrypt, decrypt
+
 async def GET(
     request: Request,
     namespace: Optional[str] = "image-registry",
@@ -50,7 +52,13 @@ async def GET(
     if list_mode:
         with get_session() as session:
             registries = session.exec(select(RegistryConfig)).all()
-            return {"registries": [r.dict() for r in registries]}
+            # Sanitize passwords
+            results = []
+            for r in registries:
+                d = r.dict()
+                d.pop("password", None)
+                results.append(d)
+            return {"registries": results}
             
     if registry_id:
         with get_session() as session:
@@ -81,8 +89,11 @@ async def GET(
                      
                      # Auth Headers
                      auth = None
-                     if reg.username and reg.password:
-                         auth = requests.auth.HTTPBasicAuth(reg.username, reg.password)
+                     # Decrypt password for use
+                     plain_password = decrypt(reg.password) if reg.password else None
+                     
+                     if reg.username and plain_password:
+                         auth = requests.auth.HTTPBasicAuth(reg.username, plain_password)
                          
                      logger.info(f"Accessing Remote Registry: {target_url}")
                      
@@ -153,7 +164,7 @@ async def POST(
                 name=body.name,
                 url=body.url,
                 username=body.username,
-                password=body.password,
+                password=encrypt(body.password) if body.password else None,
                 is_remote=True,
                 config_json=json.dumps({})
             )
@@ -295,7 +306,7 @@ async def PUT(request: Request):
             if data.username is not None:
                 reg.username = data.username
             if data.password is not None:
-                reg.password = data.password
+                reg.password = encrypt(data.password)
                 
             # Note: Changing K8s deployment params is not supported here, only DB record.
             
@@ -304,6 +315,7 @@ async def PUT(request: Request):
             session.refresh(reg)
             
             return {"success": True, "message": "Registry updated", "registry": reg.dict()}
+
             
     except Exception as e:
         logger.error(f"Update failed: {e}")

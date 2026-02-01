@@ -128,19 +128,60 @@ class Package_Info(BaseModel):
 class Get_Packages_Response(BaseModel):
     packages:List[Package_Info]
 
-async def GET(request:Request):
-    images = client.images.list(all=True)  # Get all containers (running or stopped)
+async def GET(request: Request, id: Optional[str] = None):
+    if id:
+        try:
+            image = client.images.get(id)
+            history = image.history()
+            
+            # Format history to be more frontend friendly. 
+            # Docker history returns list of dicts: {'Comment': '', 'Created': 123, 'CreatedBy': '/bin/sh', 'Id': '<sha>', 'Size': 123, 'Tags': []}
+            formatted_history = []
+            for layer in history:
+                formatted_history.append({
+                    "id": layer.get("Id", "missing"),
+                    "created": layer.get("Created", 0),
+                    "created_by": layer.get("CreatedBy", ""),
+                    "tags": layer.get("Tags", []),
+                    "size": layer.get("Size", 0),
+                    "comment": layer.get("Comment", "")
+                })
+
+            image_details = {}
+            image_details['name'] = [tag.split(":")[0] for tag in image.tags] if image.tags else "None"
+            image_details['id'] = image.id
+            image_details['tags'] = image.tags
+            image_details['created'] = image.attrs['Created']
+            image_details['size'] = image.attrs['Size']
+            image_details['virtual_size'] = image.attrs.get('VirtualSize', "N/A")
+            image_details['repo_tags'] = image.attrs['RepoTags']
+            image_details['labels'] = image.attrs.get('Labels', {})
+            image_details['os'] = image.attrs.get('Os', 'N/A')
+            image_details['architecture'] = image.attrs.get('Architecture', 'N/A')
+            image_details['author'] = image.attrs.get('Author', 'N/A')
+            image_details['config'] = image.attrs.get('Config', {})
+            image_details['graph_driver'] = image.attrs.get('GraphDriver', {})
+            image_details['root_fs'] = image.attrs.get('RootFS', {})
+
+            return {
+                "package": image_details,
+                "history": formatted_history
+            }
+        except docker.errors.ImageNotFound:
+             return {"error": True, "message": "Image not found"}
+        except Exception as e:
+            return {"error": True, "message": str(e)}
+
+    # List all images if no ID provided
+    images = client.images.list(all=True)
     
     image_info = []
 
     for image in images:
         if image.tags:
             try:
-                # Loop through each image and retrieve information
                 image_details = {}
-                # Extract image name (repo name) and tag from the tags
                 image_details['name'] = [tag.split(":")[0] for tag in image.tags] if image.tags else "None"
-                
                 image_details['id'] = image.id
                 image_details['tags'] = image.tags
                 image_details['created'] = image.attrs['Created']
@@ -149,10 +190,9 @@ async def GET(request:Request):
                 image_details['repo_tags'] = image.attrs['RepoTags']
                 image_details['labels'] = image.attrs.get('Labels', {})
 
-                # You can also retrieve more info, like layers, parent id, etc.
                 image_info.append(image_details)
             except Exception as e:
-                print(f"Error retrieving info for image {[tag.split(':')[0] for tag in image.tags] if image.tags else 'None'}: {e}")
+                print(f"Error retrieving info: {e}")
     
     return {"packages": image_info}
 
@@ -208,4 +248,4 @@ async def POST(request:Request,body: RunImage):
         return({"error":True,"message":f"Invalid action: {actionType}. Allowed actions are 'run', 'remove', 'pull', 'create'."})
         
     except Exception as e:
-        return {"error": True, "message": e.__dict__["explanation"]}
+        return {"error": True, "message": e.__dict__.get("explanation", str(e))}

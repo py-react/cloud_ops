@@ -1,7 +1,12 @@
 import re
 import uuid
 import base64
+import os
+import shutil
+import subprocess
+import tempfile
 import logging
+from contextlib import contextmanager
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -96,4 +101,45 @@ def decode_github_content(content: str) -> str:
     Returns:
         Decoded string content
     """
-    return base64.b64decode(content).decode('utf-8') 
+    return base64.b64decode(content).decode('utf-8')
+
+
+@contextmanager
+def clone_repo(repo_full_name: str, branch: str, pat: str):
+    """
+    Context manager that clones a GitHub repository to a temporary directory.
+    
+    Args:
+        repo_full_name: Full repository name (e.g., "owner/repo")
+        branch: Branch to clone
+        pat: GitHub Personal Access Token
+        
+    Yields:
+        Path to the temporary directory containing the cloned repository
+    """
+    base_dir = "/tmp/cloud_ops/ci_cd/repos"
+    os.makedirs(base_dir, exist_ok=True)
+    
+    temp_dir = tempfile.mkdtemp(dir=base_dir)
+    try:
+        # Construct clone URL with PAT for authentication
+        clone_url = f"https://x-access-token:{pat}@github.com/{repo_full_name}.git"
+        
+        logger.info(f"Cloning {repo_full_name} branch {branch} to {temp_dir}")
+        
+        # Run git clone command
+        subprocess.run(
+            ["git", "clone", "--depth", "1", "--branch", branch, clone_url, "."],
+            cwd=temp_dir,
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        
+        yield temp_dir
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to clone repository {repo_full_name}: {e.stderr}")
+        raise Exception(f"Failed to clone repository: {e.stderr}")
+    finally:
+        logger.info(f"Cleaning up temporary directory {temp_dir}")
+        shutil.rmtree(temp_dir, ignore_errors=True)

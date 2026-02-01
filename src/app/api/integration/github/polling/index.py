@@ -78,14 +78,22 @@ async def PUT(request: Request, body: PollingConfigRequest,background_tasks: Bac
 
         # If enabling, try to start background poller in this running process.
         # If disabling, stop any running background poller task.
+        global _background_poller_task
         if body.enabled:
-            if get_repo_poller()._stop == False:
+            poller = get_repo_poller()
+            if not poller._stop:
                 return {"success": True, "message": "Polling already enabled."}
-            # Start run_forever as a background task
-            background_tasks.add_task(get_repo_poller().run_forever)
+            
+            # Start run_forever as a background task and keep reference
+            _background_poller_task = asyncio.create_task(poller.run_forever())
             return {"success": True, "message": "Polling enabled and background poller started."}
         else:
-            background_tasks.add_task(get_repo_poller().stop)
+            poller = get_repo_poller()
+            await poller.stop()
+            if _background_poller_task:
+                # Optional: cancel it if it doesn't stop gracefully fast enough
+                # but poller.stop() sets _stop=True which should handle it
+                _background_poller_task = None
             return {"success": True, "message": "Polling disabled for this process."}
 
     except Exception as e:

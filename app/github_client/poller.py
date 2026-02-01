@@ -84,10 +84,10 @@ class RepoPoller:
         """Run a single iteration: iterate allowed repos and process open PRs."""
         logger.info("RepoPoller: starting run_once")
         try:
-            repos_map, branches_map, deployments = self.repo_utils.get_all()
+            repos_map, branches_map, deployments, repo_pats = self.repo_utils.get_all()
             user_login = None
             try:
-                user = self.github_client.get_user()
+                user = await asyncio.to_thread(self.github_client.get_user)
                 user_login = user.login
                 logger.debug(f"RepoPoller authenticated as GitHub user: {user_login}")
             except Exception as e:
@@ -128,9 +128,8 @@ class RepoPoller:
         """Process all branches for a given repository."""
         try:
             logger.info(f"Polling repo: {repo_name} branches: {branches_map[repo_name]}")
-            gh_repo = self.github_client.get_repo(
-                repo_name if "/" in repo_name else f"{user_login}/{repo_name}"
-            )
+            full_repo_name = repo_name if "/" in repo_name else f"{user_login}/{repo_name}"
+            gh_repo = await asyncio.to_thread(self.github_client.get_repo, full_repo_name)
             promises = []
             for branch in branches_map[repo_name]:
                 promises.append(
@@ -147,8 +146,13 @@ class RepoPoller:
     ) -> None:
         """Process all PRs for a single branch."""
         try:
-            pulls = gh_repo.get_pulls(state="open", base=branch)
-            if pulls.totalCount == 0:
+            # gh_repo.get_pulls returns a PaginatedList; the actual network call happens when we iterate
+            def get_all_pulls():
+                return list(gh_repo.get_pulls(state="open", base=branch))
+            
+            pulls = await asyncio.to_thread(get_all_pulls)
+            
+            if not pulls:
                 logger.info(f"No open PRs found for repo {repo_name} base_branch {branch}")
             else:
                 for pull in pulls:
@@ -228,10 +232,17 @@ class RepoPoller:
         
         while not self._stop:
             try:
-                rate_info = self.rate_limiter.should_backoff(self.github_client)
-                logger.info(f"Rate limit check: {rate_info}")
-                Promise(self.run_once())
-                logger.info("RepoPoller: started")
+                # should_backoff is now async and uses to_thread internally
+                should_backoff, backoff_seconds = await self.rate_limiter.should_backoff(
+                    self.github_client
+                )
+                if should_backoff:
+                    logger.warning(f"Rate limit backoff: {backoff_seconds}s")
+                    await asyncio.sleep(backoff_seconds)
+                    continue
+
+                await self.run_once()
+                logger.info("RepoPoller: iteration completed")
             except Exception as e:
                 logger.error(f"RepoPoller encountered error: {e}")
             await asyncio.sleep(self.poll_interval_seconds)

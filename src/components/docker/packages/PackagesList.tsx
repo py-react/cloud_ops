@@ -32,6 +32,7 @@ interface PackagesListProps {
   onPlay?: (pkg: PackageTableData) => void;
   onDelete?: (pkg: PackageTableData) => void;
   onPush?: (pkg: PackageTableData) => void;
+  onViewDetails?: (pkg: PackageTableData) => void;
   onBulkPlay?: (pkgs: PackageTableData[]) => void;
   onBulkDelete?: (pkgs: PackageTableData[]) => void;
   title?: string;
@@ -39,7 +40,7 @@ interface PackagesListProps {
   icon?: React.ReactNode;
 }
 
-export function PackagesList({ packages, onPlay, onDelete, onPush, onBulkPlay, onBulkDelete, title, description, icon }: PackagesListProps) {
+export function PackagesList({ packages, onPlay, onDelete, onPush, onViewDetails, onBulkPlay, onBulkDelete, title, description, icon }: PackagesListProps) {
   const columns = [
     { header: 'ID', accessor: 'id' },
     { header: 'Image', accessor: 'image' },
@@ -93,6 +94,7 @@ export function PackagesList({ packages, onPlay, onDelete, onPush, onBulkPlay, o
       onPlay={onPlay}
       onDelete={onDelete}
       onPush={onPush}
+      onViewDetails={onViewDetails}
       onBulkPlay={onBulkPlay}
       onBulkDelete={onBulkDelete}
       tableClassName="max-h-[550px]"

@@ -23,7 +23,8 @@ class ImageLifecycleService:
         self, 
         dockerfile_content: str, 
         image_name: str, 
-        labels: dict | None = None
+        labels: dict | None = None,
+        context_path: str | None = None
     ) -> str:
         """
         Build and push image to registry.
@@ -50,14 +51,14 @@ class ImageLifecycleService:
             if self.registry_manager.get_primary_registry():
                 try:
                     built_name, logs = await self.builder.build_image(
-                        dockerfile_content, image_name, labels
+                        dockerfile_content, image_name, labels, path=context_path
                     )
                     final_image_name = built_name
                     
                     logger.info(f"Image built successfully: {final_image_name}")
                     
                     
-                    image = self.builder.docker_client.images.get(final_image_name.split(':')[0])
+                    image = self.builder.docker_client.images.get(final_image_name)
                     registry_url, push_logs = await self.registry_manager.push_with_fallback(
                         image, final_image_name
                     )
@@ -75,7 +76,7 @@ class ImageLifecycleService:
             else:
                 logger.info("No registry configured, building locally only")
                 built_name, logs = await self.builder.build_image(
-                    dockerfile_content, image_name, labels
+                    dockerfile_content, image_name, labels, path=context_path
                 )
                 final_image_name = built_name
             

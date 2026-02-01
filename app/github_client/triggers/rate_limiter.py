@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from typing import Tuple
 from github import Github
 
@@ -23,7 +24,7 @@ class RateLimiter:
             Tuple of (should_backoff, backoff_seconds)
         """
         try:
-            rl = github_client.get_rate_limit()
+            rl = await asyncio.to_thread(github_client.get_rate_limit)
             core = rl.core
             remaining = core.remaining
             limit = core.limit

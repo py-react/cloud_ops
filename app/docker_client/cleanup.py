@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import time
 import datetime
 from typing import Dict
@@ -28,7 +29,7 @@ class ImageCleanupService:
             current_time = time.time()
             max_age_seconds = max_age_hours * 3600
             
-            images = self.docker_client.images.list(filters={"label": "com.github.pr"})
+            images = await asyncio.to_thread(self.docker_client.images.list, filters={"label": "com.github.pr"})
             for image in images:
                 try:
                     created_time = image.attrs['Created']
@@ -38,7 +39,7 @@ class ImageCleanupService:
                     if current_time - created_timestamp > max_age_seconds:
                         image_name = image.tags[0] if image.tags else image.id
                         logger.info(f"Removing old image {image_name} (created {created_time})")
-                        self.docker_client.images.remove(image.id, force=True)
+                        await asyncio.to_thread(image.remove, force=True)
                         stats['images_cleaned'] += 1
                 except Exception as e:
                     logger.warning(f"Failed to remove image {image.id}: {e}")
