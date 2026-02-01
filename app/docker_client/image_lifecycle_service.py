@@ -24,7 +24,8 @@ class ImageLifecycleService:
         dockerfile_content: str, 
         image_name: str, 
         labels: dict | None = None,
-        context_path: str | None = None
+        context_path: str | None = None,
+        registry_config: Any | None = None
     ) -> str:
         """
         Build and push image to registry.
@@ -33,6 +34,7 @@ class ImageLifecycleService:
             dockerfile_content: Content of Dockerfile
             image_name: Image name with tag
             labels: Optional labels for the image
+            registry_config: Optional specific registry configuration
             
         Returns:
             Final image name (may include registry URL)
@@ -48,7 +50,10 @@ class ImageLifecycleService:
             
             final_image_name = image_name
             
-            if self.registry_manager.get_primary_registry():
+            # Use specific registry if provided, otherwise default/fallback
+            target_registry = registry_config if registry_config else self.registry_manager.get_primary_registry()
+            
+            if target_registry:
                 try:
                     built_name, logs = await self.builder.build_image(
                         dockerfile_content, image_name, labels, path=context_path
@@ -57,18 +62,24 @@ class ImageLifecycleService:
                     
                     logger.info(f"Image built successfully: {final_image_name}")
                     
-                    
                     image = self.builder.docker_client.images.get(final_image_name)
-                    registry_url, push_logs = await self.registry_manager.push_with_fallback(
-                        image, final_image_name
+                    
+                    # Direct push to the target registry
+                    logs = await self.registry_manager.push_image(
+                        image, final_image_name, target_registry
                     )
+                    
+                    registry_url = target_registry.url
                     
                     logger.info(
                         f"Image pushed successfully to registry: {registry_url}. "
-                        f"Logs: {len(push_logs)} entries"
+                        f"Logs: {len(logs)} entries"
                     )
                     
-                    final_image_name = f"{registry_url}/{final_image_name}"
+                    # Ensure final name includes registry if not already present (though push_image tags it)
+                    # We return the "remote" name for reference
+                    if not final_image_name.startswith(registry_url):
+                        final_image_name = f"{registry_url}/{final_image_name}"
                     
                 except Exception as e:
                     logger.error(f"Failed to build and push image: {e}")

@@ -84,7 +84,7 @@ class RepoPoller:
         """Run a single iteration: iterate allowed repos and process open PRs."""
         logger.info("RepoPoller: starting run_once")
         try:
-            repos_map, branches_map, deployments, repo_pats = self.repo_utils.get_all()
+            repos_map, branches_map, deployments, repo_pats, _ = self.repo_utils.get_all()
             user_login = None
             try:
                 user = await asyncio.to_thread(self.github_client.get_user)

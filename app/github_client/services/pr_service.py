@@ -164,12 +164,32 @@ class PRService:
         from app.db_client.models.source_code_build.types import SourceCodeBuildType
         from render_relay.utils import load_settings
         
-        settings = load_settings()
-        registry_host = settings.get("REGISTRY_HOST")
+        from app.db_client.db import get_session
+        from app.db_client.models.registry_config import RegistryConfig as DBRegistryConfig
+        from app.github_client.core.allowed_repo import AllowedRepoUtils
+        
+        # Determine registry URL (repo specific or default)
+        registry_url = None
+        
+        with get_session() as session:
+            # Check for repo-specific registry
+            utils = AllowedRepoUtils(session)
+            _, _, _, _, repo_registries = utils.get_all()
+            repo_registry_id = repo_registries.get(repo.name)
+            
+            if repo_registry_id:
+                reg_config = session.get(DBRegistryConfig, repo_registry_id)
+                if reg_config:
+                   registry_url = reg_config.url
+            
+            # Fallback to default if no specific registry found
+            if not registry_url:
+                 settings = load_settings()
+                 registry_url = settings.get("REGISTRY_HOST")
 
-        if registry_host:
+        if registry_url:
             image_name = generate_image_name(
-                repo.name, pr.head.ref, registry_url=registry_host
+                repo.name, pr.head.ref, registry_url=registry_url
             )
             
             return SourceCodeBuildType(
@@ -185,7 +205,7 @@ class PRService:
                 base_branch_name=pr.base.ref,
                 time_taken=None
             )
-        raise Exception("REGISTRY_HOST not configured in settings")
+        raise Exception("No registry configured for repository (check Settings -> CI/CD -> Source Control or General Settings)")
     
     async def _build_pr_image(
         self, 
@@ -199,14 +219,45 @@ class PRService:
         from app.github_client.helpers import generate_image_name
         from render_relay.utils import load_settings
         
-        settings = load_settings()
-        registry_host = settings.get("REGISTRY_HOST")
+        from app.db_client.db import get_session
+        from app.db_client.models.registry_config import RegistryConfig as DBRegistryConfig
+        from app.github_client.config.registry_config import RegistryConfig
+        from app.github_client.core.allowed_repo import AllowedRepoUtils
+        
+        registry_url = None
+        registry_config = None
+        
+        with get_session() as session:
+            # Check for repo-specific registry
+            utils = AllowedRepoUtils(session)
+            _, _, _, _, repo_registries = utils.get_all()
+            repo_registry_id = repo_registries.get(repo.name)
+            
+            if repo_registry_id:
+                db_reg_config = session.get(DBRegistryConfig, repo_registry_id)
+                if db_reg_config:
+                   registry_url = db_reg_config.url
+                   # Convert DB model to Config object expected by manager
+                   registry_config = RegistryConfig(
+                       url=db_reg_config.url,
+                       name=db_reg_config.name,
+                       username=db_reg_config.username,
+                       password=db_reg_config.password,
+                       priority=1,
+                       is_remote=db_reg_config.is_remote,
+                       config=db_reg_config.config
+                   )
 
-        if not registry_host:
-            raise Exception("REGISTRY_HOST not configured in settings")
+            # Fallback to default if no specific registry found
+            if not registry_url:
+                 settings = load_settings()
+                 registry_url = settings.get("REGISTRY_HOST")
+
+        if not registry_url:
+            raise Exception("No registry configured for repository (check Settings -> CI/CD -> Source Control or General Settings)")
         
         base_image_name = generate_image_name(
-            repo.name, pr.head.ref, registry_url=registry_host
+            repo.name, pr.head.ref, registry_url=registry_url
         )
         
         unique_id = base_image_name.split(':')[-1]
@@ -225,7 +276,7 @@ class PRService:
 
             with clone_repo(repo.full_name, pr.head.ref, pat) as context_path:
                 image_name = await self.image_lifecycle_service.build_and_push(
-                    dockerfile_content, base_image_name, labels, context_path=context_path
+                    dockerfile_content, base_image_name, labels, context_path=context_path, registry_config=registry_config
                 )
             
             self.build_repository.add_log(build_id, "Build and push completed successfully")

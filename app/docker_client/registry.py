@@ -85,38 +85,6 @@ class RegistryManager:
         """Get highest priority registry."""
         return self.registries[0] if self.registries else None
     
-    async def check_connectivity(self, registry_config: RegistryConfig) -> bool:
-        """Test registry connectivity."""
-        try:
-            # If it is a K8s registry, we might need to use proxy
-            if not registry_config.is_remote:
-                logger.info(f"Checking K8s registry connectivity via proxy for {registry_config.url}")
-                namespace = registry_config.config.get("namespace", "image-registry")
-                # Derive service name from name + "-service" as per user instructions
-                service_name = registry_config.config.get("service_name", f"{registry_config.name}-service")
-                
-                # Registries run on 5000
-                result = await asyncio.to_thread(
-                    access_registry_via_api_proxy,
-                    namespace=namespace, 
-                    service_name=service_name,
-                    service_port=5000
-                )
-                return result is not None and "repositories" in result
-            
-            # For remote registries, direct access
-            registry_api_url = f"http://{registry_config.url}/v2/_catalog"
-            # decrypt password if needed
-            auth = None
-            if registry_config.username and registry_config.password:
-                plain_password = decrypt(registry_config.password)
-                auth = requests.auth.HTTPBasicAuth(registry_config.username, plain_password)
-                
-            response = await asyncio.to_thread(requests.get, registry_api_url, auth=auth, timeout=10, verify=False)
-            return response.status_code == 200
-        except Exception as e:
-            logger.warning(f"Registry connectivity check failed for {registry_config.url}: {e}")
-            return False
     
     async def push_image(
         self, 
@@ -282,54 +250,3 @@ class RegistryManager:
         except Exception as e:
             return False, f"Verification failed: {str(e)}"
     
-    async def push_with_fallback(
-        self, 
-        image: Any, 
-        image_name: str
-    ) -> tuple[str, List[str]]:
-        """
-        Push image to registries with fallback.
-        
-        Tries each registry in priority order until one succeeds.
-        
-        Args:
-            image: Docker image object
-            image_name: Image name with tag
-            
-        Returns:
-            Tuple of (successful_registry_url, push_logs)
-            
-        Raises:
-            Exception: If all registries fail
-        """
-        if not self.registries:
-            raise Exception("No registries configured")
-        
-        for registry in self.registries:
-            try:
-                logger.info(f"Attempting to push to registry: {registry.url}")
-                
-                connectivity_ok = await self.check_connectivity(registry)
-                if not connectivity_ok:
-                    logger.warning(f"Registry {registry.url} not accessible, trying next")
-                    continue
-                
-                logs = await self.push_image(image, image_name, registry)
-                
-                # Robust extraction
-                repo_name, tag = self._get_repo_and_tag(image_name)
-                
-                verified, msg = await self.verify_push(registry, repo_name, tag)
-                
-                if verified:
-                    logger.info(f"Successfully pushed and verified image to {registry.url}")
-                    return registry.url, logs
-                else:
-                    logger.warning(f"Push verification failed for {registry.url}: {msg}")
-                    continue
-                    
-            except Exception as e:
-                logger.warning(f"Registry {registry.url} failed: {e}")
-                continue
-        
-        raise Exception(f"All registries failed. Tried {len(self.registries)} registries")
