@@ -175,7 +175,7 @@ export const FormWizard = <T extends FieldValues>({
         </DialogHeader>
 
         <Form {...form}>
-          <form id={name} onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col min-h-0 h-[620px] max-h-[80vh]">
+          <form id={name} onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col min-h-0 h-[700px] max-h-[85vh]">
             <div className="flex shrink-0 min-h-0 overflow-hidden h-full">
               {/* Sidebar Navigation */}
               <div className="w-64 border-r border-border/30 bg-muted/20 flex flex-col shrink-0 relative z-30 max-w-64 overflow-hidden">

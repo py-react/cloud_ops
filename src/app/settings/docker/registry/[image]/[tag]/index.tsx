@@ -1,13 +1,14 @@
-import RouteDescription from "@/components/route-description";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DefaultService } from "@/gingerJs_api_client";
 import { Editor } from "@monaco-editor/react";
-import { ChevronDown, ChevronRight, Clock, Eye, FileText, FolderOpen, Layers, Loader2, Package, Settings } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, Eye, FileText, FolderOpen, Layers, Loader2, Package, Settings, Tag as TagIcon, X, HardDrive } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { toast } from "sonner";
-
+import PageLayout from "@/components/PageLayout";
+import ResourceCard from "@/components/kubernetes/dashboard/resourceCard";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/libs/utils";
 
 interface ImageConfig {
   created: string
@@ -34,7 +35,6 @@ interface ImageConfig {
   }>
 }
 
-
 interface ImageManifest {
   mediaType: string
   schemaVersion: number
@@ -49,7 +49,6 @@ interface ImageManifest {
     size: number
   }>
 }
-
 
 interface FileContent {
   type: string
@@ -126,13 +125,10 @@ const Tag = () => {
   const [fileLoading, setFileLoading] = useState<Record<string, boolean>>({})
   const [viewingFile, setViewingFile] = useState<string | null>(null)
 
-
   // Layer examination states
   const [layerContents, setLayerContents] = useState<Record<string, LayerContents>>({})
   const [expandedLayers, setExpandedLayers] = useState<Record<string, boolean>>({})
   const [layerLoading, setLayerLoading] = useState<Record<string, boolean>>({})
-
-
 
   // UI states
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -142,7 +138,6 @@ const Tag = () => {
     history: false
   })
 
-
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -150,10 +145,8 @@ const Tag = () => {
     }))
   }
 
-
   const examineLayer = async (layerDigest: string, repoName: string) => {
     if (layerContents[layerDigest]) {
-      // If already loaded, just toggle visibility
       setExpandedLayers(prev => ({
         ...prev,
         [layerDigest]: !prev[layerDigest]
@@ -163,10 +156,7 @@ const Tag = () => {
 
     try {
       setLayerLoading(prev => ({ ...prev, [layerDigest]: true }))
-
-      // Extract SHA256 without the "sha256:" prefix
       const sha256 = layerDigest.replace('sha256:', '')
-
       const res = await fetch(`/api/docker/registry/examine?repo=${encodeURIComponent(repoName)}&sha256=${sha256}&action=list&registryId=${registryId || ''}`)
       const data = await res.json()
 
@@ -183,8 +173,7 @@ const Tag = () => {
         toast.error('Failed to examine layer - invalid response')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to examine layer'
-      toast.error(errorMessage)
+      toast.error(err instanceof Error ? err.message : 'Failed to examine layer')
     } finally {
       setLayerLoading(prev => ({ ...prev, [layerDigest]: false }))
     }
@@ -195,11 +184,9 @@ const Tag = () => {
       setDetailLoading(true)
       const res = await fetch(`/api/docker/registry?image_name=${encodeURIComponent(image!)}&tag=${tag}&registry_id=${registryId || ''}`)
       const manifest = await res.json()
-
       setImageManifest(manifest as ImageManifest)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch image manifest'
-      toast.error(errorMessage)
+      toast.error(err instanceof Error ? err.message : 'Failed to fetch image manifest')
     } finally {
       setDetailLoading(false)
     }
@@ -207,15 +194,12 @@ const Tag = () => {
 
   const calculateEditorHeight = (content: string): string => {
     const lines = content.split('\n').length
-    const lineHeight = 19 // Monaco editor line height
-    const padding = 16 // Top and bottom padding
+    const lineHeight = 19
+    const padding = 16
     const minHeight = 40
     const maxHeight = 720
-
-    const calculatedHeight = Math.max(minHeight, Math.min(maxHeight, lines * lineHeight + padding))
-    return `${calculatedHeight}px`
+    return `${Math.max(minHeight, Math.min(maxHeight, lines * lineHeight + padding))}px`
   }
-
 
   const fetchImageConfig = async (configDigest: string) => {
     try {
@@ -223,12 +207,10 @@ const Tag = () => {
         setDetailLoading(true)
         const res = await fetch(`/api/docker/registry?image_name=${encodeURIComponent(image!)}&blob=true&sha256_digest=${configDigest}&registry_id=${registryId || ''}`)
         const config = await res.json()
-
         setImageConfig(config as ImageConfig)
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch image config'
-      toast.error(errorMessage)
+      toast.error(err instanceof Error ? err.message : 'Failed to fetch image config')
     } finally {
       setDetailLoading(false)
     }
@@ -236,7 +218,6 @@ const Tag = () => {
 
   const viewFileContent = async (filePath: string, layerDigest: string, repoName: string) => {
     const fileKey = `${layerDigest}:${filePath}`
-
     if (fileContents[fileKey]) {
       setViewingFile(fileKey)
       return
@@ -244,9 +225,7 @@ const Tag = () => {
 
     try {
       setFileLoading(prev => ({ ...prev, [fileKey]: true }))
-
       const sha256 = layerDigest.replace('sha256:', '')
-
       const res = await fetch(`/api/docker/registry/examine?repo=${encodeURIComponent(repoName)}&sha256=${sha256}&action=file&file_path=${encodeURIComponent(filePath)}&registryId=${registryId || ''}`)
       const data = await res.json()
 
@@ -260,8 +239,7 @@ const Tag = () => {
         toast.error('Failed to load file content')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load file'
-      toast.error(errorMessage)
+      toast.error(err instanceof Error ? err.message : 'Failed to load file')
     } finally {
       setFileLoading(prev => ({ ...prev, [fileKey]: false }))
     }
@@ -279,7 +257,6 @@ const Tag = () => {
   }
 
   const parseDockerfileCommand = (createdBy: string): { command: string; isShellCommand: boolean } => {
-    // Remove common prefixes
     let command = createdBy
       .replace(/^\/bin\/sh -c #\(nop\)\s*/, '')
       .replace(/^\/bin\/sh -c /, 'RUN ')
@@ -287,7 +264,6 @@ const Tag = () => {
       .replace(/^COPY /, 'COPY ')
       .trim()
 
-    // Check if it's a shell command (starts with RUN and contains complex shell operations)
     const isShellCommand = command.startsWith('RUN ') && (
       command.includes('&&') ||
       command.includes('||') ||
@@ -301,20 +277,14 @@ const Tag = () => {
 
   const formatShellCommand = (command: string): string => {
     if (!command.startsWith('RUN ')) return command
-
-    // Extract the shell part after RUN
     const shellPart = command.substring(4)
-
-    // Split on && and add proper indentation
-    const formatted = shellPart
+    return shellPart
       .split(' && ')
       .map((part, index) => {
         if (index === 0) return `RUN ${part.trim()}`
         return `    && ${part.trim()}`
       })
       .join(' \\\n')
-
-    return formatted
   }
 
   const toggleLayerContents = (layerDigest: string) => {
@@ -324,13 +294,9 @@ const Tag = () => {
     }))
   }
 
-
-
   const buildFileTree = (files: LayerContents['contents']): TreeNode[] => {
     const tree: TreeNode[] = []
     const nodeMap = new Map<string, TreeNode>()
-
-    // Sort files to ensure directories come before their contents
     const sortedFiles = [...files].sort((a, b) => a.name.localeCompare(b.name))
 
     for (const file of sortedFiles) {
@@ -363,26 +329,20 @@ const Tag = () => {
           }
 
           nodeMap.set(currentPath, node)
-
           if (parentPath) {
             const parent = nodeMap.get(parentPath)
-            if (parent && parent.children) {
-              parent.children.push(node)
-            }
+            if (parent && parent.children) parent.children.push(node)
           } else {
             tree.push(node)
           }
         }
       }
     }
-
     return tree
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString()
-  }
-  // TreeView Component
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleString()
+
   const TreeView: React.FC<{
     nodes: TreeNode[];
     layerDigest: string;
@@ -399,55 +359,30 @@ const Tag = () => {
           return (
             <div key={index} style={{ marginLeft: `${depth * 16}px` }}>
               <div className="flex items-center py-1 hover:bg-gray-50 rounded">
-                {/* Expand/Collapse Icon for Directories */}
                 {node.is_dir && (
                   <button
                     className="w-4 h-4 mr-1 flex items-center justify-center text-gray-500 hover:text-gray-700"
                     onClick={() => toggleDirectory(dirKey)}
                   >
-                    {isExpanded ? (
-                      <ChevronDown className="w-3 h-3" />
-                    ) : (
-                      <ChevronRight className="w-3 h-3" />
-                    )}
+                    {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                   </button>
                 )}
-
-                {/* File/Directory Icon and Name */}
                 <div
-                  className={`flex items-center gap-1 flex-1 ${node.is_file ? "cursor-pointer hover:text-blue-600" : ""
-                    }`}
+                  className={cn("flex items-center gap-1 flex-1", node.is_file && "cursor-pointer hover:text-blue-600")}
                   onClick={() => {
-                    if (node.is_file) {
-                      viewFileContent(node.path, layerDigest, repoName);
-                    } else if (node.is_dir) {
-                      toggleDirectory(dirKey);
-                    }
+                    if (node.is_file) viewFileContent(node.path, layerDigest, repoName);
+                    else if (node.is_dir) toggleDirectory(dirKey);
                   }}
                 >
-                  <span className="text-sm">
-                    {node.is_dir ? "📁" : node.is_symlink ? "🔗" : "📄"}
-                  </span>
-                  <span className="font-mono text-xs text-gray-700">
-                    {node.name}
-                  </span>
-                  {node.linkname && (
-                    <span className="text-gray-500 text-xs">
-                      → {node.linkname}
-                    </span>
-                  )}
-                  {fileLoading[fileKey] && (
-                    <Loader2 className="w-3 h-3 animate-spin text-blue-500 ml-1" />
-                  )}
+                  <span className="text-sm">{node.is_dir ? "📁" : node.is_symlink ? "🔗" : "📄"}</span>
+                  <span className="font-mono text-xs text-gray-700">{node.name}</span>
+                  {node.linkname && <span className="text-gray-500 text-xs">→ {node.linkname}</span>}
+                  {fileLoading[fileKey] && <Loader2 className="w-3 h-3 animate-spin text-blue-500 ml-1" />}
                 </div>
-
-                {/* File Size */}
                 <div className="text-xs text-gray-500 min-w-16 text-right">
                   {node.is_file ? formatBytes(node.size) : ""}
                 </div>
               </div>
-
-              {/* Render Children for Expanded Directories */}
               {node.is_dir && isExpanded && node.children && (
                 <TreeView
                   nodes={node.children}
@@ -463,36 +398,65 @@ const Tag = () => {
     );
   };
 
-
   useEffect(() => {
     fetchImageManifest()
   }, [image, tag, registryId])
 
-
   return (
-    <div title="Docker Registry - Image Details">
-      <div className="space-y-6">
-        <RouteDescription
-          title={
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <Package className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {image}:{tag}
-                </h2>
-                <p className="text-base text-slate-500">
-                  Detailed inspection for {image} in {registryName || 'Registry'}
-                </p>
-              </div>
-            </div>
-          }
-          shortDescription=""
-          description="Examine the structure, configuration, and build history of your Docker image. Explore individual layers and their contents to understand how your image was constructed."
+    <PageLayout
+      title={`${image}:${tag}`}
+      subtitle={
+        <>
+          Detailed inspection for <span className="text-primary font-bold">{image}</span> in <span className="text-primary font-bold">{registryName || 'Registry'}</span>
+        </>
+      }
+      icon={Package}
+      actions={
+        <div className="flex items-center gap-2 mb-1">
+          <Button variant="outline" onClick={fetchImageManifest} disabled={detailLoading}>
+            <Loader2 className={cn("w-3.5 h-3.5 mr-2", detailLoading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
+      }
+    >
+      <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-6">
+        <ResourceCard
+          title="Layers"
+          count={imageManifest?.layers.length || 0}
+          icon={<Layers className="w-4 h-4" />}
+          color="bg-purple-500"
+          className="border-purple-500/20 bg-purple-500/5 shadow-none hover:border-purple-500/30 transition-all"
+          isLoading={detailLoading}
         />
+        <ResourceCard
+          title="Architecture"
+          count={imageConfig?.architecture || "..."}
+          icon={<Settings className="w-4 h-4" />}
+          color="bg-blue-500"
+          className="border-blue-500/20 bg-blue-500/5 shadow-none hover:border-blue-500/30 transition-all"
+          isLoading={detailLoading}
+        />
+        <ResourceCard
+          title="OS"
+          count={imageConfig?.os || "..."}
+          icon={<TagIcon className="w-4 h-4" />}
+          color="bg-emerald-500"
+          className="border-emerald-500/20 bg-emerald-500/5 shadow-none hover:border-emerald-500/30 transition-all"
+          isLoading={detailLoading}
+        />
+        <ResourceCard
+          title="Media Type"
+          count={imageManifest?.mediaType ? (imageManifest.mediaType.split('.').pop() || "...") : "..."}
+          icon={<FileText className="w-4 h-4" />}
+          color="bg-orange-500"
+          className="border-orange-500/20 bg-orange-500/5 shadow-none hover:border-orange-500/30 transition-all"
+          isLoading={detailLoading}
+        />
+      </div>
 
-        {/* Image Overview */}
+      <div className="space-y-6 overflow-y-auto pr-2 pb-10">
+        {/* Image Overview Card */}
         <Card className="p-4 rounded-[0.5rem] shadow-sm bg-white border border-gray-200">
           <CardHeader>
             <CardTitle>Image Overview</CardTitle>
@@ -529,7 +493,6 @@ const Tag = () => {
               </CardTitle>
             </div>
           </CardHeader>
-
           {expandedSections.layers && (
             <CardContent className="space-y-3">
               {imageManifest?.layers.map((layer, index) => (
@@ -559,23 +522,15 @@ const Tag = () => {
                     <div className="text-xs font-mono text-gray-500 break-all">{layer.digest}</div>
                     <div className="text-xs text-gray-500 mt-1">{layer.mediaType}</div>
                   </div>
-
-                  {/* Layer Contents */}
                   {layerContents[layer.digest] && expandedLayers[layer.digest] && (
                     <div className="border-t bg-white">
                       <div className="p-3">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-medium text-gray-800">Layer Contents</h4>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleLayerContents(layer.digest)}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => toggleLayerContents(layer.digest)}>
                             <ChevronDown className="w-4 h-4" />
                           </Button>
                         </div>
-
-                        {/* Summary */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
                           <div className="bg-blue-50 p-2 rounded">
                             <div className="font-medium text-blue-700">Total Entries</div>
@@ -594,8 +549,6 @@ const Tag = () => {
                             <div className="text-purple-600">{formatBytes(layerContents[layer.digest].summary.total_uncompressed_size)}</div>
                           </div>
                         </div>
-
-                        {/* File Tree */}
                         <div className="max-h-96 overflow-y-auto border rounded p-3 bg-gray-50">
                           <TreeView
                             nodes={buildFileTree(layerContents[layer.digest].contents)}
@@ -624,18 +577,13 @@ const Tag = () => {
               <Button
                 variant="outline"
                 onClick={() => fetchImageConfig(imageManifest?.config.digest!)}
-                disabled={detailLoading}
+                disabled={detailLoading || !imageManifest}
               >
-                {detailLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Eye className="w-4 h-4 mr-2" />
-                )}
+                {detailLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Eye className="w-4 h-4 mr-2" />}
                 Load Details
               </Button>
             </div>
           </CardHeader>
-
           <CardContent className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-gray-50 p-3 rounded">
@@ -644,13 +592,11 @@ const Tag = () => {
               </div>
               <div className="bg-gray-50 p-3 rounded">
                 <div className="font-medium text-gray-700">Config Size</div>
-                <div className="text-gray-600">{formatBytes(imageManifest?.config?.size!)}</div>
+                <div className="text-gray-600">{formatBytes(imageManifest?.config?.size! || 0)}</div>
               </div>
             </div>
-
             {imageConfig && (
               <div className="mt-6 space-y-4">
-                {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-blue-50 p-3 rounded">
                     <div className="font-medium text-blue-700">Architecture</div>
@@ -665,36 +611,26 @@ const Tag = () => {
                     <div className="text-blue-600 text-sm">{formatDate(imageConfig?.created!)}</div>
                   </div>
                 </div>
-
                 {/* Environment Variables */}
                 {imageConfig.config.Env && (
                   <div className="border rounded-lg">
-                    <div
-                      className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between"
-                      onClick={() => toggleSection('environment')}
-                    >
+                    <div className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between" onClick={() => toggleSection('environment')}>
                       <span className="font-medium text-gray-700">Environment Variables ({imageConfig.config.Env.length})</span>
                       {expandedSections.environment ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                     </div>
                     {expandedSections.environment && (
                       <div className="p-3 space-y-2">
                         {imageConfig.config.Env.map((env, index) => (
-                          <div key={index} className="bg-gray-50 p-2 rounded font-mono text-sm">
-                            {env}
-                          </div>
+                          <div key={index} className="bg-gray-50 p-2 rounded font-mono text-sm">{env}</div>
                         ))}
                       </div>
                     )}
                   </div>
                 )}
-
                 {/* Labels */}
                 {imageConfig.config.Labels && Object.keys(imageConfig.config.Labels).length > 0 && (
                   <div className="border rounded-lg">
-                    <div
-                      className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between"
-                      onClick={() => toggleSection('labels')}
-                    >
+                    <div className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between" onClick={() => toggleSection('labels')}>
                       <span className="font-medium text-gray-700">Labels ({Object.keys(imageConfig.config.Labels).length})</span>
                       {expandedSections.labels ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                     </div>
@@ -710,13 +646,9 @@ const Tag = () => {
                     )}
                   </div>
                 )}
-
                 {/* History */}
                 <div className="border rounded-lg">
-                  <div
-                    className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between"
-                    onClick={() => toggleSection('history')}
-                  >
+                  <div className="p-3 bg-gray-50 border-b cursor-pointer flex items-center justify-between" onClick={() => toggleSection('history')}>
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4" />
                       <span className="font-medium text-gray-700">Build History ({imageConfig.history.length})</span>
@@ -728,60 +660,18 @@ const Tag = () => {
                       {imageConfig.history.map((step, index) => {
                         const { command, isShellCommand } = parseDockerfileCommand(step.created_by)
                         const displayCommand = isShellCommand ? formatShellCommand(command) : command
-
                         return (
                           <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
-                            {/* Step Header */}
                             <div className="flex items-start justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium text-gray-700">Step {index + 1}</span>
-                                {step.empty_layer && (
-                                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Empty Layer</span>
-                                )}
+                                {step.empty_layer && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Empty Layer</span>}
                               </div>
                               <div className="text-xs text-gray-500">{formatDate(step.created)}</div>
                             </div>
-
-                            {/* Comment */}
-                            {step.comment && (
-                              <div className="text-xs text-gray-500 italic mb-2">
-                                {step.comment}
-                              </div>
-                            )}
-
-                            {/* Command Editor */}
+                            {step.comment && <div className="text-xs text-gray-500 italic mb-2">{step.comment}</div>}
                             <div className="border rounded overflow-hidden">
-                              <Editor
-                                height={calculateEditorHeight(displayCommand)}
-                                defaultLanguage="dockerfile"
-                                theme="vs-light"
-                                value={displayCommand}
-                                options={{
-                                  readOnly: true,
-                                  minimap: { enabled: false },
-                                  scrollBeyondLastLine: false,
-                                  fontSize: 13,
-                                  lineNumbers: 'off',
-                                  folding: false,
-                                  lineDecorationsWidth: 0,
-                                  lineNumbersMinChars: 0,
-                                  glyphMargin: false,
-                                  contextmenu: false,
-                                  scrollbar: {
-                                    vertical: 'hidden',
-                                    horizontal: 'hidden'
-                                  },
-                                  wrappingIndent: 'indent',
-                                  automaticLayout: true,
-                                  padding: { top: 8, bottom: 8 },
-                                  renderLineHighlight: 'none',
-                                  occurrencesHighlight: 'off',
-                                  cursorStyle: 'line',
-                                  hideCursorInOverviewRuler: true,
-                                  overviewRulerBorder: false,
-                                  overviewRulerLanes: 0
-                                }}
-                              />
+                              <Editor height={calculateEditorHeight(displayCommand)} defaultLanguage="dockerfile" theme="vs-light" value={displayCommand} options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, fontSize: 13, lineNumbers: 'off', folding: false, contextmenu: false, automaticLayout: true, padding: { top: 8, bottom: 8 }, renderLineHighlight: 'none' }} />
                             </div>
                           </div>
                         )
@@ -796,87 +686,42 @@ const Tag = () => {
 
         {/* File Content Viewer Modal */}
         {viewingFile && fileContents[viewingFile] && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between p-4 border-b">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-500" />
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {fileContents[viewingFile].file_path}
-                  </h3>
-                </div>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full h-[80vh] max-h-[900px] flex flex-col overflow-hidden border border-border/30">
+              <div className="p-4 border-b bg-gray-50 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="text-sm text-gray-600">
-                    {formatBytes(fileContents[viewingFile].size)}
+                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                    <FileText className="w-5 h-5" />
                   </div>
-                  <Button variant="outline" size="sm" onClick={closeFileViewer}>
-                    ×
-                  </Button>
+                  <div>
+                    <h3 className="font-bold text-gray-900">{fileContents[viewingFile].file_path.split('/').pop()}</h3>
+                    <p className="text-xs text-gray-500">{fileContents[viewingFile].file_path}</p>
+                  </div>
                 </div>
+                <Button variant="ghost" size="icon" onClick={closeFileViewer} className="rounded-full">
+                  <X className="w-5 h-5" />
+                </Button>
               </div>
-
-              {/* Modal Content */}
-              <div className="flex-1 min-h-0 p-4">
-                {fileContents[viewingFile].is_text && fileContents[viewingFile].content ? (
-                  <div className="h-full border rounded overflow-hidden">
-                    <Editor
-                      height="720px"
-                      defaultLanguage={fileContents[viewingFile].file_path.split('.').pop() || 'text'}
-                      theme="vs-light"
-                      value={fileContents[viewingFile].content}
-                      options={{
-                        readOnly: true,
-                        minimap: { enabled: false },
-                        scrollBeyondLastLine: false,
-                        fontSize: 13,
-                        lineNumbers: 'on',
-                        folding: true,
-                        wordWrap: 'on',
-                        automaticLayout: true,
-                        contextmenu: false
-                      }}
-                    />
-                  </div>
+              <div className="flex-1 overflow-hidden bg-[#fffffe]">
+                {fileContents[viewingFile].is_text ? (
+                  <Editor height="100%" defaultLanguage="plaintext" theme="vs-light" value={fileContents[viewingFile].content || ''} options={{ readOnly: true, minimap: { enabled: true }, fontSize: 13, scrollBeyondLastLine: false, automaticLayout: true, padding: { top: 16, bottom: 16 } }} />
                 ) : (
-                  <div className="h-full flex items-center justify-center bg-gray-50 rounded border">
-                    <div className="text-center">
-                      <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <h4 className="text-lg font-medium text-gray-700 mb-2">Binary File</h4>
-                      <p className="text-gray-500 mb-4">
-                        This file contains binary data and cannot be displayed as text.
-                      </p>
-                      {fileContents[viewingFile].download_url && (
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            toast.info('Download functionality would be implemented here')
-                          }}
-                        >
-                          Download File
-                        </Button>
-                      )}
-                    </div>
+                  <div className="h-full flex flex-col items-center justify-center gap-4 text-gray-500">
+                    <HardDrive className="w-16 h-16 opacity-20" />
+                    <p className="font-medium text-lg text-gray-400">Binary file cannot be displayed</p>
+                    <p className="text-sm opacity-60">Size: {formatBytes(fileContents[viewingFile].size)}</p>
                   </div>
                 )}
               </div>
-
-              {/* Modal Footer */}
-              <div className="flex items-center justify-between p-4 border-t bg-gray-50">
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <span>Type: {fileContents[viewingFile].is_text ? 'Text' : 'Binary'}</span>
-                  <span>SHA256: {fileContents[viewingFile].sha256.substring(0, 16)}...</span>
-                </div>
-                <Button onClick={closeFileViewer}>
-                  Close
-                </Button>
+              <div className="p-4 border-t bg-gray-50 flex justify-end shrink-0">
+                <Button onClick={closeFileViewer} variant="secondary">Close</Button>
               </div>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </PageLayout>
   )
-};
+}
 
-export default Tag;
+export default Tag
