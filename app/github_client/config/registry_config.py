@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RegistryConfig:
     url: str
+    id: Optional[int] = None
     name: Optional[str] = None
     username: Optional[str] = None
     password: Optional[str] = None
@@ -72,6 +73,7 @@ def load_registries(settings: Dict[str, Any]) -> list[RegistryConfig]:
                     
                 registries.append(RegistryConfig(
                     url=db_reg.url,
+                    id=db_reg.id,
                     name=db_reg.name,
                     username=db_reg.username,
                     password=db_reg.password, # Note: this might be encrypted, but RegistryManager should handle it

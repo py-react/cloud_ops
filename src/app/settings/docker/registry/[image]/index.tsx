@@ -1,10 +1,27 @@
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable'
 import { DefaultService } from '@/gingerJs_api_client'
 import useNavigate from '@/libs/navigate'
-import { Loader2, Package, RefreshCw, Tag, Layers, Settings, Eye, FileText, Info } from 'lucide-react'
+import { Loader2, Package, RefreshCw, Tag, Layers, Settings, Eye, FileText, Info, UploadCloud, Terminal } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import React, { useEffect, useState, useMemo } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreVertical } from 'lucide-react'
 import PageLayout from '@/components/PageLayout'
 import ResourceCard from '@/components/kubernetes/dashboard/resourceCard'
 import { Button } from '@/components/ui/button'
@@ -17,7 +34,8 @@ const tagColumns = [
   { header: "Architecture", accessor: "config.architecture" },
   { header: "OS", accessor: "config.os" },
   { header: "Created", accessor: "created" },
-  { header: "Labels", accessor: "labels", type: 'labels' },
+  { header: 'Labels', accessor: 'labels', type: 'labels' },
+  { header: 'Actions', accessor: 'actions' }
 ]
 
 const tagSchema = z.object({
@@ -130,6 +148,39 @@ const RegistryImage = () => {
   const [wizardOpen, setWizardOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState('summary')
   const [selectedTag, setSelectedTag] = useState<any>(null)
+
+  // Load Image Dialog State
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false)
+  const [tagToLoad, setTagToLoad] = useState<any>(null)
+  const [pullOverride, setPullOverride] = useState('')
+  const [loadingImage, setLoadingImage] = useState(false)
+  const [loadLogs, setLoadLogs] = useState<string | null>(null)
+
+  const handleLoadImage = async () => {
+    if (!tagToLoad) return
+    setLoadingImage(true)
+    setLoadLogs(null)
+    try {
+      const payload = {
+        image: image,
+        tag: tagToLoad.name,
+        registry_id: registryId ? parseInt(registryId) : undefined,
+        pull_source_override: pullOverride || undefined
+      }
+
+      const res = await (DefaultService as any).apiOrchestrationK8sLoadImagePost({
+        requestBody: payload
+      })
+
+      toast.success(res.message || "Image loaded successfully")
+      setLoadLogs(res.logs)
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load image")
+      setLoadLogs(err.body?.detail || err.message)
+    } finally {
+      setLoadingImage(false)
+    }
+  }
 
   const fetchTags = async () => {
     setDetailLoading(true)
@@ -257,7 +308,33 @@ const RegistryImage = () => {
                 : "",
               labels: tag?.config?.config?.Labels
                 ? Object.entries(tag.config.config.Labels || {}).map(([k, v]) => `${k.replace("com.github.", "")}=${v}`)
-                : []
+                : [],
+              actions: (
+                <div className="flex justify-end pr-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md">
+                        <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[160px]">
+                      <DropdownMenuItem onClick={() => handleViewDetails(tag)}>
+                        <Eye className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                        Inspect
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        setTagToLoad(tag)
+                        setPullOverride('')
+                        setLoadLogs(null)
+                        setLoadDialogOpen(true)
+                      }}>
+                        <UploadCloud className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                        Load to Cluster
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )
             }))
         }
         onViewDetails={handleViewDetails}
@@ -295,6 +372,64 @@ const RegistryImage = () => {
         }}
         hideActions={true}
       />
+
+      <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UploadCloud className="h-5 w-5 text-primary" />
+              Load to Kind/Minikube
+            </DialogTitle>
+            <DialogDescription>
+              Load <b>{image}:{tagToLoad?.name}</b> directly into the current local cluster context. This avoids manual pulling inside the cluster node.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Pull Source Override (Optional)</Label>
+              <Input
+                placeholder="e.g. ghcr.io/my/image:tag"
+                value={pullOverride}
+                onChange={(e) => setPullOverride(e.target.value)}
+                className="h-8 text-xs font-mono"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                If left empty, we will construct the pull source from the registry URL and image name.
+              </p>
+            </div>
+
+            {loadLogs && (
+              <div className="rounded-md bg-zinc-950 p-2 border border-border/50">
+                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+                  <Terminal className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Execution Logs</span>
+                </div>
+                <pre className="text-[10px] font-mono text-zinc-300 whitespace-pre-wrap max-h-[150px] overflow-y-auto">
+                  {loadLogs}
+                </pre>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLoadDialogOpen(false)} disabled={loadingImage}>Cancel</Button>
+            <Button variant="gradient" onClick={handleLoadImage} disabled={loadingImage}>
+              {loadingImage ? (
+                <>
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="mr-2 h-3.5 w-3.5" />
+                  Load Image
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   )
 }

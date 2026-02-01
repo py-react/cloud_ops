@@ -62,6 +62,7 @@ export type { K8sServiceSelectorProfile } from './models/K8sServiceSelectorProfi
 export type { K8sToleration } from './models/K8sToleration';
 export type { K8sVolume } from './models/K8sVolume';
 export type { Lifecycle } from './models/Lifecycle';
+export type { LoadImageRequest } from './models/LoadImageRequest';
 export type { NamespaceInfo } from './models/NamespaceInfo';
 export type { NetworkCreateParams } from './models/NetworkCreateParams';
 export type { NetworkCreateResponse } from './models/NetworkCreateResponse';
@@ -171,6 +172,7 @@ export { $K8sServiceSelectorProfile } from './schemas/$K8sServiceSelectorProfile
 export { $K8sToleration } from './schemas/$K8sToleration';
 export { $K8sVolume } from './schemas/$K8sVolume';
 export { $Lifecycle } from './schemas/$Lifecycle';
+export { $LoadImageRequest } from './schemas/$LoadImageRequest';
 export { $NamespaceInfo } from './schemas/$NamespaceInfo';
 export { $NetworkCreateParams } from './schemas/$NetworkCreateParams';
 export { $NetworkCreateResponse } from './schemas/$NetworkCreateResponse';

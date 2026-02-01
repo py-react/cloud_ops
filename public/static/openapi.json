@@ -44,138 +44,10 @@
       }
     },
     "/cluster/proxy/{service}/{namespace}/{path}": {
-      "post": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "head": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
       "delete": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
         "parameters": [
           {
             "name": "service",
@@ -236,10 +108,10 @@
           }
         }
       },
-      "put": {
+      "post": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
         "parameters": [
           {
             "name": "service",
@@ -303,7 +175,7 @@
       "patch": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
         "parameters": [
           {
             "name": "service",
@@ -367,7 +239,135 @@
       "get": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
         "parameters": [
           {
             "name": "service",
@@ -430,118 +430,10 @@
       }
     },
     "/v2/{service}/{namespace}/{path}": {
-      "post": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "head": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
       "delete": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
+        "operationId": "v2_proxy_v2__service___namespace___path__delete",
         "parameters": [
           {
             "name": "service",
@@ -592,10 +484,10 @@
           }
         }
       },
-      "put": {
+      "post": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
+        "operationId": "v2_proxy_v2__service___namespace___path__delete",
         "parameters": [
           {
             "name": "service",
@@ -649,7 +541,7 @@
       "patch": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
+        "operationId": "v2_proxy_v2__service___namespace___path__delete",
         "parameters": [
           {
             "name": "service",
@@ -703,7 +595,115 @@
       "get": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
+        "operationId": "v2_proxy_v2__service___namespace___path__delete",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__delete",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__delete",
         "parameters": [
           {
             "name": "service",
@@ -6523,6 +6523,43 @@
         }
       }
     },
+    "/api/orchestration/k8s/load_image": {
+      "post": {
+        "summary": "",
+        "description": "Load a docker image into the current Kind or Minikube cluster.",
+        "operationId": "_api_orchestration_k8s_load_image_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoadImageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/monitoring/webhook/{type}": {
       "get": {
         "summary": "",
@@ -11496,6 +11533,46 @@
         },
         "type": "object",
         "title": "Lifecycle"
+      },
+      "LoadImageRequest": {
+        "properties": {
+          "image": {
+            "type": "string",
+            "title": "Image"
+          },
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "registry_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Id"
+          },
+          "pull_source_override": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pull Source Override"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image",
+          "tag"
+        ],
+        "title": "LoadImageRequest"
       },
       "NamespaceInfo": {
         "properties": {
