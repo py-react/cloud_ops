@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileText, Monitor, Loader2, Package, Plus, Server, Cloud, ArrowLeft } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Monitor, Loader2, Package, Plus, ArrowLeft, Layers } from 'lucide-react'
 import { toast } from 'sonner'
 import { DefaultService } from '@/gingerJs_api_client'
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable'
 import useNavigate from '@/libs/navigate'
 import PageLayout from '@/components/PageLayout'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { FormWizard, Step } from '@/components/FormWizard'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import FormWizard from "@/components/wizard/form-wizard";
+import * as z from "zod";
+import { RegistryForm } from "@/components/docker/registry/forms/RegistryForm"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,8 +20,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import ResourceCard from "@/components/kubernetes/dashboard/resourceCard";
+import { Input } from "@/components/ui/input"
 
-// Define columns for ResourceTable
+const registrySchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  type: z.enum(["remote", "k8s"]),
+  url: z.string().optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  namespace: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.type === 'remote' && !data.url) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "URL is required for remote registry",
+      path: ["url"]
+    });
+  }
+  if (data.type === 'k8s' && !data.namespace) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Namespace is required for K8s registry",
+      path: ["namespace"]
+    });
+  }
+});
+
+const defaultValues = {
+  name: '',
+  type: 'remote' as const,
+  url: '',
+  username: '',
+  password: '',
+  namespace: 'image-registry',
+}
+
+// Define columns for Repository Table
 const repositoryColumns = [
   { header: 'Repository Name', accessor: 'name' },
   { header: 'Type', accessor: 'type' },
@@ -34,15 +68,16 @@ const Registry = () => {
 
   // Registry List State
   const [registries, setRegistries] = useState<any[]>([])
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Selected Registry State (for viewing details)
   const [selectedRegistry, setSelectedRegistry] = useState<any | null>(null)
   const [repositories, setRepositories] = useState<string[]>([])
   const [repoLoading, setRepoLoading] = useState(false)
+  const [repoSearchQuery, setRepoSearchQuery] = useState("");
 
   // Wizard State
   const [isWizardOpen, setIsWizardOpen] = useState(false)
-  const [wizardType, setWizardType] = useState<'remote' | 'k8s' | null>(null)
   const [editingRegistry, setEditingRegistry] = useState<any | null>(null)
 
   // Delete State
@@ -50,15 +85,7 @@ const Registry = () => {
   const [registryToDelete, setRegistryToDelete] = useState<any | null>(null)
 
   // Wizard Form Data
-  const [formData, setFormData] = useState({
-    name: '',
-    url: '',
-    username: '',
-    password: '',
-    namespace: 'image-registry',
-    storageClass: 'standard',
-    serviceType: 'ClusterIP'
-  })
+  const [initialValues, setInitialValues] = useState<any>(defaultValues);
 
   // --- Data Fetching ---
 
@@ -85,7 +112,7 @@ const Registry = () => {
   const fetchRepositories = async (registryId: number) => {
     try {
       setRepoLoading(true)
-      // Use native fetch to ensure registry_id is sent correctly (Client might be outdated)
+      // Use native fetch to ensure registry_id is sent correctly
       const res = await fetch(`/api/docker/registry?registry_id=${registryId}`)
       const data = await res.json()
 
@@ -117,16 +144,7 @@ const Registry = () => {
 
   const handleCreateRegistryLaunch = () => {
     setEditingRegistry(null)
-    setFormData({
-      name: '',
-      url: '',
-      username: '',
-      password: '',
-      namespace: 'image-registry',
-      storageClass: 'standard',
-      serviceType: 'ClusterIP'
-    })
-    setWizardType(null)
+    setInitialValues(defaultValues)
     setIsWizardOpen(true)
   }
 
@@ -143,15 +161,13 @@ const Registry = () => {
     }
 
     setEditingRegistry(reg)
-    setWizardType(reg.is_remote ? 'remote' : 'k8s')
-    setFormData({
+    setInitialValues({
       name: reg.name || '',
+      type: reg.is_remote ? 'remote' : 'k8s',
       url: reg.url || '',
       username: reg.username || '',
-      password: '', // Don't pre-fill password for security
+      password: '', // Don't pre-fill password
       namespace: config.namespace || 'image-registry',
-      storageClass: 'standard',
-      serviceType: 'ClusterIP'
     })
     setIsWizardOpen(true)
   }
@@ -187,16 +203,16 @@ const Registry = () => {
     }
   }
 
-  const handleCreateSubmit = async () => {
+  const handleSubmit = async (values: any) => {
     try {
       if (editingRegistry) {
         // Update Logic
         const payload = {
           registry_id: editingRegistry.id,
-          name: formData.name, // Name usually immutable but API might allow?
-          url: formData.url,
-          username: formData.username,
-          password: formData.password
+          name: values.name,
+          url: values.url,
+          username: values.username,
+          password: values.password
         }
         const res = await fetch('/api/docker/registry', {
           method: 'PUT',
@@ -217,14 +233,14 @@ const Registry = () => {
       // Create Logic
       const payload = {
         action: 'create_registry' as const,
-        type: wizardType,
-        name: formData.name,
-        ...(wizardType === 'remote' ? {
-          url: formData.url,
-          username: formData.username,
-          password: formData.password
+        type: values.type,
+        name: values.name,
+        ...(values.type === 'remote' ? {
+          url: values.url,
+          username: values.username,
+          password: values.password
         } : {
-          namespace: formData.namespace,
+          namespace: values.namespace,
         })
       }
 
@@ -243,124 +259,49 @@ const Registry = () => {
   }
 
   const handleSelectRegistry = (reg: any) => {
-    // Current "View Details" -> Go to Repositories
     setSelectedRegistry(reg)
   }
 
   const handleBackToList = () => {
     setSelectedRegistry(null)
     setRepositories([])
+    setRepoSearchQuery("")
   }
 
   // --- Wizard Steps ---
 
-  const steps: Step[] = [
+  const steps = useMemo(() => [
     {
       id: 'configuration',
-      title: 'Registry Details',
-      description: 'Configure your registry connection',
-      content: (
-        <div className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label>Registry Type</Label>
-            <Select
-              value={wizardType || ''}
-              onValueChange={(val: 'remote' | 'k8s') => setWizardType(val)}
-              disabled={!!editingRegistry} // Type is immutable when editing
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select type..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="remote">Remote Registry (Docker Hub, Harbor, etc.)</SelectItem>
-                <SelectItem value="k8s">Kubernetes Hosted (Deploy New)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Registry Name</Label>
-            <Input
-              placeholder="my-registry"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              disabled={!!editingRegistry}
-            />
-            <p className="text-xs text-muted-foreground">Unique identifier for this registry.</p>
-          </div>
-
-          {wizardType === 'remote' && (
-            <>
-              <div className="space-y-2">
-                <Label>Registry URL</Label>
-                <Input
-                  placeholder="registry.example.com"
-                  value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Username (Optional)</Label>
-                  <Input
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Password / Token (Optional)</Label>
-                  <Input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder={editingRegistry ? "(Unchanged)" : ""}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {wizardType === 'k8s' && (
-            <>
-              <div className="space-y-2">
-                <Label>Namespace</Label>
-                <Input
-                  value={formData.namespace}
-                  onChange={(e) => setFormData({ ...formData, namespace: e.target.value })}
-                  disabled={!!editingRegistry}
-                />
-                <p className="text-xs text-muted-foreground">Target namespace for deployment.</p>
-              </div>
-            </>
-          )}
-        </div>
-      ),
-      validation: () => !!wizardType && !!formData.name && (wizardType === 'k8s' || !!formData.url)
-    }
-  ]
+      label: 'Registry Details',
+      description: 'Configure registry connection',
+      longDescription: 'Configure your Docker registry connection details. Choose between a remote registry (like Docker Hub) or a Kubernetes-hosted registry.',
+      component: (props: any) => <RegistryForm {...props} isEditing={!!editingRegistry} />,
+    },
+  ], [editingRegistry]);
 
 
-  // --- Views ---
-
-  if (loading) {
-    return (
-      <div className="h-[80vh] flex items-center justify-center p-4 w-full">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-      </div>
-    )
-  }
+  // --- Table Data Filtering ---
+  const filteredRegistries = useMemo(() => {
+    return registries.filter(reg =>
+      reg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (reg.url && reg.url.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [registries, searchQuery]);
 
   // View: Details (Single Registry Repositories)
   if (selectedRegistry) {
-    const repositoryData = repositories.map(repo => ({
-      name: repo,
-      type: 'Docker Repository',
-      lastModified: 'N/A',
-      rawRepo: repo,
-      showEdit: false,
-      showDelete: false,
-      showViewDetails: true // Opens repo details
-    }))
+    const filteredRepos = repositories
+      .filter(repo => repo.toLowerCase().includes(repoSearchQuery.toLowerCase()))
+      .map(repo => ({
+        name: repo,
+        type: 'Docker Repository',
+        lastModified: 'N/A',
+        rawRepo: repo,
+        showEdit: false,
+        showDelete: false,
+        showViewDetails: true
+      }));
 
     return (
       <PageLayout
@@ -375,31 +316,49 @@ const Registry = () => {
         }
       >
         <div className="space-y-6">
-          {repoLoading ? (
-            <div className="flex justify-center p-12">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <div className="flex-none grid grid-cols-1 md:grid-cols-4 gap-2 px-0">
+            <ResourceCard
+              title="Total Repositories"
+              count={repositories.length}
+              icon={<Package className="w-4 h-4" />}
+              color="bg-blue-500"
+              className="border-blue-500/20 bg-blue-500/5 shadow-none hover:border-blue-500/30 transition-all"
+              isLoading={repoLoading}
+            />
+          </div>
+
+          {repoLoading && !repositories.length ? (
+            <div className="h-[400px] flex items-center justify-center p-4 w-full">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
             </div>
-          ) : repositories.length === 0 ? (
+          ) : repositories.length === 0 && !repoLoading ? (
             <Card className="p-12 text-center">
               <Monitor className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">No Images Found</h3>
               <p className="text-muted-foreground mb-6">This registry is empty or not reachable.</p>
-              <Button variant="outline">Check Connection</Button>
+              <Button variant="outline" onClick={() => fetchRepositories(selectedRegistry.id)}>Retry Connection</Button>
             </Card>
           ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Repositories ({repositories.length})</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ResourceTable
-                  columns={repositoryColumns}
-                  data={repositoryData}
-                  onViewDetails={(row) => navigate(`/cee/docker/registry/${row.rawRepo}`)}
-                  className="shadow-none"
-                />
-              </CardContent>
-            </Card>
+            <div className="flex-1 min-h-0">
+              <ResourceTable
+                className="pt-0 shadow-none border-0"
+                loading={repoLoading}
+                title="Repositories"
+                description={`Images stored in ${selectedRegistry.name}`}
+                icon={<Layers className="h-5 w-5" />}
+                columns={repositoryColumns}
+                data={filteredRepos}
+                extraHeaderContent={
+                  <Input
+                    placeholder="Search repositories..."
+                    value={repoSearchQuery}
+                    onChange={(e) => setRepoSearchQuery(e.target.value)}
+                    className="h-9 w-64"
+                  />
+                }
+                onViewDetails={(row) => navigate(`/cee/docker/registry/${row.rawRepo}`)}
+              />
+            </div>
           )}
         </div>
       </PageLayout>
@@ -415,14 +374,16 @@ const Registry = () => {
   ]
 
   // Map Data
-  const registryTableData = registries.map(reg => ({
+  const registryTableData = filteredRegistries.map(reg => ({
     ...reg,
     type_label: reg.is_remote ? 'Remote' : 'Kubernetes',
     status_label: 'Active',
-    showViewDetails: true, // Used for Edit/Config View
-    showEdit: reg.is_remote, // Only allow editing for Remote registries
+    showViewDetails: true,
+    showEdit: reg.is_remote,
     showDelete: true
   }))
+
+  const activeTab = "configuration"
 
   return (
     <>
@@ -431,39 +392,65 @@ const Registry = () => {
         subtitle="Manage your connected image registries"
         icon={Package}
         actions={
-          <Button onClick={handleCreateRegistryLaunch}>
+          <Button variant="gradient" onClick={handleCreateRegistryLaunch}>
             <Plus className="w-4 h-4 mr-2" />
             Add Registry
           </Button>
         }
       >
-        <Card>
-          <CardHeader>
-            <CardTitle>Configured Registries</CardTitle>
-            <CardDescription>List of all connected registry endpoints.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ResourceTable
-              columns={registryColumns}
-              data={registryTableData}
-              onViewDetails={(row) => handleSelectRegistry(row)} // Click row -> View Repositories
-              onEdit={(row) => handleEditRegistry(row)} // Edit Action -> Open Form Wizard
-              onDelete={(row) => handleDeleteRequest(row)} // Delete Action -> Confirm Dialog
-              className="shadow-none border-0"
-            />
-          </CardContent>
-        </Card>
+        <div className="flex-none grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 px-0">
+          <ResourceCard
+            title="Total Registries"
+            count={registries.length}
+            icon={<Package className="w-4 h-4" />}
+            color="bg-purple-500"
+            className="border-purple-500/20 bg-purple-500/5 shadow-none hover:border-purple-500/30 transition-all"
+            isLoading={loading}
+          />
+        </div>
+
+        <div className="flex-1 min-h-0 mt-6">
+          <ResourceTable
+            className="pt-0 shadow-none border-0"
+            loading={loading}
+            title="Configured Registries"
+            description="List of all connected registry endpoints."
+            icon={<Layers className="h-5 w-5" />}
+            columns={registryColumns}
+            data={registryTableData}
+            extraHeaderContent={
+              <Input
+                placeholder="Search connection..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 w-64"
+              />
+            }
+            onViewDetails={(row) => handleSelectRegistry(row)}
+            onEdit={(row) => handleEditRegistry(row)}
+            onDelete={(row) => handleDeleteRequest(row)}
+          />
+        </div>
       </PageLayout>
 
-      {isWizardOpen && (
-        <FormWizard
-          title={editingRegistry ? "Edit Registry" : "Add Registry"}
-          description={editingRegistry ? "Update registry details" : "Configure a new Docker registry connection"}
-          steps={steps}
-          onComplete={handleCreateSubmit}
-          onCancel={() => setIsWizardOpen(false)}
-        />
-      )}
+      <FormWizard
+        name="registry-wizard"
+        isWizardOpen={isWizardOpen}
+        setIsWizardOpen={setIsWizardOpen}
+        currentStep={activeTab}
+        setCurrentStep={() => { }}
+        steps={steps}
+        schema={registrySchema}
+        initialValues={initialValues}
+        onSubmit={handleSubmit}
+        submitLabel={editingRegistry ? "Update Registry" : "Create Registry"}
+        submitIcon={Package}
+        heading={{
+          primary: editingRegistry ? "Edit Registry" : "Add Registry",
+          secondary: editingRegistry ? "Update registry details" : "Configure a new Docker registry connection",
+          icon: Package,
+        }}
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -471,7 +458,7 @@ const Registry = () => {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the registry configuration
-              {registryToDelete?.type_label === 'Kubernetes' && " and remove associated Kubernetes resources (Deployment, Service, PVC)."}
+              {registryToDelete?.is_remote === false && " and remove associated Kubernetes resources (Deployment, Service, PVC)."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

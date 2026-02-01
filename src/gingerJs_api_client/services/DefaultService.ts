@@ -58,22 +58,22 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathGet = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPut = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathGet1 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPut1 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathGet2 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPut2 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathGet3 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPut3 = {
                 namespace: string
 path: string
 service: string
@@ -594,14 +594,14 @@ path,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathGet(data: TDataClusterProxyClusterProxyServiceNamespacePathGet): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPut(data: TDataClusterProxyClusterProxyServiceNamespacePathPut): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'GET',
+			method: 'PUT',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -619,7 +619,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathGet1(data: TDataClusterProxyClusterProxyServiceNamespacePathGet1): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPut1(data: TDataClusterProxyClusterProxyServiceNamespacePathPut1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -644,7 +644,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathGet2(data: TDataClusterProxyClusterProxyServiceNamespacePathGet2): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPut2(data: TDataClusterProxyClusterProxyServiceNamespacePathPut2): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -669,14 +669,14 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathGet3(data: TDataClusterProxyClusterProxyServiceNamespacePathGet3): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPut3(data: TDataClusterProxyClusterProxyServiceNamespacePathPut3): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'PUT',
+			method: 'GET',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
