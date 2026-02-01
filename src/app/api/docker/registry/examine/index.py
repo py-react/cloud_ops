@@ -9,6 +9,10 @@ import io
 import json
 import logging
 from render_relay.utils import load_settings
+from app.db_client.models.registry_config import RegistryConfig
+from app.db_client.db import get_session
+from app.utils.crypto import decrypt
+from app.k8s_helper.core import access_registry_via_api_proxy
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,25 +21,105 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def _get_registry_url() -> str:
-    """Get registry URL from settings"""
+    """Get registry URL from settings (legacy)"""
     settings = load_settings()
     registry_host = settings.get("REGISTRY_HOST")
     if not registry_host:
-        raise HTTPException(status_code=500, detail="Registry host not configured")
+        return None
     return f"http://{registry_host}"
 
 
-def _download_blob(registry_url: str, repo: str, sha256: str) -> bytes:
-    """Download blob from registry"""
-    blob_url = f"{registry_url}/v2/{repo}/blobs/sha256:{sha256}"
-    response = requests.get(blob_url, timeout=30, verify=False)
+def _download_blob(registry_config: Optional[RegistryConfig], repo: str, sha256: str) -> bytes:
+    """Download blob from registry, handling remote/k8s/v1 proxying"""
     
-    if response.status_code == 404:
-        raise HTTPException(status_code=404, detail=f"Blob sha256:{sha256} not found in repository {repo}")
-    elif response.status_code != 200:
-        raise HTTPException(status_code=500, detail=f"Failed to download blob: HTTP {response.status_code}")
-    
-    return response.content
+    # 1. Handle K8s Registry via Proxy
+    if registry_config and not registry_config.is_remote:
+        config = registry_config.config
+        namespace = config.get("namespace", "image-registry")
+        service_name = config.get("service_name", f"{registry_config.name}-service")
+        service_port = config.get("port", 5000)
+        
+        logger.info(f"Downloading blob from K8s Registry via proxy: {service_name}.{namespace}:{service_port}")
+        # access_registry_via_api_proxy returns a dict if it's JSON, but for blob it returns raw content?
+        # Actually in registry_helper.py: 
+        # return response.json() if it's json, but for blob it should probably return raw?
+        # Let's check registry_helper.py
+        try:
+             # We need a raw version of access_registry_via_api_proxy or just call requests directly as it does
+             from kubernetes import client as k8s_client, config as k8s_config
+             try:
+                 k8s_config.load_kube_config()
+             except:
+                 k8s_config.load_incluster_config()
+                 
+             configuration = k8s_client.Configuration.get_default_copy()
+             
+             # The proxy path needs to match how k8s behaves
+             # Using : for port is correct in svc:port
+             full_url = f"{configuration.host}/api/v1/namespaces/{namespace}/services/{service_name}:{service_port}/proxy/v2/{repo}/blobs/sha256:{sha256}"
+             
+             headers = {}
+             if configuration.api_key:
+                 for key, value in configuration.api_key.items():
+                     headers[key] = value
+             
+             # Add Bearer prefix if needed
+             if configuration.api_key_prefix and 'authorization' in configuration.api_key_prefix:
+                  headers['authorization'] = f"{configuration.api_key_prefix['authorization']} {headers['authorization']}"
+
+             logger.info(f"Downloading blob from K8s Registry via proxy: {full_url}")
+             response = requests.get(
+                 full_url,
+                 headers=headers,
+                 verify=configuration.ssl_ca_cert or not configuration.verify_ssl,
+                 cert=(configuration.cert_file, configuration.key_file) if configuration.cert_file else None,
+                 timeout=60
+             )
+             
+             if response.status_code != 200:
+                 logger.error(f"K8s Registry proxy returned {response.status_code}: {response.text[:200]}")
+                 raise HTTPException(status_code=500, detail=f"Failed to download blob from K8s: HTTP {response.status_code}")
+             return response.content
+        except requests.exceptions.ConnectionError as ce:
+            logger.error(f"Connection error to K8s API: {ce}")
+            raise HTTPException(status_code=503, detail=f"K8s API connection failed: {str(ce)}")
+        except Exception as e:
+            logger.error(f"K8s proxy download failed: {e}")
+            raise HTTPException(status_code=500, detail=f"K8s proxy download failed: {str(e)}")
+
+    # 2. Handle Remote Registry
+    elif registry_config and registry_config.is_remote:
+        base_url = registry_config.url
+        if not base_url.startswith("http"):
+            base_url = f"https://{base_url}"
+        
+        blob_url = f"{base_url}/v2/{repo}/blobs/sha256:{sha256}"
+        
+        auth = None
+        if registry_config.username and registry_config.password:
+            plain_password = decrypt(registry_config.password)
+            auth = requests.auth.HTTPBasicAuth(registry_config.username, plain_password)
+            
+        logger.info(f"Downloading blob from Remote Registry: {blob_url}")
+        response = requests.get(blob_url, auth=auth, verify=False, timeout=30)
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Failed to download blob from Remote: {response.status_code}")
+        return response.content
+
+    # 3. Fallback to Legacy REGISTRY_HOST
+    else:
+        registry_url = _get_registry_url()
+        if not registry_url:
+            raise HTTPException(status_code=500, detail="No registry configured and no registry_id provided")
+            
+        blob_url = f"{registry_url}/v2/{repo}/blobs/sha256:{sha256}"
+        logger.info(f"Downloading blob from Legacy Registry: {blob_url}")
+        response = requests.get(blob_url, timeout=30, verify=False)
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Failed to download blob from Legacy: {response.status_code}")
+        return response.content
 
 
 def _decompress_layer(blob_data: bytes) -> tarfile.TarFile:
@@ -119,7 +203,8 @@ async def GET(
     sha256: str = Query(..., description="SHA256 digest of the blob (without sha256: prefix)"),
     action: str = Query("list", description="Action: 'list' to show files, 'file' to extract file, 'config' to view config"),
     file_path: Optional[str] = Query(None, description="Path to file within layer (for action=file)"),
-    format: str = Query("json", description="Response format: 'json' or 'raw' (for file content)")
+    format: str = Query("json", description="Response format: 'json' or 'raw' (for file content)"),
+    registryId: Optional[int] = Query(None, description="Optional registry ID")
 ):
     """
     Examine Docker registry blobs (layers and configs)
@@ -131,11 +216,15 @@ async def GET(
     """
     
     try:
-        registry_url = _get_registry_url()
-        logger.info(f"Examining blob sha256:{sha256} in repo {repo}, action: {action}")
+        registry_config = None
+        if registryId:
+            with get_session() as session:
+                registry_config = session.get(RegistryConfig, registryId)
+                
+        logger.info(f"Examining blob sha256:{sha256} in repo {repo}, action: {action}, registry_id: {registryId}")
         
         # Download blob
-        blob_data = _download_blob(registry_url, repo, sha256)
+        blob_data = _download_blob(registry_config, repo, sha256)
         logger.info(f"Downloaded blob: {len(blob_data)} bytes")
         
         if action == "config":

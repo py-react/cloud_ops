@@ -5,7 +5,7 @@ import { DefaultService } from "@/gingerJs_api_client";
 import { Editor } from "@monaco-editor/react";
 import { ChevronDown, ChevronRight, Clock, Eye, FileText, FolderOpen, Layers, Loader2, Package, Settings } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 
@@ -110,6 +110,11 @@ const formatBytes = (bytes: number) => {
 
 const Tag = () => {
   const { tag, image } = useParams()
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const registryId = queryParams.get('registry_id')
+  const registryName = queryParams.get('registry_name')
+
   // Detail view states
   const [imageManifest, setImageManifest] = useState<ImageManifest | null>(null)
   const [imageConfig, setImageConfig] = useState<ImageConfig | null>(null)
@@ -162,11 +167,8 @@ const Tag = () => {
       // Extract SHA256 without the "sha256:" prefix
       const sha256 = layerDigest.replace('sha256:', '')
 
-      const data = await DefaultService.apiDockerRegistryExamineGet({
-        repo: repoName,
-        sha256: sha256,
-        action: 'list'
-      }) as any
+      const res = await fetch(`/api/docker/registry/examine?repo=${encodeURIComponent(repoName)}&sha256=${sha256}&action=list&registryId=${registryId || ''}`)
+      const data = await res.json()
 
       if (data && data.type === 'layer') {
         setLayerContents(prev => ({
@@ -191,10 +193,8 @@ const Tag = () => {
   const fetchImageManifest = async () => {
     try {
       setDetailLoading(true)
-      const manifest = await DefaultService.apiDockerRegistryGet({
-        imageName: image,
-        tag: tag
-      })
+      const res = await fetch(`/api/docker/registry?image_name=${encodeURIComponent(image!)}&tag=${tag}&registry_id=${registryId || ''}`)
+      const manifest = await res.json()
 
       setImageManifest(manifest as ImageManifest)
     } catch (err) {
@@ -221,11 +221,8 @@ const Tag = () => {
     try {
       if (!imageConfig) {
         setDetailLoading(true)
-        const config = await DefaultService.apiDockerRegistryGet({
-          imageName: image!,
-          blob: true,
-          sha256Digest: configDigest
-        }) as any
+        const res = await fetch(`/api/docker/registry?image_name=${encodeURIComponent(image!)}&blob=true&sha256_digest=${configDigest}&registry_id=${registryId || ''}`)
+        const config = await res.json()
 
         setImageConfig(config as ImageConfig)
       }
@@ -250,12 +247,8 @@ const Tag = () => {
 
       const sha256 = layerDigest.replace('sha256:', '')
 
-      const data = await DefaultService.apiDockerRegistryExamineGet({
-        repo: repoName,
-        sha256: sha256,
-        action: 'file',
-        filePath: filePath
-      }) as any
+      const res = await fetch(`/api/docker/registry/examine?repo=${encodeURIComponent(repoName)}&sha256=${sha256}&action=file&file_path=${encodeURIComponent(filePath)}&registryId=${registryId || ''}`)
+      const data = await res.json()
 
       if (data && data.type === 'file') {
         setFileContents(prev => ({
@@ -473,7 +466,7 @@ const Tag = () => {
 
   useEffect(() => {
     fetchImageManifest()
-  }, [image, tag])
+  }, [image, tag, registryId])
 
 
   return (
@@ -490,7 +483,7 @@ const Tag = () => {
                   {image}:{tag}
                 </h2>
                 <p className="text-base text-slate-500">
-                  Detailed image inspection and layer analysis
+                  Detailed inspection for {image} in {registryName || 'Registry'}
                 </p>
               </div>
             </div>

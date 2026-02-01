@@ -5,7 +5,7 @@ import { DefaultService } from '@/gingerJs_api_client'
 import useNavigate from '@/libs/navigate'
 import { Loader2, Package, Tag } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 const tagColumns = [
@@ -16,11 +16,12 @@ const tagColumns = [
   { header: "Labels", accessor: "labels" },
 ]
 
-const fetchImageManifest = async (image: string, tag: string) => {
+const fetchImageManifest = async (image: string, tag: string, registryId?: string) => {
   try {
     const manifest = await DefaultService.apiDockerRegistryGet({
       imageName: image,
-      tag: tag
+      tag: tag,
+      registryId: registryId ? parseInt(registryId) : undefined
     })
     return manifest
   } catch (err) {
@@ -29,12 +30,13 @@ const fetchImageManifest = async (image: string, tag: string) => {
   }
 }
 
-const fetchImageConfig = async (image: string, configDigest: string) => {
+const fetchImageConfig = async (image: string, configDigest: string, registryId?: string) => {
   try {
     const config = await DefaultService.apiDockerRegistryGet({
       imageName: image,
       blob: true,
-      sha256Digest: configDigest
+      sha256Digest: configDigest,
+      registryId: registryId ? parseInt(registryId) : undefined
     }) as any
 
     return config
@@ -47,12 +49,22 @@ const fetchImageConfig = async (image: string, configDigest: string) => {
 const RegistryImage = () => {
   const { image } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const registryId = queryParams.get('registry_id')
+  const registryName = queryParams.get('registry_name')
+
   const [tags, setTags] = useState<any[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
 
   const fetchTags = async () => {
     setDetailLoading(true)
-    const res = await DefaultService.apiDockerRegistryGet({ "imageName": image }).catch(err => {
+    const params: any = { "imageName": image };
+    if (registryId) {
+      params.registryId = parseInt(registryId);
+    }
+
+    const res = await DefaultService.apiDockerRegistryGet(params).catch(err => {
       toast.error("Failed to fetch tags")
       return null
     }) as any
@@ -62,10 +74,10 @@ const RegistryImage = () => {
         const tagsArray = (res as any).tags as string[];
         // For each tag, fetch manifest, then fetch config using manifest.config.digest
         const allPromises = tagsArray.map(async tag => {
-          const manifest = await fetchImageManifest(image as string, tag) as any;
+          const manifest = await fetchImageManifest(image as string, tag, registryId as string) as any;
           let config = null;
           if (manifest && typeof manifest === 'object' && manifest.config && manifest.config.digest) {
-            config = await fetchImageConfig(image as string, manifest.config.digest);
+            config = await fetchImageConfig(image as string, manifest.config.digest, registryId as string);
           }
           return {
             tag,
@@ -111,7 +123,7 @@ const RegistryImage = () => {
                   {image}
                 </h2>
                 <p className="text-base text-slate-500">
-                  Available image tags and versions
+                  Available tags for {image} in {registryName || 'Registry'}
                 </p>
               </div>
             </div>
@@ -157,7 +169,10 @@ const RegistryImage = () => {
                         : []
                     }))
                 }
-                onViewDetails={(row) => navigate(`/cee/docker/registry/${image}/${row.rawTag}`)}
+                onViewDetails={(row) => {
+                  const url = `/settings/docker/registry/${image}/${row.rawTag}?registry_id=${registryId || ''}&registry_name=${registryName || ''}`
+                  navigate(url)
+                }}
                 className="shadow-none"
               />
             )}

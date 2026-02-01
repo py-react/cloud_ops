@@ -124,8 +124,15 @@ async def GET(
                  service_port = config.get("port", 5000)
                  
                  logger.info(f"Proxying to K8s Registry: {service_name}.{namespace}:{service_port}")
+                 try:
+                     return access_registry_via_api_proxy(namespace, service_name, service_port, image_name, tag, blob, sha256_digest)
+                 except Exception as e:
+                     logger.error(f"Proxy failed: {e}")
+                     return {"error": True, "message": f"Proxy failed: {str(e)}"}
 
     # Fallback/Backward Comp: Use provided params or defaults
+    # This block is now only reached if registry_id is NOT provided.
+    # It uses the default namespace/service_name/service_port from the function signature.
     try:
         return access_registry_via_api_proxy(namespace, service_name, service_port, image_name, tag, blob, sha256_digest)
     except Exception as e:

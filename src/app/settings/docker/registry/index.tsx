@@ -356,7 +356,7 @@ const Registry = () => {
                     className="h-9 w-64"
                   />
                 }
-                onViewDetails={(row) => navigate(`/cee/docker/registry/${row.rawRepo}`)}
+                onViewDetails={(row) => navigate(`/settings/docker/registry/${row.rawRepo}?registry_id=${selectedRegistry.id}&registry_name=${selectedRegistry.name}`)}
               />
             </div>
           )}
