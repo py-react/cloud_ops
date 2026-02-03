@@ -19,13 +19,23 @@ services:
   #     PGADMIN_DEFAULT_PASSWORD: strong-password
   #   volumes:
   #     - pgadmin-data:/var/lib/pgadmin
-  docker:
-    image: registry:latest
-    container_name: registry_container
+  # docker:
+  #   image: registry:latest
+  #   container_name: registry_container
+  #   ports:
+  #     - "8001:5000"
+  #   volumes:
+  #     - registry_data:/var/lib/registry
+
+  httpd-proxy:
+    image: httpd:2.4
+    container_name: dev-httpd
+    restart: unless-stopped
     ports:
-      - "8001:5000"
+      - "80:80"
     volumes:
-      - registry_data:/var/lib/registry
+      - ./httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+
 volumes:
   pgdata:
   pgadmin-data:

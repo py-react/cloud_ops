@@ -200,7 +200,7 @@ DEFAULT_GRAFANA_DATASOURCES = """apiVersion: 1
 datasources:
 - name: Prometheus
   type: prometheus
-  url: http://prometheus-service:80
+  url: http://prometheus:80
   access: proxy
   isDefault: true
   uid: prometheus
@@ -299,7 +299,6 @@ def get_alertmanager_manifests(namespace="alerting"):
                                 "args": [
                                     "--config.file=/etc/alertmanager/alertmanager.yml",
                                     "--storage.path=/alertmanager/",
-                                    "--web.external-url=http://localhost:5001/cluster/proxy/alertmanager-service/alerting/",
                                     "--web.route-prefix=/"
                                 ],
                                 "ports": [{"containerPort": 9093}],
@@ -404,7 +403,6 @@ def get_prometheus_manifests(namespace="monitoring"):
                                 "args": [
                                     "--config.file=/etc/prometheus/prometheus.yml",
                                     "--storage.tsdb.path=/prometheus/",
-                                    "--web.external-url=http://localhost:5001/cluster/proxy/prometheus-service/monitoring/",
                                     "--web.route-prefix=/"
                                 ],
                                 "ports": [{"containerPort": 9090}],
@@ -426,7 +424,7 @@ def get_prometheus_manifests(namespace="monitoring"):
         {
             "apiVersion": "v1",
             "kind": "Service",
-            "metadata": {"name": "prometheus-service", "namespace": namespace},
+            "metadata": {"name": "prometheus", "namespace": namespace},
             "spec": {
                 "selector": {"app": "prometheus-server"},
                 "ports": [{"port": 80, "targetPort": 9090}],
@@ -640,8 +638,8 @@ def get_grafana_manifests(namespace="monitoring"):
                                 "env": [
                                     {"name": "GF_AUTH_ANONYMOUS_ENABLED", "value": "true"},
                                     {"name": "GF_AUTH_ANONYMOUS_ORG_ROLE", "value": "Admin"},
-                                    {"name": "GF_SERVER_ROOT_URL", "value": f"/cluster/proxy/grafana/{namespace}/"},
-                                    {"name": "GF_SERVER_SERVE_FROM_SUB_PATH", "value": "false"},
+                                    {"name": "GF_SERVER_ROOT_URL", "value": "/"},
+                                    {"name": "GF_SERVER_SERVE_FROM_SUB_PATH", "value": "true"},
                                     {"name": "GF_SECURITY_ALLOW_EMBEDDING", "value": "true"},
                                     # Relax security for proxy usage (dev environment)
                                     {"name": "GF_SECURITY_COOKIE_SAMESITE", "value": "none"}
