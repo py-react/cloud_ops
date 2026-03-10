@@ -35,6 +35,7 @@ interface ResourceDetailViewProps {
         name: string;
         description?: string;
         namespace: string;
+        config?: any;
         // Pod Specific
         metadata_profile?: ProfileInfo;
         dynamic_attr?: Record<string, ProfileInfo>;
@@ -73,8 +74,10 @@ interface ResourceDetailViewProps {
         allocate_load_balancer_node_ports?: boolean;
         load_balancer_class?: string;
         external_name?: string;
+        // HTTPRoute Specific
+        httproute_yaml_hostnames?: string;
     };
-    type: "pod" | "container" | "deployment" | "service";
+    type: "pod" | "container" | "deployment" | "service" | "httproute";
 }
 
 export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, type }) => {
@@ -122,6 +125,18 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                 break;
             case 'service':
                 targetPath = `/settings/ci_cd/library/${namespace}/spec/service`;
+                break;
+            case 'httproute_metadata_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/httproute/metadata`;
+                break;
+            case 'httproute_hostnames_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/httproute/hostnames`;
+                break;
+            case 'httproute_rules_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/httproute/rules`;
+                break;
+            case 'httproute_parent_refs_profile':
+                targetPath = `/settings/ci_cd/library/${namespace}/spec/httproute/parent_refs`;
                 break;
             default:
                 targetPath = window.location.pathname;
@@ -451,6 +466,101 @@ export const ResourceDetailView: React.FC<ResourceDetailViewProps> = ({ data, ty
                                 </div>
                             ))}
                         </div>
+                    </>
+                )}
+
+                {/* HTTPRoute Specific Config */}
+                {type === "httproute" && (
+                    <>
+                        <SectionHeader icon={Network} title="Derived HTTPRoute Settings" />
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <InfoItem label="Name" value={data.name} icon={FileText} />
+                            <InfoItem label="Namespace" value={data.namespace} icon={Globe} />
+                        </div>
+
+                        {data.config?.metadata_profile && (
+                            <>
+                                <SectionHeader icon={Layout} title="Metadata Profile" />
+                                <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/20 flex items-center justify-between group">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-tight">Active Metadata Profile</span>
+                                        <span className="text-xs font-bold text-foreground mt-0.5">{data.config.metadata_profile.name}</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleOpenProfile(data.config.metadata_profile.id, "httproute_metadata_profile")}
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-bold uppercase">Inspect</span>
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+
+                        {data.config?.hostnames_profile && (
+                            <>
+                                <SectionHeader icon={Globe} title="Hostnames Profile" />
+                                <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20 flex items-center justify-between group">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-tight">Active Hostnames Profile</span>
+                                        <span className="text-xs font-bold text-foreground mt-0.5">{data.config.hostnames_profile.name}</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleOpenProfile(data.config.hostnames_profile.id, "httproute_hostnames_profile")}
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-bold uppercase">Inspect</span>
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+
+                        {data.config?.rules_profile && (
+                            <>
+                                <SectionHeader icon={Layers} title="Rules Profile" />
+                                <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/20 flex items-center justify-between group">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-tight">Active Rules Profile</span>
+                                        <span className="text-xs font-bold text-foreground mt-0.5">{data.config.rules_profile.name}</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleOpenProfile(data.config.rules_profile.id, "httproute_rules_profile")}
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-bold uppercase">Inspect</span>
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+
+                        {data.config?.parent_refs_profile && (
+                            <>
+                                <SectionHeader icon={Target} title="ParentRefs Profile" />
+                                <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-between group">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-tight">Active ParentRefs Profile</span>
+                                        <span className="text-xs font-bold text-foreground mt-0.5">{data.config.parent_refs_profile.name}</span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => handleOpenProfile(data.config.parent_refs_profile.id, "httproute_parent_refs_profile")}
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                        <span className="text-[10px] font-bold uppercase">Inspect</span>
+                                    </Button>
+                                </div>
+                            </>
+                        )}
                     </>
                 )}
             </div>

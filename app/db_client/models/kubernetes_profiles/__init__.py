@@ -10,3 +10,8 @@ from .service import *
 from .service_profile import *
 from .service_metadata_profile import *
 from .service_selector_profile import *
+from .httproute import *
+from .httproute_metadata_profile import *
+from .httproute_rules_profile import *
+from .httproute_parent_refs_profile import *
+from .httproute_hostnames_profile import *

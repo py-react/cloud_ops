@@ -18,6 +18,11 @@ import type { K8sDeployment } from '../models/K8sDeployment';
 import type { K8sDeploymentProfile } from '../models/K8sDeploymentProfile';
 import type { K8sDeploymentSelectorProfile } from '../models/K8sDeploymentSelectorProfile';
 import type { K8sEntityProfile } from '../models/K8sEntityProfile';
+import type { K8sHTTPRoute } from '../models/K8sHTTPRoute';
+import type { K8sHTTPRouteHostnamesProfile } from '../models/K8sHTTPRouteHostnamesProfile';
+import type { K8sHTTPRouteMetadataProfile } from '../models/K8sHTTPRouteMetadataProfile';
+import type { K8sHTTPRouteParentRefsProfile } from '../models/K8sHTTPRouteParentRefsProfile';
+import type { K8sHTTPRouteRulesProfile } from '../models/K8sHTTPRouteRulesProfile';
 import type { K8sPod } from '../models/K8sPod';
 import type { K8sPodMetaDataProfile } from '../models/K8sPodMetaDataProfile';
 import type { K8sPodProfile } from '../models/K8sPodProfile';
@@ -59,68 +64,68 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPatch = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPatch1 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet1 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPatch2 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet2 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPatch3 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet3 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPatch4 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet4 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPatch5 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathGet5 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataV2ProxyV2ServiceNamespacePathPatch = {
+export type TDataV2ProxyV2ServiceNamespacePathGet = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPatch1 = {
+export type TDataV2ProxyV2ServiceNamespacePathGet1 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPatch2 = {
+export type TDataV2ProxyV2ServiceNamespacePathGet2 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPatch3 = {
+export type TDataV2ProxyV2ServiceNamespacePathGet3 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPatch4 = {
+export type TDataV2ProxyV2ServiceNamespacePathGet4 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPatch5 = {
+export type TDataV2ProxyV2ServiceNamespacePathGet5 = {
                 namespace: string
 path: string
 service: string
@@ -490,6 +495,84 @@ requestBody: K8sDeployment
 export type TDataApiIntegrationKubernetesLibraryDeploymentDelete = {
                 id: number
             }
+export type TDataApiIntegrationKubernetesLibraryHttprouteGet = {
+                namespace: string
+            }
+export type TDataApiIntegrationKubernetesLibraryHttproutePost = {
+                requestBody: K8sHTTPRoute
+            }
+export type TDataApiIntegrationKubernetesLibraryHttproutePut = {
+                id: number
+requestBody: K8sHTTPRoute
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteDelete = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteApplyPost = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteStatusGet = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteParentRefsGet = {
+                ids?: string | null
+namespace: string
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteParentRefsPost = {
+                requestBody: K8sHTTPRouteParentRefsProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteParentRefsPut = {
+                id: number
+requestBody: K8sHTTPRouteParentRefsProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteParentRefsDelete = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteRulesGet = {
+                ids?: string | null
+namespace: string
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteRulesPost = {
+                requestBody: K8sHTTPRouteRulesProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteRulesPut = {
+                id: number
+requestBody: K8sHTTPRouteRulesProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteRulesDelete = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteMetadataGet = {
+                ids?: string | null
+namespace: string
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteMetadataPost = {
+                requestBody: K8sHTTPRouteMetadataProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteMetadataPut = {
+                id: number
+requestBody: K8sHTTPRouteMetadataProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteMetadataDelete = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteDeleteFromClusterPost = {
+                id: number
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteHostnamesGet = {
+                ids?: string | null
+namespace: string
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteHostnamesPost = {
+                requestBody: K8sHTTPRouteHostnamesProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteHostnamesPut = {
+                id: number
+requestBody: K8sHTTPRouteHostnamesProfile
+            }
+export type TDataApiIntegrationKubernetesLibraryHttprouteHostnamesDelete = {
+                id: number
+            }
 export type TDataApiIntegrationKubernetesLibraryServiceGet = {
                 namespace: string
             }
@@ -651,7 +734,7 @@ path,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPatch(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathGet(data: TDataClusterProxyClusterProxyServiceNamespacePathGet): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -659,7 +742,7 @@ service,
 servicePort = 80,
 } = data;
 		return __request(OpenAPI, {
-			method: 'PATCH',
+			method: 'GET',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -680,7 +763,7 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPatch1(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch1): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathGet1(data: TDataClusterProxyClusterProxyServiceNamespacePathGet1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -709,65 +792,7 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPatch2(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch2): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-servicePort = 80,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			query: {
-				service_port: servicePort
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPatch3(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch3): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-servicePort = 80,
-} = data;
-		return __request(OpenAPI, {
-			method: 'PUT',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			query: {
-				service_port: servicePort
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPatch4(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch4): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathGet2(data: TDataClusterProxyClusterProxyServiceNamespacePathGet2): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -796,7 +821,7 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPatch5(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch5): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathGet3(data: TDataClusterProxyClusterProxyServiceNamespacePathGet3): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -804,7 +829,65 @@ service,
 servicePort = 80,
 } = data;
 		return __request(OpenAPI, {
-			method: 'GET',
+			method: 'POST',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			query: {
+				service_port: servicePort
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathGet4(data: TDataClusterProxyClusterProxyServiceNamespacePathGet4): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+servicePort = 80,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			query: {
+				service_port: servicePort
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathGet5(data: TDataClusterProxyClusterProxyServiceNamespacePathGet5): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+servicePort = 80,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PATCH',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -825,14 +908,14 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPatch(data: TDataV2ProxyV2ServiceNamespacePathPatch): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathGet(data: TDataV2ProxyV2ServiceNamespacePathGet): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'PATCH',
+			method: 'GET',
 			url: '/v2/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -850,7 +933,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPatch1(data: TDataV2ProxyV2ServiceNamespacePathPatch1): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathGet1(data: TDataV2ProxyV2ServiceNamespacePathGet1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -875,57 +958,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPatch2(data: TDataV2ProxyV2ServiceNamespacePathPatch2): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'POST',
-			url: '/v2/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * V2 Proxy
-	 * Specialized proxy for Docker Registry V2 API.
- * Always uses port 5000 and the /v2 prefix.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static v2ProxyV2ServiceNamespacePathPatch3(data: TDataV2ProxyV2ServiceNamespacePathPatch3): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'PUT',
-			url: '/v2/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * V2 Proxy
-	 * Specialized proxy for Docker Registry V2 API.
- * Always uses port 5000 and the /v2 prefix.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static v2ProxyV2ServiceNamespacePathPatch4(data: TDataV2ProxyV2ServiceNamespacePathPatch4): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathGet2(data: TDataV2ProxyV2ServiceNamespacePathGet2): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -950,14 +983,64 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPatch5(data: TDataV2ProxyV2ServiceNamespacePathPatch5): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathGet3(data: TDataV2ProxyV2ServiceNamespacePathGet3): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'GET',
+			method: 'POST',
+			url: '/v2/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * V2 Proxy
+	 * Specialized proxy for Docker Registry V2 API.
+ * Always uses port 5000 and the /v2 prefix.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static v2ProxyV2ServiceNamespacePathGet4(data: TDataV2ProxyV2ServiceNamespacePathGet4): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/v2/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * V2 Proxy
+	 * Specialized proxy for Docker Registry V2 API.
+ * Always uses port 5000 and the /v2 prefix.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static v2ProxyV2ServiceNamespacePathGet5(data: TDataV2ProxyV2ServiceNamespacePathGet5): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PATCH',
 			url: '/v2/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -3163,6 +3246,482 @@ id,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
+	public static apiIntegrationKubernetesLibraryHttprouteGet(data: TDataApiIntegrationKubernetesLibraryHttprouteGet): CancelablePromise<unknown> {
+		const {
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/library/httproute',
+			query: {
+				namespace
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttproutePost(data: TDataApiIntegrationKubernetesLibraryHttproutePost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/httproute',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttproutePut(data: TDataApiIntegrationKubernetesLibraryHttproutePut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/library/httproute',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteDelete(data: TDataApiIntegrationKubernetesLibraryHttprouteDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/library/httproute',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Build the manifest from DB profiles and apply it to the cluster.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteApplyPost(data: TDataApiIntegrationKubernetesLibraryHttprouteApplyPost): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/httproute/apply',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteStatusGet(data: TDataApiIntegrationKubernetesLibraryHttprouteStatusGet): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/library/httproute/status',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteParentRefsGet(data: TDataApiIntegrationKubernetesLibraryHttprouteParentRefsGet): CancelablePromise<unknown> {
+		const {
+ids,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/library/httproute/parent_refs',
+			query: {
+				namespace, ids
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteParentRefsPost(data: TDataApiIntegrationKubernetesLibraryHttprouteParentRefsPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/httproute/parent_refs',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteParentRefsPut(data: TDataApiIntegrationKubernetesLibraryHttprouteParentRefsPut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/library/httproute/parent_refs',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteParentRefsDelete(data: TDataApiIntegrationKubernetesLibraryHttprouteParentRefsDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/library/httproute/parent_refs',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteRulesGet(data: TDataApiIntegrationKubernetesLibraryHttprouteRulesGet): CancelablePromise<unknown> {
+		const {
+ids,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/library/httproute/rules',
+			query: {
+				namespace, ids
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteRulesPost(data: TDataApiIntegrationKubernetesLibraryHttprouteRulesPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/httproute/rules',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteRulesPut(data: TDataApiIntegrationKubernetesLibraryHttprouteRulesPut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/library/httproute/rules',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteRulesDelete(data: TDataApiIntegrationKubernetesLibraryHttprouteRulesDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/library/httproute/rules',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteMetadataGet(data: TDataApiIntegrationKubernetesLibraryHttprouteMetadataGet): CancelablePromise<unknown> {
+		const {
+ids,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/library/httproute/metadata',
+			query: {
+				namespace, ids
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteMetadataPost(data: TDataApiIntegrationKubernetesLibraryHttprouteMetadataPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/httproute/metadata',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteMetadataPut(data: TDataApiIntegrationKubernetesLibraryHttprouteMetadataPut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/library/httproute/metadata',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteMetadataDelete(data: TDataApiIntegrationKubernetesLibraryHttprouteMetadataDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/library/httproute/metadata',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Remove the HTTPRoute from the Kubernetes cluster (does not delete the DB record).
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteDeleteFromClusterPost(data: TDataApiIntegrationKubernetesLibraryHttprouteDeleteFromClusterPost): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/httproute/delete_from_cluster',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteHostnamesGet(data: TDataApiIntegrationKubernetesLibraryHttprouteHostnamesGet): CancelablePromise<unknown> {
+		const {
+ids,
+namespace,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/library/httproute/hostnames',
+			query: {
+				namespace, ids
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteHostnamesPost(data: TDataApiIntegrationKubernetesLibraryHttprouteHostnamesPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/integration/kubernetes/library/httproute/hostnames',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteHostnamesPut(data: TDataApiIntegrationKubernetesLibraryHttprouteHostnamesPut): CancelablePromise<unknown> {
+		const {
+id,
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PUT',
+			url: '/api/integration/kubernetes/library/httproute/hostnames',
+			query: {
+				id
+			},
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesLibraryHttprouteHostnamesDelete(data: TDataApiIntegrationKubernetesLibraryHttprouteHostnamesDelete): CancelablePromise<unknown> {
+		const {
+id,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/integration/kubernetes/library/httproute/hostnames',
+			query: {
+				id
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
 	public static apiIntegrationKubernetesLibraryServiceGet(data: TDataApiIntegrationKubernetesLibraryServiceGet): CancelablePromise<unknown> {
 		const {
 namespace,
@@ -4261,6 +4820,66 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/settings/ci_cd/library/{namespace}/spec/deployment/profile',
+		});
+	}
+
+	/**
+	 * Server-side rendering or logic for the Personal Access Tokens management page.
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecHttprouteGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/httproute',
+		});
+	}
+
+	/**
+	 * Server-side rendering or logic for the Personal Access Tokens management page.
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecHttprouteParentRefsGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/httproute/parent_refs',
+		});
+	}
+
+	/**
+	 * Server-side rendering or logic for the Personal Access Tokens management page.
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecHttprouteRulesGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/httproute/rules',
+		});
+	}
+
+	/**
+	 * Server-side rendering or logic for the Personal Access Tokens management page.
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecHttprouteMetadataGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/httproute/metadata',
+		});
+	}
+
+	/**
+	 * Server-side rendering or logic for the Personal Access Tokens management page.
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsCiCdLibraryNamespaceSpecHttprouteHostnamesGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/ci_cd/library/{namespace}/spec/httproute/hostnames',
 		});
 	}
 

@@ -291,6 +291,33 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                             ],
                         },
                         {
+                            title: "Derived HTTPRoute",
+                            url: `/${selectedNamespace}/spec/httproute`,
+                            icon: NetworkIcon,
+                            items: [
+                                {
+                                    title: "Metadata",
+                                    url: `/metadata`,
+                                    icon: Layout,
+                                },
+                                {
+                                    title: "Hostnames",
+                                    url: `/hostnames`,
+                                    icon: Globe,
+                                },
+                                {
+                                    title: "Rules",
+                                    url: `/rules`,
+                                    icon: WaypointsIcon,
+                                },
+                                {
+                                    title: "ParentRefs",
+                                    url: `/parent_refs`,
+                                    icon: Target,
+                                },
+                            ],
+                        },
+                        {
                             title: "PAT's",
                             url: `/${selectedNamespace}/spec/pats`,
                             icon: Key,

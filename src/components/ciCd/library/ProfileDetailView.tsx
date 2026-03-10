@@ -6,6 +6,7 @@ import {
     Code,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ResourceDetailView } from "./ResourceDetailView";
 
 interface ProfileDetailViewProps {
     data: {
@@ -14,7 +15,7 @@ interface ProfileDetailViewProps {
         namespace: string;
         config: any;
     };
-    profileType: "pod_profile" | "pod_metadata_profile" | "service_profile" | "service_metadata_profile" | "service_selector_profile" | "profile";
+    profileType: "pod_profile" | "pod_metadata_profile" | "service_profile" | "service_metadata_profile" | "service_selector_profile" | "profile" | "httproute" | "httproute_metadata_profile" | "httproute_rules_profile" | "httproute_parent_refs_profile" | "httproute_hostnames_profile";
 }
 
 export const ProfileDetailView: React.FC<ProfileDetailViewProps> = ({ data, profileType }) => {
@@ -52,37 +53,43 @@ export const ProfileDetailView: React.FC<ProfileDetailViewProps> = ({ data, prof
     }, [data.config]);
 
     return (
-        <ScrollArea className="h-[440px] pr-4">
-            <div className="space-y-4 pb-6">
+        <div className="space-y-4 pb-6">
 
-                {/* Profile Information */}
-                <SectionHeader icon={Settings} title="Profile Information" />
-                <div className="grid grid-cols-2 gap-3">
-                    <InfoItem label="Name" value={data.name} icon={FileText} />
-                    <InfoItem label="Type" value={data.type} icon={Settings} />
-                    <InfoItem label="Namespace" value={data.namespace} icon={FileText} />
-                </div>
-
-                {/* Configuration */}
-                {parsedConfig && (
-                    <>
-                        <SectionHeader icon={Code} title="Configuration" />
-                        <div className="p-4 rounded-xl bg-muted/20 border border-border/30">
-                            <pre className="text-xs font-mono text-foreground overflow-x-auto">
-                                {JSON.stringify(parsedConfig, null, 2)}
-                            </pre>
-                        </div>
-                    </>
-                )}
-
-                {!parsedConfig && (
-                    <div className="p-6 rounded-xl border-2 border-dashed border-border/40 bg-muted/10 text-center">
-                        <Code className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-                        <p className="text-xs font-bold text-muted-foreground">No configuration available</p>
+            {/* Profile Information */}
+            {profileType === "httproute" ? null : (
+                <>
+                    <SectionHeader icon={Settings} title="Profile Information" />
+                    <div className="grid grid-cols-2 gap-3">
+                        <InfoItem label="Name" value={data.name} icon={FileText} />
+                        <InfoItem label="Type" value={data.type} icon={Settings} />
+                        <InfoItem label="Namespace" value={data.namespace} icon={FileText} />
                     </div>
-                )}
-            </div>
-        </ScrollArea>
+                </>
+            )}
+
+            {/* Configuration */}
+            {profileType === "httproute" ? (
+                <div>
+                    <ResourceDetailView data={data as any} type="httproute" />
+                </div>
+            ) : parsedConfig && (
+                <>
+                    <SectionHeader icon={Code} title="Configuration" />
+                    <div className="p-4 rounded-xl bg-muted/20 border border-border/30">
+                        <pre className="text-xs font-mono text-foreground overflow-x-auto">
+                            {JSON.stringify(parsedConfig, null, 2)}
+                        </pre>
+                    </div>
+                </>
+            )}
+
+            {!parsedConfig && (
+                <div className="p-6 rounded-xl border-2 border-dashed border-border/40 bg-muted/10 text-center">
+                    <Code className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-muted-foreground">No configuration available</p>
+                </div>
+            )}
+        </div>
     );
 };
 

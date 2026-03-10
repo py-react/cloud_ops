@@ -10,7 +10,7 @@ DEFAULT_GATEWAY_CONFIG = """apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: main-gateway
-  namespace: monitoring
+  namespace: default
 spec:
   gatewayClassName: nginx
   listeners:
@@ -37,7 +37,7 @@ def get_gateway_api_manifests():
     config_map = {
         "apiVersion": "v1",
         "kind": "ConfigMap",
-        "metadata": {"name": "gateway-api-config", "namespace": "monitoring"},
+        "metadata": {"name": "gateway-api-config", "namespace": "default"},
         "data": {
             "gateway.yaml": DEFAULT_GATEWAY_CONFIG
         }
@@ -49,7 +49,7 @@ def get_gateway_api_manifests():
         "kind": "Gateway",
         "metadata": {
             "name": "main-gateway",
-            "namespace": "monitoring"
+            "namespace": "default"
         },
         "spec": {
             "gatewayClassName": "nginx",

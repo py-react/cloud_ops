@@ -27,6 +27,11 @@ from ...db_client.models.kubernetes_profiles.service_selector_profile import K8s
 from ...db_client.models.kubernetes_profiles.deployment_selector import K8sDeploymentSelectorProfile
 from ...db_client.models.kubernetes_profiles.service_profile import K8sServiceProfile
 from ...db_client.models.kubernetes_profiles.profile import K8sEntityProfile
+from ...db_client.models.kubernetes_profiles.httproute import K8sHTTPRoute
+from ...db_client.models.kubernetes_profiles.httproute_metadata_profile import K8sHTTPRouteMetadataProfile
+from ...db_client.models.kubernetes_profiles.httproute_rules_profile import K8sHTTPRouteRulesProfile
+from ...db_client.models.kubernetes_profiles.httproute_parent_refs_profile import K8sHTTPRouteParentRefsProfile
+from ...db_client.models.kubernetes_profiles.httproute_hostnames_profile import K8sHTTPRouteHostnamesProfile
 import json
 
 
@@ -420,8 +425,86 @@ class DeploymentManager:
             return self._import_deployment(yaml_data)
         elif kind == "Service":
             return self._import_service(yaml_data)
+        elif kind == "HTTPRoute":
+            return self._import_httproute(yaml_data)
         else:
             raise ValueError(f"Unsupported resource kind: {kind}")
+
+    def _import_httproute(self, yaml_data: Dict[str, Any]) -> Dict[str, Any]:
+        metadata = yaml_data.get("metadata", {})
+        spec = yaml_data.get("spec", {})
+
+        namespace = metadata.get("namespace", "default")
+        name = metadata.get("name")
+        if not name:
+            raise ValueError("HTTPRoute must have a name in metadata")
+
+        # 1. Create Metadata Profile
+        meta_config = {
+            "labels": metadata.get("labels", {}),
+            "annotations": metadata.get("annotations", {})
+        }
+        meta_profile = K8sHTTPRouteMetadataProfile(
+            name=f"{name}-meta",
+            namespace=namespace,
+            type="metadata",
+            config=meta_config
+        )
+        self.session.add(meta_profile)
+        self.session.flush()
+
+        # 2. Create ParentRefs Profile
+        parent_refs = spec.get("parentRefs", [])
+        parent_refs_profile = K8sHTTPRouteParentRefsProfile(
+            name=f"{name}-parents",
+            namespace=namespace,
+            type="parent_refs",
+            config=parent_refs
+        )
+        self.session.add(parent_refs_profile)
+        self.session.flush()
+
+        # 3. Create Hostnames Profile
+        hostnames = spec.get("hostnames", [])
+        hostnames_profile = K8sHTTPRouteHostnamesProfile(
+            name=f"{name}-hostnames",
+            namespace=namespace,
+            type="hostnames",
+            config=hostnames
+        )
+        self.session.add(hostnames_profile)
+        self.session.flush()
+
+        # 4. Create Rules Profile
+        rules = spec.get("rules", [])
+        rules_profile = K8sHTTPRouteRulesProfile(
+            name=f"{name}-rules",
+            namespace=namespace,
+            type="rules",
+            config=rules
+        )
+        self.session.add(rules_profile)
+        self.session.flush()
+
+        # 5. Create HTTPRoute
+        httproute = K8sHTTPRoute(
+            name=name,
+            namespace=namespace,
+            metadata_profile_id=meta_profile.id,
+            parent_refs_profile_id=parent_refs_profile.id,
+            hostnames_profile_id=hostnames_profile.id,
+            rules_profile_id=rules_profile.id
+        )
+        self.session.add(httproute)
+        self.session.commit()
+
+        return {
+            "status": "success",
+            "message": f"HTTPRoute '{name}' imported successfully",
+            "data": {
+                "httproute_id": httproute.id
+            }
+        }
 
     def _import_deployment(self, yaml: Dict[str, Any]) -> Dict[str, Any]:
         metadata = yaml.get("metadata", {})

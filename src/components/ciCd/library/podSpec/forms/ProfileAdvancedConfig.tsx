@@ -12,7 +12,7 @@ interface ProfileAdvancedConfigProps {
         namespace: string;
         config: any;
     };
-    profileType: "pod_profile" | "pod_metadata_profile" | "service_profile" | "service_metadata_profile" | "service_selector_profile" | "profile";
+    profileType: "pod_profile" | "pod_metadata_profile" | "service_profile" | "service_metadata_profile" | "service_selector_profile" | "profile" | "httproute" | "httproute_metadata_profile" | "httproute_rules_profile" | "httproute_parent_refs_profile" | "httproute_hostnames_profile";
 }
 
 export const ProfileAdvancedConfig: React.FC<ProfileAdvancedConfigProps> = ({ profile, profileType }) => {
@@ -38,12 +38,88 @@ export const ProfileAdvancedConfig: React.FC<ProfileAdvancedConfigProps> = ({ pr
             configObj = profile.config;
         }
 
+        if (profileType === "httproute" && configObj) {
+            // Reconstruct standard Kubernetes HTTPRoute YAML
+            const httpRouteYaml: any = {
+                apiVersion: "gateway.networking.k8s.io/v1",
+                kind: "HTTPRoute",
+                metadata: {
+                    name: profile.name,
+                    namespace: profile.namespace,
+                },
+                spec: {}
+            };
+
+            // Parse metadata profile limits (labels/annotations)
+            if (configObj.metadata_profile?.config) {
+                try {
+                    const metaConfig = typeof configObj.metadata_profile.config === 'string'
+                        ? JSON.parse(configObj.metadata_profile.config)
+                        : configObj.metadata_profile.config;
+                    if (metaConfig.labels) httpRouteYaml.metadata.labels = metaConfig.labels;
+                    if (metaConfig.annotations) httpRouteYaml.metadata.annotations = metaConfig.annotations;
+                } catch (e) { }
+            }
+
+            // Parse ParentRefs
+            if (configObj.parent_refs_profile?.config) {
+                try {
+                    const parentRefsConfig = typeof configObj.parent_refs_profile.config === 'string'
+                        ? JSON.parse(configObj.parent_refs_profile.config)
+                        : configObj.parent_refs_profile.config;
+                    if (Array.isArray(parentRefsConfig)) {
+                        httpRouteYaml.spec.parentRefs = parentRefsConfig;
+                    } else if (parentRefsConfig.parentRefs) {
+                        httpRouteYaml.spec.parentRefs = parentRefsConfig.parentRefs;
+                    }
+                } catch (e) { }
+            }
+
+            // Parse Hostnames
+            let hostnames: string[] = [];
+            if (configObj.hostnames_profile?.config) {
+                try {
+                    const hostnamesConfig = typeof configObj.hostnames_profile.config === 'string'
+                        ? JSON.parse(configObj.hostnames_profile.config)
+                        : configObj.hostnames_profile.config;
+                    if (Array.isArray(hostnamesConfig)) {
+                        hostnames = hostnamesConfig;
+                    } else if (hostnamesConfig.hostnames && Array.isArray(hostnamesConfig.hostnames)) {
+                        hostnames = hostnamesConfig.hostnames;
+                    }
+                } catch (e) { }
+            }
+            if (hostnames.length > 0) {
+                httpRouteYaml.spec.hostnames = hostnames;
+            }
+
+            // Parse Rules
+            if (configObj.rules_profile?.config) {
+                try {
+                    const rulesConfig = typeof configObj.rules_profile.config === 'string'
+                        ? JSON.parse(configObj.rules_profile.config)
+                        : configObj.rules_profile.config;
+                    if (Array.isArray(rulesConfig)) {
+                        httpRouteYaml.spec.rules = rulesConfig;
+                    } else if (rulesConfig.rules && Array.isArray(rulesConfig.rules)) {
+                        httpRouteYaml.spec.rules = rulesConfig.rules;
+                    }
+                } catch (e) { }
+            }
+
+            try {
+                return yaml.dump(httpRouteYaml, { sortKeys: false });
+            } catch (e) {
+                return "# Error converting to YAML";
+            }
+        }
+
         try {
             return yaml.dump(configObj, { sortKeys: false });
         } catch (e) {
             return "# Error converting to YAML";
         }
-    }, [profile.config]);
+    }, [profile, profileType]);
 
     const structuredData = useMemo(() => {
         return {
