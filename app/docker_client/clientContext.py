@@ -13,6 +13,15 @@ import docker
 #     tls=tls_config
 # )
 
-client = docker.from_env()
+_client = None
+
+def get_client():
+    global _client
+    if _client is None:
+        print("Initializing Docker client...")
+        _client = docker.from_env()
+    return _client
+
+# client = get_client()  # Replaced with get_client() for lazy loading
 
 # --host=tcp://0.0.0.0:2376 --tlsverify --tlscacert /certs/server/ca.pem --tlscert /certs/server/cert.pem --tlskey /certs/server/key.pem

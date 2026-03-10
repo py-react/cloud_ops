@@ -3,7 +3,7 @@ import os
 NAME="app"
 VERSION="1.0"
 PACKAGE_MANAGER="npm"
-DEBUG=True
+DEBUG=False
 PORT="5001"
 HOST="0.0.0.0"
 PYTHONDONTWRITEBYTECODE=""
@@ -15,7 +15,7 @@ KUBECONFIG="~/.kube/config"
 REGISTRY_HOST="registry.docker.localhome.com"
 LOG_LEVEL="DEBUG"
 UVICORN_WORKERS="1"
-GITHUB_PAT_ENCRYPTION_KEY = os.getenv("GITHUB_PAT_ENCRYPTION_KEY", "")
+GITHUB_PAT_ENCRYPTION_KEY = os.getenv("GITHUB_PAT_ENCRYPTION_KEY", "SG6wE9iMceUmWMXLdDhg69Hhn1qmyZ2r0PFLRHluq0c=")
 # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 SCM_POLLING_ENABLED="false"
 SCM_POLL_INTERVAL_SECONDS="300"

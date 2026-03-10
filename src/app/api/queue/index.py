@@ -9,8 +9,6 @@ from pydantic import BaseModel
 from typing import Dict
 from app.docker_client import clientContext
 
-client = clientContext.client
-
 class RunQueue(BaseModel):
     queueName: str
     prefix: str
@@ -32,7 +30,7 @@ def run_containers(queueName="dynamicWorkQueue1",prefix="bull",processFileName="
         # Start the Deno container with a unique name
         unique_container_name = f"deno_{queueName}_{prefix}_{processFileName}_{int(time.time())}"
         
-        client.containers.run(
+        clientContext.get_client().containers.run(
             "denoland/deno",
             name=unique_container_name,
             volumes={
@@ -83,7 +81,7 @@ def create_queue_connection(queue_name, all_queue_configs):
     return queue
 
 async def GET(request:Request):
-    containers = client.containers.list(all=True)  # Get all containers (running or stopped)
+    containers = clientContext.get_client().containers.list(all=True)  # Get all containers (running or stopped)
     
     container_info = []
     
@@ -136,7 +134,7 @@ async def DELETE(request:Request,body:StopQueue):
     container_name = body.containerName
 
     try:
-        container = client.containers.get(container_name)
+        container = clientContext.get_client().containers.get(container_name)
         if container.status == 'running':
             # Stop and remove the container
             container.stop()

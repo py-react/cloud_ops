@@ -3,6 +3,7 @@ from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
 from app.k8s_helper.monitoring.stack import get_prometheus_manifests, get_grafana_manifests, get_node_exporter_manifests, get_alertmanager_manifests, get_kube_state_metrics_manifests
 from app.k8s_helper.monitoring.metrics_server import get_metrics_server_manifests
 from app.k8s_helper.monitoring.loki import get_loki_manifests, get_otel_collector_manifests, get_promtail_manifests
+from app.k8s_helper.monitoring.gateway_api import get_gateway_api_manifests
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,8 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
             namespace, deploy_name, resource_type = "logging", "promtail", "daemonsets"
         elif component == "node-exporter":
             namespace, deploy_name, resource_type = "monitoring", "node-exporter", "daemonsets"
+        elif component == "gateway-api":
+            namespace, deploy_name, resource_type = "monitoring", "main-gateway", "gateways"
         else:
             namespace, deploy_name, resource_type = "monitoring", component, "deployments"
             if component == "prometheus": deploy_name = "prometheus-deployment"
@@ -35,7 +38,8 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
             if not any(ns.get("metadata", {}).get("name") == namespace for ns in namespaces):
                 return {"installed": False, "namespace": namespace}
 
-        resources = k8s_helper.get_resource_details(resource_type, namespace=namespace)
+        api_version = "gateway.networking.k8s.io/v1" if component == "gateway-api" else None
+        resources = k8s_helper.get_resource_details(resource_type, namespace=namespace, api_version=api_version)
         target = next((r for r in resources if r.get("metadata", {}).get("name") == deploy_name), None)
         
         is_installed = target is not None
@@ -71,6 +75,8 @@ async def POST(request: Request, component: str = "prometheus") -> dict:
             namespace, manifests = "monitoring", get_prometheus_manifests("monitoring") + get_node_exporter_manifests("monitoring") + get_kube_state_metrics_manifests("monitoring")
         elif component == "grafana":
             namespace, manifests = "monitoring", get_grafana_manifests("monitoring")
+        elif component == "gateway-api":
+            namespace, manifests = "monitoring", get_gateway_api_manifests()
         else:
             return {"success": False, "message": f"Unknown component: {component}"}
 
@@ -111,6 +117,8 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
             namespace, manifests = "monitoring", get_prometheus_manifests("monitoring") + get_node_exporter_manifests("monitoring") + get_kube_state_metrics_manifests("monitoring")
         elif component == "grafana":
             namespace, manifests = "monitoring", get_grafana_manifests("monitoring")
+        elif component == "gateway-api":
+            namespace, manifests = "monitoring", get_gateway_api_manifests()
         else:
             return {"success": False, "message": f"Unknown component: {component}"}
 

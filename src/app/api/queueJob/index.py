@@ -6,7 +6,7 @@ from typing import  Dict,Optional
 from app.docker_client import clientContext
 import time
 
-client = clientContext.client
+client = clientContext.get_client()
 
 class CreateQueueJobMeta(BaseModel):
     id:Optional[str]=None
@@ -20,7 +20,7 @@ class CreateQueueJob(BaseModel):
     meta: CreateQueueJobMeta
     data: Dict
 
-async def get_queues():
+async def get_queues(client):
     containers = client.containers.list(all=True)  # Get all containers (running or stopped)
     container_info = []
     for container in containers:
@@ -65,11 +65,11 @@ async def GET(request:Request):
     return {"user":"1"}
 
 async def POST(request:Request,body:CreateQueueJob):
-    print(body)
+    client = clientContext.get_client()
     queueName = body.queueName
     data = body.data
     meta = body.meta
-    all_queue_configs = await get_queues()
+    all_queue_configs = await get_queues(client)
     queue = create_queue_connection(queueName,all_queue_configs["containers"])
     job_data = {
         "obj":{

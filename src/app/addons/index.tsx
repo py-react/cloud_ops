@@ -5,7 +5,7 @@ import RedirectPage from "@/components/RedirectPage";
 function Namespaced() {
   const navigate = useNavigate()
   useEffect(() => {
-    navigate(`/addons/monitoring`)
+    navigate(`/addons/essentials`)
   }, [])
   return (
     <RedirectPage />

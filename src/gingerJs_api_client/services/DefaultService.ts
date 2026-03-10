@@ -59,68 +59,68 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPut = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPatch = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPut1 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPatch1 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPut2 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPatch2 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPut3 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPatch3 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPut4 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPatch4 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPut5 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathPatch5 = {
                 namespace: string
 path: string
 service: string
 servicePort?: number
             }
-export type TDataV2ProxyV2ServiceNamespacePathPut = {
+export type TDataV2ProxyV2ServiceNamespacePathPatch = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPut1 = {
+export type TDataV2ProxyV2ServiceNamespacePathPatch1 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPut2 = {
+export type TDataV2ProxyV2ServiceNamespacePathPatch2 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPut3 = {
+export type TDataV2ProxyV2ServiceNamespacePathPatch3 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPut4 = {
+export type TDataV2ProxyV2ServiceNamespacePathPatch4 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPut5 = {
+export type TDataV2ProxyV2ServiceNamespacePathPatch5 = {
                 namespace: string
 path: string
 service: string
@@ -651,7 +651,7 @@ path,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPut(data: TDataClusterProxyClusterProxyServiceNamespacePathPut): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPatch(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -659,7 +659,7 @@ service,
 servicePort = 80,
 } = data;
 		return __request(OpenAPI, {
-			method: 'PUT',
+			method: 'PATCH',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -680,65 +680,7 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPut1(data: TDataClusterProxyClusterProxyServiceNamespacePathPut1): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-servicePort = 80,
-} = data;
-		return __request(OpenAPI, {
-			method: 'DELETE',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			query: {
-				service_port: servicePort
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPut2(data: TDataClusterProxyClusterProxyServiceNamespacePathPut2): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-servicePort = 80,
-} = data;
-		return __request(OpenAPI, {
-			method: 'GET',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			query: {
-				service_port: servicePort
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
- * Handles authentication, URL construction, and content rewriting for assets.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPut3(data: TDataClusterProxyClusterProxyServiceNamespacePathPut3): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPatch1(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -767,7 +709,7 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPut4(data: TDataClusterProxyClusterProxyServiceNamespacePathPut4): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPatch2(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch2): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -796,7 +738,7 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPut5(data: TDataClusterProxyClusterProxyServiceNamespacePathPut5): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathPatch3(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch3): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -804,7 +746,65 @@ service,
 servicePort = 80,
 } = data;
 		return __request(OpenAPI, {
-			method: 'PATCH',
+			method: 'PUT',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			query: {
+				service_port: servicePort
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathPatch4(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch4): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+servicePort = 80,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			query: {
+				service_port: servicePort
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
+ * Handles authentication, URL construction, and content rewriting for assets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathPatch5(data: TDataClusterProxyClusterProxyServiceNamespacePathPatch5): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+servicePort = 80,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -825,14 +825,14 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPut(data: TDataV2ProxyV2ServiceNamespacePathPut): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathPatch(data: TDataV2ProxyV2ServiceNamespacePathPatch): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'PUT',
+			method: 'PATCH',
 			url: '/v2/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -850,57 +850,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPut1(data: TDataV2ProxyV2ServiceNamespacePathPut1): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'DELETE',
-			url: '/v2/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * V2 Proxy
-	 * Specialized proxy for Docker Registry V2 API.
- * Always uses port 5000 and the /v2 prefix.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static v2ProxyV2ServiceNamespacePathPut2(data: TDataV2ProxyV2ServiceNamespacePathPut2): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'GET',
-			url: '/v2/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * V2 Proxy
-	 * Specialized proxy for Docker Registry V2 API.
- * Always uses port 5000 and the /v2 prefix.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static v2ProxyV2ServiceNamespacePathPut3(data: TDataV2ProxyV2ServiceNamespacePathPut3): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathPatch1(data: TDataV2ProxyV2ServiceNamespacePathPatch1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -925,7 +875,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPut4(data: TDataV2ProxyV2ServiceNamespacePathPut4): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathPatch2(data: TDataV2ProxyV2ServiceNamespacePathPatch2): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -950,14 +900,64 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPut5(data: TDataV2ProxyV2ServiceNamespacePathPut5): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathPatch3(data: TDataV2ProxyV2ServiceNamespacePathPatch3): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'PATCH',
+			method: 'PUT',
+			url: '/v2/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * V2 Proxy
+	 * Specialized proxy for Docker Registry V2 API.
+ * Always uses port 5000 and the /v2 prefix.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static v2ProxyV2ServiceNamespacePathPatch4(data: TDataV2ProxyV2ServiceNamespacePathPatch4): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/v2/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * V2 Proxy
+	 * Specialized proxy for Docker Registry V2 API.
+ * Always uses port 5000 and the /v2 prefix.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static v2ProxyV2ServiceNamespacePathPatch5(data: TDataV2ProxyV2ServiceNamespacePathPatch5): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
 			url: '/v2/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -4477,10 +4477,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static addonsAlertingGet(): CancelablePromise<string> {
+	public static addonsEssentialsGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/addons/alerting',
+			url: '/addons/essentials',
 		});
 	}
 
@@ -4488,10 +4488,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static addonsDashboardGet(): CancelablePromise<string> {
+	public static addonsEssentialsAlertingGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/addons/dashboard',
+			url: '/addons/essentials/alerting',
 		});
 	}
 
@@ -4499,10 +4499,10 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static addonsMonitoringGet(): CancelablePromise<string> {
+	public static addonsEssentialsDashboardGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/addons/monitoring',
+			url: '/addons/essentials/dashboard',
 		});
 	}
 
@@ -4510,10 +4510,21 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
-	public static addonsLoggingGet(): CancelablePromise<string> {
+	public static addonsEssentialsMonitoringGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
-			url: '/addons/logging',
+			url: '/addons/essentials/monitoring',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static addonsEssentialsLoggingGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/addons/essentials/logging',
 		});
 	}
 

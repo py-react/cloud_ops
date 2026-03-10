@@ -12,7 +12,6 @@ from typing import List, Dict, Optional
 
 from app.docker_client import clientContext
 
-client = clientContext.client
 
 
 class ActionTypeEnum(str, Enum):
@@ -36,7 +35,7 @@ class RunImage(BaseModel):
     create_config: CreateConfig = None
 
 
-def run_container(image_id):
+def run_container(image_id, client):
     """Run a container from the given image ID."""
     # Run a container from the image ID (detached mode)
     container = client.containers.run(image_id, detach=True)
@@ -44,7 +43,7 @@ def run_container(image_id):
     print(f"Container {container.id} is running from image {image_id}")
     
 
-def remove_image(image_id):
+def remove_image(image_id, client):
     """Remove the image with the given image ID, only if no containers are using it."""
 
     # Check if there are any containers using this image
@@ -66,7 +65,7 @@ def remove_image(image_id):
         client.images.remove(image_id,force=True)
         print(f"Image {image_id} has been removed successfully.")
 
-def pull_image(image_name: str):
+def pull_image(image_name: str, client):
     """
     Pulls an image from either a local registry or a remote registry.
     """
@@ -75,7 +74,7 @@ def pull_image(image_name: str):
     return image
 
 
-async def build_from_string(dockerfile_string, tag):
+async def build_from_string(dockerfile_string, tag, client):
 
     try:
         # Use the low-level API client
@@ -131,6 +130,7 @@ class Get_Packages_Response(BaseModel):
 async def GET(request: Request, id: Optional[str] = None):
     if id:
         try:
+            client = clientContext.get_client()
             image = client.images.get(id)
             history = image.history()
             
@@ -201,6 +201,7 @@ async def POST(request:Request,body: RunImage):
     # Get all containers that are running and match the stored names
 
     try:
+        client = clientContext.get_client()
         if actionType == "pull":
             if not body.pull_config.image:
                 return({"error":True,"message":f"Image name is required'."})
@@ -213,7 +214,7 @@ async def POST(request:Request,body: RunImage):
                 image_name = f"{registry}/{image_name}"
 
             # Try pulling the image
-            image = pull_image(image_name)
+            image = pull_image(image_name,client)
 
             # Loop through each image and retrieve information
             image_details = {}
@@ -232,17 +233,17 @@ async def POST(request:Request,body: RunImage):
         if actionType == "create":
             package_content = body.create_config.content
             tag = body.create_config.tag
-            created_image = await build_from_string(package_content,tag)
+            created_image = await build_from_string(package_content,tag,client)
             # Loop through each image and retrieve information
             return {"error":False, "message":f"Created Image {created_image['image']['id']}","image":created_image['image']}
         
         image_id = body.packageId
 
         if actionType == "run":
-            run_container(image_id)
+            run_container(image_id,client)
             return {"error":False,"message":f"Running {image_id} in a container", "image_ran": [image_id]}
         if actionType == "remove":
-            remove_image(image_id)
+            remove_image(image_id,client)
             return {"error":False, "message":f"Removed {image_id}", "images_removed": [image_id]}
 
         return({"error":True,"message":f"Invalid action: {actionType}. Allowed actions are 'run', 'remove', 'pull', 'create'."})

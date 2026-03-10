@@ -3,7 +3,7 @@ from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
 
 async def meta_data():
     return {
-        "title": "Essentials",
+        "title": "Monitoring Essentials",
     }
 
 async def index(request: Request):

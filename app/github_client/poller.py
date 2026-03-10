@@ -48,7 +48,7 @@ class RepoPoller:
         """Create PR service with all dependencies."""
         settings = load_settings()
         
-        docker_client = clientContext.client
+        docker_client = clientContext.get_client()
         registries = load_registries(settings)
         docker_config = load_docker_config(settings)
         

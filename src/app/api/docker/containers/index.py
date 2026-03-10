@@ -5,7 +5,6 @@ from enum import Enum
 from fastapi.responses import JSONResponse
 from app.docker_client import clientContext
 
-client = clientContext.client
 
 class HostConfig(BaseModel):
     CpuShares: Optional[int]
@@ -92,40 +91,44 @@ class RunContainer(BaseModel):
 
 async def GET(request:Request)->GetContainerResponse:
     print("Getting containers")
-    containers = client.containers.list(all=True)  # Get all containers (running or stopped)
-    
-    container_info = []
-    
-    for container in containers:
-        try:
-            # Fetch container details
-            host_Config = container.attrs['HostConfig']
-            container_details = {
-                "name": container.name,
-                "id": container.id,
-                "status": container.status,
-                "created": container.attrs['Created'],
-                "image": container.attrs['Config']['Image'],
-                "ports": container.attrs['NetworkSettings']['Ports'],
-                "command": container.attrs['Config']['Cmd'],
-                "state": container.attrs['State'],
-                "exit_code": container.attrs['State'].get('ExitCode', None),
-                "network": container.attrs['NetworkSettings']['Networks'],
-                "volumes": container.attrs['Mounts'],
-                "labels": container.attrs['Config'].get('Labels', {}),
-                "env_vars": container.attrs['Config'].get('Env', []),
-                "host_config": {
-                    "CpuShares": host_Config["CpuShares"],
-                    "Memory": host_Config["Memory"],
-                    "MemoryReservation": host_Config["MemoryReservation"],
-                    "MemorySwap": host_Config["MemorySwap"],
-                    "PortBindings": host_Config["PortBindings"] if host_Config["PortBindings"] else container.attrs['NetworkSettings']['Ports']
+    try:
+        client = clientContext.get_client()
+        containers = client.containers.list(all=True)  # Get all containers (running or stopped)
+        
+        container_info = []
+        
+        for container in containers:
+            try:
+                # Fetch container details
+                host_Config = container.attrs['HostConfig']
+                container_details = {
+                    "name": container.name,
+                    "id": container.id,
+                    "status": container.status,
+                    "created": container.attrs['Created'],
+                    "image": container.attrs['Config']['Image'],
+                    "ports": container.attrs['NetworkSettings']['Ports'],
+                    "command": container.attrs['Config']['Cmd'],
+                    "state": container.attrs['State'],
+                    "exit_code": container.attrs['State'].get('ExitCode', None),
+                    "network": container.attrs['NetworkSettings']['Networks'],
+                    "volumes": container.attrs['Mounts'],
+                    "labels": container.attrs['Config'].get('Labels', {}),
+                    "env_vars": container.attrs['Config'].get('Env', []),
+                    "host_config": {
+                        "CpuShares": host_Config["CpuShares"],
+                        "Memory": host_Config["Memory"],
+                        "MemoryReservation": host_Config["MemoryReservation"],
+                        "MemorySwap": host_Config["MemorySwap"],
+                        "PortBindings": host_Config["PortBindings"] if host_Config["PortBindings"] else container.attrs['NetworkSettings']['Ports']
+                    }
                 }
-            }
-            
-            container_info.append(container_details)
-        except Exception as e:
-            print(f"Error retrieving info for container {container.name}: {e}")
+                
+                container_info.append(container_details)
+            except Exception as e:
+                print(f"Error retrieving info for container {container.name}: {e}")
+    except Exception as e:
+            print(f"Error: {e}")
     
     return {"containers": container_info, "length": len(container_info)}
 
@@ -134,6 +137,7 @@ async def POST(request:Request,body: RunContainer):
     # Get all containers that are running and match the stored names
 
     try:
+        client = clientContext.get_client()
         if actionType == ActionTypeEnum.RUN:
             config = body.instanceConfig
 

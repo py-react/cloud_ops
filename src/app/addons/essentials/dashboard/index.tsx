@@ -1,6 +1,6 @@
 import React from 'react'
-import { LayoutDashboard } from 'lucide-react'
 import PageLayout from '@/components/PageLayout'
+import { LayoutDashboard } from 'lucide-react'
 import { MonitoringAddon } from '@/components/addons/monitoring/MonitoringAddon'
 
 function Dashboard() {

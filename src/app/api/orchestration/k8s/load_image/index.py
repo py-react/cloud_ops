@@ -98,7 +98,7 @@ class DockerDesktopBridge:
         # If no bridge port provided, find a free one (not perfect as it's on Host, but unlikely VM collision)
         self.bridge_port = bridge_port or self._get_free_port()
         self.container_name = f"registry-bridge-{random.randint(1000,9999)}"
-        self.client = clientContext.client
+        self.client = clientContext.get_client()
 
     def _get_free_port(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -182,7 +182,7 @@ async def POST(request: Request, body: LoadImageRequest):
             )
 
         # 2. Logic to Pull Image to Host
-        docker_client = clientContext.client
+        docker_client = clientContext.get_client()
         
         pull_source = f"{body.image}:{body.tag}"
         requires_retag = False

@@ -23,7 +23,7 @@ import { Database, LayoutDashboard, Activity } from 'lucide-react'
 interface MonitoringAddonProps {
     title: string;
     description: string;
-    component: "prometheus" | "grafana" | "metrics-server" | "node-exporter" | "loki" | "promtail" | "otel-collector";
+    component: "prometheus" | "grafana" | "metrics-server" | "node-exporter" | "loki" | "promtail" | "otel-collector" | "gateway-api";
     icon: React.ReactNode;
     features: string[];
     proxyUrl?: string;
@@ -93,6 +93,14 @@ export function MonitoringAddon({ title, description, component, icon, features,
             fileName: 'otel-collector.yaml',
             configLabel: 'Valid YAML is required for the collector to start.',
             icon: Activity
+        },
+        'gateway-api': {
+            label: 'Gateway API Config',
+            description: 'Kubernetes Gateway API configuration.',
+            longDescription: 'Configure Gateways and listeners for advanced traffic routing.',
+            fileName: 'gateway.yaml',
+            configLabel: 'Ensure your Gateway resources match the Gateway API specification.',
+            icon: Activity
         }
     }
 
@@ -150,18 +158,20 @@ export function MonitoringAddon({ title, description, component, icon, features,
             ) : (
                 <div className="flex flex-col gap-2">
                     <div className="flex gap-2">
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            className="flex-1 h-9 text-xs rounded-xl border-border/50"
-                            onClick={async () => {
-                                await fetchConfig()
-                                setIsConfigOpen(true)
-                            }}
-                        >
-                            <Settings2Icon className="mr-2 h-3.5 w-3.5" />
-                            Configure
-                        </Button>
+                        {configMeta[component] && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                className="flex-1 h-9 text-xs rounded-xl border-border/50"
+                                onClick={async () => {
+                                    await fetchConfig()
+                                    setIsConfigOpen(true)
+                                }}
+                            >
+                                <Settings2Icon className="mr-2 h-3.5 w-3.5" />
+                                Configure
+                            </Button>
+                        )}
                     </div>
 
                     <FormWizard
@@ -226,7 +236,9 @@ export function MonitoringAddon({ title, description, component, icon, features,
     )
 
     useEffect(() => {
-        if (installed) { fetchConfig() } else {
+        if (installed && configMeta[component]) {
+            fetchConfig()
+        } else {
             checkStatus()
         }
     }, [installed])

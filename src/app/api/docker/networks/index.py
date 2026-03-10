@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, List, Any
 import docker
 
-client = clientContext.client
 
 # Request Models
 class NetworkCreateParams(BaseModel):
@@ -81,6 +80,7 @@ async def GET(request: Request) -> NetworkListResponse:
         NetworkListResponse: List of network information
     """
     try:
+        client = clientContext.get_client()
         networks = client.networks.list()
         network_info = []
         for network in networks:
@@ -128,6 +128,7 @@ async def POST(request: Request, params: NetworkCreateParams) -> NetworkCreateRe
         HTTPException: If network creation fails
     """
     try:
+        client = clientContext.get_client()
         network = client.networks.create(
             name=params.name,
             driver=params.driver,
@@ -191,6 +192,7 @@ async def PUT(request: Request, params: NetworkUpdateParams) -> NetworkCreateRes
         HTTPException: If network update fails
     """
     try:
+        client = clientContext.get_client()
         # Get the old network
         old_network = client.networks.get(params.network_id)
         old_attrs = old_network.attrs
@@ -257,6 +259,7 @@ async def DELETE(request: Request, params: NetworkDeleteParams) -> NetworkDelete
         HTTPException: If network deletion fails
     """
     try:
+        client = clientContext.get_client()
         network = client.networks.get(params.network_id)
         network.remove()
         

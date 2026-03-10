@@ -11,7 +11,7 @@ async def meta_data():
 
 # Function to list all volumes
 async def list_volumes():
-    client = clientContext.client
+    client = clientContext.get_client()
     volumes = client.volumes.list()  # Get all volumes
     volume_info = []
 

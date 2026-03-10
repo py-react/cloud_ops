@@ -3,8 +3,6 @@ from fastapi import Request
 from pydantic import BaseModel
 from app.docker_client import clientContext
 
-client = clientContext.client
-
 class SystemInfo(BaseModel):
     action:str
 
@@ -25,7 +23,7 @@ def bytes_to_human_readable(byte_value):
 
 def get_docker_info():
     """Fetches the full docker info."""
-    return client.info()
+    return clientContext.get_client().info()
 
 def extract_general_info(info):
     return {
@@ -82,7 +80,7 @@ def extract_plugins_info(info):
         "Plugins": info.get("Plugins"),
     }
 
-def calculate_network_io():
+def calculate_network_io(client):
     """Calculates total network I/O from all containers (Heavy)."""
     total_bytes_sent = 0
     total_bytes_recv = 0
@@ -102,7 +100,7 @@ def calculate_network_io():
         "total_bytes_recv": total_bytes_recv
     }
 
-def calculate_memory_usage():
+def calculate_memory_usage(client):
     """Calculates total memory usage from all containers (Heavy)."""
     total_memory_usage = 0
     total_memory_allocated = 0
@@ -130,9 +128,10 @@ def calculate_memory_usage():
 async def POST(request:Request, body: SystemInfo):
     actionType = body.action
     try:
+        client = clientContext.get_client()
         # Fast Info Actions (Single docker.info() call split up)
         if actionType in ["general", "resources", "containers", "images", "network_config", "security", "drivers", "plugins"]:
-            info = get_docker_info()
+            info = get_docker_info(client)
             
             if actionType == "general":
                 return {"error": False, "data": extract_general_info(info)}
@@ -153,10 +152,10 @@ async def POST(request:Request, body: SystemInfo):
 
         # Heavy Stat Actions
         elif actionType == "network_io":
-            return {"error": False, "data": calculate_network_io()}
+            return {"error": False, "data": calculate_network_io(client)}
         elif actionType == "memory_usage":
             # We might want to include the system MemTotal here for the chart
-            mem_data = calculate_memory_usage()
+            mem_data = calculate_memory_usage(client)
             # Optional: Fetch info() just for MemTotal if strictly needed in this payload,
             # but usually frontend can combine data from 'resources'.
             # Let's verify if `get_basic_info` previously returned `total_memory_allocated_docker` (MemTotal).

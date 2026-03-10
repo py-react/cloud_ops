@@ -3,7 +3,6 @@ from fastapi import Request
 from pydantic import BaseModel
 from app.docker_client import clientContext
 
-client = clientContext.client
 
 class SystemInfo(BaseModel):
     action:str
@@ -17,7 +16,7 @@ def bytes_to_human_readable(byte_value):
             return f"{byte_value:.2f} {unit}"
         byte_value /= 1024
 
-def get_system_stats():
+def get_system_stats(client):
     # Initialize the Docker client
     # Get system-wide information using docker.info()
     system_info = client.info()
@@ -62,9 +61,10 @@ def get_system_stats():
 
 async def POST(request:Request,body: SystemInfo):
     actionType = body.action
+    client = clientContext.get_client()
     try:
         if actionType == "info":
-            return {"error":False, "info": get_system_stats()}
+            return {"error":False, "info": get_system_stats(client)}
         else:
             print({"error":True,"message":f"Invalid action: {actionType}. Allowed actions are 'run' and 'remove'."})
         

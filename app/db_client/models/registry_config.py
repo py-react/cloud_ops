@@ -17,6 +17,10 @@ class RegistryConfig(SQLModel, table=True):
     def config(self) -> Dict[str, Any]:
         return json.loads(self.config_json or "{}")
 
+    @property
+    def password(self) -> str:
+        return self.password
+
     @config.setter
     def config(self, value: Dict[str, Any]):
         self.config_json = json.dumps(value)

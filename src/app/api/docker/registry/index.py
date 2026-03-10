@@ -4,7 +4,7 @@ from app.k8s_helper.core import access_registry_via_api_proxy
 from kubernetes import client as k8s_client, config as k8s_config
 from typing import Optional, Dict, Any, Literal
 from render_relay.utils import load_settings
-from app.docker_client.clientContext import client
+from app.docker_client.clientContext import get_client
 from docker.errors import APIError, ImageNotFound
 import docker
 import requests
@@ -24,6 +24,103 @@ logger = logging.getLogger(__name__)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from app.utils.crypto import encrypt, decrypt
+
+def get_dockerhub_jwt(username, password, timeout=10):
+    """Obtain a JWT token from Docker Hub API."""
+    if not password:
+        return None
+    try:
+        r = requests.post(
+            "https://hub.docker.com/v2/users/login/",
+            json={"username": username, "password": password},
+            timeout=timeout
+        )
+        r.raise_for_status()
+        return r.json().get("token")
+    except Exception as e:
+        logger.error(f"Docker Hub login failed: {e}")
+        return None
+
+def list_repos_hub(namespace, token, timeout=10):
+    """List all repositories for a user or org on Docker Hub."""
+    repos = []
+    url = f"https://hub.docker.com/v2/repositories/{namespace}/?page_size=100"
+    try:
+        while url:
+            r = requests.get(url, headers={"Authorization": f"JWT {token}"}, timeout=timeout)
+            r.raise_for_status()
+            data = r.json()
+            repos.extend(f"{namespace}/{repo['name']}" for repo in data.get("results", []))
+            url = data.get("next")
+        return repos
+    except Exception as e:
+        logger.error(f"Failed to list Docker Hub repos for {namespace}: {e}")
+        return None
+
+def list_tags_hub(namespace, repo, token, timeout=10):
+    """List all tags for a repository on Docker Hub."""
+    tags = []
+    # If repo name already contains namespace, split it
+    if "/" in repo:
+        ns, rname = repo.split("/", 1)
+    else:
+        ns, rname = namespace, repo
+        
+    url = f"https://hub.docker.com/v2/repositories/{ns}/{rname}/tags/?page_size=100"
+    try:
+        while url:
+            r = requests.get(url, headers={"Authorization": f"JWT {token}"}, timeout=timeout)
+            r.raise_for_status()
+            data = r.json()
+            tags.extend(tag["name"] for tag in data.get("results", []))
+            url = data.get("next")
+        return {"name": repo, "tags": tags}
+    except Exception as e:
+        logger.error(f"Failed to list Docker Hub tags for {ns}/{rname}: {e}")
+        return None
+
+
+def fetch_registry_v2(
+    reg,
+    image_name=None,
+    tag=None,
+    blob=False,
+    sha256_digest=None,
+    timeout=10,
+):
+    """
+    Main entry point for registry access. Dispatcher for Hub vs Standard V2.
+    """
+    if not reg.url.startswith(("http://", "https://")):
+        raise ValueError("Registry URL must explicitly include http:// or https://")
+
+    is_docker_hub = "docker.io" in reg.url
+    plain_password = decrypt(reg.password) if reg.password else None
+
+    if is_docker_hub and reg.username and plain_password:
+        return fetch_from_hub(reg, plain_password, image_name, tag, blob, sha256_digest, timeout)
+    
+    return {"error": True, "message": "Not implemented yet"}
+
+def fetch_from_hub(reg, plain_password, image_name=None, tag=None, blob=False, sha256_digest=None, timeout=10):
+    """Specialized logic for Docker Hub using the Hub API (v2)."""
+    # 1. Repository Discovery (Discovery phase uses Hub API)
+    if not image_name:
+        token = get_dockerhub_jwt(reg.username, plain_password, timeout=timeout)
+        if not token:
+            return {"error": True, "message": "Docker Hub authentication failed"}
+        repos = list_repos_hub(reg.username, token, timeout=timeout)
+        return {"repositories": repos} if repos is not None else {"error": True, "message": "Failed to list repositories"}
+
+    # 2. Tag Listing (Discovery phase uses Hub API)
+    if not tag and not blob:
+        token = get_dockerhub_jwt(reg.username, plain_password, timeout=timeout)
+        if not token:
+            return {"error": True, "message": "Docker Hub authentication failed"}
+        tags_data = list_tags_hub(reg.username, image_name, token, timeout=timeout)
+        return tags_data if tags_data else {"error": True, "message": "Failed to list tags"}
+
+    return {"error": True, "message": "Not implemented yet"}
 
 async def GET(
     request: Request,
@@ -70,47 +167,14 @@ async def GET(
                  # Direct access for Remote Registry
                  try:
                      # Determine protocol (default to https if not specified)
-                     base_url = reg.url
-                     if not base_url.startswith("http"):
-                         base_url = f"https://{base_url}"
-                     
-                     # Construct V2 API path
-                     if image_name:
-                         if blob:
-                             path = f"/v2/{image_name}/blobs/{sha256_digest}"
-                         elif tag:
-                             path = f"/v2/{image_name}/manifests/{tag}"
-                         else:
-                             path = f"/v2/{image_name}/tags/list"
-                     else:
-                         path = f"/v2/_catalog"
-                         
-                     target_url = f"{base_url}{path}"
-                     
-                     # Auth Headers
-                     auth = None
-                     # Decrypt password for use
-                     plain_password = decrypt(reg.password) if reg.password else None
-                     
-                     if reg.username and plain_password:
-                         auth = requests.auth.HTTPBasicAuth(reg.username, plain_password)
-                         
-                     logger.info(f"Accessing Remote Registry: {target_url}")
-                     
-                     # Make Request
-                     # Note: verify=False for self-signed certs (common in internal setups), 
-                     # ideally this should be a setting.
-                     resp = requests.get(target_url, auth=auth, verify=False, timeout=10)
-                     
-                     if resp.status_code == 401:
-                          return {"error": True, "message": "Authentication failed for remote registry"}
-                     
-                     if resp.status_code != 200:
-                         logger.error(f"Remote registry error {resp.status_code}: {resp.text}")
-                         return {"error": True, "message": f"Remote registry returned {resp.status_code}"}
-                         
-                     return resp.json()
-                     
+                     logger.info(f"Accessing remote registry: {reg.url} {reg.username} {reg.password}")
+                     return fetch_registry_v2(
+                         reg,
+                         image_name=image_name,
+                         tag=tag,
+                         blob=blob,
+                         sha256_digest=sha256_digest,
+                     )
                  except Exception as e:
                      logger.error(f"Failed to access remote registry: {e}")
                      return {"error": True, "message": f"Failed to access remote registry: {str(e)}"}
@@ -157,7 +221,6 @@ async def POST(
     """
     Handle Registry Creation and Image Push
     """
-    logger.info(f"POST Body (Pydantic): {body}")
 
     if body.action == "create_registry":
         # Check duplicate
@@ -424,7 +487,7 @@ async def push_image(
         logger.info(f"Starting push of {source_image} to {full_image_name}")
         
         # Validate Docker connection
-        docker_client = client
+        docker_client = get_client()
         try:
             docker_info = docker_client.info()
             logger.info(f"Docker connected - Version: {docker_info.get('ServerVersion', 'Unknown')}")

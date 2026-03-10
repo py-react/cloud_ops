@@ -301,40 +301,47 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
             ],
         },
         productionEssentials: {
-            title: "Essentials",
+            title: "Add-ons",
             url: "/addons",
             color: "orange",
             childs: [
                 {
-                    title: "Dashboards",
-                    url: "/dashboard",
+                    title: "Essentials",
+                    url: "/essentials",
                     icon: LayoutDashboard,
-                    items: [],
+                    items: [
+                        {
+                            title: "Visualization Dashboards",
+                            url: "/dashboard",
+                            icon: LayoutDashboard,
+                            items: [],
+                        },
+                        {
+                            title: "System Metrics",
+                            url: "/monitoring",
+                            icon: Activity,
+                            items: [],
+                        },
+                        {
+                            title: "Alerting & Notifications",
+                            url: "/alerting",
+                            icon: AlertCircle,
+                            items: [],
+                        },
+                        {
+                            title: "Logging & Infrastructure",
+                            url: "/logging",
+                            icon: FileText,
+                            items: [],
+                        },
+                        // {
+                        //     title: "Database",
+                        //     url: "/db",
+                        //     icon: Database,
+                        //     items: [],
+                        // },
+                    ],
                 },
-                {
-                    title: "Metrics",
-                    url: "/monitoring",
-                    icon: Activity,
-                    items: [],
-                },
-                {
-                    title: "Alerts",
-                    url: "/alerting",
-                    icon: AlertCircle,
-                    items: [],
-                },
-                {
-                    title: "Logs",
-                    url: "/logging",
-                    icon: FileText,
-                    items: [],
-                },
-                // {
-                //     title: "Database",
-                //     url: "/db",
-                //     icon: Database,
-                //     items: [],
-                // },
             ],
         },
         // infraManager: {

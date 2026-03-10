@@ -15,6 +15,7 @@ from app.k8s_helper.monitoring.stack import (
     get_k8s_dashboard_json
 )
 from app.k8s_helper.monitoring.loki import DEFAULT_LOKI_CONFIG, DEFAULT_PROMTAIL_CONFIG, DEFAULT_OTEL_COLLECTOR_CONFIG
+from app.k8s_helper.monitoring.gateway_api import DEFAULT_GATEWAY_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ COMPONENT_MAP = {
     "loki": ("loki-config", "loki.yaml", DEFAULT_LOKI_CONFIG, "logging"),
     "promtail": ("promtail-config", "promtail.yaml", DEFAULT_PROMTAIL_CONFIG, "logging"),
     "otel-collector": ("otel-collector-config", "otel-collector-config.yaml", DEFAULT_OTEL_COLLECTOR_CONFIG, "logging"),
+    "gateway-api": ("gateway-api-config", "gateway.yaml", DEFAULT_GATEWAY_CONFIG, "monitoring"),
 }
 async def GET(request: Request, component: str = Query("alertmanager")) -> dict:
     """
@@ -149,7 +151,8 @@ async def restart_rollout(k8s_helper, component: str, namespace: str):
             "metrics-server": ("deployment", "metrics-server"),
             "loki": ("deployment", "loki"),
             "promtail": ("daemonset", "promtail"),
-            "otel-collector": ("daemonset", "otel-collector")
+            "otel-collector": ("daemonset", "otel-collector"),
+            "gateway-api": ("gateway", "main-gateway")
         }
         
         if component not in deployment_map:
@@ -158,8 +161,13 @@ async def restart_rollout(k8s_helper, component: str, namespace: str):
         kind, name = deployment_map[component]
         logger.info(f"Triggering {kind} restart for {name} in {namespace}")
 
+        if kind == "gateway":
+            api_version, kind_cap = "gateway.networking.k8s.io/v1", "Gateway"
+        else:
+            api_version, kind_cap = "apps/v1", kind.capitalize()
+
         # Use the dynamic client for generic patching
-        resource_client = k8s_helper.dyn_client.resources.get(api_version="apps/v1", kind=kind.capitalize())
+        resource_client = k8s_helper.dyn_client.resources.get(api_version=api_version, kind=kind_cap)
         
         # Patch body: update annotation
         patch = {

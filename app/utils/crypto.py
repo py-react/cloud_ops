@@ -22,24 +22,15 @@ def _load_key():
             return key
     except Exception as e:
         logger.warning(f"Could not load key from settings: {e}")
+        raise e
 
-    # Fallback to local file
-    if os.path.exists(KEY_FILE):
-        with open(KEY_FILE, "rb") as key_file:
-            return key_file.read()
-    else:
-        logger.info("Generating new local encryption key")
-        key = Fernet.generate_key()
-        with open(KEY_FILE, "wb") as key_file:
-            key_file.write(key)
-        return key
 
 try:
     _key = _load_key()
     _cipher_suite = Fernet(_key)
 except Exception as e:
     logger.error(f"Failed to initialize encryption: {e}")
-    _cipher_suite = None
+    raise e
 
 def encrypt(text: str) -> str:
     """Encrypts a plain text string."""
@@ -47,23 +38,23 @@ def encrypt(text: str) -> str:
         return text
     if not _cipher_suite:
         logger.warning("Encryption not initialized, returning text as-is")
-        return text
+        raise Exception("Encryption not initialized")
     try:
         # Fernet encrypt expects bytes, returns bytes
         return _cipher_suite.encrypt(text.encode()).decode()
     except Exception as e:
         logger.error(f"Encryption failed: {e}")
-        return text
+        raise e
 
 def decrypt(text: str) -> str:
     """Decrypts a cipher text string."""
     if not text:
         return text
     if not _cipher_suite:
-        return text
+        raise Exception("Encryption not initialized")
     try:
         # Fernet decrypt expects bytes
         return _cipher_suite.decrypt(text.encode()).decode()
     except Exception as e:
         logger.debug(f"Decryption failed (possibly not encrypted?): {e}")
-        return text
+        raise e

@@ -3,11 +3,14 @@ from bullmq import Queue
 import asyncio
 from app.docker_client import clientContext
 
-client = clientContext.client
 
 
 async def get_queues():
-    containers = client.containers.list(all=True)  # Get all containers (running or stopped)
+    try:
+        client = clientContext.get_client()
+        containers = client.containers.list(all=True)  # Get all containers (running or stopped)
+    except Exception as e:
+        containers = []
     container_info = []
     for container in containers:
         if container.name.startswith("deno_"):  # Filter only containers started by the POST method

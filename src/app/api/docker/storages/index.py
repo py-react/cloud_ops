@@ -5,7 +5,6 @@ from enum import Enum
 from datetime import datetime
 from app.docker_client import clientContext
 
-client = clientContext.client
 
 class VolumeActionEnum(str, Enum):
     PRUNE = 'prune'
@@ -24,7 +23,7 @@ class VolumeActionRequest(BaseModel):
     add_data:AddVolumeData = None
 
 
-async def create_volume(data):
+async def create_volume(data, client):
     name = data.name
     driver = data.driver
     driver_opts = data.driverOpts
@@ -49,7 +48,7 @@ async def create_volume(data):
 
 
 # Function to list all volumes
-async def list_volumes():
+async def list_volumes(client):
 
     volumes = client.volumes.list()  # Get all volumes
     volume_info = []
@@ -78,7 +77,7 @@ async def list_volumes():
     return volume_info
 
 # Function to prune unused volumes
-async def prune_volumes():
+async def prune_volumes(client):
     unused_volumes = []
 
     # First, list all volumes
@@ -103,7 +102,7 @@ async def prune_volumes():
         return {"message": "No unused volumes found to prune."}
 
 # Function to remove a volume by ID
-async def remove_volume(volume_id: str):
+async def remove_volume(volume_id: str, client):
     
     try:
         # Check if the volume exists
@@ -134,7 +133,8 @@ async def remove_volume(volume_id: str):
 
 async def GET(request:Request):
     try:
-        volumes = await list_volumes()
+        client = clientContext.get_client()
+        volumes = await list_volumes(client)
         return {"storages": sorted(volumes, key=lambda x: datetime.fromisoformat(x['created'].replace('Z', '+00:00')),reverse=True)}
     except Exception as e:
         # Return a custom error if listing volumes fails
@@ -144,15 +144,16 @@ async def POST(request: VolumeActionRequest):
     action = request.action
 
     try:
+        client = clientContext.get_client()
         if action == VolumeActionEnum.PRUNE:
-            await prune_volumes()
+            await prune_volumes(client)
             return {"error":False,"message":f"Removed All"}
         
         elif action == VolumeActionEnum.REMOVE and request.volume_id:
-            await remove_volume(request.volume_id)
+            await remove_volume(request.volume_id,client)
             return {"error":False,"message":f"Removed {request.volume_id}"}
         elif action == VolumeActionEnum.ADD:
-            new_volume = await create_volume(request.add_data)
+            new_volume = await create_volume(request.add_data,client)
             return {"error":False,"message":f"Volume Create {new_volume['name']}","volume":new_volume}
         else:
             raise Exception("Invalid action. Use 'prune' or 'remove'.")

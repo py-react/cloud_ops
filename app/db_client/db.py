@@ -41,7 +41,9 @@ def ensure_default_strategies():
                 session.add(DeploymentStrategy(**strat))
         session.commit()
 
-# Call this function once before you create any deployment configs
-ensure_default_strategies()
-# Call run_migrations() at startup (optional, or call from FastAPI startup event)
-run_migrations()
+
+if __name__ == "__main__":
+    # Call this function once before you create any deployment configs
+    ensure_default_strategies()
+    # Call run_migrations() at startup (optional, or call from FastAPI startup event)
+    run_migrations()

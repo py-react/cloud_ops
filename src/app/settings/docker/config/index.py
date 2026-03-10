@@ -2,7 +2,7 @@ from app.docker_client import clientContext
 from fastapi import Request
 
 async def index(request: Request):
-    client = clientContext.client
+    client = clientContext.get_client()
     try:
         info = client.info()
         reduced_info = {
