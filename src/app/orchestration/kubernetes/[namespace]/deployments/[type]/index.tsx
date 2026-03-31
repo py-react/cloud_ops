@@ -149,8 +149,16 @@ export default function DeploymentsPage() {
                 setCurrentToEdit(res);
               }}
               onDelete={(data) => {
-                let manifest = yaml.dump(JSON.parse(data.last_applied));
-                if (!Object.keys(data.last_applied).length) {
+                let manifest = "";
+                if (data.last_applied) {
+                  try {
+                    manifest = yaml.dump(JSON.parse(data.last_applied));
+                  } catch (e) {
+                    console.error("Failed to parse last_applied annotation", e);
+                  }
+                }
+                
+                if (!manifest) {
                   manifest = yaml.dump({
                     apiVersion: data.fullData.apiVersion,
                     kind: data.fullData.kind,
@@ -165,7 +173,7 @@ export default function DeploymentsPage() {
                     manifest: manifest,
                   },
                 })
-                  .then((res) => {
+                  .then((res: any) => {
                     if (res.success) {
                       toast.success(res.data.message);
                       refetch();
@@ -173,7 +181,7 @@ export default function DeploymentsPage() {
                       toast.error(res.error);
                     }
                   })
-                  .catch((err) => {
+                  .catch((err: any) => {
                     toast.error(err);
                   });
               }}
@@ -207,7 +215,7 @@ export default function DeploymentsPage() {
                 manifest: data.rawYaml,
               },
             })
-              .then((res) => {
+              .then((res: any) => {
                 if (res.success) {
                   toast.success(res.data.message);
                   refetch();
@@ -216,7 +224,7 @@ export default function DeploymentsPage() {
                   toast.error(res.error);
                 }
               })
-              .catch((err) => {
+              .catch((err: any) => {
                 toast.error(err);
               });
           }}

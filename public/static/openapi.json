@@ -44,10 +44,10 @@
       }
     },
     "/cluster/proxy/{service}/{namespace}/{path}": {
-      "delete": {
+      "put": {
         "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -85,69 +85,15 @@
               "default": 80,
               "title": "Service Port"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
           },
           {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
+            "name": "rewrite_v2_location",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
             }
           }
         ],
@@ -174,8 +120,8 @@
       },
       "head": {
         "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -212,6 +158,16 @@
               "type": "integer",
               "default": 80,
               "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
             }
           }
         ],
@@ -236,10 +192,10 @@
           }
         }
       },
-      "put": {
+      "delete": {
         "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -276,6 +232,16 @@
               "type": "integer",
               "default": 80,
               "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
             }
           }
         ],
@@ -302,8 +268,8 @@
       },
       "get": {
         "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -340,6 +306,16 @@
               "type": "integer",
               "default": 80,
               "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
             }
           }
         ],
@@ -366,8 +342,8 @@
       },
       "patch": {
         "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).\nHandles authentication, URL construction, and content rewriting for assets.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__delete",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -404,6 +380,90 @@
               "type": "integer",
               "default": 80,
               "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
             }
           }
         ],
@@ -430,64 +490,10 @@
       }
     },
     "/v2/{service}/{namespace}/{path}": {
-      "delete": {
+      "put": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__delete",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__delete",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -541,7 +547,7 @@
       "head": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__delete",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -592,10 +598,10 @@
           }
         }
       },
-      "put": {
+      "delete": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__delete",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -649,7 +655,7 @@
       "get": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__delete",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -703,7 +709,61 @@
       "patch": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__delete",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -950,6 +1010,53 @@
             }
           }
         }
+      },
+      "patch": {
+        "summary": "",
+        "operationId": "_api_settings_docker_config_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/swarm/init": {
@@ -1054,22 +1161,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/swarm/unlock_key": {
-      "get": {
-        "summary": "",
-        "operationId": "_api_swarm_unlock_key_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
               }
             }
           }
@@ -1987,8 +2078,17 @@
       },
       "put": {
         "summary": "",
-        "description": "Update Registry Details",
         "operationId": "_api_docker_registry_put",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRegistryRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1997,18 +2097,48 @@
                 "schema": {}
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       },
       "delete": {
         "summary": "",
         "operationId": "_api_docker_registry_delete",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteRegistryRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -2193,42 +2323,6 @@
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/docker/systems": {
-      "post": {
-        "summary": "",
-        "operationId": "_api_docker_systems_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SystemInfo"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2822,6 +2916,7 @@
     "/api/kubernertes/resources/{type}": {
       "get": {
         "summary": "",
+        "description": "Generic GET for any Kubernetes resource.\nUsage: /api/kubernertes/resources/[type]?namespace=...&api_version=...",
         "operationId": "_api_kubernertes_resources__type__get",
         "parameters": [
           {
@@ -2831,70 +2926,6 @@
             "schema": {
               "type": "string",
               "title": "Type"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "field_selector",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Field Selector"
-            }
-          },
-          {
-            "name": "label_selector",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Label Selector"
-            }
-          },
-          {
-            "name": "api_version",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Api Version"
             }
           }
         ],
@@ -2968,6 +2999,7 @@
       },
       "put": {
         "summary": "",
+        "description": "Generic PUT for editing resources.",
         "operationId": "_api_kubernertes_resources__type__put",
         "parameters": [
           {
@@ -2978,63 +3010,8 @@
               "type": "string",
               "title": "Type"
             }
-          },
-          {
-            "name": "apiVersion",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Apiversion"
-            }
-          },
-          {
-            "name": "name",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Name"
-            }
-          },
-          {
-            "name": "modifytype",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Modifytype"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Namespace"
-            }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true,
-                "title": "Data"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3058,6 +3035,7 @@
       },
       "delete": {
         "summary": "",
+        "description": "Generic DELETE for any Kubernetes resource.\nUsage: /api/kubernertes/resources/[type]?apiVersion=...&name=...&namespace=...",
         "operationId": "_api_kubernertes_resources__type__delete",
         "parameters": [
           {
@@ -3067,40 +3045,6 @@
             "schema": {
               "type": "string",
               "title": "Type"
-            }
-          },
-          {
-            "name": "apiVersion",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Apiversion"
-            }
-          },
-          {
-            "name": "name",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Name"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Namespace"
             }
           }
         ],
@@ -8478,6 +8422,24 @@
         }
       }
     },
+    "/settings/ci_cd/release_control": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_ci_cd_release_control_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/settings/ci_cd/deployment_strategy": {
       "get": {
         "summary": "",
@@ -9478,6 +9440,44 @@
         ],
         "title": "ApplyBody"
       },
+      "BranchConfigRequest": {
+        "properties": {
+          "branch": {
+            "type": "string",
+            "title": "Branch",
+            "description": "Branch name"
+          },
+          "registry_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Id",
+            "description": "Branch-specific Registry ID"
+          },
+          "docker_config_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Docker Config Id",
+            "description": "Branch-specific Docker Engine ID"
+          }
+        },
+        "type": "object",
+        "required": [
+          "branch"
+        ],
+        "title": "BranchConfigRequest"
+      },
       "ConfigUpdate": {
         "properties": {
           "config": {
@@ -10393,6 +10393,19 @@
         ],
         "title": "DaemonSetInfo"
       },
+      "DeleteRegistryRequest": {
+        "properties": {
+          "registry_id": {
+            "type": "integer",
+            "title": "Registry Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "registry_id"
+        ],
+        "title": "DeleteRegistryRequest"
+      },
       "DeploymentConfigType": {
         "properties": {
           "id": {
@@ -11012,6 +11025,18 @@
             ],
             "title": "Status",
             "default": "active"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active",
+            "default": false
           }
         },
         "type": "object",
@@ -13978,13 +14003,14 @@
           "allowed_branches": {
             "additionalProperties": {
               "items": {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               "type": "array"
             },
             "type": "object",
             "title": "Allowed Branches",
-            "description": "Allowed branches per repo"
+            "description": "Allowed branches with specific configs"
           },
           "repo_pats": {
             "additionalProperties": {
@@ -14016,6 +14042,22 @@
             "type": "object",
             "title": "Repo Registries",
             "description": "Map of repo name to Registry ID",
+            "default": {}
+          },
+          "repo_engines": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Repo Engines",
+            "description": "Map of repo name to Docker Engine ID",
             "default": {}
           },
           "builds": {
@@ -14195,11 +14237,11 @@
           },
           "branches": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/BranchConfigRequest"
             },
             "type": "array",
             "title": "Branches",
-            "description": "List of branches to monitor"
+            "description": "List of branches and their specific configs"
           },
           "pat_id": {
             "anyOf": [
@@ -14223,7 +14265,19 @@
               }
             ],
             "title": "Registry Id",
-            "description": "ID of the Docker Registry to use"
+            "description": "Default Registry ID for this repo"
+          },
+          "docker_config_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Docker Config Id",
+            "description": "Default Docker Engine ID for this repo"
           }
         },
         "type": "object",
@@ -15840,6 +15894,63 @@
         },
         "type": "object",
         "title": "UpdatePATRequest"
+      },
+      "UpdateRegistryRequest": {
+        "properties": {
+          "registry_id": {
+            "type": "integer",
+            "title": "Registry Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "registry_id"
+        ],
+        "title": "UpdateRegistryRequest"
       },
       "ValidationError": {
         "properties": {

@@ -1,31 +1,38 @@
 services:
-  # db:
-  #   image: postgres
-  #   restart: always
-  #   environment:
-  #     POSTGRES_PASSWORD: example
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data 
-  #   ports:
-  #     - 5432:5432
-  # pg_admin:
-  #   image: dpage/pgadmin4
-  #   container_name: pgadmin4_container
-  #   restart: always
-  #   ports:
-  #     - "8888:80"
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
-  #     PGADMIN_DEFAULT_PASSWORD: strong-password
-  #   volumes:
-  #     - pgadmin-data:/var/lib/pgadmin
-  # docker:
-  #   image: registry:latest
-  #   container_name: registry_container
-  #   ports:
-  #     - "8001:5000"
-  #   volumes:
-  #     - registry_data:/var/lib/registry
+  app:
+    build: .
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.kube:/root/.kube
+    working_dir: /app
+    command: bash -c "socat TCP-LISTEN:50925,fork TCP:host.docker.internal:50925 & socat TCP-LISTEN:5432,fork TCP:host.docker.internal:5432 & npm start"
+    ports:
+      - 5002:5001
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+    volumes:
+      - pgdata:/var/lib/postgresql/data 
+    ports:
+      - 5432:5432
+
+  pg_admin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
+      PGADMIN_DEFAULT_PASSWORD: strong-password
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - db
 
   httpd-proxy:
     image: httpd:2.4
@@ -35,6 +42,9 @@ services:
       - "80:80"
     volumes:
       - ./httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+    depends_on:
+      - db
+      - pg_admin
 
 volumes:
   pgdata:

@@ -122,7 +122,7 @@ def fetch_from_hub(reg, plain_password, image_name=None, tag=None, blob=False, s
 
     return {"error": True, "message": "Not implemented yet"}
 
-async def GET(
+def GET(
     request: Request,
     namespace: Optional[str] = "image-registry",
     service_name: Optional[str] = "docker",
@@ -185,7 +185,7 @@ async def GET(
                  namespace = config.get("namespace", "image-registry")
                  service_name = config.get("service_name", f"{reg.name}-service") 
                  # Explicitly check for port in config, though deploy.py doesn't currently save it (defaults to 5000)
-                 service_port = config.get("port", 5000)
+                 service_port = config.get("port", 80)
                  
                  logger.info(f"Proxying to K8s Registry: {service_name}.{namespace}:{service_port}")
                  try:
@@ -214,7 +214,7 @@ class CreateRegistryRequest(BaseModel):
     image_name: Optional[str] = None
     source_tag: Optional[str] = None
 
-async def POST(
+def POST(
     request: Request,
     body: CreateRegistryRequest
 ):
@@ -272,17 +272,16 @@ async def POST(
     source_tag = body.source_tag or request.query_params.get("source_tag")
     
     if image_name and source_tag:
-        return await push_image(request, image_name, source_tag)
+        return push_image(image_name, source_tag)
         
     return {"error": True, "message": "Invalid request parameters", "debug_body": str(body)}
 
 class DeleteRegistryRequest(BaseModel):
     registry_id: int
 
-async def DELETE(request: Request):
+def DELETE(request: Request, body: DeleteRegistryRequest):
     try:
-        body = await request.json()
-        data = DeleteRegistryRequest(**body)
+        data = body
         
         with get_session() as session:
             reg = session.get(RegistryConfig, data.registry_id)
@@ -355,13 +354,9 @@ class UpdateRegistryRequest(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
 
-async def PUT(request: Request):
-    """
-    Update Registry Details
-    """
+def PUT(request: Request, body: UpdateRegistryRequest):
     try:
-        body = await request.json()
-        data = UpdateRegistryRequest(**body)
+        data = body
         
         with get_session() as session:
             reg = session.get(RegistryConfig, data.registry_id)
@@ -391,6 +386,7 @@ async def PUT(request: Request):
         logger.error(f"Update failed: {e}")
         return JSONResponse(status_code=500, content={"error": True, "message": f"Failed to update: {str(e)}"})
 
+def _verify_registry_connectivity(registry_url):
     """Test if registry is accessible"""
     try:
         registry_api_url = f"http://{registry_url}/v2/_catalog"
@@ -400,7 +396,7 @@ async def PUT(request: Request):
         return False
 
 
-async def _push_image_to_registry(docker_client, registry_url: str, repo_name: str, source_tag: str):
+def _push_image_to_registry(docker_client, registry_url: str, repo_name: str, source_tag: str):
     """Push image to registry and collect progress"""
     push_logs = []
     
@@ -427,7 +423,7 @@ async def _push_image_to_registry(docker_client, registry_url: str, repo_name: s
     return push_logs
 
 
-async def _verify_push_success(registry_url: str, repo_name: str, source_tag: str):
+def _verify_push_success(registry_url: str, repo_name: str, source_tag: str):
     """Verify image was successfully pushed to registry"""
     try:
         # Check repository exists
@@ -462,7 +458,7 @@ def clean_image_name(name: str) -> str:
     return re.sub(r'@sha256:[a-f0-9]{64}$', '', name)
 
 
-async def push_image(
+def push_image(
     image_name: str,
     source_tag: str,
 ):
@@ -508,7 +504,7 @@ async def push_image(
             )
         
         # Test registry connectivity
-        registry_accessible = await _verify_registry_connectivity(registry_url)
+        registry_accessible = _verify_registry_connectivity(registry_url)
         if not registry_accessible:
             logger.warning(f"Registry at {registry_url} may not be accessible")
         
@@ -524,7 +520,7 @@ async def push_image(
         
         # Push image to registry
         try:
-            push_logs = await _push_image_to_registry(
+            push_logs = _push_image_to_registry(
                 docker_client, registry_url, repo_name, source_tag
             )
             logger.info("Image push completed successfully")
@@ -547,7 +543,7 @@ async def push_image(
             )
         
         # Verify push success
-        verified, verification_msg = await _verify_push_success(
+        verified, verification_msg = _verify_push_success(
             registry_url, repo_name, source_tag
         )
         

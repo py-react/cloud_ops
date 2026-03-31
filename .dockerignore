@@ -1,0 +1,10 @@
+node_modules
+env
+.git
+.DS_Store
+__pycache__
+*.pyc
+.vscode
+.gemini
+API_ROUTES.log
+test.ipynb

@@ -23,7 +23,7 @@ import { Database, LayoutDashboard, Activity } from 'lucide-react'
 interface MonitoringAddonProps {
     title: string;
     description: string;
-    component: "prometheus" | "grafana" | "metrics-server" | "node-exporter" | "loki" | "promtail" | "otel-collector" | "gateway-api";
+    component: "prometheus" | "grafana" | "metrics-server" | "node-exporter" | "loki" | "promtail" | "otel-collector" | "gateway-api" | "local-path-provisioner" | "flannel" | "openebs";
     icon: React.ReactNode;
     features: string[];
     proxyUrl?: string;
@@ -101,6 +101,30 @@ export function MonitoringAddon({ title, description, component, icon, features,
             fileName: 'gateway.yaml',
             configLabel: 'Ensure your Gateway resources match the Gateway API specification.',
             icon: Activity
+        },
+        'local-path-provisioner': {
+            label: 'Local Path Config',
+            description: 'Configure local storage provisioner paths.',
+            longDescription: 'Manage which nodes and paths are used for dynamic local volume provisioning.',
+            fileName: 'config.json',
+            configLabel: 'Valid JSON is required for the provisioner to apply the mapping.',
+            icon: Database
+        },
+        'flannel': {
+            label: 'Flannel Networking Config',
+            description: 'Configure the cluster L3 network fabric.',
+            longDescription: 'Manage the network subnet and backend type (vxlan, host-gw, etc.) for node communication.',
+            fileName: 'net-conf.json',
+            configLabel: 'Incorrect network ranges can break cluster connectivity.',
+            icon: Activity
+        },
+        'openebs': {
+            label: 'OpenEBS Config',
+            description: 'Highly available, replicated block storage.',
+            longDescription: 'Configure storage policies and replica counts for OpenEBS Jiva and LocalPV.',
+            fileName: 'config.json',
+            configLabel: 'Ensure your storage configuration matches your node hardware.',
+            icon: Database
         }
     }
 

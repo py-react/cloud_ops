@@ -32,10 +32,11 @@ class RepoPoller:
     for allowed repos and calls `PRService.process_pr` to process them.
     """
     
-    def __init__(self, poll_interval_seconds: int = 60):
+    def __init__(self, poll_interval_seconds: int = 60, docker_client=None):
         self.github_client = get_github_client_from_pat()
         self.poll_interval_seconds = poll_interval_seconds
         self.repo_utils = AllowedRepoUtils()
+        self._docker_client = docker_client
         
         self._stop = True
         self.if_run_forever = False
@@ -43,65 +44,74 @@ class RepoPoller:
         self.pr_service = self._create_pr_service()
         self.trigger_detector = TriggerDetector()
         self.rate_limiter = RateLimiter()
+
+    @property
+    def docker_client(self):
+        return self._docker_client or clientContext.get_client()
     
-    def _create_pr_service(self) -> PRService:
+    def _create_pr_service(self, session: Any = None) -> PRService:
         """Create PR service with all dependencies."""
         settings = load_settings()
         
-        docker_client = clientContext.get_client()
+        builder = DockerImageBuilder()
         registries = load_registries(settings)
-        docker_config = load_docker_config(settings)
+        registry_manager = RegistryManager(registries)
+        cleanup_service = ImageCleanupService()
         
-        builder = DockerImageBuilder(docker_client)
-        registry_manager = RegistryManager(registries, docker_client)
-        cleanup_service = ImageCleanupService(docker_client)
         
+        if session:
+            return self._build_pr_service_with_session(session, builder, registry_manager, cleanup_service)
         
         with get_session() as session:
-            build_repository = BuildRepository(session)
-            pr_repository = PRRepository(session)
-            
-            commenter = PRCommenter()
-            detector = Detector()
+            return self._build_pr_service_with_session(session, builder, registry_manager, cleanup_service)
 
-            image_lifecycle_service = ImageLifecycleService(
-                builder=builder,
-                registry_manager=registry_manager,
-                cleanup_service=cleanup_service,
-                session=session
-            )
-            
-            
-            return PRService(
-                image_lifecycle_service=image_lifecycle_service,
-                build_repository=build_repository,
-                pr_repository=pr_repository,
-                commenter=commenter,
-                detector=detector
-            )
+    def _build_pr_service_with_session(
+        self, session: Any, builder: Any, registry_manager: Any, cleanup_service: Any
+    ) -> PRService:
+        """Helper to build PR service with a given session."""
+        build_repository = BuildRepository(session)
+        pr_repository = PRRepository(session)
+        
+        commenter = PRCommenter()
+        detector = Detector()
+
+        image_lifecycle_service = ImageLifecycleService(
+            builder=builder,
+            registry_manager=registry_manager,
+            cleanup_service=cleanup_service,
+            session=session
+        )
+        
+        return PRService(
+            image_lifecycle_service=image_lifecycle_service,
+            build_repository=build_repository,
+            pr_repository=pr_repository,
+            commenter=commenter,
+            detector=detector
+        )
     
     async def run_once(self) -> None:
         """Run a single iteration: iterate allowed repos and process open PRs."""
         logger.info("RepoPoller: starting run_once")
         try:
-            repos_map, branches_map, deployments, repo_pats, _ = self.repo_utils.get_all()
+            repos_map, branches_map, *_ = self.repo_utils.get_all()
             user_login = None
             try:
-                user = await asyncio.to_thread(self.github_client.get_user)
+                user = self.github_client.get_user()
                 user_login = user.login
                 logger.debug(f"RepoPoller authenticated as GitHub user: {user_login}")
             except Exception as e:
                 logger.error(f"RepoPoller failed to get authenticated user: {e}")
                 raise e
             
-            should_backoff, backoff_seconds = await self.rate_limiter.should_backoff(
+            should_backoff, backoff_seconds = self.rate_limiter.should_backoff(
                 self.github_client
             )
             if should_backoff:
                 logger.warning(
                     f"Backing off due to rate limiting for {backoff_seconds} seconds"
                 )
-                await asyncio.sleep(backoff_seconds)
+                result = asyncio.sleep(backoff_seconds)
                 return
             
             promises = []
@@ -131,10 +141,12 @@ class RepoPoller:
             full_repo_name = repo_name if "/" in repo_name else f"{user_login}/{repo_name}"
             gh_repo = await asyncio.to_thread(self.github_client.get_repo, full_repo_name)
             promises = []
-            for branch in branches_map[repo_name]:
+            for branch_data in branches_map[repo_name]:
+                # Extract branch name string from dict
+                branch_name = branch_data["branch"] if isinstance(branch_data, dict) else branch_data
                 promises.append(
                     Promise(
-                        self.process_single_branch(branch, gh_repo, repo_name, user_login)
+                        self.process_single_branch(branch_name, gh_repo, repo_name, user_login)
                     )
                 )
             await Promise.all(promises)
@@ -187,7 +199,7 @@ class RepoPoller:
                 f"{pr.head.repo.name}/{pr.head.ref}"
             )
             
-            should_trigger, reason = await self.trigger_detector.should_trigger_build(
+            should_trigger, reason = self.trigger_detector.should_trigger_build(
                 pr, self.pr_service.pr_repository.session, branch, repo_name
             )
             
@@ -201,12 +213,15 @@ class RepoPoller:
                             else f"{user_login}/{repo_name}"
                         )
                         try:
-                            await self.pr_service.process_pr(
-                                repo=pr.head.repo,
-                                pr=pr,
-                                github_client=self.github_client,
-                                check_status_url=check_status_url
-                            )
+                            # Re-create service with a fresh session for the actual processing task
+                            with get_session() as session:
+                                task_service = self._create_pr_service(session)
+                                await task_service.process_pr(
+                                    repo=pr.head.repo,
+                                    pr=pr,
+                                    github_client=self.github_client,
+                                    check_status_url=check_status_url
+                                )
                             logger.info(f"Completed processing PR #{pr.number} in {repo_name}")
                         except Exception as e:
                             logger.error(f"Error processing PR #{pr.number} in {repo_name}: {e}")
@@ -233,7 +248,7 @@ class RepoPoller:
         while not self._stop:
             try:
                 # should_backoff is now async and uses to_thread internally
-                should_backoff, backoff_seconds = await self.rate_limiter.should_backoff(
+                should_backoff, backoff_seconds = self.rate_limiter.should_backoff(
                     self.github_client
                 )
                 if should_backoff:

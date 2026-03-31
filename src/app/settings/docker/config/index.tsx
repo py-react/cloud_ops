@@ -12,8 +12,18 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { FileCode, Upload, X } from 'lucide-react'
+import { FileCode, Upload, X, AlertTriangle } from 'lucide-react'
 import PageLayout from '@/components/PageLayout'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const dockerConfigSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -198,26 +208,23 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
     const [isWizardOpen, setIsWizardOpen] = useState(false)
     const [editConfig, setEditConfig] = useState<any>(null)
     const [currentStep, setCurrentStep] = useState('setup')
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+    const [configToDelete, setConfigToDelete] = useState<any>(null)
 
     const fetchConfigs = async () => {
         setLoading(true)
         try {
             const data = await (DefaultService as any).apiSettingsDockerConfigGet()
-            const defaultEntry = {
-                id: 'default',
-                name: 'Local Engine (Default)',
-                base_url: 'unix:///var/run/docker.sock',
-                verify: false,
-                status: 'active',
-                is_default: true,
-                showEdit: false,
-                showDelete: false
-            }
-            setConfigs([defaultEntry, ...(data || [])])
+            const processedData = (data || []).map((c: any) => ({
+                ...c,
+                showEdit: c.id !== 0,
+                showDelete: c.id !== 0
+            }))
+            setConfigs(processedData)
         } catch (error) {
             toast.error("Failed to fetch Docker configurations")
         } finally {
-            !engineInfo && setLoading(false)
+            setLoading(false)
         }
     }
 
@@ -226,12 +233,38 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
     }, [])
 
     const handleDelete = async (row: any) => {
+        setConfigToDelete(row)
+        setDeleteDialogOpen(true)
+    }
+
+    const confirmDelete = async () => {
+        if (!configToDelete) return
         try {
-            await (DefaultService as any).apiSettingsDockerConfigDelete({ id: row.id })
+            await (DefaultService as any).apiSettingsDockerConfigDelete({ id: configToDelete.id })
             toast.success("Deleted configuration")
             fetchConfigs()
         } catch (error) {
             toast.error("Failed to delete configuration")
+        } finally {
+            setDeleteDialogOpen(false)
+            setConfigToDelete(null)
+        }
+    }
+    
+    const handleActivate = async (row: any) => {
+        try {
+            // ID 0 represents the Local Engine (deactivates all remote ones)
+            const targetId = row.id === 'default' ? 0 : row.id;
+            await (DefaultService as any).apiSettingsDockerConfigPatch({ 
+                id: targetId, 
+                requestBody: { is_active: true } 
+            })
+            toast.success(`Switched to ${row.name}`)
+            fetchConfigs()
+            // Optional: Refresh the page or trigger a global state update if needed
+            // For now, fetchConfigs updates the local view
+        } catch (error) {
+            toast.error("Failed to switch context")
         }
     }
 
@@ -290,15 +323,31 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
                             header: "TLS",
                             accessor: "verify",
                             cell: (row: any) => (
-                                <span className={row.verify ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>
+                                <Badge variant={row.verify ? "success" : "warning"} className="uppercase text-[8px] h-4">
                                     {row.verify ? "Verified" : "Unverified"}
-                                </span>
+                                </Badge>
                             )
                         },
-                        { header: "Status", accessor: "status" },
+                        { 
+                            header: "Status", 
+                            accessor: "is_active",
+                            cell: (row: any) => (
+                                <Badge variant={row.is_active ? "success" : "secondary"} className="uppercase text-[10px]">
+                                    {row.is_active ? "Active" : "Inactive"}
+                                </Badge>
+                            )
+                        },
                     ]}
                     onDelete={handleDelete}
                     onEdit={handleEdit}
+                    customActions={[
+                        {
+                            label: "Use This",
+                            icon: Activity,
+                            onClick: handleActivate,
+                            show: (row: any) => !row.is_active
+                        }
+                    ]}
                 />
             </div>
 
@@ -333,6 +382,39 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
                     icon: Server
                 }}
             />
+
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent className="max-w-md bg-background/95 backdrop-blur-xl border-border/50">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="h-5 w-5" />
+                            Delete Engine Config?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-3 pt-2">
+                            <p className="text-foreground/80">
+                                Are you sure you want to permanently delete <strong>{configToDelete?.name}</strong>?
+                            </p>
+                            <div className="bg-amber-500/10 border border-amber-500/20 rounded-md p-3">
+                                <p className="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400 font-medium">
+                                    Removing this configuration will prevent the system from connecting to this Docker engine. Any services or operations relying on this context will fail.
+                                </p>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-4">
+                        <AlertDialogCancel className="bg-muted hover:bg-muted/80 text-foreground border-none">
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold shadow-lg shadow-destructive/20"
+                        >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Config
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </PageLayout>
     )
 }

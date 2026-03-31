@@ -191,6 +191,12 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                             icon: Orbit,
                             items: [],
                         },
+                        {
+                            title: "Release Control",
+                            url: "/release_control",
+                            icon: RocketIcon,
+                            items: [],
+                        },
                     ],
                 },
                 {

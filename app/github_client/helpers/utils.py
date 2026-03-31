@@ -128,7 +128,7 @@ def clone_repo(repo_full_name: str, branch: str, pat: str):
         logger.info(f"Cloning {repo_full_name} branch {branch} to {temp_dir}")
         
         # Run git clone command
-        subprocess.run(
+        result = subprocess.run(
             ["git", "clone", "--depth", "1", "--branch", branch, clone_url, "."],
             cwd=temp_dir,
             check=True,
@@ -136,7 +136,7 @@ def clone_repo(repo_full_name: str, branch: str, pat: str):
             text=True
         )
         
-        yield temp_dir
+        yield (temp_dir, result.stdout + result.stderr)
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to clone repository {repo_full_name}: {e.stderr}")
         raise Exception(f"Failed to clone repository: {e.stderr}")

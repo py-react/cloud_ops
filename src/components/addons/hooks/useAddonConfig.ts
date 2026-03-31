@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { DefaultService } from '@/gingerJs_api_client'
 
 interface UseAddonConfigProps {
-    component: "prometheus" | "grafana" | "metrics-server" | "alertmanager" | "node-exporter" | "loki" | "promtail" | "otel-collector" | "gateway-api"
+    component: "prometheus" | "grafana" | "metrics-server" | "alertmanager" | "node-exporter" | "loki" | "promtail" | "otel-collector" | "gateway-api" | "local-path-provisioner" | "flannel" | "openebs"
 }
 
 export function useAddonConfig({ component }: UseAddonConfigProps) {

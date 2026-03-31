@@ -145,6 +145,30 @@ function Monitoring() {
           </div>
         </div>
       </div>
+      <SectionHeading title="Storage & Persistence" icon={Database} />
+      <div className="flex flex-col gap-6 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch">
+          <MonitoringAddon
+            title="OpenEBS Replicated Storage"
+            description="Highly available, replicated block storage for production-ready persistence."
+            component="openebs"
+            icon={<Database />}
+            features={[
+              "Distributed Replicas",
+              "Data Persistence",
+              "Snapshot Support"
+            ]}
+          />
+          <div className="h-full">
+            <Card className="border border-dashed border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-6 text-center hover:bg-primary/10 transition-all cursor-pointer group h-full min-h-[280px]">
+              <div className="p-3 bg-white/50 rounded-full mb-3 group-hover:scale-110 transition-transform shadow-sm">
+                <PlusIcon className="w-6 h-6 text-primary/40" />
+              </div>
+              <CardTitle className="text-sm font-bold text-primary/60">More coming</CardTitle>
+            </Card>
+          </div>
+        </div>
+      </div>
       <SectionHeading title="Networking & Connectivity" icon={Activity} />
       <div className="flex flex-col gap-6 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch">
@@ -157,6 +181,17 @@ function Monitoring() {
               // "Standard Channel (v1.0.0)",
               // "Gateway & HTTPRoute Support",
               // "Role-oriented Design"
+            ]}
+          />
+          <MonitoringAddon
+            title="Flannel"
+            description="Simple and easy way to configure a layer 3 network fabric designed for Kubernetes."
+            component="flannel"
+            icon={<Activity />}
+            features={[
+              // "Layer 3 Network",
+              // "Simple Configuration",
+              // "Overlay Network"
             ]}
           />
           <div className="h-full">

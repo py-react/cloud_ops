@@ -109,9 +109,16 @@ def update_pr_head_sha(session: Session, pull_request_number: str, pr_head_sha: 
     return build_obj
 
 def add_build_log(session: Session, build_id: int, logs):
-    # Split logs by new line, get last 100 lines, join back with new line
-    if type(logs) == list:
-        lines = deque(logs, maxlen=100)
+    # Convert iterators (like itertools._tee or generators) to list
+    if not isinstance(logs, (str, bytes, list)) and hasattr(logs, '__iter__'):
+        try:
+            logs = list(logs)
+        except Exception:
+            pass
+
+    # Split logs by new line, get last 1000 lines, join back with new line
+    if isinstance(logs, list):
+        lines = deque(logs, maxlen=1000)
         # Now last_logs contains the final 100 log lines
         # Optionally, parse or filter them
         cleaned_logs = []

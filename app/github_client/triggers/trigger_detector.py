@@ -14,7 +14,7 @@ class TriggerDetector:
         self.trigger_cooldown_seconds = trigger_cooldown_seconds
         self._trigger_re = re.compile(r"(?i)\b(rerun|rebuild)\b")
     
-    async def should_trigger_build(
+    def should_trigger_build(
         self, 
         pr, 
         session: Session, 

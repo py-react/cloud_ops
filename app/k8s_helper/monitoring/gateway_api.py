@@ -6,11 +6,16 @@ logger = logging.getLogger(__name__)
 
 GATEWAY_API_URL = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml"
 
-DEFAULT_GATEWAY_CONFIG = """apiVersion: gateway.networking.k8s.io/v1
+def get_gateway_api_manifests(namespace="monitoring"):
+    """
+    Fetches the standard Kubernetes Gateway API v1.0.0 CRDs and returns them as a list of manifests.
+    Includes the default main-gateway and a ConfigMap for UI configuration.
+    """
+    default_gateway_config = f"""apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: main-gateway
-  namespace: default
+  namespace: {namespace}
 spec:
   gatewayClassName: nginx
   listeners:
@@ -20,11 +25,6 @@ spec:
     hostname: "*.example.com"
 """
 
-def get_gateway_api_manifests():
-    """
-    Fetches the standard Kubernetes Gateway API v1.0.0 CRDs and returns them as a list of manifests.
-    Includes the default main-gateway and a ConfigMap for UI configuration.
-    """
     try:
         response = requests.get(GATEWAY_API_URL, timeout=30)
         response.raise_for_status()
@@ -37,9 +37,9 @@ def get_gateway_api_manifests():
     config_map = {
         "apiVersion": "v1",
         "kind": "ConfigMap",
-        "metadata": {"name": "gateway-api-config", "namespace": "default"},
+        "metadata": {"name": "gateway-api-config", "namespace": namespace},
         "data": {
-            "gateway.yaml": DEFAULT_GATEWAY_CONFIG
+            "gateway.yaml": default_gateway_config
         }
     }
 
@@ -49,7 +49,7 @@ def get_gateway_api_manifests():
         "kind": "Gateway",
         "metadata": {
             "name": "main-gateway",
-            "namespace": "default"
+            "namespace": namespace
         },
         "spec": {
             "gatewayClassName": "nginx",

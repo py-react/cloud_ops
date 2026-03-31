@@ -4,6 +4,8 @@ from app.db_client.models.code_source_control_branch.types import CodeSourceCont
 from typing import List
 
 def create_code_source_control_branch(session: Session, data: CodeSourceControlBranchType) -> CodeSourceControlBranch:
+    if data.docker_config_id == 0:
+        data.docker_config_id = None
     obj = CodeSourceControlBranch(**data.dict())
     session.add(obj)
     session.commit()

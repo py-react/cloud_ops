@@ -96,10 +96,14 @@ const PackagesPage = () => {
     const pkg = row.package;
     try {
       const response: any = await DefaultService.apiDockerRegistryPost({
-        imageName: pkg.tags[0].split(":")[0],
-        sourceTag: pkg.tags[0].split(":")[1],
+        requestBody: {
+          action: 'push_image',
+          image_name: pkg.tags[0].split(":")[0],
+          source_tag: pkg.tags[0].split(":")[1],
+          name: pkg.tags[0].split(":")[0], // Name is required in CreateRegistryRequest
+        }
       });
-      toast.success(response.message + " " + response.pull_command);
+      toast.success(response.message);
       const newPackages = await fetchPackages();
       setPackages(newPackages);
     } catch (err: any) {
@@ -223,25 +227,22 @@ const PackagesPage = () => {
         setIsWizardOpen={setShowPackagePullModal}
         onSubmitHandler={async (pullPackageInfo) => {
           setPullSubmitting(true);
-          const response = await fetch("/api/packges", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+          const response: any = await DefaultService.apiDockerPackagesPost({
+            requestBody: {
               action: "pull",
               pull_config: {
                 image: pullPackageInfo.image,
                 registry: pullPackageInfo.registry,
               },
-            }),
+            }
           });
-          const responseData = await response.json();
           setPullSubmitting(false);
-          if (responseData.error) {
-            toast.error(responseData.message);
+          if (response.error) {
+            toast.error(response.message);
             return;
           }
           setShowPackagePullModal(false);
-          toast.success(responseData.message);
+          toast.success(response.message);
           const newPackages = await fetchPackages();
           setPackages(newPackages);
         }}
@@ -254,22 +255,19 @@ const PackagesPage = () => {
         setIsWizardOpen={setShowPackageCreateModal}
         onSubmitHandler={async (data) => {
           setCreateSubmitting(true);
-          const response = await fetch("/api/packges", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+          const response: any = await DefaultService.apiDockerPackagesPost({
+            requestBody: {
               action: "create",
               create_config: data,
-            }),
+            }
           });
-          const responseData = await response.json();
           setCreateSubmitting(false);
-          if (responseData.error) {
-            toast.error(responseData.message);
+          if (response.error) {
+            toast.error(response.message);
             return;
           }
           setShowPackageCreateModal(false);
-          toast.success(responseData.message);
+          toast.success(response.message);
           const newPackages = await fetchPackages();
           setPackages(newPackages);
         }}

@@ -10,8 +10,13 @@ logger = logging.getLogger(__name__)
 class ImageCleanupService:
     """Service for cleaning up old Docker images."""
     
-    def __init__(self, docker_client):
-        self.docker_client = docker_client
+    def __init__(self, docker_client=None):
+        self._docker_client = docker_client
+
+    @property
+    def docker_client(self):
+        from app.docker_client import clientContext
+        return self._docker_client or clientContext.get_client()
     
     async def cleanup_old_resources(self, max_age_hours: int = 24) -> Dict[str, int]:
         """

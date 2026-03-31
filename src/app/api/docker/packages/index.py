@@ -18,7 +18,7 @@ class ActionTypeEnum(str, Enum):
     RUN = 'run'
     REMOVE = 'remove'
     PULL = "pull"
-    CREATE = "crete"
+    CREATE = "create"
 
 class PullConfig(BaseModel):
     image:str
@@ -74,7 +74,7 @@ def pull_image(image_name: str, client):
     return image
 
 
-async def build_from_string(dockerfile_string, tag, client):
+def build_from_string(dockerfile_string, tag, client):
 
     try:
         # Use the low-level API client
@@ -127,7 +127,7 @@ class Package_Info(BaseModel):
 class Get_Packages_Response(BaseModel):
     packages:List[Package_Info]
 
-async def GET(request: Request, id: Optional[str] = None):
+def GET(request: Request, id: Optional[str] = None):
     if id:
         try:
             client = clientContext.get_client()
@@ -171,32 +171,35 @@ async def GET(request: Request, id: Optional[str] = None):
              return {"error": True, "message": "Image not found"}
         except Exception as e:
             return {"error": True, "message": str(e)}
+    try:
+        client = clientContext.get_client()
+        # List all images if no ID provided
+        images = client.images.list(all=True)
+        
+        image_info = []
 
-    # List all images if no ID provided
-    images = client.images.list(all=True)
-    
-    image_info = []
+        for image in images:
+            if image.tags:
+                try:
+                    image_details = {}
+                    image_details['name'] = [tag.split(":")[0] for tag in image.tags] if image.tags else "None"
+                    image_details['id'] = image.id
+                    image_details['tags'] = image.tags
+                    image_details['created'] = image.attrs['Created']
+                    image_details['size'] = image.attrs['Size']
+                    image_details['virtual_size'] = image.attrs.get('VirtualSize',"N/A")
+                    image_details['repo_tags'] = image.attrs['RepoTags']
+                    image_details['labels'] = image.attrs.get('Labels', {})
 
-    for image in images:
-        if image.tags:
-            try:
-                image_details = {}
-                image_details['name'] = [tag.split(":")[0] for tag in image.tags] if image.tags else "None"
-                image_details['id'] = image.id
-                image_details['tags'] = image.tags
-                image_details['created'] = image.attrs['Created']
-                image_details['size'] = image.attrs['Size']
-                image_details['virtual_size'] = image.attrs.get('VirtualSize',"N/A")
-                image_details['repo_tags'] = image.attrs['RepoTags']
-                image_details['labels'] = image.attrs.get('Labels', {})
+                    image_info.append(image_details)
+                except Exception as e:
+                    print(f"Error retrieving info: {e}")
+        
+        return {"packages": image_info}
+    except Exception as e:
+        return {"error": True, "message": str(e)}
 
-                image_info.append(image_details)
-            except Exception as e:
-                print(f"Error retrieving info: {e}")
-    
-    return {"packages": image_info}
-
-async def POST(request:Request,body: RunImage):
+def POST(request:Request,body: RunImage):
     actionType = body.action
     # Get all containers that are running and match the stored names
 
@@ -233,7 +236,7 @@ async def POST(request:Request,body: RunImage):
         if actionType == "create":
             package_content = body.create_config.content
             tag = body.create_config.tag
-            created_image = await build_from_string(package_content,tag,client)
+            created_image = build_from_string(package_content,tag,client)
             # Loop through each image and retrieve information
             return {"error":False, "message":f"Created Image {created_image['image']['id']}","image":created_image['image']}
         
@@ -249,4 +252,4 @@ async def POST(request:Request,body: RunImage):
         return({"error":True,"message":f"Invalid action: {actionType}. Allowed actions are 'run', 'remove', 'pull', 'create'."})
         
     except Exception as e:
-        return {"error": True, "message": e.__dict__.get("explanation", str(e))}
+        return {"error": True, "message": getattr(e, "explanation", str(e))}

@@ -57,6 +57,7 @@
     "vite-plugin-static-copy": "^2.3.1",
     "vite-plugin-svgr": "^4.3.0",
     "vite-tsconfig-paths": "^5.1.4",
+    "ws": "^8.20.0",
     "zod": "3.23.8"
   },
   "devDependencies": {

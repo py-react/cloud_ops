@@ -12,6 +12,7 @@ class DockerConfig(SQLModel, table=True):
     ca_cert: Optional[str] = Field(default=None)
     verify: bool = Field(default=True, sa_column=Column(BOOLEAN))
     status: str = Field(default="active")
+    is_active: bool = Field(default=False, sa_column=Column(BOOLEAN))
     
     soft_delete: bool = Field(default=False, sa_column=Column(BOOLEAN))
     deleted_at: Optional[date] = Field(default=None, sa_column=Column(DATE))

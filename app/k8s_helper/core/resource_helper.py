@@ -86,6 +86,16 @@ class KubernetesResourceHelper:
         """Delete a namespace and all resources in it"""
         self.namespace_ops.delete_namespace(name)
 
+    def list_resources(self, api_version: str, kind: str, namespace: Optional[str] = None, label_selector: Optional[str] = None):
+        """List resources of a specific api_version and kind"""
+        resource_client = self.dyn_client.resources.get(api_version=api_version, kind=kind)
+        return resource_client.get(namespace=namespace, label_selector=label_selector)
+
+    def get_resource(self, api_version: str, kind: str, name: str, namespace: Optional[str] = None):
+        """Get a specific resource"""
+        resource_client = self.dyn_client.resources.get(api_version=api_version, kind=kind)
+        return resource_client.get(name=name, namespace=namespace)
+
     def create_resource(self, resource: dict):
         """
         Create a resource directly.
@@ -101,20 +111,26 @@ class KubernetesResourceHelper:
     def apply_resource(self, resource: dict):
         """
         Create or patch a resource (apply semantics).
-        Implements proper kubectl apply behavior:
-        1. Read current resource from cluster
-        2. Compare with last-applied-configuration
-        3. Compute patch diff
-        4. Patch the live resource accordingly
-        5. Update last-applied-configuration
-        
-        Handles field removal when fields are not present in the new resource spec.
         """
-        print("resource", type(resource))
-        api_version = resource['apiVersion']
-        kind = resource['kind']
-        name = resource['metadata']['name']
-        namespace = resource['metadata'].get('namespace', 'default')
+        if not resource or not isinstance(resource, dict):
+            print(f"Skipping invalid resource: {type(resource)}")
+            return None
+
+        # print("resource", type(resource))
+        api_version = resource.get('apiVersion')
+        kind = resource.get('kind')
+        
+        if not api_version or not kind:
+            print(f"Skipping resource missing apiVersion or kind: {resource}")
+            return None
+
+        metadata = resource.get('metadata', {})
+        name = metadata.get('name')
+        if not name:
+            print(f"Skipping resource missing name: {resource}")
+            return None
+
+        namespace = metadata.get('namespace', 'default')
 
         resource_client = self.dyn_client.resources.get(api_version=api_version, kind=kind)
         

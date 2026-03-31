@@ -3,6 +3,7 @@ import { Star, Package, Download, ArrowDownToLine, CheckCircle2 } from 'lucide-r
 import { DockerImage } from './types';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
+import { DefaultService } from '@/gingerJs_api_client';
 
 interface ImageCardProps {
   image: DockerImage;
@@ -12,25 +13,23 @@ export function ImageCard({ image }: ImageCardProps) {
   const handlePull = async () => {
     toast.info(`${image.name} started pulling`);
     try {
-      const response = await fetch("/api/packges", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const response: any = await DefaultService.apiDockerPackagesPost({
+        requestBody: {
           action: "pull",
           pull_config: {
             image: image.name,
             registry: "docker.io",
           },
-        }),
+        }
       });
-      const responseData = await response.json();
-      if (responseData.error) {
-        toast.error(responseData.message);
+
+      if (response.error) {
+        toast.error(response.message);
         return;
       }
-      toast.success(responseData.message);
-    } catch (e) {
-      toast.error("Failed to initiate pull");
+      toast.success(response.message);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to initiate pull");
     }
   };
 

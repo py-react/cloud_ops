@@ -37,7 +37,8 @@ def create_docker_config(session: Session, data: DockerConfigType) -> DockerConf
         client_key=_encrypt_val(data.client_key),
         ca_cert=_encrypt_val(data.ca_cert),
         verify=data.verify if data.verify is not None else True, # Reverted to original logic for verify
-        status=data.status or "active" # Reverted to original logic for status
+        status=data.status or "active", # Reverted to original logic for status
+        is_active=data.is_active or False
     )
     session.add(config)
     session.commit()
@@ -94,6 +95,8 @@ def update_docker_config(session: Session, id: int, data: DockerConfigType) -> O
         config.verify = data.verify
     if data.status is not None:
         config.status = data.status
+    if data.is_active is not None:
+        config.is_active = data.is_active
         
     session.add(config)
     session.commit()
@@ -109,3 +112,25 @@ def delete_docker_config(session: Session, id: int) -> bool:
     session.add(obj)
     session.commit()
     return True
+
+def set_active_docker_config(session: Session, config_id: Optional[int]) -> bool:
+    # First, deactivate all
+    statement = select(DockerConfig)
+    configs = session.exec(statement).all()
+    for config in configs:
+        config.is_active = False
+        session.add(config)
+    
+    # Then, activate the chosen one
+    if config_id is not None:
+        target = session.get(DockerConfig, config_id)
+        if target:
+            target.is_active = True
+            session.add(target)
+    
+    session.commit()
+    return True
+
+def get_active_docker_config(session: Session) -> Optional[DockerConfig]:
+    statement = select(DockerConfig).where(DockerConfig.is_active == True, DockerConfig.soft_delete == False)
+    return session.exec(statement).first()

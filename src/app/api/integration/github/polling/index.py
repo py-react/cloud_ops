@@ -35,9 +35,10 @@ class PollingStatusResponse(BaseModel):
     has_pat: bool = Field(..., description="Whether a GITHUB_PAT is configured")
     interval_seconds: int = Field(..., description="Current poll interval seconds")
     allowed_repositories: Dict[str, str] = Field(..., description="Allowed repositories map")
-    allowed_branches: Dict[str, List[str]] = Field(..., description="Allowed branches per repo")
+    allowed_branches: Dict[str, List[Dict[str, Any]]] = Field(..., description="Allowed branches with specific configs")
     repo_pats: Dict[str, Optional[int]] = Field(default={}, description="Map of repo name to PAT ID")
     repo_registries: Dict[str, Optional[int]] = Field(default={}, description="Map of repo name to Registry ID")
+    repo_engines: Dict[str, Optional[int]] = Field(default={}, description="Map of repo name to Docker Engine ID")
     builds: Dict[str, Dict[str, Optional[SourceCodeBuildWithLogsType]]] = Field(..., description="Last builds per repo/branch")
     timestamp: str = Field(..., description="Current timestamp")
 
@@ -48,7 +49,7 @@ async def GET(request: Request) -> PollingStatusResponse:
     settings = load_settings()
     
     with get_session() as session:
-        ALLOWED_REPOSITORIES, ALLOWED_BRANCHES, DEPLOYMENTS, REPO_PATS, REPO_REGISTRIES = utils.get_all()
+        ALLOWED_REPOSITORIES, ALLOWED_BRANCHES, DEPLOYMENTS, REPO_PATS, REPO_REGISTRIES, REPO_ENGINES = utils.get_all()
         builds = utils.get_last_builds_for_all_repo_branches()
         enabled = settings.get('SCM_POLLING_ENABLED', 'false').lower() in ('1', 'true', 'yes')
         interval = int(settings.get('SCM_POLL_INTERVAL_SECONDS', '300'))
@@ -63,6 +64,7 @@ async def GET(request: Request) -> PollingStatusResponse:
             allowed_branches=ALLOWED_BRANCHES,
             repo_pats=REPO_PATS,
             repo_registries=REPO_REGISTRIES,
+            repo_engines=REPO_ENGINES,
             builds=builds,
             timestamp=datetime.now().isoformat()
         )
@@ -87,11 +89,11 @@ async def PUT(request: Request, body: PollingConfigRequest,background_tasks: Bac
                 return {"success": True, "message": "Polling already enabled."}
             
             # Start run_forever as a background task and keep reference
-            _background_poller_task = asyncio.create_task(poller.run_forever())
+            background_tasks.add_task(poller.run_forever)
             return {"success": True, "message": "Polling enabled and background poller started."}
         else:
             poller = get_repo_poller()
-            await poller.stop()
+            poller.stop()
             if _background_poller_task:
                 # Optional: cancel it if it doesn't stop gracefully fast enough
                 # but poller.stop() sets _stop=True which should handle it
@@ -103,11 +105,11 @@ async def PUT(request: Request, body: PollingConfigRequest,background_tasks: Bac
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def POST(request: Request):
+async def POST(request: Request,background_tasks: BackgroundTasks):
     try:
         poller = get_repo_poller()
         # Schedule run_once asynchronously and return immediately
-        asyncio.create_task(poller.run_once())
+        background_tasks.add_task(poller.run_once)
         return {"success": True, "message": "Manual poll queued."}
     except HTTPException:
         raise

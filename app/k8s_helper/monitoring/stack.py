@@ -259,7 +259,8 @@ def get_pvc_manifest(name, namespace, size="2Gi"):
         "metadata": {"name": name, "namespace": namespace},
         "spec": {
             "accessModes": ["ReadWriteOnce"],
-            "resources": {"requests": {"storage": size}}
+            "resources": {"requests": {"storage": size}},
+            "storageClassName": "local-path"
             # implicit storageClassName: standard/default
         }
     }
@@ -650,6 +651,9 @@ def get_grafana_manifests(namespace="monitoring"):
                                     {"name": "grafana-dashboards", "mountPath": "/var/lib/grafana/dashboards/default", "readOnly": True}
                                 ]
                             }
+                        ],
+                        "tolerations":[
+                            {"key":"node-role.kubernetes.io/control-plane","operator":"Exists","effect":"NoSchedule"},
                         ],
                         "volumes": [
                             {"name": "grafana-datasources", "configMap": {"name": "grafana-datasources"}},

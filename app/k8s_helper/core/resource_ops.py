@@ -74,7 +74,8 @@ class ResourceOperations:
                 
                     api_resources.extend(self._process_api_resources(group_resources, group_version))
                 except Exception as e:
-                    raise Exception(f"Unable to fetch group_resources for group_version: {group_version}")
+                    print(f"Warning: Unable to fetch group_resources for group_version: {group_version} - {e}")
+                    continue
             
             # Filter by scope if specified
             if scope != ResourceScope.ALL:

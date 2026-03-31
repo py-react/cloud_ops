@@ -104,7 +104,7 @@ def deploy_registry_on_k8s(
             
     # 4. Create Service
     service_name = f"{name}-service"
-    service_ports = [client.V1ServicePort(port=5000, target_port=5000)]
+    service_ports = [client.V1ServicePort(port=80, target_port=5000)]
     if service_type == "NodePort" and node_port:
         service_ports[0].node_port = node_port
         
@@ -126,7 +126,7 @@ def deploy_registry_on_k8s(
             raise e
 
     # Determine URL
-    url = f"{service_name}.{namespace}.svc.cluster.local:5000"
+    url = f"{service_name}.{namespace}.svc.cluster.local"
     if service_type == "NodePort":
         # Strategy to get node IP needed, but for now internal URL is base
         pass

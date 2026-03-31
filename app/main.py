@@ -15,6 +15,14 @@ from fastapi.routing import APIRoute
 
 logger = logging.getLogger(__name__)
 
+# Configure logging to API_ROUTES.log
+log_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "API_ROUTES.log")
+handler = logging.FileHandler(log_file)
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logging.getLogger().addHandler(handler)
+logging.getLogger().setLevel(logging.INFO)
+
+
 
 # Define the target server for proxying requests
 TARGET_URL = "https://registry.hub.docker.com"
@@ -37,13 +45,12 @@ async def proxy(path: str, request: Request, response: Response):
     return response
 
 
-import requests
-from starlette.concurrency import run_in_threadpool
+import httpx
 
-async def cluster_proxy(request: Request, service: str, namespace: str, path: str = "", service_port: int = 80):
+async def cluster_proxy(request: Request, service: str, namespace: str, path: str = "", service_port: int = 80, rewrite_v2_location: bool = True):
     """
-    Proxy requests to Kubernetes monitoring services (Prometheus/Grafana).
-    Handles authentication, URL construction, and content rewriting for assets.
+    Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).
+    Uses httpx.AsyncClient for true concurrent async proxying — no threadpool blocking.
     """
     try:
         config.load_config()
@@ -51,11 +58,6 @@ async def cluster_proxy(request: Request, service: str, namespace: str, path: st
         configuration = client.Configuration.get_default_copy()
         api_server = configuration.host
         
-        # Determine port - simplified for now (defaulting to 80 as per previous logic)
-        # Construct K8s Proxy URL
-        # Logic: /api/v1/namespaces/{namespace}/services/{service_name}:{port}/proxy/{path}
-        
-        # Ensure path starts with / if it exists
         if path:
             path = "/" + path.lstrip("/")
         else:
@@ -64,109 +66,88 @@ async def cluster_proxy(request: Request, service: str, namespace: str, path: st
         k8s_proxy_path = f"/api/v1/namespaces/{namespace}/services/{service}:{service_port}/proxy{path}"
         target_url = f"{api_server}{k8s_proxy_path}"
         
-        # Prepare headers
-        headers = dict(request.headers)
-        headers.pop("Host", None)
-        headers.pop("host", None)
-        headers.pop("content-length", None)
-        # Strip Origin/Referer to avoid Grafana "Origin not allowed" errors
-        # This forces the backend to treat it as a direct request or rely on its own internal handling
-        headers.pop("Origin", None)
-        headers.pop("origin", None)
-        headers.pop("Referer", None)
-        headers.pop("referer", None)
-        headers.pop("Cookie", None)
-        headers.pop("cookie", None)
-        headers.pop("Authorization", None)
-        headers.pop("authorization", None)
+        # Prepare headers — strip hop-by-hop and sensitive headers
+        headers = {}
+        skip_headers = {
+            "host", "content-length", "origin", "referer", "cookie",
+            "authorization", "transfer-encoding", "connection"
+        }
+        for k, v in request.headers.items():
+            if k.lower() not in skip_headers:
+                headers[k] = v
         
-        # Add K8s Auth headers
+        # Add K8s Bearer token auth
         if configuration.api_key:
             for key, value in configuration.api_key.items():
-                headers[key] = value
+                prefix = (configuration.api_key_prefix or {}).get(key, "")
+                headers[key] = f"{prefix} {value}".strip() if prefix else value
         
-        if configuration.api_key_prefix:
-            for key, value in configuration.api_key_prefix.items():
-                if key in headers:
-                    headers[key] = f"{value} {headers[key]}"
-
-        # Prepare certs/verify for requests to match registry_helper.py patterns
-        verify_ssl = configuration.ssl_ca_cert or not configuration.verify_ssl
-        cert = (configuration.cert_file, configuration.key_file) if configuration.cert_file else None
+        # Build SSL context from kubeconfig
+        ssl_context = None
+        if configuration.ssl_ca_cert:
+            import ssl as ssl_module
+            ssl_context = ssl_module.create_default_context(cafile=configuration.ssl_ca_cert)
+            if configuration.cert_file and configuration.key_file:
+                ssl_context.load_cert_chain(
+                    certfile=configuration.cert_file,
+                    keyfile=configuration.key_file
+                )
+        elif not configuration.verify_ssl:
+            ssl_context = False  # httpx: False = skip verification
         
-        # Read body if present
         body = await request.body()
         
-        # Define sync request function to run in threadpool
-        def make_request():
-            return requests.request(
+        # Use httpx async client — handles concurrent requests without blocking threads
+        async with httpx.AsyncClient(
+            verify=ssl_context if ssl_context is not None else True,
+            timeout=httpx.Timeout(connect=10.0, read=60.0, write=60.0, pool=10.0),
+            follow_redirects=False,
+        ) as http_client:
+            proxy_res = await http_client.request(
                 method=request.method,
                 url=target_url,
                 headers=headers,
-                data=body,
-                params=request.query_params,
-                verify=verify_ssl,
-                cert=cert,
-                timeout=30.0
+                content=body if body else None,
+                params=dict(request.query_params),
             )
-
-        # Forward the request using requests (sync) in a threadpool
-        proxy_res = await run_in_threadpool(make_request)
-
-        # Content Rewriting for Grafana/Web Assets
-        # Strip the K8s proxy prefix from Location headers and text content
-        # so browser sees /cluster/proxy/... and not /api/v1/namespaces/...
         
         k8s_prefix = f"/api/v1/namespaces/{namespace}/services/{service}:{service_port}/proxy"
         
         response_headers = dict(proxy_res.headers)
         
-        # 1. Fix Location header
-        if "Location" in response_headers:
-            location = response_headers["Location"]
-            
-            # If it's an absolute URL, make it relative to the proxy
+        # Fix Location header
+        if "location" in response_headers:
+            location = response_headers["location"]
             if "://" in location:
                 from urllib.parse import urlparse
                 parsed = urlparse(location)
                 location = parsed.path
                 if parsed.query:
                     location += f"?{parsed.query}"
-            
-            # If it's a K8s proxy path returned by API, strip it
             if k8s_prefix in location:
                 location = location.replace(k8s_prefix, "")
-            
-            # If we are in the specialized V2 proxy, ensure the path reflects our route
-            # Downstream expects /v2/{service}/{namespace}/{path}
-            # Upstream might return /v2/{path}
-            if "/v2/" in location and not location.startswith(f"/v2/{service}/{namespace}/"):
+            if rewrite_v2_location and "/v2/" in location and not location.startswith(f"/v2/{service}/{namespace}/"):
                 if location.startswith("/v2/"):
                     location = location.replace("/v2/", f"/v2/{service}/{namespace}/", 1)
-            
-            response_headers["Location"] = location
+            response_headers["location"] = location
                 
-        # 2. Fix Content
+        # Fix content (rewrite K8s proxy prefix in text responses)
         content = proxy_res.content
+        content_type = response_headers.get("content-type", "")
         
-        content_type = response_headers.get("Content-Type", "")
-        
-        if any(x in content_type for x in ["text/html", "text/css", "javascript", "application/javascript", "application/json", "xml"]):
+        if any(x in content_type for x in ["text/html", "text/css", "javascript", "application/json", "xml"]):
             try:
                 prefix_bytes = k8s_prefix.encode('utf-8')
                 if prefix_bytes in content:
                     content = content.replace(prefix_bytes, b"")
-                    # Remove content-length as it changed
-                    response_headers.pop("Content-Length", None)
                     response_headers.pop("content-length", None)
             except Exception as e:
                 logger.warning(f"Failed to rewrite content: {e}")
 
-        # Filter forbidden headers for response
+        # Strip hop-by-hop response headers
         excluded_headers = {"content-encoding", "content-length", "transfer-encoding", "connection", "host"}
         final_headers = {k: v for k, v in response_headers.items() if k.lower() not in excluded_headers}
         
-        # Add Docker-Distribution-API-Version for V2 API compatibility if we are in /v2/
         if "/v2/" in target_url:
             final_headers["Docker-Distribution-API-Version"] = "registry/2.0"
 
@@ -180,6 +161,8 @@ async def cluster_proxy(request: Request, service: str, namespace: str, path: st
     except Exception as e:
         logger.error(f"Monitoring/Registry proxy error: {str(e)}")
         return Response(content=f"Proxy Error: {str(e)}", status_code=500)
+
+
 
 
 async def v2_proxy(request: Request, service: str, namespace: str, path: str = ""):

@@ -89,13 +89,13 @@ class RunContainer(BaseModel):
     instanceConfig: Optional[DockerConfig] = None
     updateInstanceConfig: Optional[UpdateDockerConfig] = None
 
-async def GET(request:Request)->GetContainerResponse:
+def GET(request:Request)->GetContainerResponse:
     print("Getting containers")
+    container_info = []
     try:
         client = clientContext.get_client()
         containers = client.containers.list(all=True)  # Get all containers (running or stopped)
         
-        container_info = []
         
         for container in containers:
             try:
@@ -132,7 +132,7 @@ async def GET(request:Request)->GetContainerResponse:
     
     return {"containers": container_info, "length": len(container_info)}
 
-async def POST(request:Request,body: RunContainer):
+def POST(request:Request,body: RunContainer):
     actionType = body.action
     # Get all containers that are running and match the stored names
 

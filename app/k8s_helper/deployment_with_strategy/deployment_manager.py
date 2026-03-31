@@ -222,28 +222,62 @@ class DeploymentManager:
             strategy_id = getattr(run_data, "deployment_strategy_id", None)
             if strategy_id is None:
                 strategy_id = getattr(config_obj, "deployment_strategy_id", None) or 1
+
+            # 5a. If complex strategy (Canary/Blue-Green), hand over to ReleaseOrchestrator
+            if StrategyHandler.is_complex_strategy(strategy_id):
+                sys.stderr.write(f"\n--- DETECTED COMPLEX STRATEGY (ID: {strategy_id}). DELEGATING TO ORCHESTRATOR ---\n")
+
+                k8s_helper = KubernetesResourceHelper()
+
+                # Verify if the Stable deployment already exists. If not, this is the very first rollout!
+                # We can't Canary if there's no baseline. Treat it as a standard rollout instead.
+                try:
+                    existing_stable = k8s_helper.get_resource(
+                        "apps/v1",
+                        "Deployment",
+                        deployment_spec["metadata"]["name"],
+                        deployment_spec["metadata"]["namespace"]
+                    )
+                except Exception as e:
+                    # Catch 404 Not Found error (or equivalent) raised by dynamic client
+                    existing_stable = None
+
+                if not existing_stable:
+                    sys.stderr.write(f"No stable deployment found for '{deployment_spec['metadata']['name']}'. Treating first release as a standard rollout to establish baseline.\n")
+                    # Override the complex strategy so the native K8s Deployment uses a valid strategy (RollingUpdate/Recreate)
+                    strategy_id = 1
+                else:
+                    from app.k8s_helper.deployment_with_strategy.release_orchestrator import ReleaseOrchestrator
+                    orchestrator = ReleaseOrchestrator(self.session)
+                    
+                    strategy_name = "canary" if strategy_id == 3 else "blue-green"
+                    orchestrator_messages = orchestrator.start_complex_release(config_obj, run_data, deployment_spec, strategy_name)
+                    self.update_deployment_run_status(run_obj.id, "deployed")
+                    return {
+                        "deployment_result": "; ".join(orchestrator_messages),
+                        "run": run_obj
+                    }
+
+            # Basic Strategy Application
             deployment_spec = StrategyHandler.apply_strategy(
                 deployment_spec,
                 strategy_id
             )
             
             # 6. Create the deployment and service in Kubernetes
-            from app.k8s_helper.core.resource_helper import KubernetesResourceHelper
             from kubernetes.client.rest import ApiException
-            import json
-            import sys
             
             # LOGGING THE MANIFEST
             sys.stderr.write("\n--- APPLYING KUBERNETES MANIFEST ---\n")
             sys.stderr.write(json.dumps(deployment_spec, indent=2, default=str))
             sys.stderr.write("\n------------------------------------\n")
 
-            k8s_helper = KubernetesResourceHelper()
+            if 'k8s_helper' not in locals():
+                k8s_helper = KubernetesResourceHelper()
             
             try:
                 k8s_helper.apply_resource(deployment_spec)
             except ApiException as e:
-                import json
                 error_body = json.loads(e.body) if e.body else {}
                 sys.stderr.write(f"K8s API Error (Deployment): {error_body.get('message', str(e))}\n")
                 sys.stderr.write(f"Problematic Spec: {json.dumps(deployment_spec, indent=2)}\n")

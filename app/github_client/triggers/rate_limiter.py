@@ -13,7 +13,7 @@ class RateLimiter:
         self.threshold = threshold
         self.backoff_multiplier = 1.0
     
-    async def should_backoff(self, github_client: Github) -> Tuple[bool, int]:
+    def should_backoff(self, github_client: Github) -> Tuple[bool, int]:
         """
         Check if should backoff due to rate limits.
         
@@ -24,7 +24,7 @@ class RateLimiter:
             Tuple of (should_backoff, backoff_seconds)
         """
         try:
-            rl = await asyncio.to_thread(github_client.get_rate_limit)
+            rl = github_client.get_rate_limit()
             core = rl.core
             remaining = core.remaining
             limit = core.limit

@@ -168,28 +168,47 @@ class PRService:
         from app.db_client.models.registry_config import RegistryConfig as DBRegistryConfig
         from app.github_client.core.allowed_repo import AllowedRepoUtils
         
-        # Determine registry URL (repo specific or default)
+        # Determine registry and engine (branch specific > repo specific > default)
         registry_url = None
+        engine_id = None
+        branch_name = pr.head.ref
         
         with get_session() as session:
-            # Check for repo-specific registry
             utils = AllowedRepoUtils(session)
-            _, _, _, _, repo_registries = utils.get_all()
-            repo_registry_id = repo_registries.get(repo.name)
+            _, allowed_branches, _, _, repo_registries, repo_engines = utils.get_all()
             
-            if repo_registry_id:
-                reg_config = session.get(DBRegistryConfig, repo_registry_id)
-                if reg_config:
-                   registry_url = reg_config.url
+            # 1. Check branch-specific config
+            branch_list = allowed_branches.get(repo.name, [])
+            branch_config = next((b for b in branch_list if b["branch"] == branch_name), None)
             
-            # Fallback to default if no specific registry found
+            if branch_config:
+                registry_id = branch_config.get("registry_id")
+                engine_id = branch_config.get("docker_config_id")
+                
+                if registry_id:
+                    reg_config = session.get(DBRegistryConfig, registry_id)
+                    if reg_config:
+                        registry_url = reg_config.url
+            
+            # 2. Fallback to repo-specific config
+            if not registry_url:
+                repo_registry_id = repo_registries.get(repo.name)
+                if repo_registry_id:
+                    reg_config = session.get(DBRegistryConfig, repo_registry_id)
+                    if reg_config:
+                        registry_url = reg_config.url
+            
+            if not engine_id:
+                engine_id = repo_engines.get(repo.name)
+            
+            # 3. Fallback to default registry
             if not registry_url:
                  settings = load_settings()
                  registry_url = settings.get("REGISTRY_HOST")
 
         if registry_url:
             image_name = generate_image_name(
-                repo.name, pr.head.ref, registry_url=registry_url
+                repo.name, branch_name, registry_url=registry_url
             )
             
             return SourceCodeBuildType(
@@ -200,7 +219,7 @@ class PRService:
                 pull_request_number=str(pr.number),
                 pr_head_sha=pr.head.sha,
                 user_login=user_login,
-                branch_name=pr.head.ref,
+                branch_name=branch_name,
                 created_at=start_time,
                 base_branch_name=pr.base.ref,
                 time_taken=None
@@ -226,18 +245,34 @@ class PRService:
         
         registry_url = None
         registry_config = None
+        engine_id = None
+        branch_name = pr.head.ref
         
         with get_session() as session:
-            # Check for repo-specific registry
             utils = AllowedRepoUtils(session)
-            _, _, _, _, repo_registries = utils.get_all()
-            repo_registry_id = repo_registries.get(repo.name)
+            _, allowed_branches, _, _, repo_registries, repo_engines = utils.get_all()
             
-            if repo_registry_id:
-                db_reg_config = session.get(DBRegistryConfig, repo_registry_id)
+            # 1. Check branch-specific config
+            branch_list = allowed_branches.get(repo.name, [])
+            branch_config = next((b for b in branch_list if b["branch"] == branch_name), None)
+            
+            target_registry_id = None
+            if branch_config:
+                target_registry_id = branch_config.get("registry_id")
+                engine_id = branch_config.get("docker_config_id")
+            
+            # 2. Fallback to repo-specific config
+            if not target_registry_id:
+                target_registry_id = repo_registries.get(repo.name)
+            
+            if not engine_id:
+                engine_id = repo_engines.get(repo.name)
+            
+            # Resolve registry details
+            if target_registry_id:
+                db_reg_config = session.get(DBRegistryConfig, target_registry_id)
                 if db_reg_config:
                    registry_url = db_reg_config.url
-                   # Convert DB model to Config object expected by manager
                    registry_config = RegistryConfig(
                        url=db_reg_config.url,
                        name=db_reg_config.name,
@@ -248,7 +283,7 @@ class PRService:
                        config=db_reg_config.config
                    )
 
-            # Fallback to default if no specific registry found
+            # 3. Fallback to default if no specific registry found
             if not registry_url:
                  settings = load_settings()
                  registry_url = settings.get("REGISTRY_HOST")
@@ -257,7 +292,7 @@ class PRService:
             raise Exception("No registry configured for repository (check Settings -> CI/CD -> Source Control or General Settings)")
         
         base_image_name = generate_image_name(
-            repo.name, pr.head.ref, registry_url=registry_url
+            repo.name, branch_name, registry_url=registry_url
         )
         
         unique_id = base_image_name.split(':')[-1]
@@ -274,12 +309,32 @@ class PRService:
             if not pat:
                 raise Exception("Failed to retrieve GitHub PAT for cloning")
 
-            with clone_repo(repo.full_name, pr.head.ref, pat) as context_path:
-                image_name = await self.image_lifecycle_service.build_and_push(
-                    dockerfile_content, base_image_name, labels, context_path=context_path, registry_config=registry_config
-                )
+            from app.docker_client import clientContext
             
-            self.build_repository.add_log(build_id, "Build and push completed successfully")
+            with clone_repo(repo.full_name, branch_name, pat) as (context_path, clone_logs):
+                if build_id:
+                    self.build_repository.add_log(build_id, f"--- Git Clone Logs ---\n{clone_logs}")
+                
+                # Set the engine context for the background thread.
+                # NOTE: engine_id=0 is the Local Engine sentinel — must use `is not None`
+                # because `if 0:` is falsy in Python and would silently skip local engine.
+                if engine_id is not None:
+                    clientContext.set_engine_id(engine_id)
+                
+                try:
+                    image_name = await self.image_lifecycle_service.build_and_push(
+                        dockerfile_content, 
+                        base_image_name, 
+                        labels, 
+                        context_path=context_path, 
+                        registry_config=registry_config,
+                        build_id=build_id
+                    )
+                finally:
+                    # Reset after build regardless of engine type
+                    if engine_id is not None:
+                        clientContext.reset()
+            
             self.build_repository.update_time_and_status(
                 build_id, start_time, "success"
             )

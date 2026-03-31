@@ -4,7 +4,10 @@ from app.k8s_helper.monitoring.stack import get_prometheus_manifests, get_grafan
 from app.k8s_helper.monitoring.metrics_server import get_metrics_server_manifests
 from app.k8s_helper.monitoring.loki import get_loki_manifests, get_otel_collector_manifests, get_promtail_manifests
 from app.k8s_helper.monitoring.gateway_api import get_gateway_api_manifests
+from app.k8s_helper.monitoring.openebs import get_openebs_manifests
+from app.k8s_helper.monitoring.networking import get_flannel_manifests
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +16,7 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
     Check if a specific monitoring component is installed.
     """
     try:
+        k8s_helper = KubernetesResourceHelper()
         # Determine namespace and name for status check
         if component == "metrics-server":
             namespace, deploy_name, resource_type = "kube-system", "metrics-server", "deployments"
@@ -28,6 +32,10 @@ async def GET(request: Request, component: str = "prometheus") -> dict:
             namespace, deploy_name, resource_type = "monitoring", "node-exporter", "daemonsets"
         elif component == "gateway-api":
             namespace, deploy_name, resource_type = "monitoring", "main-gateway", "gateways"
+        elif component == "openebs":
+            namespace, deploy_name, resource_type = "openebs", "openebs-localpv-provisioner", "deployments"
+        elif component == "flannel":
+            namespace, deploy_name, resource_type = "kube-flannel", "kube-flannel-ds", "daemonsets"
         else:
             namespace, deploy_name, resource_type = "monitoring", component, "deployments"
             if component == "prometheus": deploy_name = "prometheus-deployment"
@@ -77,6 +85,10 @@ async def POST(request: Request, component: str = "prometheus") -> dict:
             namespace, manifests = "monitoring", get_grafana_manifests("monitoring")
         elif component == "gateway-api":
             namespace, manifests = "monitoring", get_gateway_api_manifests()
+        elif component == "openebs":
+            namespace, manifests = "openebs", get_openebs_manifests()
+        elif component == "flannel":
+            namespace, manifests = "kube-flannel", get_flannel_manifests()
         else:
             return {"success": False, "message": f"Unknown component: {component}"}
 
@@ -85,17 +97,23 @@ async def POST(request: Request, component: str = "prometheus") -> dict:
             
         results = []
         for manifest in manifests:
+            if not isinstance(manifest, dict):
+                logger.warning(f"Skipping invalid manifest type in {component}: {type(manifest)}")
+                continue
             try:
                 k8s_helper.apply_resource(manifest)
-                results.append({"kind": manifest["kind"], "name": manifest["metadata"]["name"], "status": "success"})
+                results.append({"kind": manifest.get("kind", "Unknown"), "name": manifest.get("metadata", {}).get("name", "Unknown"), "status": "success"})
             except Exception as e:
-                logger.error(f"Failed to apply {manifest['kind']}/{manifest['metadata']['name']}: {str(e)}")
-                results.append({"kind": manifest["kind"], "name": manifest['metadata']['name'], "status": "failed", "error": str(e)})
+                kind = manifest.get("kind", "Unknown")
+                name = manifest.get("metadata", {}).get("name", "Unknown")
+                logger.error(f"Failed to apply {kind}/{name}: {str(e)}")
+                results.append({"kind": kind, "name": name, "status": "failed", "error": str(e)})
             
         return {"success": True, "message": f"{component.capitalize()} deployment initiated", "results": results}
     except Exception as e:
-        logger.error(f"Error installing {component}: {str(e)}")
-        return {"success": False, "message": str(e)}
+        error_trace = traceback.format_exc()
+        logger.error(f"Error installing {component}: {str(e)}\n{error_trace}")
+        return {"success": False, "message": str(e), "trace": error_trace}
 
 async def DELETE(request: Request, component: str = "prometheus") -> dict:
     """
@@ -119,6 +137,10 @@ async def DELETE(request: Request, component: str = "prometheus") -> dict:
             namespace, manifests = "monitoring", get_grafana_manifests("monitoring")
         elif component == "gateway-api":
             namespace, manifests = "monitoring", get_gateway_api_manifests()
+        elif component == "openebs":
+            namespace, manifests = "openebs", get_openebs_manifests()
+        elif component == "flannel":
+            namespace, manifests = "kube-flannel", get_flannel_manifests()
         else:
             return {"success": False, "message": f"Unknown component: {component}"}
 

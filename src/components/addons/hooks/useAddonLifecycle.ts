@@ -3,7 +3,7 @@ import { DefaultService } from '@/gingerJs_api_client'
 import { toast } from 'sonner'
 
 interface UseAddonLifecycleProps {
-    component: "prometheus" | "grafana" | "metrics-server" | "alertmanager" | "node-exporter" | "loki" | "promtail" | "otel-collector" | "gateway-api"
+    component: "prometheus" | "grafana" | "metrics-server" | "alertmanager" | "node-exporter" | "loki" | "promtail" | "otel-collector" | "gateway-api" | "local-path-provisioner" | "flannel" | "openebs"
     title: string
     onInstallChange?: (installed: boolean) => void
 }

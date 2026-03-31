@@ -9,3 +9,4 @@ class DockerConfigType(BaseModel):
     ca_cert: Optional[str] = None
     verify: Optional[bool] = True
     status: Optional[str] = "active"
+    is_active: Optional[bool] = False

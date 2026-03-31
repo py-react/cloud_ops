@@ -6,7 +6,6 @@ from typing import  Dict,Optional
 from app.docker_client import clientContext
 import time
 
-client = clientContext.get_client()
 
 class CreateQueueJobMeta(BaseModel):
     id:Optional[str]=None

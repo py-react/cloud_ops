@@ -1,0 +1,8 @@
+# Use the lightweight Nginx Alpine image
+FROM nginx:alpine
+
+# Create the index.html file directly inside the image
+RUN echo '<html><head><title>Hello Docker</title></head><body><h1>Hello World 1!</h1><p>Served from a single Dockerfile.</p></body></html>' > /usr/share/nginx/html/index.html
+
+# Expose port 80
+EXPOSE 80

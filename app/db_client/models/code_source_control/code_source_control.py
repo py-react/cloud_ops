@@ -6,3 +6,5 @@ class CodeSourceControl(SQLModel, table=True):
     name: str = Field(unique=True)
     pat_id: Optional[int] = Field(default=None, foreign_key="githubpat.id")
     registry_id: Optional[int] = Field(default=None, foreign_key="registryconfig.id")
+    docker_config_id: Optional[int] = Field(default=None, foreign_key="dockerconfig.id")
+    status: Optional[str] = Field(default="active")

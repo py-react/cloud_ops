@@ -2,7 +2,7 @@ from kubernetes import client, config
 import requests
 from requests.exceptions import HTTPError
 
-def access_registry_via_api_proxy(namespace="image-registry", service_name="docker", service_port=5000,image_name=None,tag=None,blob=False,sha256_digest=None):
+def access_registry_via_api_proxy(namespace="image-registry", service_name="docker", service_port=80,image_name=None,tag=None,blob=False,sha256_digest=None):
     """
     Access Docker registry via Kubernetes API proxy - no port forwarding needed
     """
@@ -51,10 +51,10 @@ def access_registry_via_api_proxy(namespace="image-registry", service_name="dock
             return response.json()
         except HTTPError as api_e:
             print(f"Error accessing registry via API proxy: {api_e}")
-            if api_e.response.status_code in [404, 503, 502]:
+            if 400 <= api_e.response.status_code < 500 or 500 <= api_e.response.status_code < 600:
                 return {
                     "status": "error",
-                    "message": "registry not init",
+                    "message": api_e.response.json(),
                     "details": f"Registry service not responding on {service_name}:{service_port}",
                     "namespace": namespace,
                     "service": service_name

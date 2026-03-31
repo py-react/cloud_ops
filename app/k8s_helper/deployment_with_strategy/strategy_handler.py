@@ -58,6 +58,14 @@ class StrategyHandler:
         return cls.STRATEGY_CONFIGS[strategy_type]
 
     @classmethod
+    def is_complex_strategy(cls, strategy_id: int) -> bool:
+        """
+        Returns True if the strategy requires multi-resource orchestration (e.g. Canary, Blue-Green)
+        """
+        # 1: Rolling, 2: Blue-Green, 3: Canary, 4: Recreate
+        return strategy_id in [2, 3]
+
+    @classmethod
     def apply_strategy(cls, deployment_spec: Dict[str, Any], strategy_id: int) -> Dict[str, Any]:
         """
         Apply the deployment strategy configuration to the deployment spec
