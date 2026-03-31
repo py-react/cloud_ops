@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { CommandCenter } from '@/components/CommandCenter'
+import { ClippyOverlay } from '@/components/ClippyOverlay'
 import { NamespaceContextProvider } from '@/components/kubernetes/contextProvider/NamespaceContext'
 import { KubeContextProvider } from '@/components/kubernetes/contextProvider/KubeContext'
 import { NavigationHistoryProvider } from '@/libs/navigationHistory'
@@ -31,6 +32,7 @@ function AppLayout() {
             <NamespaceContextProvider>
               <AppSidebar />
               <CommandCenter />
+              <ClippyOverlay />
               <main className='w-full overflow-auto'>
                 <Outlet />
               </main>

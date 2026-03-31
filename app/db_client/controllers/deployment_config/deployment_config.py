@@ -17,12 +17,13 @@ def create_deployment_config(session: Session, data: DeploymentConfigType) -> De
         namespace=data.namespace,
         deployment_name=data.deployment_name,
         status=data.status or "active",
-        tag=data.tag,  # Optional now
         required_source_control=data.required_source_control,
         code_source_control_name=data.code_source_control_name,
         source_control_branch=data.source_control_branch,
         derived_deployment_id=data.derived_deployment_id,
         service_id=data.service_id,
+        deployment_strategy_id=data.deployment_strategy_id,
+        http_route_id=data.http_route_id,
         replicas=data.replicas or 1,
         soft_delete=False,
         hard_delete=False
@@ -87,6 +88,8 @@ def update_deployment_config(session: Session, id: int, data: DeploymentConfigTy
     obj.source_control_branch = data.source_control_branch
     obj.derived_deployment_id = data.derived_deployment_id
     obj.service_id = data.service_id
+    obj.deployment_strategy_id = data.deployment_strategy_id
+    obj.http_route_id = data.http_route_id
     
     # Update optional fields (no deployment_strategy_id anymore)
     

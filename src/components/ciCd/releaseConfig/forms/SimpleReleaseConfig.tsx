@@ -11,12 +11,18 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { UseFormReturn } from "react-hook-form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, GitBranch, Package, Tag, Network } from "lucide-react";
+import { Settings, GitBranch, Package, Tag, Network, Route } from "lucide-react";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 
 interface SimpleReleaseConfigProps {
     form: UseFormReturn<any>;
+}
+
+interface DeploymentStrategy {
+    id: number;
+    type: string;
+    description: string;
 }
 
 const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
@@ -28,6 +34,8 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
     const [sourceControls, setSourceControls] = useState<any[]>([]);
     const [branchesMap, setBranchesMap] = useState<Record<string, string[]>>({});
     const [loading, setLoading] = useState(false);
+    const [strategies, setStrategies] = useState<DeploymentStrategy[]>([]);
+    const [httpRoutes, setHttpRoutes] = useState<any[]>([]);
 
     const availableBranches = selectedRepo ? (branchesMap[selectedRepo] || []) : [];
 
@@ -35,6 +43,8 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
         fetchDeployments();
         fetchServices();
         fetchSourceControls();
+        fetchStrategies();
+        fetchHttpRoutes();
     }, [namespace]);
 
     // Reset branch when repo changes
@@ -69,14 +79,39 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
         try {
             const res: any = await DefaultService.apiIntegrationGithubPollingGet();
             if (res && res.allowed_branches) {
-                // Store the full branches map for later use
                 setBranchesMap(res.allowed_branches);
-                // Extract repo names
                 const repos = Object.keys(res.allowed_branches).map(name => ({ name }));
                 setSourceControls(repos);
             }
         } catch (err: any) {
             toast.error(err.message || "Failed to fetch source controls");
+        }
+    };
+
+    const fetchStrategies = async () => {
+        try {
+            const res: any = await DefaultService.apiIntegrationKubernetesDeploymentStrategyGet();
+            if (res && res.strategies) {
+                setStrategies(res.strategies);
+            }
+        } catch (err: any) {
+            console.error("Failed to fetch strategies:", err);
+            setStrategies([
+                { id: 1, type: "rolling", description: "Rolling update" },
+                { id: 2, type: "blue-green", description: "Blue-green deployment" },
+                { id: 3, type: "canary", description: "Canary deployment" },
+                { id: 4, type: "recreate", description: "Recreate deployment" },
+            ]);
+        }
+    };
+
+    const fetchHttpRoutes = async () => {
+        try {
+            const res: any = await DefaultService.apiIntegrationKubernetesLibraryHttprouteGet({ namespace });
+            setHttpRoutes(res || []);
+        } catch (err: any) {
+            console.error("Failed to fetch HTTP routes:", err);
+            setHttpRoutes([]);
         }
     };
 
@@ -441,6 +476,124 @@ const SimpleReleaseConfig: React.FC<SimpleReleaseConfigProps> = ({ form }) => {
                             </div>
                             <FormDescription className="text-[10px]">
                                 Optionally link a service configuration to expose this deployment
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+
+            {/* Deployment Strategy Section */}
+            <div className="grid grid-cols-1 gap-6 p-6 rounded-2xl border border-border/50 bg-muted/5">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                        <Route className="h-5 w-5" />
+                    </div>
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-foreground">Deployment Strategy</h4>
+                </div>
+
+                <FormField
+                    control={form.control}
+                    name="deployment_strategy_id"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
+                                Strategy
+                            </FormLabel>
+                            <div className="flex gap-2">
+                                <Select
+                                    onValueChange={(value) => field.onChange(parseInt(value) || null)}
+                                    value={field.value?.toString() || ""}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger className="h-11 bg-background border-border/40">
+                                            <SelectValue placeholder="Select a deployment strategy" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {strategies.length === 0 ? (
+                                            <SelectItem value="default" disabled>Loading strategies...</SelectItem>
+                                        ) : (
+                                            strategies.map((strategy) => (
+                                                <SelectItem key={strategy.id} value={strategy.id.toString()}>
+                                                    {strategy.type} - {strategy.description}
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                {field.value && (
+                                    <button
+                                        type="button"
+                                        onClick={() => field.onChange(null)}
+                                        className="px-3 h-11 bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+                                        title="Clear selection"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                            <FormDescription className="text-[10px]">
+                                Select the deployment strategy (rolling, blue-green, canary, recreate)
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+
+            {/* Derived HTTP Route Section */}
+            <div className="grid grid-cols-1 gap-6 p-6 rounded-2xl border border-border/50 bg-muted/5">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                        <Route className="h-5 w-5" />
+                    </div>
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-foreground">Derived HTTP Route (Optional)</h4>
+                </div>
+
+                <FormField
+                    control={form.control}
+                    name="http_route_id"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80">
+                                HTTP Route
+                            </FormLabel>
+                            <div className="flex gap-2">
+                                <Select
+                                    onValueChange={(value) => field.onChange(parseInt(value) || null)}
+                                    value={field.value?.toString() || ""}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger className="h-11 bg-background border-border/40">
+                                            <SelectValue placeholder="Select an HTTP route from library" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {httpRoutes.length === 0 ? (
+                                            <SelectItem value="empty" disabled>No HTTP routes available</SelectItem>
+                                        ) : (
+                                            httpRoutes.map((route) => (
+                                                <SelectItem key={route.id} value={route.id.toString()}>
+                                                    {route.name}
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                {field.value && (
+                                    <button
+                                        type="button"
+                                        onClick={() => field.onChange(null)}
+                                        className="px-3 h-11 bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+                                        title="Clear selection"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                            <FormDescription className="text-[10px]">
+                                Optionally link an HTTP Route for traffic management
                             </FormDescription>
                             <FormMessage />
                         </FormItem>

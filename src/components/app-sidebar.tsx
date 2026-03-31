@@ -265,7 +265,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
                           {hasSubItems && (
                             <div
                               className={`overflow-hidden transition-all duration-300 ${expandedMenus[menuKey]
-                                ? "max-h-[1000px] opacity-100 mt-2"
+                                ? "max-h-[1000px] opacity-100"
                                 : "max-h-0 opacity-0 pointer-events-none"
                                 }`}
                             >

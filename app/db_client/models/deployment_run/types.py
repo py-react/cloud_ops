@@ -8,3 +8,6 @@ class DeploymentRunType(BaseModel):
     deployment_config_id: int
     status: Optional[str] = "pending"
     apply_derived_service: Optional[bool] = False
+    deployment_strategy_id: Optional[int] = None
+    http_route_id: Optional[int] = None
+    apply_derived_httproute: Optional[bool] = False

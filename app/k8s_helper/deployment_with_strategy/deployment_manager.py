@@ -218,7 +218,10 @@ class DeploymentManager:
                 deployment_spec.get("spec", {}).get("template", {}).setdefault("metadata", {}).setdefault("labels", {})["environment"] = run_data.environment
             
             # 5. Apply deployment strategy (fallback to 1 if missing)
-            strategy_id = composed_data.get("deployment_strategy_id") or 1
+            # Use run override if provided, otherwise use config value, default to 1
+            strategy_id = getattr(run_data, "deployment_strategy_id", None)
+            if strategy_id is None:
+                strategy_id = getattr(config_obj, "deployment_strategy_id", None) or 1
             deployment_spec = StrategyHandler.apply_strategy(
                 deployment_spec,
                 strategy_id
@@ -273,6 +276,31 @@ class DeploymentManager:
                             sys.stderr.write("Warning: Composed Service data is empty.\n")
                     else:
                         sys.stderr.write(f"Warning: Service ID {config_obj.service_id} not found in DB.\n")
+            
+            # 9. Apply Derived HTTPRoute if Requested
+            # Use run override if provided, otherwise use config value
+            http_route_id = getattr(run_data, "http_route_id", None)
+            if http_route_id is None:
+                http_route_id = getattr(config_obj, "http_route_id", None)
+            apply_httproute = getattr(run_data, "apply_derived_httproute", False)
+            if apply_httproute and http_route_id:
+                sys.stderr.write(f"\n--- APPLYING DERIVED HTTPROUTE for {deployment_spec['metadata']['name']} ---\n")
+                httproute_obj = self.session.get(K8sHTTPRoute, http_route_id)
+                if httproute_obj:
+                    from src.app.api.integration.kubernetes.library.httproute.index import _build_httproute_manifest
+                    httproute_manifest = _build_httproute_manifest(self.session, httproute_obj)
+                    if httproute_manifest:
+                        sys.stderr.write(f"Applying HTTPRoute: {httproute_manifest['metadata']['name']}\n")
+                        sys.stderr.write(json.dumps(httproute_manifest, indent=2, default=str))
+                        sys.stderr.write("\n------------------------------------\n")
+                        k8s_helper.apply_resource(httproute_manifest)
+                        result_messages.append("Derived HTTPRoute created")
+                    else:
+                        sys.stderr.write("Warning: Generated HTTPRoute manifest is empty.\n")
+                else:
+                    sys.stderr.write(f"Warning: HTTPRoute ID {http_route_id} not found in DB.\n")
+            elif not apply_httproute and http_route_id:
+                sys.stderr.write(f"Note: HTTPRoute ID {http_route_id} is linked but apply_derived_httproute is false. Skipping.\n")
             
             # 7. Update run status
             self.update_deployment_run_status(run_obj.id, "deployed")

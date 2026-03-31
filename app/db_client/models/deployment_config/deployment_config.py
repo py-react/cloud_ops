@@ -14,6 +14,8 @@ class DeploymentConfig(SQLModel, table=True):
     source_control_branch: Optional[str] = Field(default=None)
     derived_deployment_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
     service_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
+    deployment_strategy_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
+    http_route_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
     
     soft_delete: bool = Field(default=False, sa_column=Column(BOOLEAN))
     deleted_at: Optional[date] = Field(default=None, sa_column=Column(DATE))

@@ -154,6 +154,8 @@ class DeploymentConfigType(BaseModel):
     source_control_branch: Optional[str] = None
     derived_deployment_id: Optional[int] = None
     service_id: Optional[int] = None
+    deployment_strategy_id: Optional[int] = None
+    http_route_id: Optional[int] = None
     replicas: Optional[int] = 1
     
     # NEW: Reusable Profile IDs (preferred approach)

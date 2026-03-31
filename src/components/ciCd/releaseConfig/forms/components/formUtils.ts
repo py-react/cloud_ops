@@ -13,6 +13,8 @@ export interface DeploymentFormData extends Omit<DeploymentConfigType, 'node_sel
   node_selector?: Record<string, string> | null;
   containers: ExtendedContainerConfig[];
   kind: string;
+  deployment_strategy_id?: number | null;
+  http_route_id?: number | null;
 }
 
 export const releaseFormSchema = z.object({
@@ -25,6 +27,8 @@ export const releaseFormSchema = z.object({
   derived_deployment_id: z.number().nullable().optional(),
   service_id: z.number().nullable().optional(),
   namespace: z.string().min(1, 'Namespace is required'),
+  deployment_strategy_id: z.number().nullable().optional(),
+  http_route_id: z.number().nullable().optional(),
 }).refine((data) => {
   // Ensure derived_deployment_id is selected
   if (!data.derived_deployment_id || data.derived_deployment_id === 0) {

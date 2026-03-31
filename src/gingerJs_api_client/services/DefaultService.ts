@@ -771,7 +771,7 @@ service,
 servicePort = 80,
 } = data;
 		return __request(OpenAPI, {
-			method: 'HEAD',
+			method: 'PATCH',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -887,7 +887,7 @@ service,
 servicePort = 80,
 } = data;
 		return __request(OpenAPI, {
-			method: 'PATCH',
+			method: 'HEAD',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -940,7 +940,7 @@ path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'HEAD',
+			method: 'PATCH',
 			url: '/v2/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -1040,7 +1040,7 @@ path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'PATCH',
+			method: 'HEAD',
 			url: '/v2/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -4236,6 +4236,17 @@ status,
 			errors: {
 				422: `Validation Error`,
 			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiIntegrationKubernetesDeploymentStrategyGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/integration/kubernetes/deployment_strategy',
 		});
 	}
 

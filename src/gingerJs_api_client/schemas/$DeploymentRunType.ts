@@ -47,5 +47,29 @@ export const $DeploymentRunType = {
 	type: 'null',
 }],
 },
+		deployment_strategy_id: {
+	type: 'any-of',
+	contains: [{
+	type: 'number',
+}, {
+	type: 'null',
+}],
+},
+		http_route_id: {
+	type: 'any-of',
+	contains: [{
+	type: 'number',
+}, {
+	type: 'null',
+}],
+},
+		apply_derived_httproute: {
+	type: 'any-of',
+	contains: [{
+	type: 'boolean',
+}, {
+	type: 'null',
+}],
+},
 	},
 } as const;

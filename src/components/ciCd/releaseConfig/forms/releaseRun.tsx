@@ -48,6 +48,8 @@ export interface ReleaseConfigData {
   hard_delete: boolean;
   status: string;
   kind?: string;
+  deployment_strategy_id?: number;
+  http_route_id?: number;
 }
 
 export interface ReleaseRunData {
@@ -73,6 +75,9 @@ const releaseRunSchema = z.object({
   jira: z.string().optional(),
   images: z.record(z.string().min(1, "Image name is required")),
   apply_derived_service: z.boolean(),
+  deployment_strategy_id: z.number().optional(),
+  http_route_id: z.number().optional(),
+  apply_derived_httproute: z.boolean(),
 });
 
 type ReleaseRunFormValues = z.infer<typeof releaseRunSchema>;
@@ -91,6 +96,9 @@ export const ReleaseRun = ({
       pr_url: "",
       jira: "",
       apply_derived_service: false,
+      apply_derived_httproute: false,
+      deployment_strategy_id: deployment_config?.deployment_strategy_id || undefined,
+      http_route_id: deployment_config?.http_route_id || undefined,
       images: (deployment_config?.containers || []).reduce((acc: any, c) => {
         acc[c.name] = "";
         return acc;
@@ -194,6 +202,26 @@ You can only run releases for 'active' configurations. Please activate it first.
                   <FormLabel className="text-base font-semibold">Apply Derived Service</FormLabel>
                   <div className="text-[0.8rem] text-muted-foreground">
                     If enabled, the associated Service YAML (from Advanced Config) will be reapplied with this deployment.
+                  </div>
+                </div>
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="apply_derived_httproute"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base font-semibold">Apply Derived HTTPRoute</FormLabel>
+                  <div className="text-[0.8rem] text-muted-foreground">
+                    If enabled, the associated HTTPRoute (from Advanced Config) will be applied for traffic management.
                   </div>
                 </div>
                 <FormControl>
