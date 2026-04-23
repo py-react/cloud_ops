@@ -39,13 +39,28 @@ class NamespaceOperations:
             ns_obj = self.core_api.read_namespace(namespace)
             ns_dict = self._convert_to_dict(ns_obj)
             
-            # Get resource counts
+            # Get resource counts and breakdown
+            pods = self.resource_helper.get_resource_details('pods', namespace=namespace)
+            services = self.resource_helper.get_resource_details('services', namespace=namespace)
+            deployments = self.resource_helper.get_resource_details('deployments', namespace=namespace)
+            configmaps = self.resource_helper.get_resource_details('configmaps', namespace=namespace)
+            secrets = self.resource_helper.get_resource_details('secrets', namespace=namespace)
+
+            pod_status = {
+                'Running': sum(1 for pod in pods if pod.get("status", {}).get("phase") == "Running"),
+                'Pending': sum(1 for pod in pods if pod.get("status", {}).get("phase") == "Pending"),
+                'Failed': sum(1 for pod in pods if pod.get("status", {}).get("phase") == "Failed"),
+                'Succeeded': sum(1 for pod in pods if pod.get("status", {}).get("phase") == "Succeeded"),
+                'Other': sum(1 for pod in pods if pod.get("status", {}).get("phase") not in ["Running", "Pending", "Failed", "Succeeded"])
+            }
+
             resource_counts = {
-                'pods': len(self.resource_helper.get_resource_details('pods', namespace=namespace)),
-                'services': len(self.resource_helper.get_resource_details('services', namespace=namespace)),
-                'deployments': len(self.resource_helper.get_resource_details('deployments', namespace=namespace)),
-                'configmaps': len(self.resource_helper.get_resource_details('configmaps', namespace=namespace)),
-                'secrets': len(self.resource_helper.get_resource_details('secrets', namespace=namespace)),
+                'pods': len(pods),
+                'services': len(services),
+                'deployments': len(deployments),
+                'configmaps': len(configmaps),
+                'secrets': len(secrets),
+                'pod_status_breakdown': pod_status
             }
             
             ns_dict['resource_counts'] = resource_counts

@@ -14,6 +14,7 @@ interface AddonCardProps {
     className?: string
     footerActions?: React.ReactNode
     dashboardUrl?: string
+    statusText?: string
 }
 
 const AddonCard: React.FC<AddonCardProps> = ({
@@ -25,7 +26,8 @@ const AddonCard: React.FC<AddonCardProps> = ({
     actions,
     className,
     footerActions,
-    dashboardUrl
+    dashboardUrl,
+    statusText
 }) => {
     return (
         <Card className={cn(
@@ -45,9 +47,9 @@ const AddonCard: React.FC<AddonCardProps> = ({
 
                     <div className='flex gap-2 items-center'>
                         {status === 'installed' && (
-                            <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-600 rounded-full text-[10px] font-bold">
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 text-green-600 rounded-full text-[10px] font-bold uppercase">
                                 <CheckCircle2 className="w-3 h-3" />
-                                INSTALLED
+                                {statusText || 'INSTALLED'}
                             </div>
                         )}
                         {status === 'deleting' && (

@@ -16,7 +16,7 @@ def create_deployment_run(session: Session, data: DeploymentRunType) -> Deployme
         raise ValueError("Cannot create deployment run: DeploymentConfig is deleted.")
     if getattr(config_obj, "hard_delete", False):
         raise ValueError("Cannot create deployment run: DeploymentConfig is deleted.")
-    obj = DeploymentRun(**data.dict())
+    obj = DeploymentRun(**data.model_dump())
     session.add(obj)
     session.commit()
     session.refresh(obj)
@@ -34,7 +34,7 @@ def update_deployment_run(session: Session, id: int, data: DeploymentRunType) ->
     obj = session.get(DeploymentRun, id)
     if not obj:
         return None
-    for key, value in data.dict().items():
+    for key, value in data.model_dump().items():
         setattr(obj, key, value)
     session.add(obj)
     session.commit()

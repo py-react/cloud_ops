@@ -1,24 +1,32 @@
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, BackgroundTasks
 from app.k8s_helper.deployment_with_strategy.deployment_manager import DeploymentManager
 from app.db_client.models.deployment_run.types import DeploymentRunType
 from fastapi.responses import JSONResponse
 from typing import Optional
 
 def validate_deployment_run(run: DeploymentRunType) -> None:
-    if not run.images or len(run.images) == 0:
-        raise HTTPException(status_code=400, detail="At least one image is required")
+    # Packages don't strictly require images in the body if they will be resolved from metadata, 
+    # but the validator currently requires it. I'll relax this for packages.
     if not run.deployment_config_id:
         raise HTTPException(status_code=400, detail="deployment_config_id is required")
 
-async def POST(request: Request, body: DeploymentRunType):
+async def POST(request: Request, body: DeploymentRunType, background_tasks: BackgroundTasks):
     try:
         validate_deployment_run(body)
         manager = DeploymentManager()
+        
+        # 1. Initial preparation (creates DB record)
         result = manager.run_deployment_from_run(body)
+        run_obj = result["run"]
+        
+        # 2. Trigger long-running execution in the background
+        # We pass the run_id to ensure the background task has a clean context
+        background_tasks.add_task(manager.execute_deployment_flow, run_obj.id)
+        
         return {
             "status": "success",
             "message": result["deployment_result"],
-            "data": result["run"]
+            "data": run_obj
         }
     except HTTPException as he:
         return JSONResponse(content={"status": "error", "message": he.detail}, status_code=he.status_code)

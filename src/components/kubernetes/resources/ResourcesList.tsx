@@ -11,7 +11,19 @@ export interface ResourceInfo {
   short_names: string[];
 }
 
-export function ResourcesList({ resources, onSelect }: { resources: ResourceInfo[], onSelect: (resourceType: string) => void }) {
+export function ResourcesList({ 
+  resources, 
+  onSelect,
+  title,
+  description,
+  extraHeaderContent
+}: { 
+  resources: ResourceInfo[], 
+  onSelect: (resourceType: string) => void,
+  title?: string,
+  description?: string,
+  extraHeaderContent?: React.ReactNode
+}) {
 
   const columns = [
     { header: 'Kind', accessor: 'kind' },
@@ -29,6 +41,9 @@ export function ResourcesList({ resources, onSelect }: { resources: ResourceInfo
 
   return (
     <ResourceTable
+      title={title}
+      description={description}
+      extraHeaderContent={extraHeaderContent}
       columns={columns}
       data={tableData}
       onViewDetails={(resource) => onSelect(resource.name)}

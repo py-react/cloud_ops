@@ -25,7 +25,7 @@ def normalize_kind(resource_type: str) -> str:
     }
     return mapping.get(resource_type.lower(), resource_type)
 
-async def GET(request: Request, type: str):
+async def GET(request: Request, type: str, namespace: Optional[str] = None, api_version: Optional[str] = None, field_selector: Optional[str] = None, label_selector: Optional[str] = None):
     """
     Generic GET for any Kubernetes resource.
     Usage: /api/kubernertes/resources/[type]?namespace=...&api_version=...
@@ -49,7 +49,7 @@ async def POST(type: str, resource: dict):
     k8s_helper = KubernetesResourceHelper()
     return k8s_helper.apply_resource(resource)
 
-async def PUT(request: Request, type: str):
+async def PUT(request: Request, type: str, apiVersion: Optional[str] = None, name: Optional[str] = None, modifytype: Optional[str] = None, namespace: Optional[str] = None):
     """
     Generic PUT for editing resources.
     """
@@ -77,7 +77,7 @@ async def PUT(request: Request, type: str):
         return k8s_helper.edit_resource(resource, modify_fn)
     return "provide supported modifytype "
 
-async def DELETE(request: Request, type: str):
+async def DELETE(request: Request, type: str, apiVersion: Optional[str] = None, name: Optional[str] = None, namespace: Optional[str] = None):
     """
     Generic DELETE for any Kubernetes resource.
     Usage: /api/kubernertes/resources/[type]?apiVersion=...&name=...&namespace=...

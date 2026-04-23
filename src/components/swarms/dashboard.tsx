@@ -1,7 +1,7 @@
 'use client'
 
-import React,{ useState } from 'react'
-import { Card,CardHeader,CardContent, } from "@/components/ui/card"
+import React, { useState } from 'react'
+import { Card, CardHeader, CardContent, } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Modal } from './Modal'
 import { InitializeSwarmForm } from './InitializeSwarmForm'
@@ -155,49 +155,49 @@ export default function SwarmDashboard() {
     toast.info(`Viewing tasks for service ${serviceId}.`,)
   }
 
-  if(true){
+  if (true) {
     return <WorkInProgress
       title="Exciting New Feature Coming Soon!"
       message="I am putting the finishing touches on something that will revolutionize your experience. Stay tuned!"
     />
   }
 
-  if(isSwarmEmpty){
-      return (
-        <div className="flex items-center justify-center mt-8 bg-gray-50">
-      <Card className="w-full sm:w-96 bg-white shadow-lg rounded-lg">
-        <CardHeader>
-          <h2 className="text-center text-xl font-semibold text-gray-800">Docker Swarm Not Initialized</h2>
-        </CardHeader>
-        <CardContent className="text-center space-y-4 p-6">
-          <p className="text-gray-500">
-            Your Docker Swarm is not yet initialized or joined. Please initialize a new Swarm or join an existing one to manage services and nodes.
-          </p>
-          <div className="space-y-4">
-            <Button
-              onClick={() => console.log('Initialize Swarm Button Clicked')}
-              className="w-full"
-            >
-              Initialize Swarm
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => console.log('Join Existing Swarm Button Clicked')}
-              className="w-full"
-            >
-              Join Existing Swarm
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-      )
+  if (isSwarmEmpty) {
+    return (
+      <div className="flex items-center justify-center mt-8 bg-gray-50">
+        <Card className="w-full sm:w-96 bg-white shadow-lg rounded-lg">
+          <CardHeader>
+            <h2 className="text-center text-xl font-semibold text-gray-800">Docker Swarm Not Initialized</h2>
+          </CardHeader>
+          <CardContent className="text-center space-y-4 p-6">
+            <p className="text-gray-500">
+              Your Docker Swarm is not yet initialized or joined. Please initialize a new Swarm or join an existing one to manage services and nodes.
+            </p>
+            <div className="space-y-4">
+              <Button
+                onClick={() => console.log('Initialize Swarm Button Clicked')}
+                className="w-full"
+              >
+                Initialize Swarm
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => console.log('Join Existing Swarm Button Clicked')}
+                className="w-full"
+              >
+                Join Existing Swarm
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Docker Swarm Manager Dashboard</h1>
-      <SwarmStatusCard 
+      <SwarmStatusCard
         status={mockSwarmStatus}
         onReload={handleSwarmReload}
         onGetUnlockKey={handleSwarmGetUnlockKey}
@@ -205,16 +205,16 @@ export default function SwarmDashboard() {
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {mockNodes.map(node => (
-          <SwarmEntityCard 
-            key={node.id} 
+          <SwarmEntityCard
+            key={node.id}
             entity={node}
             onReload={() => handleNodeReload(node.id)}
             onUpdate={(data) => handleNodeUpdate(node.id, data)}
           />
         ))}
         {mockServices.map(service => (
-          <SwarmEntityCard 
-            key={service.id} 
+          <SwarmEntityCard
+            key={service.id}
             entity={service}
             onReload={() => handleServiceReload(service.id)}
             onUpdate={(data) => handleServiceUpdate(service.id, data)}

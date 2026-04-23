@@ -9,13 +9,6 @@ import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { BoxIcon } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import yaml from "js-yaml";
 import { useNavigate } from "react-router-dom";
@@ -122,60 +115,49 @@ export default function PodsPage() {
         </div>
       }
     >
-      <div className="space-y-6">
-        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Your Pods</CardTitle>
-              <CardDescription>
-                {transformedPods.length} Pods found
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 shadow-none">
-            <ResourceTable
-              columns={columns}
-              data={transformedPods}
-              onViewDetails={handleViewDetails}
-              onEdit={(res: PodData) => {
-                setShowCreateDialog(true);
-                setCurrentToEdit(res);
-              }}
-              onDelete={(data: PodData) => {
-                let menifest = data.last_applied
-                  ? yaml.dump(JSON.parse(data.last_applied))
-                  : "";
-                if (!menifest) {
-                  menifest = yaml.dump({
-                    apiVersion: data.fullData.apiVersion,
-                    kind: data.fullData.kind,
-                    metadata: {
-                      name: data.fullData.metadata.name,
-                      namespace: data.fullData.metadata.namespace,
-                    },
-                  });
-                }
-                DefaultService.apiKubernertesMethodsDeletePost({
-                  requestBody: {
-                    manifest: menifest,
-                  },
-                })
-                  .then((res: any) => {
-                    if (res.success) {
-                      toast.success(res.data.message);
-                      refetch();
-                    } else {
-                      toast.error(res.error);
-                    }
-                  })
-                  .catch((err) => {
-                    toast.error(err);
-                  });
-              }}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <ResourceTable
+        columns={columns}
+        data={transformedPods}
+        title="Your Pods"
+        description={`${transformedPods.length} Pods found`}
+        icon={<BoxIcon className="w-5 h-5 text-primary" />}
+        onViewDetails={handleViewDetails}
+        onEdit={(res: PodData) => {
+          setShowCreateDialog(true);
+          setCurrentToEdit(res);
+        }}
+        onDelete={(data: PodData) => {
+          let menifest = data.last_applied
+            ? yaml.dump(JSON.parse(data.last_applied))
+            : "";
+          if (!menifest) {
+            menifest = yaml.dump({
+              apiVersion: data.fullData.apiVersion,
+              kind: data.fullData.kind,
+              metadata: {
+                name: data.fullData.metadata.name,
+                namespace: data.fullData.metadata.namespace,
+              },
+            });
+          }
+          DefaultService.apiKubernertesMethodsDeletePost({
+            requestBody: {
+              manifest: menifest,
+            },
+          })
+            .then((res: any) => {
+              if (res.success) {
+                toast.success(res.data.message);
+                refetch();
+              } else {
+                toast.error(res.error);
+              }
+            })
+            .catch((err) => {
+              toast.error(err);
+            });
+        }}
+      />
       {showCreateDialog && (
         <ResourceForm
           heading="Pod resource"

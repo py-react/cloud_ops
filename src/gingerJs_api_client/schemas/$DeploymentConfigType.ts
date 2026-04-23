@@ -23,6 +23,9 @@ export const $DeploymentConfigType = {
 		status: {
 	type: 'string',
 },
+		category: {
+	type: 'string',
+},
 		tag: {
 	type: 'any-of',
 	contains: [{
@@ -83,6 +86,38 @@ export const $DeploymentConfigType = {
 }],
 },
 		replicas: {
+	type: 'any-of',
+	contains: [{
+	type: 'number',
+}, {
+	type: 'null',
+}],
+},
+		package_type: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		release_strategy: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		package_name: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		registry_credential_id: {
 	type: 'any-of',
 	contains: [{
 	type: 'number',

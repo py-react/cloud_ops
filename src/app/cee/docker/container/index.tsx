@@ -119,24 +119,24 @@ const ContainersPage = () => {
         />
       </div>
 
-      {/* Containers Table Section */}
-      <div className="flex-1 bg-card/10 backdrop-blur-md rounded-xl border border-border/40 overflow-hidden flex flex-col min-h-0">
-        <ContainersTable
-          containers={data}
-          loading={isLoading}
-          onView={(container) => setSelectedContainer(container)}
-          onEdit={(container) => {
-            setEditingContainer(container);
-            setShowRunnerModal(true);
-          }}
-          onLogs={(container) => setSelectedContainer(container)} // Details has logs tab
-          onStop={(container) => handleAction('stop', container)}
-          onDelete={(container) => handleAction('remove', container)}
-          onRerun={(container) => handleAction('rerun', container)}
-          onPause={(container) => handleAction('pause', container)}
-          onRefresh={refetch}
-        />
-      </div>
+      <ContainersTable
+        title="Active Containers"
+        description="Real-time status and lifecycle management of your virtualized workloads."
+        icon={<ContainerIcon className="w-5 h-5 text-primary" />}
+        containers={data}
+        loading={isLoading}
+        onView={(container) => setSelectedContainer(container)}
+        onEdit={(container) => {
+          setEditingContainer(container);
+          setShowRunnerModal(true);
+        }}
+        onLogs={(container) => setSelectedContainer(container)} // Details has logs tab
+        onStop={(container) => handleAction('stop', container)}
+        onDelete={(container) => handleAction('remove', container)}
+        onRerun={(container) => handleAction('rerun', container)}
+        onPause={(container) => handleAction('pause', container)}
+        onRefresh={refetch}
+      />
 
       {/* Modals */}
       <ContainerRunnerUpdateModal

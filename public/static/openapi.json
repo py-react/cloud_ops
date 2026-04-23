@@ -44,10 +44,84 @@
       }
     },
     "/cluster/proxy/{service}/{namespace}/{path}": {
+      "post": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
         "parameters": [
           {
             "name": "service",
@@ -120,156 +194,8 @@
       },
       "head": {
         "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          },
-          {
-            "name": "rewrite_v2_location",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Rewrite V2 Location"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          },
-          {
-            "name": "rewrite_v2_location",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Rewrite V2 Location"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
         "parameters": [
           {
             "name": "service",
@@ -342,8 +268,8 @@
       },
       "patch": {
         "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
         "parameters": [
           {
             "name": "service",
@@ -414,10 +340,84 @@
           }
         }
       },
-      "post": {
+      "get": {
         "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses httpx.AsyncClient for true concurrent async proxying \u2014 no threadpool blocking.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
         "parameters": [
           {
             "name": "service",
@@ -490,10 +490,64 @@
       }
     },
     "/v2/{service}/{namespace}/{path}": {
+      "post": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__post",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__put",
+        "operationId": "v2_proxy_v2__service___namespace___path__post",
         "parameters": [
           {
             "name": "service",
@@ -547,115 +601,7 @@
       "head": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__put",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__put",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__put",
+        "operationId": "v2_proxy_v2__service___namespace___path__post",
         "parameters": [
           {
             "name": "service",
@@ -709,7 +655,7 @@
       "patch": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__put",
+        "operationId": "v2_proxy_v2__service___namespace___path__post",
         "parameters": [
           {
             "name": "service",
@@ -760,10 +706,64 @@
           }
         }
       },
-      "post": {
+      "get": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__put",
+        "operationId": "v2_proxy_v2__service___namespace___path__post",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__post",
         "parameters": [
           {
             "name": "service",
@@ -1161,6 +1161,22 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/swarm/unlock_key": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_swarm_unlock_key_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
@@ -1808,6 +1824,16 @@
               ],
               "title": "Id"
             }
+          },
+          {
+            "name": "summary",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Summary"
+            }
           }
         ],
         "responses": {
@@ -1860,6 +1886,23 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docker/packages/stats": {
+      "get": {
+        "summary": "",
+        "description": "Returns image sizes for all tagged images.\nUsed for lazy-loading in the UI to keep the initial list fetch fast.",
+        "operationId": "_api_docker_packages_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
@@ -2345,6 +2388,241 @@
         }
       }
     },
+    "/api/docker/systems": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_docker_systems_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemInfo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/rbac": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_rbac_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_kubernertes_rbac_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccessBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/rbac/{id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_rbac__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_kubernertes_rbac__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/rbac___id___UpdateAccessBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_kubernertes_rbac__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "revoke",
+              "title": "Action"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/kubernertes/cluster": {
       "get": {
         "summary": "",
@@ -2371,6 +2649,59 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/cluster/metrics/namespace": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_cluster_metrics_namespace_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/cluster/metrics/namespace/{namespace}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_cluster_metrics_namespace__namespace__get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -2927,6 +3258,70 @@
               "type": "string",
               "title": "Type"
             }
+          },
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "api_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Api Version"
+            }
+          },
+          {
+            "name": "field_selector",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Field Selector"
+            }
+          },
+          {
+            "name": "label_selector",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Label Selector"
+            }
           }
         ],
         "responses": {
@@ -3010,6 +3405,70 @@
               "type": "string",
               "title": "Type"
             }
+          },
+          {
+            "name": "apiVersion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Apiversion"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Name"
+            }
+          },
+          {
+            "name": "modifytype",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modifytype"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
+            }
           }
         ],
         "responses": {
@@ -3045,6 +3504,54 @@
             "schema": {
               "type": "string",
               "title": "Type"
+            }
+          },
+          {
+            "name": "apiVersion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Apiversion"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Name"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Namespace"
             }
           }
         ],
@@ -3088,6 +3595,59 @@
                   "type": "null"
                 }
               ],
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/namespaces": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_namespaces_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kubernertes/namespaces/{namespace}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_kubernertes_namespaces__namespace__get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
               "title": "Namespace"
             }
           }
@@ -3456,6 +4016,399 @@
         }
       }
     },
+    "/api/bastion/audit": {
+      "get": {
+        "summary": "",
+        "description": "List all audit log sessions ordered by most recent first, or return full keystroke data for a specific id",
+        "operationId": "_api_bastion_audit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bastion/keys": {
+      "get": {
+        "summary": "",
+        "description": "List all SSH keys",
+        "operationId": "_api_bastion_keys_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Add or generate a new SSH key",
+        "operationId": "_api_bastion_keys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KeyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "description": "Universally revoke an SSH key from all reachable servers and delete from database.",
+        "operationId": "_api_bastion_keys_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bastion/keys/{keyId}/revoke": {
+      "post": {
+        "summary": "",
+        "description": "Revoke system access for an SSH key using background tasks",
+        "operationId": "_api_bastion_keys__keyId__revoke_post",
+        "parameters": [
+          {
+            "name": "keyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Keyid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/keys___keyId___RevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bastion/keys/{keyId}/deploy": {
+      "post": {
+        "summary": "",
+        "description": "Deploy an SSH key with granular options using background tasks",
+        "operationId": "_api_bastion_keys__keyId__deploy_post",
+        "parameters": [
+          {
+            "name": "keyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Keyid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/keys___keyId___DeployRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bastion/keys/{keyId}/deploy/retry": {
+      "post": {
+        "summary": "",
+        "description": "Retry a failed deployment by resetting its status and re-running the background task",
+        "operationId": "_api_bastion_keys__keyId__deploy_retry_post",
+        "parameters": [
+          {
+            "name": "keyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Keyid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/keys___keyId___RetryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bastion/keys/{keyId}/deployments": {
+      "get": {
+        "summary": "",
+        "description": "List all system deployments for a specific SSH key",
+        "operationId": "_api_bastion_keys__keyId__deployments_get",
+        "parameters": [
+          {
+            "name": "keyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Keyid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bastion/keys/install-local": {
+      "post": {
+        "summary": "",
+        "description": "Write a private key to the host machine's ~/.ssh directory so the user can\nSSH from their own terminal without extra steps.\nDetects OS automatically and sets correct permissions.",
+        "operationId": "_api_bastion_keys_install_local_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallLocalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bastion/systems": {
+      "get": {
+        "summary": "",
+        "description": "List all systems \u2014 never return passwords or private keys",
+        "operationId": "_api_bastion_systems_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Register a new system. Password or Private Key is Fernet-encrypted before storage.",
+        "operationId": "_api_bastion_systems_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bastion/systems/{systemId}": {
+      "delete": {
+        "summary": "",
+        "description": "Delete a registered system and all its associated audit logs",
+        "operationId": "_api_bastion_systems__systemId__delete",
+        "parameters": [
+          {
+            "name": "systemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Systemid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/integration/github/repos": {
       "post": {
         "summary": "",
@@ -3584,6 +4537,7 @@
       },
       "post": {
         "summary": "",
+        "description": "Trigger a manual poll for all currently enabled repositories.",
         "operationId": "_api_integration_github_polling_post",
         "responses": {
           "200": {
@@ -3598,7 +4552,7 @@
       },
       "put": {
         "summary": "",
-        "description": "Update polling configuration for the running process (in-memory env).\n\nNote: changes are applied to the running process environment only; update your deployment\nconfiguration to persist across restarts.",
+        "description": "Update polling configuration. Handles both global interval and per-repo toggling.",
         "operationId": "_api_integration_github_polling_put",
         "requestBody": {
           "required": true,
@@ -3633,7 +4587,7 @@
       },
       "delete": {
         "summary": "",
-        "description": "Proxy delete to allowed-repo utils (keeps same contract as webhook DELETE).",
+        "description": "Proxy delete and sync pollers.",
         "operationId": "_api_integration_github_polling_delete",
         "parameters": [
           {
@@ -3733,150 +4687,6 @@
             "schema": {
               "type": "string",
               "title": "Branch Name"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/integration/github/pat": {
-      "get": {
-        "summary": "",
-        "operationId": "_api_integration_github_pat_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PATListItem"
-                  },
-                  "title": "Response  Api Integration Github Pat Get"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "",
-        "operationId": "_api_integration_github_pat_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePATRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "",
-        "description": "Update PAT status or verify token",
-        "operationId": "_api_integration_github_pat_put",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/UpdatePATRequest"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Body"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "",
-        "operationId": "_api_integration_github_pat_delete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Id"
             }
           }
         ],
@@ -7221,6 +8031,60 @@
         }
       }
     },
+    "/api/integration/kubernetes/release/control": {
+      "get": {
+        "summary": "",
+        "description": "List active releases (canary/blue-green).",
+        "operationId": "_api_integration_kubernetes_release_control_get",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "Namespace"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Handle release actions: update weights, promote, or rollback.",
+        "operationId": "_api_integration_kubernetes_release_control_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/integration/kubernetes/deployment_strategy": {
       "get": {
         "summary": "",
@@ -7311,6 +8175,198 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/integration/credentials": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_integration_credentials_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CredentialListItem"
+                  },
+                  "title": "Response  Api Integration Credentials Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_integration_credentials_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCredentialRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_integration_credentials_put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateCredentialRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_integration_credentials_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/addons": {
+      "get": {
+        "summary": "",
+        "description": "List all addons, OR fetch default values for a chart.\n\nQuery params for chart defaults:\n  ?action=fetch_values&repo_name=...&repo_url=...&chart_name=...",
+        "operationId": "_api_addons_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Handle creation, install, or uninstall based on action",
+        "operationId": "_api_addons_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "summary": "",
+        "description": "Aggregated Dashboard API.\nFetches K8s, Docker, Registry, and CI/CD data in parallel with a 5s TTL cache.",
+        "operationId": "_api_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
@@ -7546,7 +8602,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "default": "prometheus",
+              "default": "gateway-api",
               "title": "Component"
             }
           }
@@ -7587,7 +8643,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "default": "prometheus",
+              "default": "gateway-api",
               "title": "Component"
             }
           }
@@ -7628,7 +8684,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "default": "prometheus",
+              "default": "gateway-api",
               "title": "Component"
             }
           }
@@ -7671,7 +8727,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "default": "alertmanager",
+              "default": "gateway-api",
               "title": "Component"
             }
           }
@@ -8132,25 +9188,6 @@
       "get": {
         "summary": "",
         "operationId": "_settings_ci_cd_library__namespace__spec_pod_metadata_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/settings/ci_cd/library/{namespace}/spec/pats": {
-      "get": {
-        "summary": "",
-        "description": "Server-side rendering or logic for the Personal Access Tokens management page.",
-        "operationId": "_settings_ci_cd_library__namespace__spec_pats_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -8656,6 +9693,24 @@
         }
       }
     },
+    "/settings/credentials": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_credentials_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/infra": {
       "get": {
         "summary": "",
@@ -8692,6 +9747,96 @@
         }
       }
     },
+    "/bastion": {
+      "get": {
+        "summary": "",
+        "operationId": "_bastion_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bastion/audit": {
+      "get": {
+        "summary": "",
+        "operationId": "_bastion_audit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bastion/keys": {
+      "get": {
+        "summary": "",
+        "operationId": "_bastion_keys_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bastion/systems": {
+      "get": {
+        "summary": "",
+        "operationId": "_bastion_systems_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bastion/console": {
+      "get": {
+        "summary": "",
+        "operationId": "_bastion_console_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/addons": {
       "get": {
         "summary": "",
@@ -8714,78 +9859,6 @@
       "get": {
         "summary": "",
         "operationId": "_addons_essentials_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/addons/essentials/alerting": {
-      "get": {
-        "summary": "",
-        "operationId": "_addons_essentials_alerting_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/addons/essentials/dashboard": {
-      "get": {
-        "summary": "",
-        "operationId": "_addons_essentials_dashboard_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/addons/essentials/monitoring": {
-      "get": {
-        "summary": "",
-        "operationId": "_addons_essentials_monitoring_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/addons/essentials/logging": {
-      "get": {
-        "summary": "",
-        "operationId": "_addons_essentials_logging_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -9941,6 +11014,51 @@
         ],
         "title": "ContextPostType"
       },
+      "CreateAccessBody": {
+        "properties": {
+          "service_account_name": {
+            "type": "string",
+            "title": "Service Account Name"
+          },
+          "namespace": {
+            "type": "string",
+            "title": "Namespace",
+            "default": "default"
+          },
+          "role_template": {
+            "type": "string",
+            "title": "Role Template",
+            "default": "developer"
+          },
+          "token_expiry_hours": {
+            "type": "integer",
+            "title": "Token Expiry Hours",
+            "default": 168
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "custom_rules": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Rules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service_account_name"
+        ],
+        "title": "CreateAccessBody"
+      },
       "CreateConfig": {
         "properties": {
           "content": {
@@ -10116,6 +11234,34 @@
         ],
         "title": "CreateContextUserData"
       },
+      "CreateCredentialRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "default": "github"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "token"
+        ],
+        "title": "CreateCredentialRequest"
+      },
       "CreateNamespacePayload": {
         "properties": {
           "name": {
@@ -10142,29 +11288,6 @@
           "name"
         ],
         "title": "CreateNamespacePayload"
-      },
-      "CreatePATRequest": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "token": {
-            "type": "string",
-            "title": "Token"
-          },
-          "active": {
-            "type": "boolean",
-            "title": "Active",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "token"
-        ],
-        "title": "CreatePATRequest"
       },
       "CreateQueueJob": {
         "properties": {
@@ -10331,6 +11454,80 @@
         ],
         "title": "CreateRegistryRequest"
       },
+      "CredentialListItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "scopes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scopes"
+          },
+          "usage_count": {
+            "type": "integer",
+            "title": "Usage Count",
+            "default": 0
+          },
+          "used_repos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Used Repos",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "provider",
+          "active",
+          "created_at",
+          "last_used_at"
+        ],
+        "title": "CredentialListItem"
+      },
       "CronJobInfo": {
         "properties": {
           "component_type": {
@@ -10436,6 +11633,11 @@
             "title": "Status",
             "default": "active"
           },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "default": "kubernetes"
+          },
           "tag": {
             "anyOf": [
               {
@@ -10529,6 +11731,50 @@
             ],
             "title": "Replicas",
             "default": 1
+          },
+          "package_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Type"
+          },
+          "release_strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Strategy"
+          },
+          "package_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Name"
+          },
+          "registry_credential_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Credential Id"
           },
           "scheduling_profile_id": {
             "anyOf": [
@@ -10843,6 +12089,40 @@
             ],
             "title": "Apply Derived Httproute",
             "default": false
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "release_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Notes"
+          },
+          "is_public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Public",
+            "default": true
           }
         },
         "type": "object",
@@ -11381,6 +12661,24 @@
           "path_type"
         ],
         "title": "IngressPath"
+      },
+      "InstallLocalRequest": {
+        "properties": {
+          "key_name": {
+            "type": "string",
+            "title": "Key Name"
+          },
+          "private_key": {
+            "type": "string",
+            "title": "Private Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key_name",
+          "private_key"
+        ],
+        "title": "InstallLocalRequest"
       },
       "JobInfo": {
         "properties": {
@@ -12917,6 +14215,35 @@
         ],
         "title": "K8sVolume"
       },
+      "KeyCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "public_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "user_id"
+        ],
+        "title": "KeyCreate"
+      },
       "Lifecycle": {
         "properties": {
           "preStop": {
@@ -13705,75 +15032,6 @@
         "type": "object",
         "title": "NodeSelectorTerm"
       },
-      "PATListItem": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "active": {
-            "type": "boolean",
-            "title": "Active"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "last_used_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Used At"
-          },
-          "scopes": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scopes"
-          },
-          "usage_count": {
-            "type": "integer",
-            "title": "Usage Count",
-            "default": 0
-          },
-          "used_repos": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Used Repos",
-            "default": []
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "active",
-          "created_at",
-          "last_used_at"
-        ],
-        "title": "PATListItem"
-      },
       "PodAffinity": {
         "properties": {
           "requiredDuringSchedulingIgnoredDuringExecution": {
@@ -13957,15 +15215,33 @@
             "description": "Enable or disable SCM polling"
           },
           "interval_seconds": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Interval Seconds",
             "description": "Poll interval in seconds"
+          },
+          "repo_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repo Name",
+            "description": "Specific repository to toggle polling for"
           }
         },
         "type": "object",
         "required": [
-          "enabled",
-          "interval_seconds"
+          "enabled"
         ],
         "title": "PollingConfigRequest"
       },
@@ -13980,7 +15256,7 @@
           "enabled": {
             "type": "boolean",
             "title": "Enabled",
-            "description": "Whether polling is enabled"
+            "description": "Whether polling is enabled (deprecated globally)"
           },
           "has_pat": {
             "type": "boolean",
@@ -14026,6 +15302,15 @@
             "type": "object",
             "title": "Repo Pats",
             "description": "Map of repo name to PAT ID",
+            "default": {}
+          },
+          "repo_polling_enabled": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Repo Polling Enabled",
+            "description": "Map of repo name to polling status",
             "default": {}
           },
           "repo_registries": {
@@ -15827,6 +17112,84 @@
         "type": "object",
         "title": "SwarmUpdateSpec"
       },
+      "SystemCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "ip_address": {
+            "type": "string",
+            "title": "Ip Address"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username",
+            "default": "root"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          },
+          "private_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Private Key"
+          },
+          "os_type": {
+            "type": "string",
+            "title": "Os Type",
+            "default": "linux"
+          },
+          "connection_type": {
+            "type": "string",
+            "title": "Connection Type",
+            "default": "ssh"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "hostname",
+          "ip_address"
+        ],
+        "title": "SystemCreate"
+      },
       "SystemInfo": {
         "properties": {
           "action": {
@@ -15840,33 +17203,7 @@
         ],
         "title": "SystemInfo"
       },
-      "UpdateDockerConfig": {
-        "properties": {
-          "cpuShares": {
-            "type": "string",
-            "title": "Cpushares",
-            "default": ""
-          },
-          "memory": {
-            "type": "string",
-            "title": "Memory",
-            "default": ""
-          },
-          "memoryReservation": {
-            "type": "string",
-            "title": "Memoryreservation",
-            "default": ""
-          },
-          "memorySwap": {
-            "type": "string",
-            "title": "Memoryswap",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "UpdateDockerConfig"
-      },
-      "UpdatePATRequest": {
+      "UpdateCredentialRequest": {
         "properties": {
           "active": {
             "anyOf": [
@@ -15893,7 +17230,33 @@
           }
         },
         "type": "object",
-        "title": "UpdatePATRequest"
+        "title": "UpdateCredentialRequest"
+      },
+      "UpdateDockerConfig": {
+        "properties": {
+          "cpuShares": {
+            "type": "string",
+            "title": "Cpushares",
+            "default": ""
+          },
+          "memory": {
+            "type": "string",
+            "title": "Memory",
+            "default": ""
+          },
+          "memoryReservation": {
+            "type": "string",
+            "title": "Memoryreservation",
+            "default": ""
+          },
+          "memorySwap": {
+            "type": "string",
+            "title": "Memoryswap",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "UpdateDockerConfig"
       },
       "UpdateRegistryRequest": {
         "properties": {
@@ -16073,6 +17436,108 @@
         ],
         "title": "YAMLImportRequest"
       },
+      "keys___keyId___DeployRequest": {
+        "properties": {
+          "system_id": {
+            "type": "integer",
+            "title": "System Id"
+          },
+          "linux_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linux Username"
+          },
+          "privilege_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Privilege Level",
+            "default": "user"
+          },
+          "is_system_managed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is System Managed",
+            "default": false
+          },
+          "restrictions": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restrictions",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "system_id"
+        ],
+        "title": "DeployRequest"
+      },
+      "keys___keyId___RetryRequest": {
+        "properties": {
+          "deployment_id": {
+            "type": "integer",
+            "title": "Deployment Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deployment_id"
+        ],
+        "title": "RetryRequest"
+      },
+      "keys___keyId___RevokeRequest": {
+        "properties": {
+          "deployment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Id"
+          },
+          "system_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Id"
+          }
+        },
+        "type": "object",
+        "title": "RevokeRequest"
+      },
       "nodes___node_id___NodeSpec": {
         "properties": {
           "Availability": {
@@ -16139,6 +17604,40 @@
         },
         "type": "object",
         "title": "NodeSpec"
+      },
+      "rbac___id___UpdateAccessBody": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "default": "regenerate_token"
+          },
+          "role_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Template"
+          },
+          "custom_rules": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Rules"
+          }
+        },
+        "type": "object",
+        "title": "UpdateAccessBody"
       }
     }
   }

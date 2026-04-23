@@ -379,3 +379,5 @@ You can now call the service method using type-safe functions. For example, to m
 await DefaultService.apiTestGet()
 ```
 By leveraging the type safety features, you get better auto-completion, error handling, and validation during development.
+
+Note: framework requires to have a index.py as well with index.(jsx|tsx) to register as view route and if nested all parent also requires a index.py with a index function defination

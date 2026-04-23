@@ -13,6 +13,8 @@ import {
   FileCog,
   Boxes,
   Network,
+  Library,
+  GanttChartSquare,
   ChevronDown,
   ChevronRight,
   HardDrive,
@@ -341,6 +343,8 @@ const ReleaseConfigDetailedInfo = () => {
   const [selectorProfile, setSelectorProfile] = useState<any>(null);
   const [dynamicProfiles, setDynamicProfiles] = useState<any[]>([]);
 
+  const category = configData?.category || (configData?.derived_deployment_id ? 'kubernetes' : 'package');
+
   const toggleRunModal = (open: boolean) => {
     setIsRunModalOpen(open);
     if (!open) setRerunValues(null); // Clear rerun values on close
@@ -372,7 +376,7 @@ const ReleaseConfigDetailedInfo = () => {
   };
 
   const historyColumns = [
-    {
+    ...(category !== 'package' ? [{
       header: "Image Identifier",
       accessor: "images",
       cell: (row: ReleaseRunData) => (
@@ -386,7 +390,7 @@ const ReleaseConfigDetailedInfo = () => {
           ))}
         </div>
       )
-    },
+    }] : []),
     {
       header: "Lifecycle State",
       accessor: "status",
@@ -537,8 +541,7 @@ const ReleaseConfigDetailedInfo = () => {
                           loadedProfiles[key] = profile;
                         }
                       });
-                      console.log({ loadedProfiles })
-                      setDynamicProfiles(Object.values(loadedProfiles)); // Changed to array
+                      setDynamicProfiles(Object.values(loadedProfiles));
                     }
                   })
                   .catch(console.error);
@@ -552,9 +555,7 @@ const ReleaseConfigDetailedInfo = () => {
 
 
 
-  useEffect(() => {
-    console.log({ metadataProfile })
-  }, [metadataProfile])
+
 
   // Removed error handling block as error state is removed.
   // if (error) {
@@ -606,8 +607,8 @@ const ReleaseConfigDetailedInfo = () => {
           {loading ? (
             <div className="animate-pulse space-y-4">
               <div className="h-4 w-48 bg-muted rounded"></div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-muted rounded"></div>)}
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 bg-muted rounded"></div>)}
               </div>
             </div>
           ) : (
@@ -619,9 +620,15 @@ const ReleaseConfigDetailedInfo = () => {
                 <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Config Summary</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 px-1">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Namespace</p>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Category</p>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${category === 'package' ? 'bg-orange-500/10 text-orange-500 ring-1 ring-orange-500/20' : 'bg-primary/10 text-primary ring-1 ring-primary/20'}`}>
+                    {category === 'package' ? 'Library Release' : 'Kubernetes Deployment'}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Target Namespace</p>
                   <p className="text-sm font-medium text-foreground">{configData?.namespace}</p>
                 </div>
                 {configData?.required_source_control && (
@@ -638,25 +645,38 @@ const ReleaseConfigDetailedInfo = () => {
                     </p>
                   </div>
                 )}
-                <div className="space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Replicas</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-foreground tabular-nums">{configData?.replicas}</span>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Resource Kind</p>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/20">
-                    {configData?.kind || 'Deployment'}
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Service Type</p>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-500 ring-1 ring-blue-500/20">
-                    Kubernetes Runtime
-                  </span>
-                </div>
-                {serviceData && (
+                {category === 'kubernetes' ? (
+                  <>
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Replicas</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground tabular-nums">{configData?.replicas}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Resource Kind</p>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/20">
+                        {configData?.kind || 'Deployment'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Package Type</p>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/10 text-orange-600 ring-1 ring-orange-500/20 uppercase">
+                        {configData?.package_type || 'NPM'}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Strategy</p>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/20">
+                        {configData?.release_strategy || 'Semantic'}
+                      </span>
+                    </div>
+                  </>
+                )}
+                {serviceData && category === 'kubernetes' && (
                   <div className="space-y-1">
                     <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Derived Service</p>
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-500 ring-1 ring-purple-500/20">
@@ -685,8 +705,8 @@ const ReleaseConfigDetailedInfo = () => {
           )}
         </div>
 
-        {/* Derived Service Card */}
-        {serviceData && (
+        {/* Derived Service Card - Kubernetes Only */}
+        {category === 'kubernetes' && serviceData && (
           <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
             <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
               <div className="p-2 rounded-md bg-purple-500/10 text-purple-500 ring-1 ring-purple-500/20">
@@ -789,8 +809,8 @@ const ReleaseConfigDetailedInfo = () => {
           </div>
         )}
 
-        {/* Network & Connectivity (Service Ports) */}
-        {(configData?.service || (configData?.service_ports && configData.service_ports.length > 0)) && (
+        {/* Network & Connectivity (Service Ports) - Kubernetes Only */}
+        {category === 'kubernetes' && (configData?.service || (configData?.service_ports && configData.service_ports.length > 0)) && (
           <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
             <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
               <div className="p-2 rounded-md bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20">
@@ -829,8 +849,9 @@ const ReleaseConfigDetailedInfo = () => {
           </div>
         )}
 
-        {/* Containers Section */}
-        <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm space-y-4">
+        {/* Containers Section - Kubernetes Only */}
+        {category === 'kubernetes' && (
+          <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm space-y-4">
           <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
             <div className="p-2 rounded-md bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/20">
               <DockIcon className="h-4 w-4" />
@@ -964,6 +985,7 @@ const ReleaseConfigDetailedInfo = () => {
             </div>
           </div>
         </div>
+      )}
 
 
 
@@ -1060,11 +1082,11 @@ const ReleaseConfigDetailedInfo = () => {
               )
             }
             customActions={[
-              {
+              ...(category === 'kubernetes' ? [{
                 label: "View Deployment",
                 icon: ExternalLink,
                 onClick: (row) => window.open(`/kubernetes/deployments/${configData?.namespace}/${configData?.deployment_name}`, '_blank'),
-              },
+              }] : []),
               {
                 label: "Rerun",
                 icon: RotateCcw,

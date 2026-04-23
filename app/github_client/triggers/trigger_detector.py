@@ -60,7 +60,20 @@ class TriggerDetector:
             
             triggered_by_comment = False
             if last_comment and last_build:
-                if last_comment.body in ["rebuild", "rerun", "run"]:
+                comment_time = getattr(last_comment, "created_at", None)
+                build_time = getattr(last_build, "created_at", None)
+                
+                is_newer_comment = False
+                if comment_time and build_time:
+                    # Strip timezones for safe comparison
+                    c_time = comment_time.replace(tzinfo=None)
+                    b_time = build_time.replace(tzinfo=None)
+                    is_newer_comment = c_time > b_time
+                else:
+                    # If we can't compare, assume it might be new
+                    is_newer_comment = True
+
+                if is_newer_comment and last_comment.body in ["rebuild", "rerun", "run"]:
                     triggered_by_comment = True
                     logger.info(
                         f"Trigger comment detected on PR #{pr_number} in {repo_name} "

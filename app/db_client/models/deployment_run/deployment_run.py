@@ -14,4 +14,7 @@ class DeploymentRun(SQLModel, table=True):
     deployment_strategy_id: Optional[int] = Field(default=None)
     http_route_id: Optional[int] = Field(default=None)
     apply_derived_httproute: bool = Field(default=False, sa_column=Column(BOOLEAN))
+    version: Optional[str] = None
+    release_notes: Optional[str] = None
+    is_public: bool = Field(default=True, sa_column=Column(BOOLEAN))
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=True)

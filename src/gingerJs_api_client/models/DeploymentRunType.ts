@@ -10,5 +10,8 @@ export type DeploymentRunType = {
 	deployment_strategy_id?: number | null;
 	http_route_id?: number | null;
 	apply_derived_httproute?: boolean | null;
+	version?: string | null;
+	release_notes?: string | null;
+	is_public?: boolean | null;
 };
 

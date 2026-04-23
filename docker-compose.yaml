@@ -20,19 +20,19 @@ services:
     ports:
       - 5432:5432
 
-  pg_admin:
-    image: dpage/pgadmin4
-    container_name: pgadmin4_container
-    restart: always
-    ports:
-      - "8888:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
-      PGADMIN_DEFAULT_PASSWORD: strong-password
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    depends_on:
-      - db
+  # pg_admin:
+  #   image: dpage/pgadmin4
+  #   container_name: pgadmin4_container
+  #   restart: always
+  #   ports:
+  #     - "8888:80"
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: user-name@domain-name.com
+  #     PGADMIN_DEFAULT_PASSWORD: strong-password
+  #   volumes:
+  #     - pgadmin-data:/var/lib/pgadmin
+  #   depends_on:
+  #     - db
 
   httpd-proxy:
     image: httpd:2.4
@@ -42,9 +42,6 @@ services:
       - "80:80"
     volumes:
       - ./httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
-    depends_on:
-      - db
-      - pg_admin
 
 volumes:
   pgdata:

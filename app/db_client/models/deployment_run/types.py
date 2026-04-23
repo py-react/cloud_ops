@@ -11,3 +11,6 @@ class DeploymentRunType(BaseModel):
     deployment_strategy_id: Optional[int] = None
     http_route_id: Optional[int] = None
     apply_derived_httproute: Optional[bool] = False
+    version: Optional[str] = None
+    release_notes: Optional[str] = None
+    is_public: Optional[bool] = True

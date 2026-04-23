@@ -7,3 +7,4 @@ class CodeSourceControlType(BaseModel):
     registry_id: Optional[int] = None
     docker_config_id: Optional[int] = None
     status: Optional[str] = "active"
+    polling_enabled: Optional[bool] = False

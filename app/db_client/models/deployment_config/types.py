@@ -148,6 +148,7 @@ class DeploymentConfigType(BaseModel):
     namespace: str
     deployment_name: str
     status: str = "active"  # active or inactive
+    category: str = "kubernetes"  # kubernetes or package
     tag: Optional[str] = None  # Optional since it comes from derived deployment
     required_source_control: bool = False
     code_source_control_name: Optional[str] = None
@@ -157,6 +158,12 @@ class DeploymentConfigType(BaseModel):
     deployment_strategy_id: Optional[int] = None
     http_route_id: Optional[int] = None
     replicas: Optional[int] = 1
+    
+    # Package Details
+    package_type: Optional[str] = None
+    release_strategy: Optional[str] = None
+    package_name: Optional[str] = None
+    registry_credential_id: Optional[int] = None  # Link to specific credential for publishing
     
     # NEW: Reusable Profile IDs (preferred approach)
     scheduling_profile_id: Optional[int] = None

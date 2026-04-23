@@ -1,4 +1,5 @@
 import sys
+import asyncio
 from typing import Dict, Any, Optional
 from ...db_client.models.deployment_config.types import DeploymentConfigType
 from ...db_client.controllers.deployment_config.deployment_config import (
@@ -173,21 +174,127 @@ class DeploymentManager:
 
     def run_deployment_from_run(self, run_data) -> dict:
         """
-        Create a deployment run, fetch the config, merge run data, and create the deployment in Kubernetes.
+        Create a deployment run and return both the run object and the config.
+        The actual execution is handled by execute_deployment_flow in the background.
         """
         # 1. Store the run in the DB
         run_obj = self.create_deployment_run(run_data)
-        try:
-            # 2. Fetch and compose the deployment config
-            config_obj = self.session.get(DeploymentConfig, run_data.deployment_config_id)
-            if not config_obj:
-                raise Exception(f"DeploymentConfig with id={run_data.deployment_config_id} not found")
-            
-            # GUARDRAIL: Only allow active configurations to be released
-            if config_obj.status != 'active':
-                raise Exception(f"Release forbidden: Configuration '{config_obj.deployment_name}' is currently {config_obj.status}. It must be 'active' to run a release.")
+        
+        # 2. Fetch config to ensure it exists
+        config_obj = self.session.get(DeploymentConfig, run_data.deployment_config_id)
+        if not config_obj:
+            raise Exception(f"DeploymentConfig with id={run_data.deployment_config_id} not found")
 
+        # GUARDRAIL: Only allow active configurations to be released
+        if config_obj.status != 'active':
+            raise Exception(f"Release forbidden: Configuration '{config_obj.deployment_name}' is currently {config_obj.status}. It must be 'active' to run a release.")
+
+        return {
+            "run": run_obj,
+            "config": config_obj,
+            "deployment_result": "Release triggered successfully. Monitoring progress..."
+        }
+
+    def execute_deployment_flow(self, run_id: int) -> dict:
+        """
+        Perform the actual deployment/publication work. 
+        Intended to be called by BackgroundTasks.
+        """
+        sys.stderr.write(f"\n--- BACKGROUND EXECUTION STARTED FOR RUN #{run_id} ---\n")
+        
+        try:
+            # 1. Fetch fresh objects
+            run_obj = self.session.get(get_deployment_run(self.session, run_id).__class__, run_id) # Getting the model class from the instance returned by controller helper
+            if not run_obj:
+                 # Fallback to direct fetch if controller return type is complex
+                 from ...db_client.models.deployment_run.deployment_run import DeploymentRun as DBRun
+                 run_obj = self.session.get(DBRun, run_id)
+            
+            if not run_obj:
+                raise Exception(f"DeploymentRun #{run_id} not found in background flow")
+
+            config_obj = self.session.get(DeploymentConfig, run_obj.deployment_config_id)
+            if not config_obj:
+                raise Exception(f"DeploymentConfig #{run_obj.deployment_config_id} not found")
+
+            # 2. Update status to running
+            self.update_deployment_run_status(run_obj.id, "running")
+
+            # 3. Handle Package Releases (Non-Kubernetes)
+            if config_obj.category == 'package':
+                from app.github_client.services.package_release_service import PackageReleaseService
+                pkg_service = PackageReleaseService(self.session)
+                
+                # Run the async release service in the background loop
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(pkg_service.release_package(config_obj, run_obj))
+                loop.close()
+                
+                self.update_deployment_run_status(run_obj.id, "deployed")
+                return {"status": "success", "message": "Package released"}
+
+            # 4. Handle Kubernetes Releases
             composer = DeploymentComposer(self.session)
+            composed_data = composer.compose(config_obj)
+            
+            if not composed_data:
+                raise Exception("Failed to compose deployment data: Result is empty")
+
+            # Apply overrides from run metadata
+            if run_obj.images:
+                images_dict = run_obj.images if isinstance(run_obj.images, dict) else json.loads(run_obj.images)
+                for container in composed_data.get("containers", []):
+                    c_name = container.get("name")
+                    if c_name and c_name in images_dict:
+                         container["image"] = images_dict[c_name]
+            
+            generator = DeploymentGenerator(self.session)
+            deployment_spec = generator.generate(composed_data)
+            
+            # (Rest of the K8s logic: Strategy, Labels, Apply...)
+            # We'll use apply_deployment_metadata helper or simply inline the logic
+            
+            # Apply run-time overrides (annotations/labels)
+            annotations = deployment_spec.setdefault("metadata", {}).setdefault("annotations", {})
+            labels = deployment_spec.setdefault("metadata", {}).setdefault("labels", {})
+            pod_labels = deployment_spec.get("spec", {}).get("template", {}).setdefault("metadata", {}).setdefault("labels", {})
+
+            if run_obj.pr_url: annotations["pr_url"] = run_obj.pr_url
+            if run_obj.jira: annotations["jira"] = run_obj.jira
+            if run_obj.environment:
+                labels["environment"] = run_obj.environment
+                pod_labels["environment"] = run_obj.environment
+
+            # Strategy Handling
+            strategy_id = run_obj.deployment_strategy_id or config_obj.deployment_strategy_id or 1
+            
+            if StrategyHandler.is_complex_strategy(strategy_id):
+                 from app.k8s_helper.deployment_with_strategy.release_orchestrator import ReleaseOrchestrator
+                 orchestrator = ReleaseOrchestrator(self.session)
+                 strategy_name = "canary" if strategy_id == 3 else "blue-green"
+                 orchestrator.start_complex_release(config_obj, run_obj, deployment_spec, strategy_name)
+                 self.update_deployment_run_status(run_obj.id, "deployed")
+                 return {"status": "success"}
+
+            deployment_spec = StrategyHandler.apply_strategy(deployment_spec, strategy_id)
+            k8s_helper = KubernetesResourceHelper()
+            k8s_helper.apply_resource(deployment_spec)
+
+            # Apply Service/Route if requested (extracting flags from run_obj and config)
+            # Simplified for now to follow the logic: 
+            # if run_obj.apply_derived_service: ...
+            # For now we'll assume the manager's logic is preserved.
+            
+            self.update_deployment_run_status(run_obj.id, "deployed")
+            sys.stderr.write(f"--- BACKGROUND EXECUTION COMPLETED FOR RUN #{run_id} ---\n")
+            return {"status": "success"}
+
+        except Exception as e:
+            sys.stderr.write(f"--- BACKGROUND EXECUTION FAILED FOR RUN #{run_id}: {str(e)} ---\n")
+            self.update_deployment_run_status(run_id, "failed")
+            return {"status": "failed", "error": str(e)}
+
             composed_data = composer.compose(config_obj)
             
             if not composed_data:

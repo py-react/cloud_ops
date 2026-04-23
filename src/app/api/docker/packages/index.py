@@ -127,7 +127,7 @@ class Package_Info(BaseModel):
 class Get_Packages_Response(BaseModel):
     packages:List[Package_Info]
 
-def GET(request: Request, id: Optional[str] = None):
+def GET(request: Request, id: Optional[str] = None, summary: bool = False):
     if id:
         try:
             client = clientContext.get_client()
@@ -173,8 +173,27 @@ def GET(request: Request, id: Optional[str] = None):
             return {"error": True, "message": str(e)}
     try:
         client = clientContext.get_client()
-        # List all images if no ID provided
-        images = client.images.list(all=True)
+        
+        if summary:
+            # OPTIMIZATION: Use low-level API for summary list (much faster on remote engines)
+            images = client.api.images(all=False)
+            image_info = []
+            for img in images:
+                if img.get('RepoTags'):
+                    image_info.append({
+                        'name': [tag.split(":")[0] for tag in img['RepoTags']],
+                        'id': img['Id'],
+                        'tags': img['RepoTags'],
+                        'created': img['Created'],
+                        'size': 0, # Lazy-loaded
+                        'virtual_size': 0, # Lazy-loaded
+                        'repo_tags': img['RepoTags'],
+                        'labels': img.get('Labels', {})
+                    })
+            return {"packages": image_info}
+
+        # List only top-level images (significantly faster on remote engines than all=True)
+        images = client.images.list(all=False)
         
         image_info = []
 

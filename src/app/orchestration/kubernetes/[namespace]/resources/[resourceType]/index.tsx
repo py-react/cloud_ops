@@ -7,12 +7,6 @@ import { NamespaceContext } from '@/components/kubernetes/contextProvider/Namesp
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
 import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector';
 import PageLayout from "@/components/PageLayout";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -74,28 +68,25 @@ export default function ResourceTypePage() {
       subtitle={`View and manage all ${resourceType} in your cluster.`}
       actions={<NamespaceSelector />}
     >
-      <div className="space-y-6">
-        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Your {resourceType}</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 shadow-none">
-            <div className="relative px-6">
-              <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder={`Search ${resourceType}...`}
-                className="w-full pl-9 bg-background"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <ResourceTable columns={_columns} data={filteredResources} />
-          </CardContent>
-        </Card>
-      </div>
+      <ResourceTable
+        title={`Your ${resourceType}`}
+        description={`Total ${filteredResources.length} found`}
+        extraHeaderContent={
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={`Search ${resourceType}...`}
+              className="w-full pl-9 bg-background"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        }
+        columns={_columns}
+        data={filteredResources}
+        loading={isLoading}
+      />
     </PageLayout>
   );
 } 

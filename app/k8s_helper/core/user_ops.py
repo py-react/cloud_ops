@@ -89,12 +89,18 @@ class UserOperations:
             raise
 
     def create_role(self, spec: RBACRoleSpec):
+        def convert_rule_keys(rule: Dict[str, Any]) -> Dict[str, Any]:
+            return {
+                "api_groups" if k == "apiGroups" else k: v
+                for k, v in rule.items()
+            }
+        
         body = client.V1Role(
             metadata=client.V1ObjectMeta(name=spec.name),
-            rules=[client.V1PolicyRule(**r) for r in spec.rules]
+            rules=[client.V1PolicyRule(**convert_rule_keys(r)) for r in spec.rules]
         ) if spec.namespace else client.V1ClusterRole(
             metadata=client.V1ObjectMeta(name=spec.name),
-            rules=[client.V1PolicyRule(**r) for r in spec.rules]
+            rules=[client.V1PolicyRule(**convert_rule_keys(r)) for r in spec.rules]
         )
 
         if spec.namespace:
@@ -103,10 +109,16 @@ class UserOperations:
             return self.rbac_api.create_cluster_role(body)
 
     def update_role(self, spec: RBACRoleSpec):
+        def convert_rule_keys(rule: Dict[str, Any]) -> Dict[str, Any]:
+            return {
+                "api_groups" if k == "apiGroups" else k: v
+                for k, v in rule.items()
+            }
+        
         existing = self.get_role(spec)
         if not existing:
             raise KeyError(f"Role '{spec.name}' not found")
-        existing.rules = [client.V1PolicyRule(**r) for r in spec.rules]
+        existing.rules = [client.V1PolicyRule(**convert_rule_keys(r)) for r in spec.rules]
         if spec.namespace:
             return self.rbac_api.replace_namespaced_role(spec.name, spec.namespace, existing)
         else:
@@ -140,10 +152,16 @@ class UserOperations:
             raise
 
     def create_binding(self, spec: RBACBindingSpec):
+        def convert_subject_keys(s: Dict[str, Any]) -> Dict[str, Any]:
+            return {
+                "api_group" if k == "apiGroup" else k: v
+                for k, v in s.items()
+            }
+        
         meta = client.V1ObjectMeta(name=spec.name)
         body = (client.V1RoleBinding if spec.namespace else client.V1ClusterRoleBinding)(
             metadata=meta,
-            subjects=[client.V1Subject(**s) for s in spec.subjects],
+            subjects=[client.RbacV1Subject(**convert_subject_keys(s)) for s in spec.subjects],
             role_ref=client.V1RoleRef(**spec.role_ref)
         )
         if spec.namespace:
@@ -152,10 +170,16 @@ class UserOperations:
             return self.rbac_api.create_cluster_role_binding(body)
 
     def update_binding(self, spec: RBACBindingSpec):
+        def convert_subject_keys(s: Dict[str, Any]) -> Dict[str, Any]:
+            return {
+                "api_group" if k == "apiGroup" else k: v
+                for k, v in s.items()
+            }
+        
         existing = self.get_binding(spec)
         if not existing:
             raise KeyError(f"Binding '{spec.name}' not found")
-        existing.subjects = [client.V1Subject(**s) for s in spec.subjects]
+        existing.subjects = [client.RbacV1Subject(**convert_subject_keys(s)) for s in spec.subjects]
         existing.role_ref = client.V1RoleRef(**spec.role_ref)
         if spec.namespace:
             return self.rbac_api.replace_namespaced_role_binding(

@@ -17,6 +17,7 @@ def create_deployment_config(session: Session, data: DeploymentConfigType) -> De
         namespace=data.namespace,
         deployment_name=data.deployment_name,
         status=data.status or "active",
+        category=data.category or "kubernetes",
         required_source_control=data.required_source_control,
         code_source_control_name=data.code_source_control_name,
         source_control_branch=data.source_control_branch,
@@ -24,6 +25,10 @@ def create_deployment_config(session: Session, data: DeploymentConfigType) -> De
         service_id=data.service_id,
         deployment_strategy_id=data.deployment_strategy_id,
         http_route_id=data.http_route_id,
+        package_type=data.package_type,
+        release_strategy=data.release_strategy,
+        package_name=data.package_name,
+        registry_credential_id=data.registry_credential_id,
         replicas=data.replicas or 1,
         soft_delete=False,
         hard_delete=False
@@ -34,16 +39,24 @@ def create_deployment_config(session: Session, data: DeploymentConfigType) -> De
     session.refresh(obj)
     return obj
 
+from app.db_client.models.kubernetes_profiles.deployment import K8sDeployment
+
 def list_deployment_configs(
     session: Session,
     namespace: str = "default"
 ) -> List[DeploymentConfig]:
     """
     List all deployment configs, excluding hard-deleted items.
-    Filtering by status/soft_delete is handled on frontend.
+    Includes technical names for derived templates and services via joins.
     """
-    query = select(DeploymentConfig, K8sService.name.label("service_name")).outerjoin(
+    query = select(
+        DeploymentConfig, 
+        K8sService.name.label("service_name"),
+        K8sDeployment.name.label("derived_deployment_name")
+    ).outerjoin(
         K8sService, DeploymentConfig.service_id == K8sService.id
+    ).outerjoin(
+        K8sDeployment, DeploymentConfig.derived_deployment_id == K8sDeployment.id
     ).where(
         DeploymentConfig.namespace == namespace,
         DeploymentConfig.hard_delete == False
@@ -51,11 +64,11 @@ def list_deployment_configs(
     
     results = session.exec(query).all()
     
-    # Convert to list of dicts with service_name included
     response = []
-    for config, service_name in results:
+    for config, service_name, deployment_name in results:
         config_dict = config.model_dump()
         config_dict["service_name"] = service_name
+        config_dict["derived_deployment_name"] = deployment_name
         response.append(config_dict)
         
     return response
@@ -83,6 +96,7 @@ def update_deployment_config(session: Session, id: int, data: DeploymentConfigTy
         obj.status = data.status
     
     # Update release config specific fields
+    obj.category = data.category or "kubernetes"
     obj.required_source_control = data.required_source_control
     obj.code_source_control_name = data.code_source_control_name
     obj.source_control_branch = data.source_control_branch
@@ -91,7 +105,11 @@ def update_deployment_config(session: Session, id: int, data: DeploymentConfigTy
     obj.deployment_strategy_id = data.deployment_strategy_id
     obj.http_route_id = data.http_route_id
     
-    # Update optional fields (no deployment_strategy_id anymore)
+    # Update package specific fields
+    obj.package_type = data.package_type
+    obj.release_strategy = data.release_strategy
+    obj.package_name = data.package_name
+    obj.registry_credential_id = data.registry_credential_id
     
     # Handle delete flags if provided (for hard delete via update)
     if hasattr(data, 'hard_delete') and data.hard_delete is not None:

@@ -15,7 +15,7 @@ function Events({
   const [showAllEvents, setShowAllEvents] = useState(false);
 
   return (
-    <div className="p-4 rounded-[0.5rem]  shadow-sm mb-6 bg-white border border-gray-200">
+    <div className="p-4 rounded-[0.5rem] shadow-sm mb-6 bg-white/50 backdrop-blur-sm border border-border/50">
       <div className="flex items-center justify-between mb-4 px-6 pt-6">
         <h2 className="text-lg font-semibold text-gray-800">Recent Events</h2>
         <button

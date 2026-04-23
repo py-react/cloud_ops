@@ -147,28 +147,26 @@ export default function NetworkPage() {
         />
       </div>
 
-      <div className="flex-1 min-h-0 mt-4">
-        <NetworkList
-          networks={filteredNetworks}
-          onDelete={handleDelete}
-          onBulkDelete={handleBulkDelete}
-          title="Network Registry"
-          description="Virtual network segment configuration and driver management"
-          icon={<NetworkIcon className="h-4 w-4" />}
-          extraHeaderContent={
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search networks..."
-                className="pl-9 h-9 bg-background/50 border-border/50 rounded-xl"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          }
-        />
-      </div>
+      <NetworkList
+        networks={filteredNetworks}
+        onDelete={handleDelete}
+        onBulkDelete={handleBulkDelete}
+        title="Network Registry"
+        description="Virtual network segment configuration and driver management"
+        icon={<NetworkIcon className="w-5 h-5 text-primary" />}
+        extraHeaderContent={
+          <div className="relative w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search networks..."
+              className="pl-9 h-9 bg-background/50 border-border/50 rounded-xl"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        }
+      />
 
       <CreateNetworkForm
         isWizardOpen={showCreate}

@@ -10,6 +10,7 @@ export type DeploymentConfigType = {
 	namespace: string;
 	deployment_name: string;
 	status?: string;
+	category?: string;
 	tag?: string | null;
 	required_source_control?: boolean;
 	code_source_control_name?: string | null;
@@ -19,6 +20,10 @@ export type DeploymentConfigType = {
 	deployment_strategy_id?: number | null;
 	http_route_id?: number | null;
 	replicas?: number | null;
+	package_type?: string | null;
+	release_strategy?: string | null;
+	package_name?: string | null;
+	registry_credential_id?: number | null;
 	scheduling_profile_id?: number | null;
 	container_profile_ids?: Array<number> | null;
 	volume_profile_ids?: Array<number> | null;

@@ -29,6 +29,7 @@ export interface PackageTableData {
 
 interface PackagesListProps {
   packages: PackageInfo[];
+  isLoading?: boolean;
   onPlay?: (pkg: PackageTableData) => void;
   onDelete?: (pkg: PackageTableData) => void;
   onPush?: (pkg: PackageTableData) => void;
@@ -38,9 +39,23 @@ interface PackagesListProps {
   title?: string;
   description?: string;
   icon?: React.ReactNode;
+  extraHeaderContent?: React.ReactNode;
 }
 
-export function PackagesList({ packages, onPlay, onDelete, onPush, onViewDetails, onBulkPlay, onBulkDelete, title, description, icon }: PackagesListProps) {
+export function PackagesList({ 
+  packages, 
+  isLoading,
+  onPlay, 
+  onDelete, 
+  onPush, 
+  onViewDetails, 
+  onBulkPlay, 
+  onBulkDelete, 
+  title, 
+  description, 
+  icon, 
+  extraHeaderContent 
+}: PackagesListProps) {
   const columns = [
     { header: 'ID', accessor: 'id' },
     { header: 'Image', accessor: 'image' },
@@ -91,6 +106,7 @@ export function PackagesList({ packages, onPlay, onDelete, onPush, onViewDetails
     <ResourceTable
       columns={columns}
       data={data}
+      loading={isLoading}
       onPlay={onPlay}
       onDelete={onDelete}
       onPush={onPush}
@@ -101,6 +117,7 @@ export function PackagesList({ packages, onPlay, onDelete, onPush, onViewDetails
       title={title}
       description={description}
       icon={icon}
+      extraHeaderContent={extraHeaderContent}
     />
   );
 }

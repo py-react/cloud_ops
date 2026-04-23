@@ -20,7 +20,7 @@ class RegistryManager:
     @property
     def docker_client(self):
         from app.docker_client import clientContext
-        return self._docker_client or clientContext.get_client()
+        return self._docker_client or clientContext.get_client(use_active=False)
     
     def _get_repo_and_tag(self, image_name: str) -> tuple[str, str]:
         """
@@ -133,7 +133,37 @@ class RegistryManager:
         bridge_name = "registry-pf-bridge"
         try:
             if start:
-                logger.info(f"Starting socat bridge on port {local_port}...")
+                import socket
+                import urllib.parse
+                
+                docker_url = self.docker_client.api.base_url
+                target_ip = 'host.docker.internal'
+                
+                # If remote docker engine, find the Mac's IP relative to the engine
+                if docker_url and docker_url.startswith('http'):
+                    parsed = urllib.parse.urlparse(docker_url)
+                    if parsed.hostname and parsed.hostname not in ['localhost', '127.0.0.1']:
+                        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        try:
+                            s.connect((parsed.hostname, parsed.port or 80))
+                            target_ip = s.getsockname()[0]
+                        except Exception:
+                            pass
+                        finally:
+                            s.close()
+                elif docker_url and docker_url.startswith('tcp'):
+                    parsed = urllib.parse.urlparse(docker_url.replace('tcp://', 'http://'))
+                    if parsed.hostname and parsed.hostname not in ['localhost', '127.0.0.1']:
+                        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        try:
+                            s.connect((parsed.hostname, parsed.port or 80))
+                            target_ip = s.getsockname()[0]
+                        except Exception:
+                            pass
+                        finally:
+                            s.close()
+
+                logger.info(f"Starting socat bridge on port {local_port} aiming back at {target_ip}...")
                 try:
                     old = await asyncio.to_thread(self.docker_client.containers.get, bridge_name)
                     await asyncio.to_thread(old.remove, force=True)
@@ -143,12 +173,13 @@ class RegistryManager:
                 await asyncio.to_thread(
                     self.docker_client.containers.run,
                     "alpine/socat",
-                    command=f"tcp-listen:{local_port},fork,reuseaddr tcp-connect:host.docker.internal:{local_port}",
+                    command=f"tcp-listen:{local_port},fork,reuseaddr tcp-connect:{target_ip}:{local_port}",
                     name=bridge_name,
                     network_mode="host",
+                    extra_hosts={'host.docker.internal': 'host-gateway'},
                     detach=True
                 )
-                logger.info(f"Socat bridge started (VM:{local_port} → host:{local_port})")
+                logger.info(f"Socat bridge started (VM:{local_port} → host:{target_ip}:{local_port})")
             else:
                 logger.info("Stopping socat bridge...")
                 try:
@@ -252,6 +283,86 @@ class RegistryManager:
 
         except Exception as e:
             logger.error(f"Failed to push image to {registry_config.url}: {e}")
+            raise
+        finally:
+            if not registry_config.is_remote:
+                await self._manage_socat_bridge(local_port or 0, start=False)
+                await self._stop_registry_proxy()
+
+    async def pull_image(
+        self,
+        image_name: str,
+        registry_config: RegistryConfig
+    ) -> List[str]:
+        """
+        Pull image from specified registry.
+        
+        Args:
+            image_name: Image name with tag (e.g., "repo_branch:tag")
+            registry_config: Registry configuration
+            
+        Returns:
+            List of pull log strings
+        """
+        local_port = None
+        try:
+            logger.info(f"Pulling image from registry: {registry_config.url}")
+            repo_name, tag = self._get_repo_and_tag(image_name)
+
+            if not registry_config.is_remote:
+                namespace = registry_config.config.get("namespace", "image-registry")
+                service_name = registry_config.config.get("service_name", registry_config.url.split('.')[0])
+                
+                service_port = 80
+                if ":" in registry_config.url:
+                    try:
+                        service_port = int(registry_config.url.split(":")[-1])
+                        if service_name and ":" in service_name:
+                            service_name = service_name.split(":")[0]
+                    except (ValueError, IndexError):
+                        pass
+
+                local_port = await self._start_registry_proxy(service_name, namespace, service_port=service_port)
+                await self._manage_socat_bridge(local_port, start=True)
+                target_repo = f"127.0.0.1:{local_port}/{repo_name}"
+            else:
+                target_repo = f"{registry_config.url}/{repo_name}"
+
+            def _do_pull():
+                pull_logs = []
+                # Use low-level api.pull context to guarantee streamed JSON output
+                pull_stream = self.docker_client.api.pull(
+                    repository=target_repo,
+                    tag=tag,
+                    stream=True,
+                    decode=True
+                )
+                for line in pull_stream:
+                    if 'status' in line:
+                        status = line['status']
+                        progress = line.get('progress', '')
+                        pull_logs.append(f"{status} {progress}".strip())
+                    if 'error' in line:
+                        raise APIError(line['error'])
+                return pull_logs
+
+            pull_logs = await asyncio.to_thread(_do_pull)
+            
+            # Tag the image back to its original name if it was pulled through a proxy
+            if not registry_config.is_remote:
+                image = await asyncio.to_thread(self.docker_client.images.get, f"{target_repo}:{tag}")
+                await asyncio.to_thread(image.tag, image_name)
+                # Cleanup proxy tag to avoid pollution
+                try:
+                    await asyncio.to_thread(self.docker_client.images.remove, f"{target_repo}:{tag}", force=True)
+                except:
+                    pass
+
+            logger.info(f"Successfully pulled image {image_name}")
+            return pull_logs
+
+        except Exception as e:
+            logger.error(f"Failed to pull image from {registry_config.url}: {e}")
             raise
         finally:
             if not registry_config.is_remote:

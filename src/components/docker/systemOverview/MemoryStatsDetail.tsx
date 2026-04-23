@@ -1,19 +1,18 @@
 import * as React from "react"
-import { TrendingUp, MemoryStickIcon as Memory } from "lucide-react"
-import { Label, Pie, PieChart } from "recharts"
+import { MemoryStickIcon as Memory } from "lucide-react"
+import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { ISystemInfo } from "./types";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription 
 } from "@/components/ui/card"
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
+import { 
+  ChartContainer, 
+  ChartTooltip, 
+  ChartTooltipContent 
 } from "@/components/ui/chart"
 
 const formatBytes = (bytes: number) => {
@@ -22,15 +21,14 @@ const formatBytes = (bytes: number) => {
 }
 
 const chartConfig = {
-  Used: {
-    label: '',
-    color: 'hsl(var(--chart-1))',
+  containers: {
+    label: "Docker Containers",
+    color: "hsl(var(--primary))",
   },
-  Free: {
-    label: '',
-    color: 'hsl(var(--chart-2))',
+  system: {
+    label: "Available System",
+    color: "hsl(var(--muted-foreground) / 0.2)",
   },
-
 }
 
 const LoadingOverlay = () => (
@@ -44,102 +42,90 @@ export function MemroryStatsDetail({ data, isLoading }: { data: ISystemInfo["sys
   const ChartTooltipContentAny = ChartTooltipContent as any;
 
   if (!data) return (
-    <Card className="flex flex-col relative">
+    <Card className="flex flex-col relative border-border/50 shadow-sm bg-white/50 backdrop-blur-sm">
       {isLoading && <LoadingOverlay />}
-      <CardHeader>
-        <CardTitle className="text-base font-medium flex items-center gap-2">
-          <Memory className="w-4 h-4" />
-          System Memory Monitor
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+          <Memory className="w-4 h-4 text-primary" />
+          Memory Infrastructure
         </CardTitle>
-        <CardDescription></CardDescription>
       </CardHeader>
-      <CardContent className="flex items-center justify-center min-h-[200px]">
-        <div className="text-muted-foreground text-sm">Waiting for stats...</div>
+      <CardContent className="flex items-center justify-center h-[120px]">
+        <div className="text-muted-foreground text-xs italic">Awaiting telemetry...</div>
       </CardContent>
     </Card>
   );
 
+  const total = data.total_memory_allocated_docker || 1;
+  const used = data.total_memory_usage || 0;
+  const free = Math.max(0, total - used);
+
   const chartData = [
     {
-      name: "Used",
-      value: data.total_memory_usage,
-      fill: 'hsl(var(--color-used))'
-    },
-    {
-      name: "Free",
-      value: data.total_memory_allocated_docker - data.total_memory_usage,
-      fill: 'hsl(var(--color-free))',
-    },
-
-  ]
-  const totalMemoryAllocated = data.total_memory_allocated
-
+      name: "Usage",
+      containers: used,
+      system: free,
+    }
+  ];
 
   return (
-    <Card className="flex flex-col h-full relative">
+    <Card className="flex flex-col relative border-border/50 shadow-sm bg-white/50 backdrop-blur-sm h-full">
       {isLoading && <LoadingOverlay />}
-      <CardHeader>
-        <CardTitle className="text-base font-medium flex items-center">
-          <div className="bg-primary/10 p-2 rounded-lg mr-3">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <div className="space-y-1">
+          <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
             <Memory className="w-4 h-4 text-primary" />
-          </div>
-          System Memory Monitor
-        </CardTitle>
-        <CardDescription>Allocation({formatBytes(totalMemoryAllocated)}) and Usage({formatBytes(data.total_memory_usage)})</CardDescription>
-
+            Memory Utilization
+          </CardTitle>
+          <CardDescription className="text-[10px] uppercase font-bold">
+            Host Capacity: {formatBytes(total)}
+          </CardDescription>
+        </div>
+        <div className="text-right">
+            <div className="text-sm font-black text-primary">
+                {((used / total) * 100).toFixed(1)}%
+            </div>
+            <div className="text-[9px] font-bold text-muted-foreground uppercase">Allocation</div>
+        </div>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainerAny
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[180px]"
-        >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContentAny labelFormatter={(value: any, payload: any) => {
-                return `${payload[0]?.name} ${formatBytes(payload[0]?.value)}`
-              }} />}
+      <CardContent className="pb-4 flex-1 flex flex-col justify-between">
+        <ChartContainerAny config={chartConfig} className="h-16 w-full">
+          <BarChart
+            layout="vertical"
+            data={chartData}
+            margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
+          >
+            <XAxis type="number" hide domain={[0, total]} />
+            <YAxis type="category" dataKey="name" hide />
+            <ChartTooltip cursor={false} content={<ChartTooltipContentAny />} />
+            <Bar 
+              dataKey="containers" 
+              stackId="a" 
+              fill="var(--color-containers)" 
+              radius={[4, 0, 0, 4]} 
+              barSize={32}
             />
-            <Pie
-              data={chartData}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={55}
-              strokeWidth={5}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
-                        >
-                          {formatBytes(data.total_memory_allocated_docker)}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
-                        >
-                          System
-                        </tspan>
-                      </text>
-                    )
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
+            <Bar 
+              dataKey="system" 
+              stackId="a" 
+              fill="var(--color-system)" 
+              radius={[0, 4, 4, 0]} 
+              barSize={32}
+            />
+          </BarChart>
         </ChartContainerAny>
+        
+        <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+                <span className="text-[9px] font-black uppercase text-primary/70 block mb-1">Docker Usage</span>
+                <span className="text-sm font-black">{formatBytes(used)}</span>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
+                <span className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Available Host</span>
+                <span className="text-sm font-black">{formatBytes(free)}</span>
+            </div>
+        </div>
       </CardContent>
-    </Card >
+    </Card>
   )
 }

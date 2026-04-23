@@ -4,39 +4,16 @@ import yaml
 import logging
 import requests
 from pydantic import BaseModel
-from app.k8s_helper.monitoring.stack import (
-    DEFAULT_ALERTMANAGER_CONFIG, 
-    DEFAULT_PROMETHEUS_CONFIG,
-    DEFAULT_PROMETHEUS_RULES,
-    DEFAULT_GRAFANA_DATASOURCES,
-    DEFAULT_NODE_EXPORTER_CONFIG,
-    DEFAULT_METRICS_SERVER_CONFIG,
-    DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG,
-    get_k8s_dashboard_json
-)
-from app.k8s_helper.monitoring.loki import DEFAULT_LOKI_CONFIG, DEFAULT_PROMTAIL_CONFIG, DEFAULT_OTEL_COLLECTOR_CONFIG
+
 
 logger = logging.getLogger(__name__)
 
 # Mapping component to (ConfigMap name, data key, default config, namespace)
 COMPONENT_MAP = {
-    "alertmanager": ("alertmanager-config", "alertmanager.yml", DEFAULT_ALERTMANAGER_CONFIG, "alerting"),
-    "prometheus": ("prometheus-server-conf", "prometheus.yml", DEFAULT_PROMETHEUS_CONFIG, "monitoring"),
-    "prometheus-rules": ("prometheus-server-conf", "alert_rules.yml", DEFAULT_PROMETHEUS_RULES, "monitoring"),
-    "grafana": ("grafana-datasources", "datasources.yaml", DEFAULT_GRAFANA_DATASOURCES, "monitoring"),
-    "grafana-dashboards": ("grafana-dashboard-k8s", "k8s-dashboard.json", get_k8s_dashboard_json(), "monitoring"),
-    "grafana-provider": ("grafana-dashboards-provider", "dashboards.yaml", DEFAULT_GRAFANA_DASHBOARDS_PROVIDER_CONFIG, "monitoring"),
-    "node-exporter": ("node-exporter-conf", "config.yml", DEFAULT_NODE_EXPORTER_CONFIG, "monitoring"),
-    "metrics-server": ("metrics-server-config", "config.yml", DEFAULT_METRICS_SERVER_CONFIG, "kube-system"),
-    "loki": ("loki-config", "loki.yaml", DEFAULT_LOKI_CONFIG, "logging"),
-    "promtail": ("promtail-config", "promtail.yaml", DEFAULT_PROMTAIL_CONFIG, "logging"),
-    "otel-collector": ("otel-collector-config", "otel-collector-config.yaml", DEFAULT_OTEL_COLLECTOR_CONFIG, "logging"),
     "gateway-api": ("gateway-api-config", "gateway.yaml", 'apiVersion: gateway.networking.k8s.io/v1\nkind: Gateway\nmetadata:\n  name: main-gateway\n  namespace: monitoring\nspec:\n  gatewayClassName: nginx\n  listeners:\n  - name: http\n    port: 80\n    protocol: HTTP\n    hostname: "*.example.com"', "monitoring"),
-    "local-path-provisioner": ("local-path-config", "config.json", '{\n        "nodePathMap":[\n        {\n                "node":"DEFAULT_PATH_FOR_NON_LISTED_NODES",\n                "paths":["/opt/local-path-provisioner"]\n        }\n        ]\n}', "local-path-storage"),
-    "flannel": ("kube-flannel-cfg", "net-conf.json", '{\n  "Network": "10.244.0.0/16",\n  "EnableNFTables": false,\n  "Backend": {\n    "Type": "vxlan"\n  }\n}', "kube-flannel"),
-    "openebs": ("openebs-ndm-config", "node-disk-manager.config", 'probeconfigs:\n  - key: udev-probe\n    name: udev probe\n    state: true', "openebs"),
 }
-async def GET(request: Request, component: str = Query("alertmanager")) -> dict:
+
+async def GET(request: Request, component: str = Query("gateway-api")) -> dict:
     """
     Fetch the configuration for a specific component.
     """
@@ -143,21 +120,7 @@ async def restart_rollout(k8s_helper, component: str, namespace: str):
         
         # Map component to deployment info
         deployment_map = {
-            "alertmanager": ("deployment", "alertmanager"),
-            "prometheus": ("deployment", "prometheus-deployment"),
-            "prometheus-rules": ("deployment", "prometheus-deployment"),
-            "grafana": ("deployment", "grafana"),
-            "grafana-dashboards": ("deployment", "grafana"),
-            "grafana-provider": ("deployment", "grafana"),
-            "node-exporter": ("daemonset", "node-exporter"),
-            "metrics-server": ("deployment", "metrics-server"),
-            "loki": ("deployment", "loki"),
-            "promtail": ("daemonset", "promtail"),
-            "otel-collector": ("daemonset", "otel-collector"),
-            "gateway-api": ("gateway", "main-gateway"),
-            "local-path-provisioner": ("deployment", "local-path-provisioner"),
-            "flannel": ("daemonset", "kube-flannel-ds"),
-            "openebs": ("deployment", "openebs-localpv-provisioner")
+            "gateway-api": ("gateway", "main-gateway")
         }
         
         if component not in deployment_map:

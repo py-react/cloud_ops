@@ -10,7 +10,8 @@ def create_code_source_control(session: Session, data: CodeSourceControlType) ->
         pat_id=data.pat_id, 
         registry_id=data.registry_id, 
         docker_config_id=docker_config_id,
-        status=data.status
+        status=data.status,
+        polling_enabled=data.polling_enabled if data.polling_enabled is not None else False
     )
     session.add(obj)
     session.commit()

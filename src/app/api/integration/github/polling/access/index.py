@@ -19,7 +19,7 @@ async def GET(request: Request, name: str = Query(..., description="full repo na
         utils = AllowedRepoUtils()
         
         
-        _, _, _, repo_pats, _, _ = utils.get_all()
+        _, _, _, repo_pats, _, _, _ = utils.get_all()
         pat_id = repo_pats.get(name)
         
         gh = get_github_client_from_pat(pat_id=pat_id)
@@ -63,21 +63,28 @@ async def GET(request: Request, name: str = Query(..., description="full repo na
         pr_s = repo.get_pulls(state="open")
         pr = [p for p in pr_s][:1]
         result["can_read_pulls"] = True
+        
+        # Check collaborator permission independently of open PRs
+        try:
+            permission = repo.get_collaborator_permission(user_login)
+            result["scopes"] = [permission]
+            if permission in ["admin", "write", "maintain", "triage", "read"]:
+                result["can_post_comments"] = True
+            else:
+                result["can_post_comments"] = False
+        except GithubException as e:
+            logger.warning(f"Failed getting collaborator permission: {owner_repo}: {e}")
+            pass
+
         if pr:
             # check comments read on this PR (issue comments)
             try:
                 has_comment = pr[0].get_issue_comments()
                 if has_comment:
                     result["can_read_comments"] = True
-                permission = repo.get_collaborator_permission(user_login)
-                result["scopes"] = [permission]
-                if permission in ["admin", "write", "maintain", "triage", "read"]:
-                    result["can_post_comments"] = True
-                else:
-                    result["can_post_comments"] = False
             except GithubException as e:
                 # if comments aren't readable, leave can_read_comments False
-                logger.warning(f"GithubException: {owner_repo}: {e}")
+                logger.warning(f"GithubException reading comments: {owner_repo}: {e}")
                 pass
     except GithubException as e:
         logger.warning(f"Failed reading pulls for {owner_repo}: {e}")

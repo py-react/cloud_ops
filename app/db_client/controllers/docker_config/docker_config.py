@@ -133,4 +133,9 @@ def set_active_docker_config(session: Session, config_id: Optional[int]) -> bool
 
 def get_active_docker_config(session: Session) -> Optional[DockerConfig]:
     statement = select(DockerConfig).where(DockerConfig.is_active == True, DockerConfig.soft_delete == False)
-    return session.exec(statement).first()
+    config = session.exec(statement).first()
+    if config:
+        config.client_cert = _decrypt_val(config.client_cert)
+        config.client_key = _decrypt_val(config.client_key)
+        config.ca_cert = _decrypt_val(config.ca_cert)
+    return config

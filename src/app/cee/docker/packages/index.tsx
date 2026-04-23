@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { ArrowDownToLineIcon, ContainerIcon, RefreshCw, HardDrive, Trash2, Plus } from "lucide-react";
+import { ArrowDownToLineIcon, ContainerIcon, RefreshCw, HardDrive, Trash2, Plus, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
 import { PackagesList } from "@/components/docker/packages/PackagesList";
 import { toast } from "sonner";
@@ -18,8 +19,11 @@ import PageLayout from "@/components/PageLayout";
 import useNavigate from "@/libs/navigate";
 
 
-const fetchPackages = async () => {
-  const response: any = await DefaultService.apiDockerPackagesGet();
+const fetchPackages = async (summary = false) => {
+  const url = summary ? '/api/docker/packages?summary=true' : '/api/docker/packages';
+  const res = await fetch(url);
+  const response: any = await res.json();
+  
   return response.packages.map((pkg: any) => ({
     id: pkg.id,
     name: Array.isArray(pkg.name) ? pkg.name[0] : pkg.name,
@@ -33,6 +37,17 @@ const fetchPackages = async () => {
   }));
 };
 
+const fetchStats = async () => {
+  try {
+    const res = await fetch('/api/docker/packages/stats');
+    const data = await res.json();
+    return data.stats || {};
+  } catch (err) {
+    console.error("Failed to fetch package stats:", err);
+    return {};
+  }
+};
+
 const PackagesPage = () => {
   const navigate = useNavigate();
   const [showPackagePullModal, setShowPackagePullModal] = useState(false);
@@ -41,15 +56,43 @@ const PackagesPage = () => {
   const [successPackage, setSuccessPackage] = useState<PackageInfo | null>(null);
   const [pullSubmitting, setPullSubmitting] = useState(false);
   const [createSubmitting, setCreateSubmitting] = useState(false);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
 
   const [packages, setPackages] = useState<PackageInfo[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  const filteredPackages = packages.filter(pkg => 
+    pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pkg.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const refreshData = async () => {
+    setIsLoading(true);
+    try {
+      // Phase 1: Fast Summary Load (~8s)
+      const res = await fetchPackages(true);
+      setPackages(res);
+      setIsLoading(false); // Show the table immediately
+
+      // Phase 2: Background Stats Load (~25s)
+      setIsStatsLoading(true);
+      const stats = await fetchStats();
+      setPackages(prev => prev.map(pkg => ({
+        ...pkg,
+        size: stats[pkg.id]?.size ?? pkg.size,
+        virtual_size: stats[pkg.id]?.virtual_size ?? pkg.virtual_size
+      })));
+    } catch (error) {
+      console.error(error);
+      setIsLoading(false);
+    } finally {
+      setIsStatsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchPackages().then((res) => {
-      setPackages(res)
-    }).catch(error => {
-      console.error(error);
-    })
+    refreshData();
   }, []);
 
   const handlePlay = async (row: PackageTableData) => {
@@ -64,8 +107,7 @@ const PackagesPage = () => {
       setSuccessPackage(pkg);
       setShowConfettiModal(true);
       toast.success('Package run successfully');
-      const newPackages = await fetchPackages();
-      setPackages(newPackages);
+      await refreshData();
       setTimeout(() => {
         setShowConfettiModal(false);
         setSuccessPackage(null);
@@ -85,8 +127,7 @@ const PackagesPage = () => {
         },
       });
       toast.success('Package removed successfully');
-      const newPackages = await fetchPackages();
-      setPackages(newPackages);
+      await refreshData();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to remove package');
     }
@@ -104,8 +145,7 @@ const PackagesPage = () => {
         }
       });
       toast.success(response.message);
-      const newPackages = await fetchPackages();
-      setPackages(newPackages);
+      await refreshData();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to push package');
     }
@@ -120,8 +160,7 @@ const PackagesPage = () => {
       );
       await Promise.all(promises);
       toast.success(`${pkgs.length} packages started successfully`);
-      const newPackages = await fetchPackages();
-      setPackages(newPackages);
+      await refreshData();
     } catch (err: any) {
       toast.error('Failed to run some packages');
     }
@@ -136,8 +175,7 @@ const PackagesPage = () => {
       );
       await Promise.all(promises);
       toast.success(`${pkgs.length} packages removed successfully`);
-      const newPackages = await fetchPackages();
-      setPackages(newPackages);
+      await refreshData();
     } catch (err: any) {
       toast.error('Failed to remove some packages');
     }
@@ -164,8 +202,8 @@ const PackagesPage = () => {
       icon={ContainerIcon}
       actions={
         <div className="flex items-center gap-2 mb-1">
-          <Button variant="outline" onClick={() => fetchPackages().then(setPackages)}>
-            <RefreshCw className="w-3.5 h-3.5 mr-2" />
+          <Button variant="outline" onClick={refreshData}>
+            <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading || isStatsLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <div className="flex gap-2">
@@ -189,6 +227,7 @@ const PackagesPage = () => {
           icon={<ContainerIcon className="w-4 h-4" />}
           color="bg-primary"
           className="border-primary/20 bg-primary/5 shadow-none hover:border-primary/30 transition-all"
+          isLoading={isLoading}
         />
         <ResourceCard
           title="Storage"
@@ -197,6 +236,7 @@ const PackagesPage = () => {
           icon={<HardDrive className="w-4 h-4" />}
           color="bg-blue-500"
           className="border-blue-500/20 bg-blue-500/5 shadow-none hover:border-blue-500/30 transition-all"
+          isLoading={isLoading}
         />
         <ResourceCard
           title="Unused"
@@ -204,23 +244,35 @@ const PackagesPage = () => {
           icon={<Trash2 className="w-4 h-4" />}
           color="bg-orange-500"
           className="border-orange-500/20 bg-orange-500/5 shadow-none hover:border-orange-500/30 transition-all"
+          isLoading={isLoading}
         />
       </div>
 
-      <div className="flex-1 min-h-0 4">
-        <PackagesList
-          packages={packages}
-          onPlay={handlePlay}
-          onDelete={handleDelete}
-          onPush={handlePush}
-          onBulkPlay={handleBulkPlay}
-          onBulkDelete={handleBulkDelete}
-          onViewDetails={(row) => navigate(`/cee/docker/packages/${row.package.id}`)}
-          title="Image Registry"
-          description="Local container image storage and management"
-          icon={<HardDrive className="h-4 w-4" />}
-        />
-      </div>
+      <PackagesList
+        packages={filteredPackages}
+        isLoading={isLoading}
+        onPlay={handlePlay}
+        onDelete={handleDelete}
+        onPush={handlePush}
+        onBulkPlay={handleBulkPlay}
+        onBulkDelete={handleBulkDelete}
+        onViewDetails={(row) => navigate(`/cee/docker/packages/${row.package.id}`)}
+        title="Image Registry"
+        description="Local container image storage and management"
+        icon={<HardDrive className="w-5 h-5 text-primary" />}
+        extraHeaderContent={
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search images..."
+              className="w-full pl-9 bg-background"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        }
+      />
 
       <PackageRunnerForm
         isWizardOpen={showPackagePullModal}
@@ -243,8 +295,7 @@ const PackagesPage = () => {
           }
           setShowPackagePullModal(false);
           toast.success(response.message);
-          const newPackages = await fetchPackages();
-          setPackages(newPackages);
+          await refreshData();
         }}
         submitting={pullSubmitting}
         setSubmitting={setPullSubmitting}
@@ -268,8 +319,7 @@ const PackagesPage = () => {
           }
           setShowPackageCreateModal(false);
           toast.success(response.message);
-          const newPackages = await fetchPackages();
-          setPackages(newPackages);
+          await refreshData();
         }}
         submitting={createSubmitting}
         setSubmitting={setCreateSubmitting}

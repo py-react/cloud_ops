@@ -2,13 +2,6 @@ import React, { useContext, useEffect, useState } from "react";
 import { ResourcesList } from "@/components/kubernetes/resources/ResourcesList";
 import useNavigate from "@/libs/navigate";
 import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ListIcon, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PageLayout from "@/components/PageLayout";
@@ -117,32 +110,24 @@ export default function KubernetesResourcesPage() {
       icon={ListIcon}
       actions={<NamespaceSelector />}
     >
-      <div className="space-y-6">
-        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Your Resources</CardTitle>
-              <CardDescription>All resources</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 shadow-none ">
-            <div className="relative px-6">
-              <Search className="absolute left-9 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search resources..."
-                className="w-full pl-9 bg-background"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <ResourcesList
-              resources={filteredResources}
-              onSelect={handleResourceSelect}
+      <ResourcesList
+        title="Your Resources"
+        description="All resources"
+        extraHeaderContent={
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search resources..."
+              className="w-full pl-9 bg-background"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        }
+        resources={filteredResources}
+        onSelect={handleResourceSelect}
+      />
     </PageLayout>
   );
 }

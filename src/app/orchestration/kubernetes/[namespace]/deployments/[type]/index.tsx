@@ -9,13 +9,6 @@ import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { RocketIcon, Box, Settings, Server, HardDrive, Network, Shield, Activity } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import { Wizard } from "@/components/wizard/wizard";
 import yaml from "js-yaml"
@@ -129,66 +122,55 @@ export default function DeploymentsPage() {
         </div>
       }
     >
-      <div className="space-y-6">
-        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Your {resourceType.charAt(0).toUpperCase() + resourceType.slice(1)}</CardTitle>
-              <CardDescription>
-                {transformedDeployments.length} {resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} found
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 shadow-none">
-            <ResourceTable
-              columns={columns}
-              data={transformedDeployments}
-              onViewDetails={handleViewDetails}
-              onEdit={(res) => {
-                setShowCreateDialog(true);
-                setCurrentToEdit(res);
-              }}
-              onDelete={(data) => {
-                let manifest = "";
-                if (data.last_applied) {
-                  try {
-                    manifest = yaml.dump(JSON.parse(data.last_applied));
-                  } catch (e) {
-                    console.error("Failed to parse last_applied annotation", e);
-                  }
-                }
-                
-                if (!manifest) {
-                  manifest = yaml.dump({
-                    apiVersion: data.fullData.apiVersion,
-                    kind: data.fullData.kind,
-                    metadata: {
-                      name: data.fullData.metadata.name,
-                      namespace: data.fullData.metadata.namespace,
-                    },
-                  });
-                }
-                DefaultService.apiKubernertesMethodsDeletePost({
-                  requestBody: {
-                    manifest: manifest,
-                  },
-                })
-                  .then((res: any) => {
-                    if (res.success) {
-                      toast.success(res.data.message);
-                      refetch();
-                    } else {
-                      toast.error(res.error);
-                    }
-                  })
-                  .catch((err: any) => {
-                    toast.error(err);
-                  });
-              }}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <ResourceTable
+        title={`Your ${resourceType.charAt(0).toUpperCase() + resourceType.slice(1)}`}
+        description={`${transformedDeployments.length} ${resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} found`}
+        icon={<RocketIcon className="w-5 h-5 text-primary" />}
+        columns={columns}
+        data={transformedDeployments}
+        onViewDetails={handleViewDetails}
+        onEdit={(res) => {
+          setShowCreateDialog(true);
+          setCurrentToEdit(res);
+        }}
+        onDelete={(data) => {
+          let manifest = "";
+          if (data.last_applied) {
+            try {
+              manifest = yaml.dump(JSON.parse(data.last_applied));
+            } catch (e) {
+              console.error("Failed to parse last_applied annotation", e);
+            }
+          }
+
+          if (!manifest) {
+            manifest = yaml.dump({
+              apiVersion: data.fullData.apiVersion,
+              kind: data.fullData.kind,
+              metadata: {
+                name: data.fullData.metadata.name,
+                namespace: data.fullData.metadata.namespace,
+              },
+            });
+          }
+          DefaultService.apiKubernertesMethodsDeletePost({
+            requestBody: {
+              manifest: manifest,
+            },
+          })
+            .then((res: any) => {
+              if (res.success) {
+                toast.success(res.data.message);
+                refetch();
+              } else {
+                toast.error(res.error);
+              }
+            })
+            .catch((err: any) => {
+              toast.error(err);
+            });
+        }}
+      />
 
       {showCreateDialog && (
         <ResourceForm

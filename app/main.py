@@ -50,9 +50,23 @@ import httpx
 async def cluster_proxy(request: Request, service: str, namespace: str, path: str = "", service_port: int = 80, rewrite_v2_location: bool = True):
     """
     Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).
-    Uses httpx.AsyncClient for true concurrent async proxying — no threadpool blocking.
+    Uses intelligent port discovery: if port is 80 (default), it looks up the 
+    actual service port in the Addon Registry.
     """
     try:
+        # Intelligent Port Discovery: Look up the service in the registry to find its native port
+        # This keeps the Apache and Proxy URLs generic while hitting the correct backend port.
+        if service_port == 80:
+            from app.db_client.db import get_session
+            from app.db_client.models.addon_plugin.addon_plugin import AddonPlugin
+            from sqlmodel import select
+            
+            with get_session() as session:
+                plugin = session.exec(select(AddonPlugin).where(AddonPlugin.name == service)).first()
+                if plugin and plugin.service_port:
+                    service_port = plugin.service_port
+                    logger.info(f"Intelligent Port Discovery: Using port {service_port} for service '{service}'")
+
         config.load_config()
             
         configuration = client.Configuration.get_default_copy()
@@ -145,9 +159,11 @@ async def cluster_proxy(request: Request, service: str, namespace: str, path: st
                 logger.warning(f"Failed to rewrite content: {e}")
 
         # Strip hop-by-hop response headers
-        excluded_headers = {"content-encoding", "content-length", "transfer-encoding", "connection", "host"}
+        excluded_headers = {"content-encoding", "transfer-encoding", "connection", "host"}
+        if request.method != "HEAD":
+            excluded_headers.add("content-length")
+            
         final_headers = {k: v for k, v in response_headers.items() if k.lower() not in excluded_headers}
-        
         if "/v2/" in target_url:
             final_headers["Docker-Distribution-API-Version"] = "registry/2.0"
 
@@ -286,12 +302,16 @@ async def cluster_websocket_proxy(websocket: WebSocket):
 # Function to extend the app by adding routes (following your exact pattern)
 def extend_app(app: FastAPI):
     origins = [
-        "http://localhost:5001",  # Example: your client's origin
+        "http://localhost:5001",
+        "http://127.0.0.1:5001",
     ]
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=[
+            "http://localhost:5001",
+            "http://127.0.0.1:5001",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -325,8 +345,23 @@ def extend_app(app: FastAPI):
     # Add WebSocket Route
     app.add_websocket_route("/cluster/proxy/{service}/{namespace}/{path:path}", cluster_websocket_proxy)
 
+    # Database system seeding (after schema sync)
+    from app.db_client.db import ensure_default_essential_addons, ensure_default_strategies
+    ensure_default_strategies(force=False)
+    # Seed essentials (fetches helm values in user env) - force=True updates existing broken system values
+    ensure_default_essential_addons(force=False)
+
+    @app.on_event("startup")
+    async def startup_event():
+
+        from app.github_client.poller import get_polling_manager
+        manager = get_polling_manager()
+        # Initialize and sync pollers in the background
+        asyncio.create_task(manager.sync_pollers())
+
     @app.on_event("shutdown")
     def shutdown_event():
-        # Perform any necessary cleanup or logging here
-        pass
+        from app.github_client.poller import get_polling_manager
+        manager = get_polling_manager()
+        manager.stop_all()
 

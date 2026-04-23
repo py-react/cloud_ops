@@ -312,3 +312,7 @@ class KubernetesResourceHelper:
     def get_cluster_metrics(self):
         """Get comprehensive information about the cluster"""
         return self.cluster_ops.get_cluster_metrics() 
+
+    def get_namespace_metrics(self, namespace: str):
+        """Get resource metrics for a specific namespace"""
+        return self.cluster_ops.get_namespace_metrics(namespace)

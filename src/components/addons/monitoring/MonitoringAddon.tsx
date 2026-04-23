@@ -23,7 +23,7 @@ import { Database, LayoutDashboard, Activity } from 'lucide-react'
 interface MonitoringAddonProps {
     title: string;
     description: string;
-    component: "prometheus" | "grafana" | "metrics-server" | "node-exporter" | "loki" | "promtail" | "otel-collector" | "gateway-api" | "local-path-provisioner" | "flannel" | "openebs";
+    component: "gateway-api";
     icon: React.ReactNode;
     features: string[];
     proxyUrl?: string;
@@ -38,62 +38,6 @@ export function MonitoringAddon({ title, description, component, icon, features,
     const [currentStep, setCurrentStep] = useState('config')
 
     const configMeta: Record<string, { label: string, description: string, longDescription: string, fileName: string, configLabel: string, icon: any }> = {
-        prometheus: {
-            label: 'Prometheus Configuration',
-            description: 'Edit your scraping and global monitoring rules.',
-            longDescription: 'Direct access to the Prometheus configuration. You can configure scrape targets, intervals, and global evaluation rules.',
-            fileName: 'prometheus.yml',
-            configLabel: 'Make sure to follow the Prometheus specification for jobs and scrape configs.',
-            icon: Database
-        },
-        grafana: {
-            label: 'Grafana Data Sources',
-            description: 'Manage your observability data sources.',
-            longDescription: 'Configure how Grafana connects to Prometheus and other backends.',
-            fileName: 'datasources.yaml',
-            configLabel: 'Ensure the datasource URLs match your cluster internal service names.',
-            icon: LayoutDashboard
-        },
-        'metrics-server': {
-            label: 'Metrics Server Config',
-            description: 'Configure resource metrics aggregation.',
-            longDescription: 'Adjust the CLI arguments for the Metrics Server. This allows you to tune resolution, port, and security settings.',
-            fileName: 'config.yml',
-            configLabel: 'Invalid flags may prevent the Metrics Server from starting.',
-            icon: Activity
-        },
-        'node-exporter': {
-            label: 'Node Exporter Config',
-            description: 'Configure hardware and OS metric collection.',
-            longDescription: 'Adjust the CLI arguments for the Node Exporter DaemonSet. You can enable/disable specific collectors and paths.',
-            fileName: 'config.yml',
-            configLabel: 'Consult the Node Exporter documentation for available collector flags.',
-            icon: Database
-        },
-        loki: {
-            label: 'Loki Configuration',
-            description: 'Log aggregation system configuration.',
-            longDescription: 'Configure retention periods, storage backends, and limits in loki.yaml.',
-            fileName: 'loki.yaml',
-            configLabel: 'Ensure storage and schema configs match your persistence layer.',
-            icon: Database
-        },
-        promtail: {
-            label: 'Promtail Configuration',
-            description: 'Log shipping agent configuration.',
-            longDescription: 'Configure scrape configs and pipeline stages in promtail.yaml to parsing logs before sending to Loki.',
-            fileName: 'promtail.yaml',
-            configLabel: 'Define static labels and relabel configs here.',
-            icon: FileSearch
-        },
-        'otel-collector': {
-            label: 'OTel Collector Config',
-            description: 'Configure the OpenTelemetry data pipeline.',
-            longDescription: 'Configure receivers, processors, and exporters. This collector is configured to send logs to Loki.',
-            fileName: 'otel-collector.yaml',
-            configLabel: 'Valid YAML is required for the collector to start.',
-            icon: Activity
-        },
         'gateway-api': {
             label: 'Gateway API Config',
             description: 'Kubernetes Gateway API configuration.',
@@ -101,34 +45,10 @@ export function MonitoringAddon({ title, description, component, icon, features,
             fileName: 'gateway.yaml',
             configLabel: 'Ensure your Gateway resources match the Gateway API specification.',
             icon: Activity
-        },
-        'local-path-provisioner': {
-            label: 'Local Path Config',
-            description: 'Configure local storage provisioner paths.',
-            longDescription: 'Manage which nodes and paths are used for dynamic local volume provisioning.',
-            fileName: 'config.json',
-            configLabel: 'Valid JSON is required for the provisioner to apply the mapping.',
-            icon: Database
-        },
-        'flannel': {
-            label: 'Flannel Networking Config',
-            description: 'Configure the cluster L3 network fabric.',
-            longDescription: 'Manage the network subnet and backend type (vxlan, host-gw, etc.) for node communication.',
-            fileName: 'net-conf.json',
-            configLabel: 'Incorrect network ranges can break cluster connectivity.',
-            icon: Activity
-        },
-        'openebs': {
-            label: 'OpenEBS Config',
-            description: 'Highly available, replicated block storage.',
-            longDescription: 'Configure storage policies and replica counts for OpenEBS Jiva and LocalPV.',
-            fileName: 'config.json',
-            configLabel: 'Ensure your storage configuration matches your node hardware.',
-            icon: Database
         }
     }
 
-    const currentMeta = configMeta[component || 'prometheus'] || configMeta.prometheus
+    const currentMeta = configMeta[component || 'gateway-api'] || configMeta['gateway-api']
 
     const wizardSteps = [
         {
@@ -137,7 +57,7 @@ export function MonitoringAddon({ title, description, component, icon, features,
             description: currentMeta.description,
             longDescription: currentMeta.longDescription,
             icon: currentMeta.icon || Settings2Icon,
-            submitOnNext: component === 'prometheus',
+            submitOnNext: component === 'gateway-api',
             component: (props: any) => (
                 <FileEditorStep
                     {...props}

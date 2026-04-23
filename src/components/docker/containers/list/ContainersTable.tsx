@@ -174,7 +174,12 @@ export function ContainersTable({
       title={title}
       description={description}
       icon={icon}
-      extraHeaderContent={filtersElement}
+      extraHeaderContent={
+        <div className="flex items-center gap-4">
+          {extraHeaderContent}
+          {filtersElement}
+        </div>
+      }
     />
   );
 }

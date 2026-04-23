@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Activity, Rocket, Link, Hash } from "lucide-react";
+import { Activity, Rocket, Link, Hash, Tag, Globe } from "lucide-react";
 import { z } from "zod";
 import { DefaultService } from "@/gingerJs_api_client/services/DefaultService";
 import type { DeploymentRunType } from "@/gingerJs_api_client/models/DeploymentRunType";
@@ -48,6 +48,7 @@ export interface ReleaseConfigData {
   hard_delete: boolean;
   status: string;
   kind?: string;
+  category?: string;
   deployment_strategy_id?: number;
   http_route_id?: number;
 }
@@ -78,6 +79,9 @@ const releaseRunSchema = z.object({
   deployment_strategy_id: z.number().optional(),
   http_route_id: z.number().optional(),
   apply_derived_httproute: z.boolean(),
+  // Package specific
+  release_notes: z.string().optional(),
+  is_public: z.boolean(),
 });
 
 type ReleaseRunFormValues = z.infer<typeof releaseRunSchema>;
@@ -99,10 +103,15 @@ export const ReleaseRun = ({
       apply_derived_httproute: false,
       deployment_strategy_id: deployment_config?.deployment_strategy_id || undefined,
       http_route_id: deployment_config?.http_route_id || undefined,
-      images: (deployment_config?.containers || []).reduce((acc: any, c) => {
-        acc[c.name] = "";
-        return acc;
-      }, {}),
+      images: deployment_config?.category === 'package' 
+        ? { main: "" }
+        : (deployment_config?.containers || []).reduce((acc: any, c) => {
+            acc[c.name] = "";
+            return acc;
+          }, {}),
+      version: "",
+      release_notes: "",
+      is_public: true,
     };
 
     if (defaultValues) {
@@ -135,12 +144,11 @@ You can only run releases for 'active' configurations. Please activate it first.
       await DefaultService.apiIntegrationKubernetesReleaseRunPost({
         requestBody: payload,
       });
-      toast.success("Release run triggered successfully.")
+      toast.success(deployment_config.category === 'package' ? "Package release triggered!" : "Deployment triggered!");
       onSuccess()
       onClose(false);
     } catch (e: any) {
-      const errorMsg = e?.message || "Failed to trigger release run.";
-      window.alert(`Release Failed: ${errorMsg}`);
+      const errorMsg = e?.message || "Failed to trigger release.";
       toast.error(errorMsg);
     }
   };
@@ -187,70 +195,95 @@ You can only run releases for 'active' configurations. Please activate it first.
       )
     },
     {
-      id: "images",
-      label: "Deployment Images",
-      description: "Container versions",
-      longDescription: "Specify the image name and tag for each container in this release.",
+      id: "versioning",
+      label: deployment_config.category === 'package' ? "Release Details" : "Deployment Specs",
+      description: deployment_config.category === 'package' ? "Version and Image" : "Container versions",
+      longDescription: deployment_config.category === 'package' 
+        ? "Specify the version tag and the PR image that contains your build artifacts."
+        : "Specify the image name and tag for each container in this release.",
       component: ({ control }: any) => (
         <div className="space-y-6">
-          <FormField
-            control={control}
-            name="apply_derived_service"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base font-semibold">Apply Derived Service</FormLabel>
-                  <div className="text-[0.8rem] text-muted-foreground">
-                    If enabled, the associated Service YAML (from Advanced Config) will be reapplied with this deployment.
-                  </div>
-                </div>
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
+          {deployment_config.category === 'package' && (
+            <div className="space-y-4 pb-4 border-b">
+              <FormField
+                control={control}
+                name="is_public"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base font-semibold flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-blue-500" /> Public Release
+                      </FormLabel>
+                    </div>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="release_notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-bold uppercase text-muted-foreground/70">
+                      Release Notes
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Describe changes in this release..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
+          {/* Image Selection Section */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <Activity className="h-4 w-4 text-muted-foreground" />
+              {deployment_config.category === 'package' ? "Source Build Image" : "Container Images"}
+            </h4>
+            
+            {deployment_config.category === 'package' ? (
+              <FormField
+                control={control}
+                name="images.main"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[10px] font-black uppercase text-muted-foreground">Artifact Image Tag (from PR)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. library-name:pr-123" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              (deployment_config?.containers || []).map((container) => (
+                <FormField
+                  key={container.name}
+                  control={control}
+                  name={`images.${container.name}`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 font-black uppercase text-[10px] tracking-widest text-muted-foreground bg-muted/30 px-2 py-1 rounded w-fit">
+                        {container.name}
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. nginx:1.21-alpine" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))
             )}
-          />
-          <FormField
-            control={control}
-            name="apply_derived_httproute"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base font-semibold">Apply Derived HTTPRoute</FormLabel>
-                  <div className="text-[0.8rem] text-muted-foreground">
-                    If enabled, the associated HTTPRoute (from Advanced Config) will be applied for traffic management.
-                  </div>
-                </div>
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          {(deployment_config?.containers || []).map((container) => (
-            <FormField
-              key={container.name}
-              control={control}
-              name={`images.${container.name}`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2 font-black uppercase text-[10px] tracking-widest text-muted-foreground bg-muted/30 px-2 py-1 rounded w-fit">
-                    {container.name}
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. nginx:1.21-alpine" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ))}
+          </div>
         </div>
       )
     }
@@ -269,12 +302,14 @@ You can only run releases for 'active' configurations. Please activate it first.
       schema={releaseRunSchema}
       initialValues={initialValues}
       onSubmit={onSubmit}
-      submitLabel="Run Release"
+      submitLabel={deployment_config?.category === 'package' ? "Publish Release" : "Run Release"}
       submitIcon={Rocket}
       heading={{
-        primary: "Run New Release",
-        secondary: `Trigger a fresh deployment for ${deployment_config?.deployment_name}`,
-        icon: Activity,
+        primary: deployment_config?.category === 'package' ? "Publish New Library Release" : "Run New Deployment Release",
+        secondary: deployment_config?.category === 'package' 
+          ? `Publish a new version for ${deployment_config?.deployment_name}`
+          : `Trigger a fresh deployment for ${deployment_config?.deployment_name}`,
+        icon: deployment_config?.category === 'package' ? Tag : Activity,
       }}
     />
   );

@@ -1,83 +1,79 @@
 from sqlmodel import Session, select, desc
 from typing import List, Optional
-from app.db_client.models.github_pat.github_pat import GitHubPAT
+from app.db_client.models.github_pat.github_pat import IntegrationCredential
 from datetime import datetime
 
 
-def create_pat(session: Session, name: str, token_encrypted: str, active: bool = False, scopes: Optional[str] = None) -> GitHubPAT:
-    pat = GitHubPAT(name=name, token_encrypted=token_encrypted, active=active, scopes=scopes)
-    session.add(pat)
+def create_credential(session: Session, name: str, token_encrypted: str, provider: str = "github", active: bool = False, scopes: Optional[str] = None) -> IntegrationCredential:
+    credential = IntegrationCredential(name=name, token_encrypted=token_encrypted, provider=provider, active=active, scopes=scopes)
+    session.add(credential)
     session.commit()
-    session.refresh(pat)
-    return pat
+    session.refresh(credential)
+    return credential
 
 
-def list_pats(session: Session) -> List[GitHubPAT]:
-    return list(session.exec(select(GitHubPAT)).all())
+def list_credentials(session: Session) -> List[IntegrationCredential]:
+    return list(session.exec(select(IntegrationCredential)).all())
 
 
-def get_pat(session: Session, pat_id: int) -> Optional[GitHubPAT]:
-    return session.get(GitHubPAT, pat_id)
+def get_credential(session: Session, credential_id: int) -> Optional[IntegrationCredential]:
+    return session.get(IntegrationCredential, credential_id)
 
 
-def delete_pat(session: Session, pat_id: int) -> bool:
-    pat = session.get(GitHubPAT, pat_id)
-    if not pat:
+def delete_credential(session: Session, credential_id: int) -> bool:
+    credential = session.get(IntegrationCredential, credential_id)
+    if not credential:
         return False
-    session.delete(pat)
+    session.delete(credential)
     session.commit()
     return True
 
 
-def set_active_pat(session: Session, pat_id: int) -> Optional[GitHubPAT]:
-    # Activate chosen (allow multiple active)
-    pat = session.get(GitHubPAT, pat_id)
-    if not pat:
+def set_active_credential(session: Session, credential_id: int) -> Optional[IntegrationCredential]:
+    credential = session.get(IntegrationCredential, credential_id)
+    if not credential:
         session.commit()
         return None
     
-    # Toggle active state? Or just set to True? 
-    # User says "multiple PATs can have active state".
-    # Usually a "Use Token" button implies "Activate".
-    # Let's make it a toggle if it's already active? 
-    # The UI currently has "Use Token" which calls PUT.
-    # If I make it just "Activate", I need a "Deactivate" too.
-    # Let's assume PUT toggles it? Or enables it.
-    # Existing code:
-    # if body.active: set_active_pat(...)
-    # Let's make it enable. 
-    
-    pat.active = True
-    session.add(pat)
+    credential.active = True
+    session.add(credential)
     session.commit()
-    session.refresh(pat)
-    return pat
+    session.refresh(credential)
+    return credential
 
 
-def get_active_pat(session: Session) -> Optional[GitHubPAT]:
-    res = session.exec(select(GitHubPAT).where(GitHubPAT.active == True).order_by(desc(GitHubPAT.id))).first()
+def get_active_credential(session: Session) -> Optional[IntegrationCredential]:
+    res = session.exec(select(IntegrationCredential).where(IntegrationCredential.active == True).order_by(desc(IntegrationCredential.id))).first()
     return res
 
 
-def update_pat(session: Session, pat_id: int, active: Optional[bool] = None) -> Optional[GitHubPAT]:
-    pat = session.get(GitHubPAT, pat_id)
-    if not pat:
+def update_credential(session: Session, credential_id: int, active: Optional[bool] = None) -> Optional[IntegrationCredential]:
+    credential = session.get(IntegrationCredential, credential_id)
+    if not credential:
         return None
     
     if active is not None:
-        pat.active = active
+        credential.active = active
     
-    session.add(pat)
+    session.add(credential)
     session.commit()
-    session.refresh(pat)
-    return pat
+    session.refresh(credential)
+    return credential
 
-def mark_last_used(session: Session, pat_id: int):
-    pat = session.get(GitHubPAT, pat_id)
-    if not pat:
+def mark_last_used(session: Session, credential_id: int):
+    credential = session.get(IntegrationCredential, credential_id)
+    if not credential:
         return None
-    pat.last_used_at = datetime.utcnow()
-    session.add(pat)
+    credential.last_used_at = datetime.utcnow()
+    session.add(credential)
     session.commit()
-    session.refresh(pat)
-    return pat
+    session.refresh(credential)
+    return credential
+
+def get_active_credential_by_provider(session: Session, provider: str) -> Optional[IntegrationCredential]:
+    """Retrieve the most recently active credential for a specific provider (npm, pypi, github)."""
+    return session.exec(
+        select(IntegrationCredential)
+        .where(IntegrationCredential.provider == provider, IntegrationCredential.active == True)
+        .order_by(desc(IntegrationCredential.id))
+    ).first()

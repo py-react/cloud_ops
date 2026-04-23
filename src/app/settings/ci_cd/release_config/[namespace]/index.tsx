@@ -11,19 +11,118 @@ import { NamespaceContext } from "@/components/kubernetes/contextProvider/Namesp
 import useNavigate from "@/libs/navigate";
 import { FormWizard } from "@/components/wizard/form-wizard";
 import { releaseFormSchema } from "@/components/ciCd/releaseConfig/forms/components/formUtils";
-import { Settings } from "lucide-react";
+import { releaseFormSchema } from "@/components/ciCd/releaseConfig/forms/components/formUtils";
+import { Settings, GitBranch, LayoutDashboard } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Simplified step component
-import SimpleReleaseConfig from "@/components/ciCd/releaseConfig/forms/SimpleReleaseConfig";
+// Multi-step components
+import BasicConfigStep from "@/components/ciCd/releaseConfig/forms/steps/BasicConfigStep";
+import SourceControlStep from "@/components/ciCd/releaseConfig/forms/steps/SourceControlStep";
+import ReleaseDetailsStep from "@/components/ciCd/releaseConfig/forms/steps/ReleaseDetailsStep";
+
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/libs/utils";
+import { Boxes, Database, Globe, Layers, Package, Tag, Network } from "lucide-react";
 
 const columns = [
-  { header: "Release Config Name", accessor: "deployment_name" },
-  { header: "Type", accessor: "type" },
-  { header: "Source Control", accessor: "code_source_control_name" },
-  { header: "Branch", accessor: "source_control_branch" },
-  { header: "Derived Deployment", accessor: "derived_deployment_name" },
-  { header: "Derived Service", accessor: "service_name" },
+  { 
+    header: "Configuration", 
+    accessor: "deployment_name",
+    cell: (row: any) => (
+      <div className="flex flex-col">
+        <span className="font-bold text-foreground">{row.deployment_name}</span>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-tight flex items-center gap-1">
+          <Tag className="h-2.5 w-2.5 text-primary/50" /> {row.id}
+        </span>
+      </div>
+    )
+  },
+  { 
+    header: "Category", 
+    accessor: "category",
+    cell: (row: any) => {
+      const isK8s = row.category === 'kubernetes' || !row.category;
+      return (
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "gap-1.5 py-0.5 font-bold uppercase text-[10px]",
+            isK8s ? "border-blue-500/30 text-blue-500 bg-blue-500/5" : "border-orange-500/30 text-orange-500 bg-orange-500/5"
+          )}
+        >
+          {isK8s ? <Layers className="h-3 w-3" /> : <Package className="h-3 w-3" />}
+          {isK8s ? "K8s" : "Library"}
+        </Badge>
+      );
+    }
+  },
+  { 
+    header: "Release Target", 
+    accessor: "target",
+    cell: (row: any) => {
+      const isK8s = row.category === 'kubernetes' || !row.category;
+      if (isK8s) {
+        return (
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <Boxes className="h-3 w-3 text-muted-foreground/60" />
+              <span className="text-[11px] font-semibold text-foreground/80">{row.derived_deployment_name || "No Template"}</span>
+            </div>
+            {row.service_name && row.service_name !== "N/A" && (
+              <div className="flex items-center gap-1.5">
+                <Network className="h-3 w-3 text-muted-foreground/60" />
+                <span className="text-[10px] text-muted-foreground">{row.service_name}</span>
+              </div>
+            )}
+          </div>
+        );
+      }
+      return (
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <Database className="h-3 w-3 text-orange-500/60" />
+            <Badge variant="glow" className="text-[9px] px-1.5 py-0 uppercase h-4 font-black">
+              {row.package_type || "N/A"}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Globe className="h-3 w-3 text-muted-foreground/60" />
+            <span className="text-[11px] text-foreground/70 font-medium truncate max-w-[150px]" title={row.package_name}>
+              {row.package_name || "Unnamed Package"}
+            </span>
+          </div>
+        </div>
+      );
+    }
+  },
+  { 
+    header: "Source Control", 
+    accessor: "source",
+    cell: (row: any) => {
+      if (!row.code_source_control_name || row.code_source_control_name === "N/A") return <span className="text-muted-foreground text-xs italic">No Binding</span>;
+      return (
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1.5 font-semibold text-foreground/80 text-[11px]">
+            <GitBranch className="h-3 w-3" />
+            {row.code_source_control_name}
+          </div>
+          <span className="text-[10px] text-muted-foreground pl-4">
+             {row.source_control_branch || "main"}
+          </span>
+        </div>
+      );
+    }
+  },
   { header: "Status", accessor: "status" },
 ];
 
@@ -36,17 +135,24 @@ const ReleaseConfigPage = () => {
   const [editingConfig, setEditingConfig] = useState<any>({});
   const [search, setSearch] = useState("");
   const [deleteFilter, setDeleteFilter] = useState(""); // "", "active", "inactive", "delete"
-  const [currentStep, setCurrentStep] = useState("essential");
+  const [currentStep, setCurrentStep] = useState("basic");
+  const [deleteConfirmRow, setDeleteConfirmRow] = useState<any>(null);
 
   const INITIAL_VALUES = React.useMemo(() => ({
     deployment_name: '',
     namespace: selectedNamespace || 'default',
+    category: 'kubernetes',
     type: '',
     required_source_control: false,
     code_source_control_name: null,
     source_control_branch: null,
     derived_deployment_id: null,
     service_id: null,
+    package_type: null,
+    package_name: null,
+    registry_id: null,
+    registry_credential_id: null,
+    release_strategy: 'semantic',
   }), [selectedNamespace]);
 
   const sanitizeFormData = (data: any) => {
@@ -57,17 +163,35 @@ const ReleaseConfigPage = () => {
     return {
       ...INITIAL_VALUES,
       ...cleanData,
+      category: data.category || (data.derived_deployment_id ? 'kubernetes' : 'package'),
+      registry_credential_id: data.registry_credential_id ?? null,
     };
   };
 
   const steps = [
     {
-      id: "essential",
-      label: "Release Configuration",
+      id: "basic",
+      label: "Basic Details",
       icon: Settings,
-      description: "Required config",
-      longDescription: "Define the release configuration with source control and deployment references.",
-      component: SimpleReleaseConfig,
+      description: "Identity & Type",
+      longDescription: "Set the name, category and business type for this release configuration.",
+      component: BasicConfigStep,
+    },
+    {
+      id: "source",
+      label: "Source Control",
+      icon: GitBranch,
+      description: "Repo Binding",
+      longDescription: "Optionally link this release to a source control repository and default branch.",
+      component: SourceControlStep,
+    },
+    {
+      id: "details",
+      label: "Release Specifics",
+      icon: LayoutDashboard,
+      description: "Infrastructure mapping",
+      longDescription: "Configure the deployment templates, services, or package registry settings.",
+      component: ReleaseDetailsStep,
     },
   ];
 
@@ -84,6 +208,7 @@ const ReleaseConfigPage = () => {
         code_source_control_name: data.code_source_control_name || null,
         source_control_branch: data.source_control_branch || null,
         service_id: data.service_id || null,
+        registry_credential_id: data.registry_credential_id,
         namespace: selectedNamespace
       };
 
@@ -149,7 +274,7 @@ const ReleaseConfigPage = () => {
       title="Release Configurations"
       subtitle={
         <>
-          Define the parameters and metadata required for traceability across deployments in <span className="text-primary font-bold">{selectedNamespace}</span>.
+          Define the parameters and metadata required for traceability across <span className="text-primary font-bold">Kubernetes</span> deployments and <span className="text-orange-500 font-bold">Package</span> distributions in <span className="text-primary font-bold">{selectedNamespace}</span>.
         </>
       }
       icon={FileCog}
@@ -226,6 +351,8 @@ const ReleaseConfigPage = () => {
           data={filteredDeployments.map((item) => ({
             ...item,
             fullData: item,
+            // Ensure category is derived correctly if missing (legacy support)
+            category: item.category || (item.derived_deployment_id ? 'kubernetes' : 'package'),
             code_source_control_name: item.code_source_control_name || (item.required_source_control ? "Missing" : "N/A"),
             source_control_branch: item.source_control_branch || (item.required_source_control ? "Missing" : "N/A"),
             derived_deployment_name: item.derived_deployment_name || "N/A",
@@ -281,17 +408,7 @@ const ReleaseConfigPage = () => {
           onDelete={(row) => {
             const isSoftDeleted = row.fullData.soft_delete === true;
             if (isSoftDeleted) {
-              if (!window.confirm("⚠️ WARNING: This will permanently delete this release config and cannot be undone.\n\nAre you sure you want to proceed?")) return;
-              DefaultService.apiIntegrationKubernetesReleasePut({
-                requestBody: { ...row.fullData, hard_delete: true },
-              }).then((res: any) => {
-                if (res.status === "success") {
-                  toast.success("Release config permanently deleted");
-                  fetchDeployments();
-                } else {
-                  toast.error(res.message);
-                }
-              }).catch((err) => toast.error(err.message));
+              setDeleteConfirmRow(row.fullData);
             } else {
               DefaultService.apiIntegrationKubernetesReleaseDelete({
                 namespace: row.fullData.namespace,
@@ -348,6 +465,41 @@ const ReleaseConfigPage = () => {
         }}
         submitLabel={editingConfig?.deployment_name ? "Save Changes" : "Create Release"}
       />
+      <AlertDialog open={!!deleteConfirmRow} onOpenChange={(open) => !open && setDeleteConfirmRow(null)}>
+        <AlertDialogContent className="border-destructive/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Hard Delete Configuration
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <span className="font-bold text-foreground">"{deleteConfirmRow?.deployment_name}"</span> and all its associated release history. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!deleteConfirmRow) return;
+                DefaultService.apiIntegrationKubernetesReleasePut({
+                  requestBody: { ...deleteConfirmRow, hard_delete: true },
+                }).then((res: any) => {
+                  if (res.status === "success") {
+                    toast.success("Release config permanently deleted");
+                    fetchDeployments();
+                  } else {
+                    toast.error(res.message);
+                  }
+                }).catch((err) => toast.error(err.message))
+                .finally(() => setDeleteConfirmRow(null));
+              }}
+            >
+              Permanently Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 };

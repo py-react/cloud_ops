@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { DefaultService } from '@/gingerJs_api_client'
 
 interface UseAddonConfigProps {
-    component: "prometheus" | "grafana" | "metrics-server" | "alertmanager" | "node-exporter" | "loki" | "promtail" | "otel-collector" | "gateway-api" | "local-path-provisioner" | "flannel" | "openebs"
+    component: "gateway-api"
 }
 
 export function useAddonConfig({ component }: UseAddonConfigProps) {
@@ -17,11 +17,6 @@ export function useAddonConfig({ component }: UseAddonConfigProps) {
         try {
             // Components to fetch configs for
             let targets: string[] = [component];
-            if (component === 'prometheus') {
-                targets = ['prometheus', 'node-exporter', 'prometheus-rules'];
-            } else if (component === 'grafana') {
-                targets = ['grafana', 'grafana-dashboards', 'grafana-provider'];
-            }
             const newConfigs: Record<string, string> = { ...configs }
 
             for (const target of targets) {
@@ -54,30 +49,6 @@ export function useAddonConfig({ component }: UseAddonConfigProps) {
             // Determine which config we are saving based on currentStep
             let targetComponent: string = component;
             let targetConfig = data.config; // Default field
-
-            if (component === 'prometheus') {
-                if (currentStep === 'config') {
-                    targetComponent = 'prometheus';
-                    targetConfig = data.config;
-                } else if (currentStep === 'prometheus-rules') {
-                    targetComponent = 'prometheus-rules';
-                    targetConfig = data.prometheus_rules_config;
-                } else if (currentStep === 'node-exporter') {
-                    targetComponent = 'node-exporter';
-                    targetConfig = data.node_exporter_config;
-                }
-            } else if (component === 'grafana') {
-                if (currentStep === 'config') {
-                    targetComponent = 'grafana';
-                    targetConfig = data.config;
-                } else if (currentStep === 'grafana-dashboards') {
-                    targetComponent = 'grafana-dashboards';
-                    targetConfig = data.grafana_dashboards_config;
-                } else if (currentStep === 'grafana-provider') {
-                    targetComponent = 'grafana-provider';
-                    targetConfig = data.grafana_provider_config;
-                }
-            }
 
             // @ts-ignore
             const response: any = await DefaultService.apiMonitoringConfigPost({

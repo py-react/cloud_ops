@@ -77,12 +77,15 @@ export const FormWizard = <T extends FieldValues>({
     defaultValues: initialValues as any,
   });
 
-  // Sync form state when initialValues change or wizard opens
+  const wasOpenRef = React.useRef(isWizardOpen);
+
+  // Sync form state only when wizard first opens (not on step changes)
   React.useEffect(() => {
-    if (isWizardOpen) {
+    if (isWizardOpen && !wasOpenRef.current) {
       form.reset(initialValues as any);
     }
-  }, [initialValues, isWizardOpen, form]);
+    wasOpenRef.current = isWizardOpen;
+  }, [isWizardOpen, form]);
 
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
   const currentStepData = steps[currentStepIndex];
@@ -154,17 +157,17 @@ export const FormWizard = <T extends FieldValues>({
         if (!open) setCurrentStep(steps[0].id);
       }}
     >
-      <DialogContent className="sm:max-w-6xl p-0 overflow-hidden border border-border/30 bg-background shadow-2xl rounded-3xl animate-in fade-in zoom-in-95 duration-500 max-h-[90vh]">
-        <DialogHeader className="py-6 px-8 border-b border-border/30 bg-muted/30 backdrop-blur-md shrink-0">
+      <DialogContent className="sm:max-w-5xl p-0 overflow-hidden max-h-[90vh]">
+        <DialogHeader className="py-4 px-8 border-b shrink-0">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
                 <heading.icon className="h-6 w-6" />
               </div>
               <div className="flex flex-col gap-0.5 text-left">
-                <DialogTitle className="text-2xl font-bold tracking-tight">{heading.primary}</DialogTitle>
+                <DialogTitle className="text-xl font-bold text-foreground">{heading.primary}</DialogTitle>
                 {heading.secondary && (
-                  <p className="text-xs text-muted-foreground font-medium">{heading.secondary}</p>
+                  <p className="text-sm text-muted-foreground">{heading.secondary}</p>
                 )}
               </div>
             </div>
@@ -175,10 +178,10 @@ export const FormWizard = <T extends FieldValues>({
         </DialogHeader>
 
         <Form {...form}>
-          <form id={name} onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col min-h-0 h-[700px] max-h-[85vh]">
+          <form id={name} onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col min-h-0 h-[650px] max-h-[85vh]">
             <div className="flex shrink-0 min-h-0 overflow-hidden h-full">
               {/* Sidebar Navigation */}
-              <div className="w-64 border-r border-border/30 bg-muted/20 flex flex-col shrink-0 relative z-30 max-w-64 overflow-hidden">
+              <div className="w-64 border-r bg-muted/30 flex flex-col shrink-0 relative z-30 max-w-64 overflow-hidden">
                 <ScrollArea className="flex-1">
                   <div className="p-4 space-y-1">
                     {steps.map((step) => {
@@ -190,23 +193,17 @@ export const FormWizard = <T extends FieldValues>({
                           type="button"
                           onClick={() => handleTabChange(step.id)}
                           className={cn(
-                            "w-56 shrink-0 flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group text-left",
+                            "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors group text-left",
                             isActive
-                              ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
-                              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:bg-muted"
                           )}
                         >
-                          {/* <div className={cn(
-                            "p-1.5 rounded-lg transition-colors",
-                            isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground group-hover:bg-background"
-                          )}>
-                            <StepIcon className="h-4 w-4" />
-                          </div> */}
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold truncate leading-none mb-1">{step.label}</div>
-                            <div className="text-[11px] opacity-70 truncate leading-none font-medium">{step.description}</div>
+                            <div className={cn("text-sm font-semibold truncate", isActive ? "text-primary-foreground" : "text-foreground")}>{step.label}</div>
+                            <div className={cn("text-[11px] opacity-70 truncate", isActive ? "text-primary-foreground/90" : "text-muted-foreground")}>{step.description}</div>
                           </div>
-                          {isActive && <ChevronRight className="h-3.5 w-3.5 opacity-50" />}
+                          {isActive && <ChevronRight className="h-4 w-4 opacity-50" />}
                         </button>
                       )
                     })}
@@ -217,24 +214,23 @@ export const FormWizard = <T extends FieldValues>({
               {/* Form Content Area */}
               <div className="flex-1 flex flex-col bg-background min-w-0 overflow-hidden">
                 <ScrollArea className="flex-1">
-                  <div className={cn("px-8 py-8 space-y-8 pb-12")}>
-                    {/* Header styled after Overview cards */}
+                  <div className={cn("p-8 space-y-8 pb-12")}>
                     {!currentStepData.hideSectionHeader && (
-                      <div className={cn("flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300")}>
-                        <div className="bg-primary/10 p-2 rounded-2xl text-primary ring-1 ring-primary/20">
-                          <Icon className="h-4 w-4" />
+                      <div className={cn("flex items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200")}>
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary ring-1 ring-primary/10">
+                          <Icon className="h-5 w-5" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-bold text-foreground tracking-tight">{currentStepData.label}</h3>
+                            <h3 className="text-xl font-bold text-foreground">{currentStepData.label}</h3>
                             <TooltipWrapper
                               content={
-                                <div className="max-w-[300px]">
-                                  <p className="text-xs leading-relaxed">{currentStepData.longDescription}</p>
+                                <div className="max-w-[300px] p-1">
+                                  <p className="text-xs">{currentStepData.longDescription}</p>
                                 </div>
                               }
                             >
-                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                              <Info className="h-4 w-4 text-muted-foreground cursor-help opacity-50 hover:opacity-100 transition-opacity" />
                             </TooltipWrapper>
                           </div>
                         </div>
@@ -242,7 +238,7 @@ export const FormWizard = <T extends FieldValues>({
                     )}
 
                     {/* Main Form Area */}
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="animate-in fade-in duration-300">
                       <CurrentStepComponent
                         {...CurrentStepComponentProps}
                         control={form.control}
@@ -255,19 +251,16 @@ export const FormWizard = <T extends FieldValues>({
                   </div>
                 </ScrollArea>
                 {(!hideActions && !currentStepData.hideActions) && (
-                  // {/* Footer: Sticky, Standard sized buttons, right-aligned */}
-                  <div className="py-3 px-8 bg-background/95 backdrop-blur-xl border-t border-border/40 flex justify-end items-center z-20 gap-3 shrink-0">
+                  <div className="p-4 border-t flex justify-end items-center z-20 gap-3 shrink-0">
                     {(currentStepData.allowSubmit || (steps.length === 2 && currentStepIndex === 0)) && currentStepIndex < steps.length - 1 && (
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        variant="gradient"
-                        className="h-9 px-8 rounded-lg shadow-sm font-semibold flex items-center gap-2"
                       >
                         {isSubmitting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : (
-                          SubmitIcon && <SubmitIcon className="h-4 w-4" />
+                          SubmitIcon && <SubmitIcon className="h-4 w-4 mr-2" />
                         )}
                         {submitLabel}
                       </Button>
@@ -277,7 +270,6 @@ export const FormWizard = <T extends FieldValues>({
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 px-6 rounded-lg font-medium text-sm transition-all hover:bg-muted"
                         onClick={() => setCurrentStep(steps[currentStepIndex - 1].id)}
                       >
                         Back
@@ -288,22 +280,19 @@ export const FormWizard = <T extends FieldValues>({
                       <Button
                         type={currentStepData.submitOnNext ? "submit" : "button"}
                         variant="secondary"
-                        className="h-9 px-6 rounded-lg font-medium text-sm"
                         onClick={currentStepData.submitOnNext ? undefined : handleNext}
                       >
-                        Next Step
+                        Next
                       </Button>
                     ) : (
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        variant="gradient"
-                        className="h-9 px-8 rounded-lg shadow-sm font-semibold flex items-center gap-2"
                       >
                         {isSubmitting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : (
-                          SubmitIcon && <SubmitIcon className="h-4 w-4" />
+                          SubmitIcon && <SubmitIcon className="h-4 w-4 mr-2" />
                         )}
                         {submitLabel}
                       </Button>

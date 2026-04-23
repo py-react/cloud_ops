@@ -113,18 +113,18 @@ const SourceControlPage = () => {
                     requestBody: { 
                         name: data.name, 
                         branches: data.branches, 
-                        pat_id: data.pat_id ?? undefined, 
-                        registry_id: data.registry_id ?? undefined,
-                        docker_config_id: data.docker_config_id ?? undefined
+                        pat_id: data.pat_id !== undefined ? data.pat_id : null, 
+                        registry_id: data.registry_id !== undefined ? data.registry_id : null,
+                        docker_config_id: data.docker_config_id !== undefined ? data.docker_config_id : null
                     } as any
                 })
                 : await DefaultService.apiIntegrationGithubReposPost({
                     requestBody: { 
                         name: data.name, 
                         branches: data.branches, 
-                        pat_id: data.pat_id ?? undefined, 
-                        registry_id: data.registry_id ?? undefined,
-                        docker_config_id: data.docker_config_id ?? undefined
+                        pat_id: data.pat_id !== undefined ? data.pat_id : null, 
+                        registry_id: data.registry_id !== undefined ? data.registry_id : null,
+                        docker_config_id: data.docker_config_id !== undefined ? data.docker_config_id : null
                     } as any
                 });
 
@@ -199,7 +199,12 @@ const SourceControlPage = () => {
         fetchData();
         fetchRegistries();
         fetchEngines();
-        DefaultService.apiIntegrationGithubPatGet().then((res: any) => setPats(res)).catch(console.error);
+        DefaultService.apiIntegrationCredentialsGet()
+            .then((res: any) => {
+                const githubPats = Array.isArray(res) ? res.filter((p: any) => p.provider === 'github') : [];
+                setPats(githubPats);
+            })
+            .catch(console.error);
     }, []);
 
     const handleSyncRepo = async (repoName: string) => {
@@ -211,6 +216,20 @@ const SourceControlPage = () => {
             toast.error(`Failed to sync ${repoName}: ` + err.message);
         } finally {
             setRefreshing(prev => ({ ...prev, [repoName]: false }));
+        }
+    };
+
+    const handleTogglePolling = async (repoName: string, enabled: bool) => {
+        try {
+            const body = {
+                repo_name: repoName,
+                enabled: enabled
+            };
+            await DefaultService.apiIntegrationGithubPollingPut({ requestBody: body as any });
+            toast.success(`${enabled ? 'Started' : 'Stopped'} polling for ${repoName}`);
+            fetchData();
+        } catch (err: any) {
+            toast.error(`Failed to toggle polling for ${repoName}: ` + err.message);
         }
     };
 
@@ -322,6 +341,7 @@ const SourceControlPage = () => {
                     repository: repo,
                     branch: branchName,
                     status: 'Active',
+                    pollingEnabled: data.repo_polling_enabled ? data.repo_polling_enabled[repo] : false,
                     permissionInfo: details ? (
                         <div className="flex items-center gap-3">
                             {details.accessible && (
@@ -383,9 +403,16 @@ const SourceControlPage = () => {
             cell: (row: FlatMappedRepo) => (
                 <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                    <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-tighter">
-                        {row.status}
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-tighter">
+                            {row.status}
+                        </span>
+                        {(row as any).pollingEnabled && (
+                            <Badge className="h-3 px-1 text-[8px] bg-amber-500/10 text-amber-600 border-none font-black uppercase tracking-widest leading-none">
+                                Polling
+                            </Badge>
+                        )}
+                    </div>
                 </div>
             )
         },
@@ -503,6 +530,13 @@ const SourceControlPage = () => {
                                 <RefreshCw className={`h-3.5 w-3.5 text-muted-foreground ${refreshing[row.repository] ? 'animate-spin' : ''}`} />
                                 Refresh Access
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => handleTogglePolling(row.repository, !(row as any).pollingEnabled)}
+                                className="gap-2 text-[12px] font-medium py-2 cursor-pointer"
+                            >
+                                <RefreshCw className={`h-3.5 w-3.5 ${(row as any).pollingEnabled ? 'text-amber-500 animate-spin-slow' : 'text-muted-foreground'}`} />
+                                {(row as any).pollingEnabled ? 'Stop Polling' : 'Start Polling'}
+                            </DropdownMenuItem>
                             <div className="h-px bg-border/40 my-1" />
                             <DropdownMenuItem
                                 onClick={() => handleDeleteRepo(row.repository)}
@@ -567,8 +601,8 @@ const SourceControlPage = () => {
                     isLoading={loading}
                 />
                 <ResourceCard
-                    title="Polling"
-                    count={data?.enabled ? "Enabled" : "Disabled"}
+                    title="Polling for repo"
+                    count={data?.repo_polling_enabled ? Object.values(data.repo_polling_enabled).filter(v => !!v).length : 0}
                     icon={<RefreshCw className={`w-4 h-4 ${data?.enabled ? 'animate-spin-slow' : ''}`} />}
                     color={data?.enabled ? "bg-amber-500" : "bg-muted-foreground"}
                     className={`${data?.enabled ? "border-amber-500/20 bg-amber-500/5" : "border-border/50 bg-muted/5"} shadow-none hover:border-amber-500/30 transition-all`}

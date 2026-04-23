@@ -9,13 +9,6 @@ import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { FileKeyIcon } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import yaml from "js-yaml";
 import useNavigate from "@/libs/navigate";
@@ -103,60 +96,49 @@ export default function SecretsPage() {
         </div>
       }
     >
-      <div className="space-y-6">
-        <Card className="p-4 rounded-[0.5rem] shadow-none bg-white border border-gray-200 min-h-[500px]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Your Secrets</CardTitle>
-              <CardDescription>
-                {transformedSecrets.length} Secrets found
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 shadow-none">
-            <ResourceTable
-              columns={columns}
-              data={transformedSecrets}
-              onEdit={(res: SecretData) => {
-                setShowCreateDialog(true);
-                setCurrentToEdit(res);
-              }}
-              onViewDetails={handleViewDetails}
-              onDelete={(data: SecretData) => {
-                let manifest = data.last_applied
-                  ? yaml.dump(JSON.parse(data.last_applied))
-                  : "";
-                if (!manifest) {
-                  manifest = yaml.dump({
-                    apiVersion: data.fullData.apiVersion,
-                    kind: data.fullData.kind,
-                    metadata: {
-                      name: data.fullData.metadata.name,
-                      namespace: data.fullData.metadata.namespace,
-                    },
-                  });
-                }
-                DefaultService.apiKubernertesMethodsDeletePost({
-                  requestBody: {
-                    manifest: manifest,
-                  },
-                })
-                  .then((res: any) => {
-                    if (res.success) {
-                      toast.success(res.data.message);
-                      refetch();
-                    } else {
-                      toast.error(res.error);
-                    }
-                  })
-                  .catch((err) => {
-                    toast.error(err);
-                  });
-              }}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <ResourceTable
+        title="Your Secrets"
+        description={`${transformedSecrets.length} Secrets found`}
+        icon={<FileKeyIcon className="w-5 h-5 text-primary" />}
+        columns={columns}
+        data={transformedSecrets}
+        onEdit={(res: SecretData) => {
+          setShowCreateDialog(true);
+          setCurrentToEdit(res);
+        }}
+        onViewDetails={handleViewDetails}
+        onDelete={(data: SecretData) => {
+          let manifest = data.last_applied
+            ? yaml.dump(JSON.parse(data.last_applied))
+            : "";
+          if (!manifest) {
+            manifest = yaml.dump({
+              apiVersion: data.fullData.apiVersion,
+              kind: data.fullData.kind,
+              metadata: {
+                name: data.fullData.metadata.name,
+                namespace: data.fullData.metadata.namespace,
+              },
+            });
+          }
+          DefaultService.apiKubernertesMethodsDeletePost({
+            requestBody: {
+              manifest: manifest,
+            },
+          })
+            .then((res: any) => {
+              if (res.success) {
+                toast.success(res.data.message);
+                refetch();
+              } else {
+                toast.error(res.error);
+              }
+            })
+            .catch((err) => {
+              toast.error(err);
+            });
+        }}
+      />
       {showCreateDialog && (
         <ResourceForm
           heading="Secret resource"

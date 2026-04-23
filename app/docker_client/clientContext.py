@@ -1,7 +1,7 @@
 import docker
 import os
 import tempfile
-import threading
+import contextvars
 from typing import Optional
 from app.db_client.db import get_session
 from app.db_client.controllers.docker_config.docker_config import (
@@ -9,7 +9,7 @@ from app.db_client.controllers.docker_config.docker_config import (
     get_docker_config
 )
 
-_thread_local = threading.local()
+_engine_id_context = contextvars.ContextVar("engine_id", default=None)
 _clients_cache = {} # { config_id: client }
 
 # Track temp files to avoid accumulation
@@ -26,55 +26,57 @@ def _cleanup_temp_files():
     _temp_files = []
 
 def set_engine_id(engine_id: int):
-    """Set the Docker Engine ID for the current background thread."""
-    _thread_local.engine_id = engine_id
+    """Set the Docker Engine ID for the current asyncio context."""
+    _engine_id_context.set(engine_id)
 
 def reset():
-    """Reset the thread-local Docker Engine context."""
-    if hasattr(_thread_local, 'engine_id'):
-        delattr(_thread_local, 'engine_id')
+    """Reset the asyncio-local Docker Engine context."""
+    _engine_id_context.set(None)
 
-def get_client() -> docker.DockerClient:
+def get_client(use_active: bool = True) -> docker.DockerClient:
     """Gets the correct Docker client based on the current thread's configured engine.
     
     Resolution priority:
-    - engine_id is None OR 0  → always use local Docker daemon (docker.from_env())
-    - engine_id > 0           → use that specific engine from the DB
-    
-    The "global active" engine is intentionally NOT used as a fallback here.
-    Builds should never accidentally use a remote engine. Remote engines must be
-    explicitly configured per repo/branch.
+    1. _engine_id_context (if set and > 0) -> specific remote engine
+    2. _engine_id_context == 0 -> explicit local engine
+    3. _engine_id_context is None AND use_active=True -> globally active engine from DB
+    4. fallback -> local engine
     """
-    engine_id = getattr(_thread_local, 'engine_id', None)
+    engine_id = _engine_id_context.get()
+    active_config = None
     
-    # None or 0 both mean local — None because nothing was configured (0 was
-    # converted to None at the DB layer to satisfy FK constraints), 0 as explicit sentinel.
+    # If engine_id is None and use_active is True, try to get the globally active config
+    if engine_id is None and use_active:
+        try:
+            with get_session() as session:
+                active_config = get_active_docker_config(session)
+                if active_config:
+                    engine_id = active_config.id
+        except Exception as e:
+            raise Exception(f"Error fetching active docker config from DB: {e}")
+    # engine_id == 0 or (engine_id is None and active_config is None) means local
     if engine_id is None or engine_id == 0:
         if "local" not in _clients_cache:
             _clients_cache["local"] = docker.from_env()
         return _clients_cache["local"]
     
-    # engine_id > 0: look up the specific engine from the DB
-    try:
-        with get_session() as session:
-            active_config = get_docker_config(session, engine_id)
-    except Exception as e:
-        print(f"Error fetching docker config {engine_id} from DB: {e}. Falling back to local.")
-        active_config = None
+    # If we already fetched active_config above, we can use it.
+    # Otherwise, we need to fetch the specific engine_id.
+    if not active_config:
+        try:
+            with get_session() as session:
+                active_config = get_docker_config(session, engine_id)
+        except Exception as e:
+            raise Exception(f"Error fetching docker config {engine_id} from DB: {e}")
     
     if not active_config:
-        print(f"Docker config {engine_id} not found. Falling back to local.")
-        if "local" not in _clients_cache:
-            _clients_cache["local"] = docker.from_env()
-        return _clients_cache["local"]
-    
+        raise Exception(f"Docker config {engine_id} not found.")
     current_active_id = active_config.id
     
     # Return cached client if available
     if current_active_id in _clients_cache:
         return _clients_cache[current_active_id]
         
-    print(f"Initializing Docker client with config ID: {current_active_id}")
     _cleanup_temp_files()
     
     tls_config = None
@@ -83,23 +85,29 @@ def get_client() -> docker.DockerClient:
         key_path = None
         ca_path = None
         
-        if active_config.client_cert:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as f:
-                f.write(active_config.client_cert.encode())
-                cert_path = f.name
-                _temp_files.append(cert_path)
-        
-        if active_config.client_key:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as f:
-                f.write(active_config.client_key.encode())
-                key_path = f.name
-                _temp_files.append(key_path)
-        
-        if active_config.ca_cert:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as f:
-                f.write(active_config.ca_cert.encode())
-                ca_path = f.name
-                _temp_files.append(ca_path)
+        try:
+            if active_config.client_cert:
+                cert_content = active_config.client_cert
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as f:
+                    f.write(cert_content.encode())
+                    cert_path = f.name
+                    _temp_files.append(cert_path)
+            
+            if active_config.client_key:
+                key_content = active_config.client_key
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as f:
+                    f.write(key_content.encode())
+                    key_path = f.name
+                    _temp_files.append(key_path)
+            
+            if active_config.ca_cert:
+                ca_content = active_config.ca_cert
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as f:
+                    f.write(ca_content.encode())
+                    ca_path = f.name
+                    _temp_files.append(ca_path)
+        except Exception as e:
+            raise Exception(f"Decryption or extraction of Docker certs failed: {e}")
         
         tls_config = docker.tls.TLSConfig(
             client_cert=(cert_path, key_path) if cert_path and key_path else None,
@@ -110,12 +118,11 @@ def get_client() -> docker.DockerClient:
     try:
         client = docker.DockerClient(
             base_url=active_config.base_url,
-            tls=tls_config
+            tls=tls_config,
+            timeout=30 # Set a reasonable timeout to prevent 60s hangs
         )
     except Exception as e:
-        print(f"Failed to initialize remote Docker client {current_active_id}: {e}. Falling back to local.")
-        client = docker.from_env()
-        current_active_id = "local"
+        raise Exception(f"Failed to initialize remote Docker client {current_active_id}: {e}")
     
     _clients_cache[current_active_id] = client
     return client

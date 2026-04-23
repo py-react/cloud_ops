@@ -12,31 +12,29 @@ from app.db_client.controllers.source_code_build import (
     SourceCodeBuildWithLogsType,
 )
 from app.db_client.controllers.github_pat.github_pat import (
-    list_pats,
+    list_credentials,
 )
 from render_relay.utils.get_logger import get_logger
-from app.db_client.db import get_session
-from app.github_client.poller import get_repo_poller
+from app.github_client.poller import get_polling_manager
 
 logger = get_logger("SCM Polling API")
-
-# Module-level background poller/task references so we can start/stop at runtime
-_background_poller_task: Optional[asyncio.Task] = None
 
 
 class PollingConfigRequest(BaseModel):
     enabled: bool = Field(..., description="Enable or disable SCM polling")
-    interval_seconds: int = Field(..., description="Poll interval in seconds")
+    interval_seconds: Optional[int] = Field(None, description="Poll interval in seconds")
+    repo_name: Optional[str] = Field(None, description="Specific repository to toggle polling for")
 
 
 class PollingStatusResponse(BaseModel):
     status: str = Field("healthy", description="Service status")
-    enabled: bool = Field(..., description="Whether polling is enabled")
+    enabled: bool = Field(..., description="Whether polling is enabled (deprecated globally)")
     has_pat: bool = Field(..., description="Whether a GITHUB_PAT is configured")
     interval_seconds: int = Field(..., description="Current poll interval seconds")
     allowed_repositories: Dict[str, str] = Field(..., description="Allowed repositories map")
     allowed_branches: Dict[str, List[Dict[str, Any]]] = Field(..., description="Allowed branches with specific configs")
     repo_pats: Dict[str, Optional[int]] = Field(default={}, description="Map of repo name to PAT ID")
+    repo_polling_enabled: Dict[str, bool] = Field(default={}, description="Map of repo name to polling status")
     repo_registries: Dict[str, Optional[int]] = Field(default={}, description="Map of repo name to Registry ID")
     repo_engines: Dict[str, Optional[int]] = Field(default={}, description="Map of repo name to Docker Engine ID")
     builds: Dict[str, Dict[str, Optional[SourceCodeBuildWithLogsType]]] = Field(..., description="Last builds per repo/branch")
@@ -49,81 +47,88 @@ async def GET(request: Request) -> PollingStatusResponse:
     settings = load_settings()
     
     with get_session() as session:
-        ALLOWED_REPOSITORIES, ALLOWED_BRANCHES, DEPLOYMENTS, REPO_PATS, REPO_REGISTRIES, REPO_ENGINES = utils.get_all()
+        # get_all returns (result, branches_with_config, deployments, repo_pats, repo_registries, repo_engines, repo_polling_enabled)
+        res_map, branches, _, repo_pats, repo_registries, repo_engines, repo_polling_enabled = utils.get_all()
         builds = utils.get_last_builds_for_all_repo_branches()
-        enabled = settings.get('SCM_POLLING_ENABLED', 'false').lower() in ('1', 'true', 'yes')
+        
+        # enabled flag is now just "is any repo polling?" for compatibility
+        enabled = any(repo_polling_enabled.values())
         interval = int(settings.get('SCM_POLL_INTERVAL_SECONDS', '300'))
-        pats = list_pats(session)
-        has_pat = any(p.active for p in pats)
+        credentials = list_credentials(session)
+        has_pat = any(p.active for p in credentials)
+        
         return PollingStatusResponse(
             status="healthy",
             enabled=enabled,
             has_pat=has_pat,
             interval_seconds=interval,
-            allowed_repositories=ALLOWED_REPOSITORIES,
-            allowed_branches=ALLOWED_BRANCHES,
-            repo_pats=REPO_PATS,
-            repo_registries=REPO_REGISTRIES,
-            repo_engines=REPO_ENGINES,
+            allowed_repositories=res_map,
+            allowed_branches=branches,
+            repo_pats=repo_pats,
+            repo_polling_enabled=repo_polling_enabled,
+            repo_registries=repo_registries,
+            repo_engines=repo_engines,
             builds=builds,
             timestamp=datetime.now().isoformat()
         )
 
 
-async def PUT(request: Request, body: PollingConfigRequest,background_tasks: BackgroundTasks):
-    """Update polling configuration for the running process (in-memory env).
-
-    Note: changes are applied to the running process environment only; update your deployment
-    configuration to persist across restarts.
-    """
+async def PUT(request: Request, body: PollingConfigRequest, background_tasks: BackgroundTasks):
+    """Update polling configuration. Handles both global interval and per-repo toggling."""
     try:
-        os.environ['SCM_POLLING_ENABLED'] = 'true' if body.enabled else 'false'
-        os.environ['SCM_POLL_INTERVAL_SECONDS'] = str(body.interval_seconds)
+        utils = AllowedRepoUtils()
+        manager = get_polling_manager()
 
-        # If enabling, try to start background poller in this running process.
-        # If disabling, stop any running background poller task.
-        global _background_poller_task
-        if body.enabled:
-            poller = get_repo_poller()
-            if not poller._stop:
-                return {"success": True, "message": "Polling already enabled."}
-            
-            # Start run_forever as a background task and keep reference
-            background_tasks.add_task(poller.run_forever)
-            return {"success": True, "message": "Polling enabled and background poller started."}
+        if body.interval_seconds:
+            os.environ['SCM_POLL_INTERVAL_SECONDS'] = str(body.interval_seconds)
+            manager.update_config(interval=body.interval_seconds)
+
+        if body.repo_name:
+            # Individual toggle
+            utils.update_polling_status(body.repo_name, body.enabled)
+            logger.info(f"Toggled polling for {body.repo_name} to {body.enabled}")
         else:
-            poller = get_repo_poller()
-            poller.stop()
-            if _background_poller_task:
-                # Optional: cancel it if it doesn't stop gracefully fast enough
-                # but poller.stop() sets _stop=True which should handle it
-                _background_poller_task = None
-            return {"success": True, "message": "Polling disabled for this process."}
+            # Global fallback - could enable/disable all if needed, 
+            # but usually we want individual. For now, let's just log it.
+            logger.warning("Global polling toggle received without repo_name. Ignoring to prevent accidental bulk change.")
+
+        # Always sync pollers after a change
+        background_tasks.add_task(manager.sync_pollers)
+        
+        return {"success": True, "message": "Polling configuration updated and synced."}
 
     except Exception as e:
         logger.error(f"Failed to update polling config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def POST(request: Request,background_tasks: BackgroundTasks):
+async def POST(request: Request, background_tasks: BackgroundTasks):
+    """Trigger a manual poll for all currently enabled repositories."""
     try:
-        poller = get_repo_poller()
-        # Schedule run_once asynchronously and return immediately
-        background_tasks.add_task(poller.run_once)
-        return {"success": True, "message": "Manual poll queued."}
-    except HTTPException:
-        raise
+        manager = get_polling_manager()
+        # Ensure pollers are synced before running once
+        await manager.sync_pollers()
+        
+        for poller in manager._pollers.values():
+            background_tasks.add_task(poller.run_once)
+            
+        return {"success": True, "message": "Manual poll queued for all active repositories."}
     except Exception as e:
         logger.error(f"Failed to trigger manual poll: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def DELETE(request: Request, name: str):
-    """Proxy delete to allowed-repo utils (keeps same contract as webhook DELETE)."""
+async def DELETE(request: Request, name: str, background_tasks: BackgroundTasks):
+    """Proxy delete and sync pollers."""
     try:
         utils = AllowedRepoUtils()
         utils.delete_repository(repo_name=name)
-        return {"success": True, "message": f"Repository {name} and its branches deleted."}
+        
+        # Cleanup pollers if no longer needed
+        manager = get_polling_manager()
+        background_tasks.add_task(manager.sync_pollers)
+        
+        return {"success": True, "message": f"Repository {name} deleted and polling synced."}
     except Exception as e:
         logger.error(f"Failed to delete repository {name}: {e}")
         return {"success": False, "message": str(e)}
@@ -134,4 +139,3 @@ async def middleware(request: Request, call_next):
     response = await call_next(request)
     logger.info(f"Response: {response.status_code}")
     return response
-    

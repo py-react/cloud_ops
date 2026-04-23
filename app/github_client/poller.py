@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Dict, Optional, Tuple
 from github import Github
 
 from app.github_client.client.pat_client import get_github_client_from_pat
@@ -25,21 +25,22 @@ logger = logging.getLogger(__name__)
 
 
 class RepoPoller:
-    """Central poller that discovers open PRs and invokes PRService.
+    """Poller for a specific PAT (Personal Access Token).
     
-    This poller is intended to run inside the application process (no CLI). 
-    It uses a single PAT-authenticated PyGithub client to fetch open PRs 
-    for allowed repos and calls `PRService.process_pr` to process them.
+    This poller processes all repositories associated with its PAT
+    reading from a shared configuration cache in the PollingManager.
     """
     
-    def __init__(self, poll_interval_seconds: int = 60, docker_client=None):
-        self.github_client = get_github_client_from_pat()
+    def __init__(self, manager: 'PollingManager', pat_id: Optional[int] = None, poll_interval_seconds: int = 60, docker_client=None):
+        self.manager = manager
+        self.pat_id = pat_id
+        self.github_client = get_github_client_from_pat(pat_id=pat_id)
         self.poll_interval_seconds = poll_interval_seconds
-        self.repo_utils = AllowedRepoUtils()
         self._docker_client = docker_client
         
         self._stop = True
         self.if_run_forever = False
+        self._in_flight_prs = set()
         
         self.pr_service = self._create_pr_service()
         self.trigger_detector = TriggerDetector()
@@ -47,7 +48,7 @@ class RepoPoller:
 
     @property
     def docker_client(self):
-        return self._docker_client or clientContext.get_client()
+        return self._docker_client or clientContext.get_client(use_active=False)
     
     def _create_pr_service(self, session: Any = None) -> PRService:
         """Create PR service with all dependencies."""
@@ -57,7 +58,6 @@ class RepoPoller:
         registries = load_registries(settings)
         registry_manager = RegistryManager(registries)
         cleanup_service = ImageCleanupService()
-        
         
         if session:
             return self._build_pr_service_with_session(session, builder, registry_manager, cleanup_service)
@@ -91,17 +91,34 @@ class RepoPoller:
         )
     
     async def run_once(self) -> None:
-        """Run a single iteration: iterate allowed repos and process open PRs."""
-        logger.info("RepoPoller: starting run_once")
+        """Run a single iteration: use cached config to iterate repos matching our PAT."""
         try:
-            repos_map, branches_map, *_ = self.repo_utils.get_all()
+            # Use cached configuration from the manager instead of hitting the DB
+            config = self.manager.get_cached_config()
+            if not config:
+                logger.debug(f"RepoPoller (PAT:{self.pat_id}): No cached config available.")
+                return
+
+            _, branches_map, _, repo_pats, _, _, repo_polling_enabled = config
+            
+            # Filter repos matching our PAT and where polling is enabled
+            target_repos = [
+                name for name, p_id in repo_pats.items() 
+                if p_id == self.pat_id and repo_polling_enabled.get(name, False)
+            ]
+            
+            if not target_repos:
+                logger.debug(f"RepoPoller (PAT:{self.pat_id}): No enabled repos found in cache.")
+                return
+
+            logger.info(f"RepoPoller (PAT:{self.pat_id}): starting run_once for {len(target_repos)} repos")
+            
             user_login = None
             try:
                 user = self.github_client.get_user()
                 user_login = user.login
-                logger.debug(f"RepoPoller authenticated as GitHub user: {user_login}")
             except Exception as e:
-                logger.error(f"RepoPoller failed to get authenticated user: {e}")
+                logger.error(f"RepoPoller (PAT:{self.pat_id}) failed to get authenticated user: {e}")
                 raise e
             
             should_backoff, backoff_seconds = self.rate_limiter.should_backoff(
@@ -109,13 +126,13 @@ class RepoPoller:
             )
             if should_backoff:
                 logger.warning(
-                    f"Backing off due to rate limiting for {backoff_seconds} seconds"
+                    f"RepoPoller (PAT:{self.pat_id}) backing off for {backoff_seconds} seconds"
                 )
-                result = asyncio.sleep(backoff_seconds)
+                await asyncio.sleep(backoff_seconds)
                 return
             
             promises = []
-            for repo_name in repos_map.keys():
+            for repo_name in target_repos:
                 promises.append(
                     Promise(
                         self.process_branches_for_repo(
@@ -126,11 +143,10 @@ class RepoPoller:
             await Promise.all(promises)
             
         except Exception as e:
-            logger.error(f"RepoPoller run_once failed: {e}")
+            logger.error(f"RepoPoller (PAT:{self.pat_id}) run_once failed: {e}")
         finally:
             if not self.if_run_forever:
                 self._stop = True
-            logger.info("RepoPoller: completed")
     
     async def process_branches_for_repo(
         self, repo_name: str, branches_map: dict, user_login: str
@@ -142,7 +158,6 @@ class RepoPoller:
             gh_repo = await asyncio.to_thread(self.github_client.get_repo, full_repo_name)
             promises = []
             for branch_data in branches_map[repo_name]:
-                # Extract branch name string from dict
                 branch_name = branch_data["branch"] if isinstance(branch_data, dict) else branch_data
                 promises.append(
                     Promise(
@@ -158,22 +173,17 @@ class RepoPoller:
     ) -> None:
         """Process all PRs for a single branch."""
         try:
-            # gh_repo.get_pulls returns a PaginatedList; the actual network call happens when we iterate
             def get_all_pulls():
                 return list(gh_repo.get_pulls(state="open", base=branch))
             
             pulls = await asyncio.to_thread(get_all_pulls)
             
             if not pulls:
-                logger.info(f"No open PRs found for repo {repo_name} base_branch {branch}")
+                logger.debug(f"No open PRs found for repo {repo_name} branch {branch}")
             else:
                 for pull in pulls:
-                    logger.info(
-                        f"Found open PR #{pull.number} in repo {repo_name} base_branch {branch}"
-                    )
-                    Promise(
-                        self.process_single_pr(pull, repo_name, branch, user_login)
-                    )
+                    logger.info(f"Found open PR #{pull.number} in repo {repo_name} branch {branch}")
+                    Promise(self.process_single_pr(pull, repo_name, branch, user_login))
         except Exception as e:
             logger.error(f"Failed to poll branch {branch} in repo {repo_name}: {e}")
             raise e
@@ -182,38 +192,26 @@ class RepoPoller:
         self, pr: Any, repo_name: str, branch: str, user_login: str
     ) -> None:
         """Process a single PR: check triggers and process if needed."""
-        logger.info(
-            f"base: {branch} <- head: {pr.head.ref} (PR #{pr.number})"
-        )
-        
         try:
             settings = load_settings()
-            
-            url_with_protocol = (
-                "http://localhost:5001" 
-                if settings.get("DEBUG", False) 
-                else settings.get("URL")
-            )
-            check_status_url = (
-                f"{url_with_protocol}/settings/ci_cd/source_control/"
-                f"{pr.head.repo.name}/{pr.head.ref}"
-            )
+            url_with_protocol = "http://localhost:5001" if settings.get("DEBUG", False) else settings.get("URL")
+            check_status_url = f"{url_with_protocol}/settings/ci_cd/source_control/{pr.head.repo.name}/{pr.head.ref}"
             
             should_trigger, reason = self.trigger_detector.should_trigger_build(
                 pr, self.pr_service.pr_repository.session, branch, repo_name
             )
             
             if should_trigger:
-                logger.info(reason)
-                
+                pr_identifier = f"{repo_name}:{pr.number}"
+                if pr_identifier in self._in_flight_prs:
+                    logger.debug(f"Skipping PR #{pr.number} in {repo_name} because it is currently in-flight")
+                    return
+
+                logger.info(f"Triggering build for PR #{pr.number} in {repo_name}: {reason}")
                 if not self._stop:
+                    self._in_flight_prs.add(pr_identifier)
                     async def process():
-                        repo_full_name = (
-                            repo_name if "/" in repo_name 
-                            else f"{user_login}/{repo_name}"
-                        )
                         try:
-                            # Re-create service with a fresh session for the actual processing task
                             with get_session() as session:
                                 task_service = self._create_pr_service(session)
                                 await task_service.process_pr(
@@ -225,41 +223,30 @@ class RepoPoller:
                             logger.info(f"Completed processing PR #{pr.number} in {repo_name}")
                         except Exception as e:
                             logger.error(f"Error processing PR #{pr.number} in {repo_name}: {e}")
-                            raise e
-                    
+                        finally:
+                            self._in_flight_prs.discard(pr_identifier)
                     Promise(process())
-                    logger.info(f"Triggered processing for PR #{pr.number} in {repo_name}")
-                else:
-                    logger.info("Already handling initialization; skipping build trigger")
             else:
-                logger.info(
-                    f"Skipping PR #{pr.number} in {repo_name} for base_branch {branch}: "
-                    f"{reason}"
-                )
+                logger.debug(f"Skipping PR #{pr.number} in {repo_name} for branch {branch}: {reason}")
         except Exception as e:
             logger.error(f"Error processing PR #{pr.number} in {repo_name}: {e}")
     
     async def run_forever(self) -> None:
         """Run poller loop until stopped."""
-        logger.info("RepoPoller: starting run_forever")
+        logger.info(f"RepoPoller (PAT:{self.pat_id}): starting run_forever")
         self.if_run_forever = True
         self._stop = False
         
         while not self._stop:
             try:
-                # should_backoff is now async and uses to_thread internally
-                should_backoff, backoff_seconds = self.rate_limiter.should_backoff(
-                    self.github_client
-                )
+                should_backoff, backoff_seconds = self.rate_limiter.should_backoff(self.github_client)
                 if should_backoff:
-                    logger.warning(f"Rate limit backoff: {backoff_seconds}s")
                     await asyncio.sleep(backoff_seconds)
                     continue
 
                 await self.run_once()
-                logger.info("RepoPoller: iteration completed")
             except Exception as e:
-                logger.error(f"RepoPoller encountered error: {e}")
+                logger.error(f"RepoPoller (PAT:{self.pat_id}) error: {e}")
             await asyncio.sleep(self.poll_interval_seconds)
     
     def stop(self):
@@ -267,11 +254,97 @@ class RepoPoller:
         self._stop = True
 
 
+class PollingManager:
+    """Manages multiple RepoPoller instances, one per GitHub PAT, with configuration caching."""
+    
+    def __init__(self):
+        self._pollers: Dict[Optional[int], RepoPoller] = {}
+        self._tasks: Dict[Optional[int], asyncio.Task] = {}
+        self._global_interval = 60
+        self._cached_config: Optional[Tuple] = None
+        self._config_lock = asyncio.Lock()
+        self.repo_utils = AllowedRepoUtils()
+
+    def update_config(self, interval: int = None):
+        """Update global polling configuration."""
+        if interval is not None:
+            self._global_interval = interval
+            for poller in self._pollers.values():
+                poller.poll_interval_seconds = interval
+
+    def get_cached_config(self) -> Optional[Tuple]:
+        """Return the current cached configuration."""
+        return self._cached_config
+
+    async def _refresh_cache(self):
+        """Internal helper to fetch latest configuration into memory."""
+        async with self._config_lock:
+            # We wrap the synchronous database call to avoid blocking the event loop
+            def fetch():
+                return self.repo_utils.get_all()
+            
+            self._cached_config = await asyncio.to_thread(fetch)
+            logger.debug("PollingManager: Configuration cache refreshed from database.")
+
+    async def sync_pollers(self):
+        """Synchronize background tasks based on the latest database state."""
+        try:
+            # First, update the cache so everyone is looking at fresh data
+            await self._refresh_cache()
+            
+            # config format: (result, branches_with_config, deployments, repo_pats, repo_registries, repo_engines, repo_polling_enabled)
+            _, _, _, repo_pats, _, _, repo_polling_enabled = self._cached_config
+            
+            # Find unique PAT IDs used by ANY repository that has polling enabled
+            active_pat_ids = {
+                p_id for name, p_id in repo_pats.items() 
+                if repo_polling_enabled.get(name, False)
+            }
+            
+            # 1. Start pollers for new PATs
+            for pat_id in active_pat_ids:
+                if pat_id not in self._pollers or self._pollers[pat_id]._stop:
+                    logger.info(f"Starting new poller for PAT ID: {pat_id}")
+                    poller = RepoPoller(manager=self, pat_id=pat_id, poll_interval_seconds=self._global_interval)
+                    self._pollers[pat_id] = poller
+                    self._tasks[pat_id] = asyncio.create_task(poller.run_forever())
+
+            # 2. Stop pollers for PATs that are no longer needed
+            for pat_id in list(self._pollers.keys()):
+                if pat_id not in active_pat_ids:
+                    logger.info(f"Stopping poller for PAT ID: {pat_id} (no enabled repos for this PAT)")
+                    self._pollers[pat_id].stop()
+                    if pat_id in self._tasks:
+                        self._tasks[pat_id].cancel()
+                        del self._tasks[pat_id]
+                    del self._pollers[pat_id]
+
+        except Exception as e:
+            logger.error(f"PollingManager sync failed: {e}")
+
+    def stop_all(self):
+        """Shutdown all poller tasks."""
+        for poller in self._pollers.values():
+            poller.stop()
+        for task in self._tasks.values():
+            task.cancel()
+        self._pollers.clear()
+        self._tasks.clear()
+        self._cached_config = None
+
+
+def get_polling_manager() -> PollingManager:
+    """Get the singleton PollingManager instance."""
+    manager = globals().get("polling_manager", None)
+    if manager is None:
+        manager = PollingManager()
+        globals()["polling_manager"] = manager
+    return manager
+
+
 def get_repo_poller() -> RepoPoller:
-    """Get or create a singleton repo poller instance."""
-    repo_poller = globals().get("repo_poller", None)
-    if repo_poller is None:
-        repo_poller = RepoPoller()
-        globals()["repo_poller"] = repo_poller
-    logger.info(f"repo_poller._stop: {globals()['repo_poller']._stop}")
-    return globals()["repo_poller"]
+    """Legacy singleton hook - returns or creates a poller for the default PAT."""
+    manager = get_polling_manager()
+    if None not in manager._pollers:
+        manager._pollers[None] = RepoPoller(manager=manager, pat_id=None)
+    return manager._pollers[None]

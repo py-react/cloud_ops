@@ -175,7 +175,7 @@ class PRService:
         
         with get_session() as session:
             utils = AllowedRepoUtils(session)
-            _, allowed_branches, _, _, repo_registries, repo_engines = utils.get_all()
+            _, allowed_branches, _, _, repo_registries, repo_engines, _ = utils.get_all()
             
             # 1. Check branch-specific config
             branch_list = allowed_branches.get(repo.name, [])
@@ -250,7 +250,7 @@ class PRService:
         
         with get_session() as session:
             utils = AllowedRepoUtils(session)
-            _, allowed_branches, _, _, repo_registries, repo_engines = utils.get_all()
+            _, allowed_branches, _, repo_pats, repo_registries, repo_engines, _ = utils.get_all()
             
             # 1. Check branch-specific config
             branch_list = allowed_branches.get(repo.name, [])
@@ -305,9 +305,13 @@ class PRService:
         }
         
         try:
-            pat = _get_pat_from_db()
+            target_pat_id = repo_pats.get(repo.name)
+            pat = _get_pat_from_db(target_pat_id)
             if not pat:
-                raise Exception("Failed to retrieve GitHub PAT for cloning")
+                from render_relay.utils.load_settings import load_settings
+                pat = load_settings().get("GITHUB_PAT")
+            if not pat:
+                raise Exception(f"Failed to retrieve GitHub PAT for cloning repository {repo.full_name}")
 
             from app.docker_client import clientContext
             

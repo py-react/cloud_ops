@@ -41,7 +41,7 @@ class AllowedRepoUtils:
         result = {}
     
         # Get all repos and branches (now branches is {repo: [{branch: "main", ...}]})
-        _, branches, _, _, _, _ = self.get_all()
+        _, branches, _, _, _, _, _ = self.get_all()
         for repo_name, branch_list in branches.items():
             result[repo_name] = {}
             for branch_config in branch_list:
@@ -82,7 +82,7 @@ class AllowedRepoUtils:
                     "namespace": d["namespace"],
                     "deployment_name": d["deployment_name"],
                     "strategy": d.get("strategy"),
-                    "tag": d["tag"],
+                    "tag": d.get("tag"),
                     "pr_url": d.get("pr_url"),
                     "jira": d.get("jira"),
                 }
@@ -91,6 +91,7 @@ class AllowedRepoUtils:
         repo_pats = {r.name: r.pat_id for r in repos}
         repo_registries = {r.name: r.registry_id for r in repos}
         repo_engines = {r.name: r.docker_config_id for r in repos}
+        repo_polling_enabled = {r.name: r.polling_enabled for r in repos}
 
         # Update branches to return objects
         branches_with_config = {}
@@ -104,7 +105,7 @@ class AllowedRepoUtils:
                 } for b in branch_objs
             ]
         
-        return result, branches_with_config, deployments, repo_pats, repo_registries, repo_engines
+        return result, branches_with_config, deployments, repo_pats, repo_registries, repo_engines, repo_polling_enabled
 
     def add_repository(self, repo_name: str, repo_id: str, branches: List[dict], pat_id: Optional[int] = None, registry_id: Optional[int] = None, docker_config_id: Optional[int] = None):
         # repo_id is ignored, as DB will auto-generate
@@ -114,7 +115,8 @@ class AllowedRepoUtils:
                 name=repo_name, 
                 pat_id=pat_id, 
                 registry_id=registry_id,
-                docker_config_id=docker_config_id
+                docker_config_id=docker_config_id,
+                polling_enabled=False
             )
         )
         if not repo:
@@ -140,20 +142,22 @@ class AllowedRepoUtils:
             self.add_repository(repo_name=repo_name, repo_id=repo_name, branches=branches, pat_id=pat_id, registry_id=registry_id, docker_config_id=docker_config_id)
             return
 
-        # Update Repository settings if provided
+        # Update Repository settings unconditionally
         updated = False
-        if pat_id is not None:
-             repo.pat_id = pat_id
-             updated = True
-             
-        if registry_id is not None:
-             repo.registry_id = registry_id
-             updated = True
+        target_docker_config = None if docker_config_id == 0 else docker_config_id
         
-        if docker_config_id is not None:
-             repo.docker_config_id = None if docker_config_id == 0 else docker_config_id
-             updated = True
+        if repo.pat_id != pat_id:
+            repo.pat_id = pat_id
+            updated = True
              
+        if repo.registry_id != registry_id:
+            repo.registry_id = registry_id
+            updated = True
+        
+        if repo.docker_config_id != target_docker_config:
+            repo.docker_config_id = target_docker_config
+            updated = True
+        
         if updated:
              self.session.add(repo)
              self.session.commit()
@@ -195,7 +199,24 @@ class AllowedRepoUtils:
         if not repo or not repo_id:
             return None
         branches = list_code_source_control_branches(self.session, repo_id)
-        return {"repo_id": repo_id, "status": getattr(repo, 'status', 'active'), "branches": [{"branch": b.branch, "registry_id": b.registry_id, "docker_config_id": b.docker_config_id} for b in branches]}
+        return {
+            "repo_id": repo_id, 
+            "status": getattr(repo, 'status', 'active'), 
+            "polling_enabled": getattr(repo, 'polling_enabled', False),
+            "branches": [{"branch": b.branch, "registry_id": b.registry_id, "docker_config_id": b.docker_config_id} for b in branches]
+        }
+
+    def update_polling_status(self, repo_name: str, enabled: bool):
+        repos = list_code_source_controls(self.session)
+        repo = next((r for r in repos if r.name == repo_name), None)
+        if not repo:
+            raise KeyError(f"Repository {repo_name} not found.")
+        
+        repo.polling_enabled = enabled
+        self.session.add(repo)
+        self.session.commit()
+        self.session.refresh(repo)
+        return repo
 
     def perform_full_deletion(self, repo_name: str):
         from app.db_client.models.code_source_control_branch.code_source_control_branch import CodeSourceControlBranch

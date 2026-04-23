@@ -54,8 +54,9 @@ const BasicConfig: React.FC<SectionProps> = ({ control }) => {
     const fetchPats = async () => {
       setLoadingPats(true);
       try {
-        const res = await DefaultService.apiIntegrationGithubPatGet();
-        setPats(res || []);
+        const res = await DefaultService.apiIntegrationCredentialsGet();
+        const githubPats = Array.isArray(res) ? res.filter((p: any) => p.provider === 'github') : [];
+        setPats(githubPats);
       } catch (err) {
         console.error("Failed to fetch PATs", err);
       } finally {

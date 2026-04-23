@@ -4,28 +4,32 @@ from typing import Dict, Optional
 from github import Github
 from render_relay.utils.load_settings import load_settings
 from app.db_client.db import get_session
-from app.db_client.controllers.github_pat.github_pat import get_active_pat, get_pat
+from app.db_client.controllers.github_pat.github_pat import get_active_credential, get_credential
 from app.db_client.controllers.github_pat.github_pat import mark_last_used
 from app.utils.get_fernet import get_fernet
 
 logger = logging.getLogger(__name__)
 
 def _get_pat_from_db(pat_id: Optional[int] = None) -> Optional[str]:
-    """Retrieve and decrypt the active GitHub PAT or a specific PAT from the database."""
+    """Retrieve and decrypt a specific GitHub credential from the database."""
+    if not pat_id:
+        return None
+        
     with get_session() as session:
-        if pat_id:
-             pat_obj = get_pat(session, pat_id)
-        else:
-             pat_obj = get_active_pat(session)
-        if not pat_obj:
+        cred_obj = get_credential(session, pat_id)
+        
+        if not cred_obj:
             return None
-        token_enc = pat_obj.token_encrypted
+        
+        # Ensure we only return credentials intended for GitHub
+        if cred_obj.provider != "github":
+            logger.warning(f"Credential {pat_id} is not a GitHub provider.")
+            return None
+
+        token_enc = cred_obj.token_encrypted
         f = get_fernet()
         if not f:
-            # No encryption key configured. It's possible the DB row contains a
-            # plaintext token (older installs). If the value looks like a GitHub
-            # PAT, use it as a fallback but log a strong warning so the operator
-            # can rotate and encrypt it properly.
+            # No encryption key configured. 
             try:
                 token_plain = token_enc if isinstance(token_enc, str) else token_enc.decode('utf-8')
             except Exception:
@@ -33,61 +37,46 @@ def _get_pat_from_db(pat_id: Optional[int] = None) -> Optional[str]:
 
             if token_plain and (token_plain.startswith('ghp_') or token_plain.startswith('github_pat_') or len(token_plain) >= 36):
                 logger.warning(
-                    "GITHUB_PAT_ENCRYPTION_KEY is not set but an active PAT exists in DB. "
-                    "Using stored token as plaintext fallback — rotate and encrypt this PAT as soon as possible."
+                    "GITHUB_PAT_ENCRYPTION_KEY is not set but an active credential exists in DB. "
+                    "Using stored token as plaintext fallback."
                 )
                 try:
-                    if pat_obj.id:
-                        mark_last_used(session, pat_obj.id)
-                    else:
-                        raise Exception("PAT object has no ID")
+                    if cred_obj.id:
+                        mark_last_used(session, cred_obj.id)
                 except Exception:
                     pass
                 return token_plain
 
-            logger.warning(
-                "Encryption key not configured; cannot decrypt PAT from DB. "
-                "Set the environment variable GITHUB_PAT_ENCRYPTION_KEY (Fernet key) "
-                "or set GITHUB_PAT as a temporary fallback."
-            )
             return None
         try:
             token = f.decrypt(token_enc.encode('utf-8')).decode('utf-8')
-            # mark last used (best-effort)
             try:
-                if pat_obj.id:
-                    mark_last_used(session, pat_obj.id)
-                else:
-                    raise Exception("PAT object has no ID")
+                if cred_obj.id:
+                    mark_last_used(session, cred_obj.id)
             except Exception:
                 pass
             return token
         except Exception as e:
-            logger.error(f"Failed to decrypt PAT from DB: {e}")
+            logger.error(f"Failed to decrypt credential from DB: {e}")
             return None
 
 
 def get_github_client_from_pat(pat_id: Optional[int] = None) -> Github:
-    """Return a PyGithub Github client.
+    """Return a PyGithub Github client for a specific pat_id.
 
-    Preference order:
-      1. Specific PAT if pat_id provided.
-      2. Active PAT stored in DB (encrypted with `GITHUB_PAT_ENCRYPTION_KEY`).
-      3. `GITHUB_PAT` environment variable (legacy).
-
-    Raises ValueError if no token is available.
+    Raises ValueError if no token is available for the given pat_id.
     """
     settings = load_settings()
-    # Try DB first
-    token = _get_pat_from_db(pat_id)
+    
+    token = _get_pat_from_db(pat_id) if pat_id else None
+    
     if not token:
+        # Fallback to env var for extreme edge cases but NO global active DB creds
         token = settings.get("GITHUB_PAT")
+        
     if not token:
         raise ValueError(
-            "No GitHub PAT available. Either set the environment variable `GITHUB_PAT` "
-            "(temporary), or configure a stored PAT and ensure `GITHUB_PAT_ENCRYPTION_KEY` "
-            "is set so the server can decrypt database-stored PATs. Generate a key with: "
-            "python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            "No GitHub access token available. Please configure a repository-specific PAT."
         )
     return Github(token)
 

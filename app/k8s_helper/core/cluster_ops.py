@@ -133,6 +133,37 @@ class ClusterOperations:
             }
         }
 
+    def get_namespace_metrics(self, namespace: str):
+        custom_api = self.custom_objects_api
+        used_cpu = 0
+        used_mem = 0
+        try:
+            # Aggregate pod metrics in the namespace
+            pod_metrics = custom_api.list_namespaced_custom_object(
+                group="metrics.k8s.io", version="v1beta1", namespace=namespace, plural="pods"
+            )
+            for pod in pod_metrics.get("items", []):
+                for container in pod.get("containers", []):
+                    cpu_str = container["usage"]["cpu"]
+                    mem_str = container["usage"]["memory"]
+                    used_cpu += parse_cpu_to_millicpu(cpu_str)
+                    used_mem += parse_memory_to_Mi(mem_str)
+        except Exception as e:
+            print(f"Error fetching namespace metrics: {e}")
+
+        return {
+            "usage": {
+                "cpu": {
+                    "used": f"{used_cpu / 1000:.2f}",
+                    "unit": "cores"
+                },
+                "memory": {
+                    "used": f"{used_mem}",
+                    "unit": "Mi"
+                }
+            }
+        }
+
 
 
     def get_cluster_info(self) -> ClusterInfo:

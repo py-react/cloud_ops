@@ -161,11 +161,11 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                         //     url: "/resource-quota",
                         //     icon: Settings,
                         // },
-                        // {
-                        //     title: "Users and RBAC",
-                        //     url: "/rbac",
-                        //     icon: Users,
-                        // },
+                        {
+                            title: "Users and RBAC",
+                            url: "/rbac",
+                            icon: Users,
+                        },
                     ],
                 },
                 {
@@ -215,6 +215,34 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                             icon: Folder,
                         },
                     ],
+                },
+                {
+                    title: "Credentials Hub",
+                    url: "/credentials",
+                    icon: Key,
+                    items: [],
+                },
+            ],
+        },
+        bastion: {
+            title: "Bastion",
+            url: "/bastion",
+            color: "green",
+            childs: [
+                {
+                    title: "Systems",
+                    url: "/systems",
+                    icon: Server,
+                },
+                {
+                    title: "SSH Keys",
+                    url: "/keys",
+                    icon: Key,
+                },
+                {
+                    title: "Audit Logs",
+                    url: "/audit",
+                    icon: Activity,
                 },
             ],
         },
@@ -323,12 +351,6 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                                 },
                             ],
                         },
-                        {
-                            title: "PAT's",
-                            url: `/${selectedNamespace}/spec/pats`,
-                            icon: Key,
-                            items: [],
-                        },
                     ],
                 },
             ],
@@ -343,36 +365,6 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                     url: "/essentials",
                     icon: LayoutDashboard,
                     items: [
-                        {
-                            title: "Visualization Dashboards",
-                            url: "/dashboard",
-                            icon: LayoutDashboard,
-                            items: [],
-                        },
-                        {
-                            title: "System Metrics",
-                            url: "/monitoring",
-                            icon: Activity,
-                            items: [],
-                        },
-                        {
-                            title: "Alerting & Notifications",
-                            url: "/alerting",
-                            icon: AlertCircle,
-                            items: [],
-                        },
-                        {
-                            title: "Logging & Infrastructure",
-                            url: "/logging",
-                            icon: FileText,
-                            items: [],
-                        },
-                        // {
-                        //     title: "Database",
-                        //     url: "/db",
-                        //     icon: Database,
-                        //     items: [],
-                        // },
                     ],
                 },
             ],

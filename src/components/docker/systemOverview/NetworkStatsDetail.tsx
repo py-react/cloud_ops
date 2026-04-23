@@ -1,11 +1,11 @@
 import React from "react"
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis, Cell } from "recharts"
-
+import { RadialBarChart, RadialBar, Legend, ResponsiveContainer, PolarAngleAxis } from "recharts"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription
 } from "@/components/ui/card"
 import {
   ChartTooltip,
@@ -14,17 +14,16 @@ import {
 } from "@/components/ui/chart"
 import { ISystemInfo } from "./types"
 import { formatBytes } from "@/libs/utils"
-import { Activity } from "lucide-react"
-
+import { Activity, ArrowDown, ArrowUp } from "lucide-react"
 
 const chartConfig = {
   received: {
     label: "Received",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--primary))",
   },
   sent: {
     label: "Sent",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(var(--chart-4))",
   }
 }
 
@@ -34,87 +33,97 @@ const LoadingOverlay = () => (
   </div>
 );
 
-
 export function NetworkStatsDetail({ data, isLoading }: { data: ISystemInfo["system_stats"]["network"], isLoading?: boolean }) {
   const ChartContainerAny = ChartContainer as any;
   const ChartTooltipContentAny = ChartTooltipContent as any;
+
   if (!data) return (
-    <Card className="flex flex-col h-full relative">
+    <Card className="flex flex-col relative border-border/50 shadow-sm bg-white/50 backdrop-blur-sm h-full">
       {isLoading && <LoadingOverlay />}
-      <CardHeader>
-        <CardTitle className="text-base font-medium flex items-center">
-          <div className="bg-primary/10 p-2 rounded-lg mr-3">
-            <Activity className="w-4 h-4 text-primary" />
-          </div>
-          System Network Monitor
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+          <Activity className="w-4 h-4 text-primary" />
+          Network Throughput
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex items-center justify-center min-h-[200px]">
-        <div className="text-muted-foreground text-sm">Waiting for stats...</div>
+      <CardContent className="flex items-center justify-center h-[120px]">
+        <div className="text-muted-foreground text-xs italic">Sniffing packets...</div>
       </CardContent>
     </Card>
   );
 
+  const total = data.total_bytes_recv + data.total_bytes_sent || 1;
   const chartData = [
     {
+      name: "Received",
       value: data.total_bytes_recv,
-      name: "received",
-      color: "hsl(var(--chart-1))"
+      fill: "var(--color-received)",
     },
     {
+      name: "Sent",
       value: data.total_bytes_sent,
-      name: "sent",
-      color: "hsl(var(--chart-2))"
+      fill: "var(--color-sent)",
     },
-  ]
+  ];
 
   return (
-    <Card className="flex flex-col h-full relative">
+    <Card className="flex flex-col relative border-border/50 shadow-sm bg-white/50 backdrop-blur-sm h-full">
       {isLoading && <LoadingOverlay />}
-      <CardHeader>
-        <CardTitle className="text-base font-medium flex items-center">
-          <div className="bg-primary/10 p-2 rounded-lg mr-3">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <div className="space-y-1">
+          <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
             <Activity className="w-4 h-4 text-primary" />
-          </div>
-          System Network Monitor
-        </CardTitle>
+            Network Traffic
+          </CardTitle>
+          <CardDescription className="text-[10px] uppercase font-bold">
+            Aggregated Interface I/O
+          </CardDescription>
+        </div>
       </CardHeader>
-      <CardContent className="flex-1 pb-4">
-        <ChartContainerAny config={chartConfig} className="h-[180px] w-full">
-          <BarChart
-            accessibilityLayer
+      <CardContent className="pb-4 flex-1 flex flex-col justify-between">
+        <ChartContainerAny config={chartConfig} className="aspect-auto h-[160px] w-full">
+          <RadialBarChart
+            cx="50%"
+            cy="50%"
+            innerRadius="60%"
+            outerRadius="120%"
+            barSize={12}
             data={chartData}
-            margin={{
-              top: 20,
-            }}
+            startAngle={180}
+            endAngle={0}
           >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="name"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => value.charAt(0).toUpperCase() + value.slice(1)}
+            <PolarAngleAxis
+                type="number"
+                domain={[0, total]}
+                angleAxisId={0}
+                tick={false}
             />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContentAny hideLabel />}
+            <RadialBar
+              background
+              dataKey="value"
+              cornerRadius={5}
             />
-            <Bar dataKey="value" radius={8}>
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-              <LabelList
-                position="top"
-                offset={12}
-                className="fill-foreground font-medium"
-                fontSize={12}
-                formatter={(value: any) => formatBytes(value as number)}
-              />
-            </Bar>
-          </BarChart>
+            <ChartTooltip content={<ChartTooltipContentAny />} />
+          </RadialBarChart>
         </ChartContainerAny>
+        
+        <div className="mt-2 flex flex-col gap-2">
+            <div className="flex items-center justify-between p-2 rounded-lg bg-primary/5 border border-primary/10">
+                <div className="flex items-center gap-2">
+                    <ArrowDown className="h-3 w-3 text-primary" />
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground">Ingress</span>
+                </div>
+                <span className="text-sm font-black text-foreground">{formatBytes(data.total_bytes_recv)}</span>
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border border-border/50">
+                <div className="flex items-center gap-2">
+                    <ArrowUp className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground">Egress</span>
+                </div>
+                <span className="text-sm font-black text-foreground">{formatBytes(data.total_bytes_sent)}</span>
+            </div>
+        </div>
       </CardContent>
-    </Card >
+    </Card>
   )
 }

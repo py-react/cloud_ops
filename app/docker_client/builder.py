@@ -16,7 +16,7 @@ class DockerImageBuilder:
     @property
     def docker_client(self):
         from app.docker_client import clientContext
-        return self._docker_client or clientContext.get_client()
+        return self._docker_client or clientContext.get_client(use_active=False)
     
     async def build_image(
         self, 

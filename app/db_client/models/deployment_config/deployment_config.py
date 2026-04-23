@@ -9,13 +9,24 @@ class DeploymentConfig(SQLModel, table=True):
     namespace: str = Field()
     deployment_name: str = Field(unique=True)
     status: str = Field(default="active")  # active or inactive
+    category: str = Field(default="kubernetes")  # kubernetes or package
+    
+    # Source Control
     required_source_control: bool = Field(default=False, sa_column=Column(BOOLEAN))
     code_source_control_name: Optional[str] = Field(default=None, foreign_key="codesourcecontrol.name")
     source_control_branch: Optional[str] = Field(default=None)
+    
+    # Deployment References (Kubernetes Category)
     derived_deployment_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
     service_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
     deployment_strategy_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
     http_route_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
+    
+    # Package Details (Package Category)
+    package_type: Optional[str] = Field(default=None)  # npm, pypi, maven
+    release_strategy: Optional[str] = Field(default=None)  # semantic, build-id, timestamp
+    package_name: Optional[str] = Field(default=None)
+    registry_credential_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))  # Link to specific credential for publish
     
     soft_delete: bool = Field(default=False, sa_column=Column(BOOLEAN))
     deleted_at: Optional[date] = Field(default=None, sa_column=Column(DATE))

@@ -15,10 +15,12 @@ export interface DeploymentFormData extends Omit<DeploymentConfigType, 'node_sel
   kind: string;
   deployment_strategy_id?: number | null;
   http_route_id?: number | null;
+  registry_credential_id?: number | null;
 }
 
 export const releaseFormSchema = z.object({
   deployment_name: z.string().min(1, 'Release config name is required'),
+  category: z.enum(['kubernetes', 'package']).default('kubernetes'),
   kind: z.enum(['Deployment', 'StatefulSet', 'ReplicaSet']).default('Deployment'),
   type: z.string().min(1, 'Type is required'),
   required_source_control: z.boolean().default(false),
@@ -29,15 +31,34 @@ export const releaseFormSchema = z.object({
   namespace: z.string().min(1, 'Namespace is required'),
   deployment_strategy_id: z.number().nullable().optional(),
   http_route_id: z.number().nullable().optional(),
+  // Package specific fields
+  package_type: z.string().optional().nullable(),
+  package_name: z.string().optional().nullable(),
+  registry_id: z.number().optional().nullable(),
+  registry_credential_id: z.number().optional().nullable(),
+  release_strategy: z.string().optional().nullable(),
 }).refine((data) => {
-  // Ensure derived_deployment_id is selected
-  if (!data.derived_deployment_id || data.derived_deployment_id === 0) {
-    return false;
+  // Kubernetes specific validation
+  if (data.category === 'kubernetes') {
+    if (!data.derived_deployment_id || data.derived_deployment_id === 0) {
+      return false;
+    }
   }
   return true;
 }, {
-  message: 'Derived deployment is required',
+  message: 'Derived deployment is required for Kubernetes releases',
   path: ['derived_deployment_id'],
+}).refine((data) => {
+  // Package specific validation
+  if (data.category === 'package') {
+    if (!data.package_name || data.package_name.length === 0) {
+      return false;
+    }
+  }
+  return true;
+}, {
+  message: 'Package name is required for library releases',
+  path: ['package_name'],
 }).refine((data) => {
   // If required_source_control is true, then code_source_control_name and branch must be provided
   if (data.required_source_control) {
