@@ -4,7 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from render_relay.utils import load_settings
+from kiwijs.utils import load_settings
 
 # File to store the encryption key if not in settings
 KEY_FILE = "secret.key"

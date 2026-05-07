@@ -342,26 +342,25 @@ def extend_app(app: FastAPI):
     )
     app.router.routes.append(v2_root_route)
     
-    # Add WebSocket Route
+    # Add WebSocket Routes
     app.add_websocket_route("/cluster/proxy/{service}/{namespace}/{path:path}", cluster_websocket_proxy)
+    
 
+async def startup(app: FastAPI):
     # Database system seeding (after schema sync)
     from app.db_client.db import ensure_default_essential_addons, ensure_default_strategies
     ensure_default_strategies(force=False)
     # Seed essentials (fetches helm values in user env) - force=True updates existing broken system values
     ensure_default_essential_addons(force=False)
 
-    @app.on_event("startup")
-    async def startup_event():
+    from app.github_client.poller import get_polling_manager
+    manager = get_polling_manager()
+    # Initialize and sync pollers in the background
+    asyncio.create_task(manager.sync_pollers())
 
-        from app.github_client.poller import get_polling_manager
-        manager = get_polling_manager()
-        # Initialize and sync pollers in the background
-        asyncio.create_task(manager.sync_pollers())
+async def shutdown(app: FastAPI):
+    from app.github_client.poller import get_polling_manager
+    manager = get_polling_manager()
+    manager.stop_all()
 
-    @app.on_event("shutdown")
-    def shutdown_event():
-        from app.github_client.poller import get_polling_manager
-        manager = get_polling_manager()
-        manager.stop_all()
 

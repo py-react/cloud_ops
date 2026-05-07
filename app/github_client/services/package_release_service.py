@@ -19,7 +19,7 @@ class PackageReleaseService:
 
     def __init__(self, session: Session):
         self.session = session
-        from render_relay.utils import load_settings
+        from kiwijs.utils import load_settings
         self.settings = load_settings()
         self.registries = load_registries(self.settings)
         self.registry_manager = RegistryManager(self.registries)

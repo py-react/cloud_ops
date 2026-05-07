@@ -3,7 +3,7 @@ from sqlmodel import select
 from app.db_client.db import get_session
 from app.db_client.models.addon_plugin.addon_plugin import AddonPlugin
 from app.k8s_helper.core.helm_client import HelmClient
-from render_relay.utils import load_settings
+from kiwijs.utils import load_settings
 import os
 
 def _get_helm_client() -> HelmClient:

@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { Package, Network, Route, Boxes, Layers, Globe, Database, Tag, KeyRound } from "lucide-react";
+import { Package, Network, Route, Boxes, Layers, Globe, Database, Tag, KeyRound, Settings } from "lucide-react";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 
@@ -26,12 +26,11 @@ interface DeploymentStrategy {
 
 const ReleaseDetailsStep: React.FC<ReleaseDetailsStepProps> = ({ form }) => {
     const category = form.watch("category") || "kubernetes";
-    const namespace = form.watch("namespace") || "default";
+    const selectedChart = form.watch("chart_name");
 
-    const [deployments, setDeployments] = useState<any[]>([]);
-    const [services, setServices] = useState<any[]>([]);
+    const [charts, setCharts] = useState<any[]>([]);
+    const [environments, setEnvironments] = useState<any[]>([]);
     const [strategies, setStrategies] = useState<DeploymentStrategy[]>([]);
-    const [httpRoutes, setHttpRoutes] = useState<any[]>([]);
     const [credentials, setCredentials] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -44,16 +43,51 @@ const ReleaseDetailsStep: React.FC<ReleaseDetailsStepProps> = ({ form }) => {
             }
             fetchCredentials();
         }
-    }, [category, namespace]);
+    }, [category]);
+
+    useEffect(() => {
+        if (category === 'kubernetes' && selectedChart) {
+            fetchEnvironments(selectedChart);
+        } else {
+            setEnvironments([]);
+        }
+    }, [selectedChart, category]);
 
     const fetchCredentials = async () => {
         try {
-            const packageType = form.watch("package_type") || "npm";
             const creds = await DefaultService.apiIntegrationCredentialsGet();
+            const packageType = form.watch("package_type") || "npm";
             const filtered = creds?.filter((c: any) => c.provider === packageType) || [];
             setCredentials(filtered);
         } catch (err: any) {
             console.error("Failed to fetch credentials:", err);
+        }
+    };
+
+    const fetchKubernetesData = async () => {
+        try {
+            setLoading(true);
+            const [chartsRes, strategiesRes] = await Promise.all([
+                fetch('/api/library').then(r => r.json()),
+                DefaultService.apiIntegrationKubernetesDeploymentStrategyGet()
+            ]);
+
+            setCharts((chartsRes || []).filter((c: any) => c.type === 'template'));
+            setStrategies(strategiesRes?.strategies || []);
+        } catch (err: any) {
+            toast.error("Failed to fetch chart data");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchEnvironments = async (chartName: string) => {
+        try {
+            const res = await fetch(`/api/library/values?template=${chartName}`);
+            const data = await res.json();
+            setEnvironments(data || []);
+        } catch {
+            toast.error("Failed to fetch environments");
         }
     };
 
@@ -64,217 +98,106 @@ const ReleaseDetailsStep: React.FC<ReleaseDetailsStepProps> = ({ form }) => {
         }
     }, [form.watch("package_type")]);
 
-    // Also fetch on mount to support edit mode
-    useEffect(() => {
-        if (category === 'package') {
-            fetchCredentials();
-        }
-    }, []);
-
-    const fetchKubernetesData = async () => {
-        try {
-            setLoading(true);
-            const [deps, svcs, strs, routes]: any = await Promise.all([
-                DefaultService.apiIntegrationKubernetesLibraryDeploymentGet({ namespace }),
-                DefaultService.apiIntegrationKubernetesLibraryServiceGet({ namespace }),
-                DefaultService.apiIntegrationKubernetesDeploymentStrategyGet(),
-                DefaultService.apiIntegrationKubernetesLibraryHttprouteGet({ namespace })
-            ]);
-
-            setDeployments(deps || []);
-            setServices(svcs || []);
-            setStrategies(strs?.strategies || []);
-            setHttpRoutes(routes || []);
-        } catch (err: any) {
-            toast.error(err.message || "Failed to fetch supporting documents");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-2xl mx-auto">
             {category === 'kubernetes' ? (
                 <div className="grid grid-cols-1 gap-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField
-                            control={form.control}
-                            name="kind"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                                        <Layers className="h-3.5 w-3.5 opacity-60" /> Resource Kind
-                                    </FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value || 'Deployment'}>
-                                        <FormControl>
-                                            <SelectTrigger className="h-11 bg-background border-border/40 focus-visible:ring-primary/20 shadow-sm">
-                                                <SelectValue placeholder="Select resource kind" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="Deployment">Deployment</SelectItem>
-                                            <SelectItem value="StatefulSet">StatefulSet</SelectItem>
-                                            <SelectItem value="ReplicaSet">ReplicaSet</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="deployment_strategy_id"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                                        <Route className="h-3.5 w-3.5 opacity-60" /> Strategy
-                                    </FormLabel>
-                                    <div className="flex gap-2">
-                                        <Select
-                                            onValueChange={(value) => field.onChange(parseInt(value) || null)}
-                                            value={field.value?.toString() || ""}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger className="h-11 bg-background border-border/40 shadow-sm">
-                                                    <SelectValue placeholder="Select strategy" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {strategies.map((strategy) => (
-                                                    <SelectItem key={strategy.id} value={strategy.id.toString()}>
-                                                        {strategy.type}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {field.value && (
-                                            <button
-                                                type="button"
-                                                onClick={() => field.onChange(null)}
-                                                className="px-3 h-11 rounded-md bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20"
-                                            >✕</button>
-                                        )}
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-
+                    {/* Strategy Selection */}
                     <FormField
                         control={form.control}
-                        name="derived_deployment_id"
+                        name="deployment_strategy_id"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                                    <Package className="h-3.5 w-3.5 opacity-60" /> Library Deployment *
+                                    <Route className="h-3.5 w-3.5 opacity-60" /> Deployment Strategy *
                                 </FormLabel>
-                                <div className="flex gap-2">
-                                    <Select
-                                        onValueChange={(value) => field.onChange(parseInt(value))}
-                                        value={field.value?.toString() || ""}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger className="h-11 bg-background border-border/40 shadow-sm">
-                                                <SelectValue placeholder={loading ? "Loading..." : "Select a deployment template"} />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {deployments.map((d) => (
-                                                <SelectItem key={d.id} value={d.id.toString()}>
-                                                    {d.deployment_name || d.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {field.value && (
-                                        <button
-                                            type="button"
-                                            onClick={() => field.onChange(null)}
-                                            className="px-3 h-11 rounded-md bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20"
-                                        >✕</button>
-                                    )}
-                                </div>
+                                <Select
+                                    onValueChange={(value) => field.onChange(parseInt(value) || null)}
+                                    value={field.value?.toString() || ""}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger className="h-11 bg-background border-border/40 shadow-sm">
+                                            <SelectValue placeholder="Select rollout strategy" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {strategies.map((strategy) => (
+                                            <SelectItem key={strategy.id} value={strategy.id.toString()}>
+                                                {strategy.type}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormDescription className="text-[10px]">
+                                    Determines how the new version is rolled out (RollingUpdate, Recreate, etc.)
+                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Chart Selection */}
                         <FormField
                             control={form.control}
-                            name="service_id"
+                            name="chart_name"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                                        <Network className="h-3.5 w-3.5 opacity-60" /> Library Service
+                                        <Package className="h-3.5 w-3.5 opacity-60" /> Chart *
                                     </FormLabel>
-                                    <div className="flex gap-2">
-                                        <Select
-                                            onValueChange={(value) => field.onChange(parseInt(value))}
-                                            value={field.value?.toString() || ""}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger className="h-11 bg-background border-border/40 shadow-sm">
-                                                    <SelectValue placeholder="Optional Service" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {services.map((s) => (
-                                                    <SelectItem key={s.id} value={s.id.toString()}>
-                                                        {s.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {field.value && (
-                                            <button
-                                                type="button"
-                                                onClick={() => field.onChange(null)}
-                                                className="px-3 h-11 rounded-md bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20"
-                                            >✕</button>
-                                        )}
-                                    </div>
+                                    <Select
+                                        onValueChange={(val) => {
+                                            field.onChange(val);
+                                            form.setValue("env_name", ""); // Reset env on chart change
+                                        }}
+                                        value={field.value || ""}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger className="h-11 bg-background border-border/40 shadow-sm">
+                                                <SelectValue placeholder={loading ? "Loading..." : "Select Chart"} />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {charts.map((c) => (
+                                                <SelectItem key={c.name} value={c.name}>
+                                                    {c.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
+                        {/* Environment Selection */}
                         <FormField
                             control={form.control}
-                            name="http_route_id"
+                            name="env_name"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                                        <Globe className="h-3.5 w-3.5 opacity-60" /> HTTP Route
+                                        <Globe className="h-3.5 w-3.5 opacity-60" /> Environment *
                                     </FormLabel>
-                                    <div className="flex gap-2">
-                                        <Select
-                                            onValueChange={(value) => field.onChange(parseInt(value))}
-                                            value={field.value?.toString() || ""}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger className="h-11 bg-background border-border/40 shadow-sm">
-                                                    <SelectValue placeholder="Optional Route" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {httpRoutes.map((r) => (
-                                                    <SelectItem key={r.id} value={r.id.toString()}>
-                                                        {r.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {field.value && (
-                                            <button
-                                                type="button"
-                                                onClick={() => field.onChange(null)}
-                                                className="px-3 h-11 rounded-md bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20"
-                                            >✕</button>
-                                        )}
-                                    </div>
+                                    <Select
+                                        onValueChange={field.onChange}
+                                        value={field.value || ""}
+                                        disabled={!selectedChart || environments.length === 0}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger className="h-11 bg-background border-border/40 shadow-sm">
+                                                <SelectValue placeholder={!selectedChart ? "Select a chart first" : (environments.length === 0 ? "No environments" : "Select Env")} />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {environments.map((e) => (
+                                                <SelectItem key={e.env_name} value={e.env_name}>
+                                                    {e.env_name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -282,6 +205,7 @@ const ReleaseDetailsStep: React.FC<ReleaseDetailsStepProps> = ({ form }) => {
                     </div>
                 </div>
             ) : (
+                /* Package Category — Kept as is */
                 <div className="space-y-8">
                     <div className="grid grid-cols-1 gap-8">
                         <FormField

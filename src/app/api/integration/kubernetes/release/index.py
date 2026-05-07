@@ -50,7 +50,7 @@ async def PUT(request: Request, body: DeploymentConfigType):
             status_code=500
         )
 
-async def DELETE(request: Request, namespace: str, name: str):
+async def DELETE(request: Request, name: str, namespace: Optional[str] = None):
     """
     Delete a deployment and its associated service.
     """
@@ -68,7 +68,7 @@ async def DELETE(request: Request, namespace: str, name: str):
             status_code=500
         )
 
-async def GET(request: Request, namespace: Optional[str]="default", name: Optional[str]=None):
+async def GET(request: Request, namespace: Optional[str] = None, name: Optional[str] = None):
     """
     Get deployment details. Returns all non-hard-deleted items.
     Frontend handles filtering by status/soft_delete.

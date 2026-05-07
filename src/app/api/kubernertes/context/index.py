@@ -5,7 +5,7 @@ import subprocess
 from typing import Optional, Literal
 from pydantic import BaseModel
 from app.k8s_helper.core.context_ops import ContextOperations, CreateContextData
-from render_relay.utils import load_settings
+from kiwijs.utils import load_settings
 from enum import Enum
 
 

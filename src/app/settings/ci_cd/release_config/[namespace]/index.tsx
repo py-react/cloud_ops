@@ -6,11 +6,9 @@ import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
 import { DefaultService } from "@/gingerJs_api_client";
 import { toast } from "sonner";
 import { ReleaseConfigFilters } from "@/components/ciCd/releaseConfig/common/ReleaseConfigFilters";
-import { NamespaceSelector } from "@/components/kubernetes/NamespaceSelector";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 import useNavigate from "@/libs/navigate";
 import { FormWizard } from "@/components/wizard/form-wizard";
-import { releaseFormSchema } from "@/components/ciCd/releaseConfig/forms/components/formUtils";
 import { releaseFormSchema } from "@/components/ciCd/releaseConfig/forms/components/formUtils";
 import { Settings, GitBranch, LayoutDashboard } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
@@ -75,13 +73,13 @@ const columns = [
         return (
           <div className="space-y-1">
             <div className="flex items-center gap-1.5">
-              <Boxes className="h-3 w-3 text-muted-foreground/60" />
-              <span className="text-[11px] font-semibold text-foreground/80">{row.derived_deployment_name || "No Template"}</span>
+              <Package className="h-3 w-3 text-primary/60" />
+              <span className="text-[11px] font-semibold text-foreground/80">{row.chart_name || "No Chart"}</span>
             </div>
-            {row.service_name && row.service_name !== "N/A" && (
+            {row.env_name && (
               <div className="flex items-center gap-1.5">
-                <Network className="h-3 w-3 text-muted-foreground/60" />
-                <span className="text-[10px] text-muted-foreground">{row.service_name}</span>
+                <Globe className="h-3 w-3 text-muted-foreground/60" />
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">{row.env_name}</span>
               </div>
             )}
           </div>
@@ -124,6 +122,21 @@ const columns = [
     }
   },
   { header: "Status", accessor: "status" },
+  { 
+    header: "Namespace", 
+    accessor: "namespace",
+    cell: (row: any) => {
+      const isK8s = row.category === 'kubernetes' || !row.category;
+      return (
+        <Badge variant="outline" className={cn(
+          "text-[10px] font-bold uppercase tracking-widest border-border/40",
+          isK8s ? "bg-muted/30" : "bg-orange-500/10 text-orange-600 border-orange-500/20"
+        )}>
+          {isK8s ? row.namespace : "Global"}
+        </Badge>
+      );
+    }
+  },
 ];
 
 const ReleaseConfigPage = () => {
@@ -148,6 +161,8 @@ const ReleaseConfigPage = () => {
     source_control_branch: null,
     derived_deployment_id: null,
     service_id: null,
+    chart_name: null,
+    env_name: null,
     package_type: null,
     package_name: null,
     registry_id: null,
@@ -163,7 +178,7 @@ const ReleaseConfigPage = () => {
     return {
       ...INITIAL_VALUES,
       ...cleanData,
-      category: data.category || (data.derived_deployment_id ? 'kubernetes' : 'package'),
+      category: data.category || (data.chart_name || data.derived_deployment_id ? 'kubernetes' : 'package'),
       registry_credential_id: data.registry_credential_id ?? null,
     };
   };
@@ -202,14 +217,15 @@ const ReleaseConfigPage = () => {
       // Prepare payload with required backend fields
       const payload = {
         ...data,
-        id: isEdit ? editingConfig?.id : undefined,  // Include id for updates
-        tag: data.tag || null,
+        id: isEdit ? editingConfig?.id : undefined,
+        chart_name: data.chart_name || null,
+        env_name: data.env_name || null,
         deployment_strategy_id: data.deployment_strategy_id || null,
         code_source_control_name: data.code_source_control_name || null,
         source_control_branch: data.source_control_branch || null,
         service_id: data.service_id || null,
-        registry_credential_id: data.registry_credential_id,
-        namespace: selectedNamespace
+        registry_credential_id: data.registry_credential_id || null,
+        namespace: data.namespace || selectedNamespace || 'default'
       };
 
       const response: any = isEdit
@@ -234,7 +250,7 @@ const ReleaseConfigPage = () => {
     try {
       const response: any = await DefaultService.apiIntegrationKubernetesReleaseGet({
         name: null,
-        namespace: selectedNamespace,
+        namespace: null, // Fetch all configurations
       });
       if (response.status === "success") {
         setDeployments(response.data || []);
@@ -249,9 +265,8 @@ const ReleaseConfigPage = () => {
   };
 
   useEffect(() => {
-    if (!selectedNamespace) return;
     fetchDeployments();
-  }, [selectedNamespace]);
+  }, []); // Fetch all on mount once
 
   const filteredDeployments = deployments
     .filter((item) => {
@@ -274,13 +289,12 @@ const ReleaseConfigPage = () => {
       title="Release Configurations"
       subtitle={
         <>
-          Define the parameters and metadata required for traceability across <span className="text-primary font-bold">Kubernetes</span> deployments and <span className="text-orange-500 font-bold">Package</span> distributions in <span className="text-primary font-bold">{selectedNamespace}</span>.
+          Define the parameters and metadata required for traceability across <span className="text-primary font-bold">Kubernetes</span> deployments and <span className="text-orange-500 font-bold">Package</span> distributions system-wide.
         </>
       }
       icon={FileCog}
       actions={
         <div className="flex items-center gap-2 mb-1">
-          <NamespaceSelector />
           <Button variant="outline" onClick={fetchDeployments}>
             <RefreshCw className="w-3.5 h-3.5 mr-2" />
             Refresh

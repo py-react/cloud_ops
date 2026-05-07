@@ -45,7 +45,10 @@ def get_source_code_build(session: Session, repo_name: Optional[str] = None,base
         statement = statement.where(SourceCodeBuild.id == build_id)
     else:
         if repo_name:
-            statement = statement.where(SourceCodeBuild.repo_name == repo_name)
+            statement = statement.where(
+                (SourceCodeBuild.repo_name == repo_name) | 
+                (SourceCodeBuild.repo_name_full_name == repo_name)
+            )
         if base_branch:
             statement = statement.where(SourceCodeBuild.base_branch_name == base_branch)
         if branch_name:

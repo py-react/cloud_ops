@@ -140,10 +140,20 @@ async def POST(request:Request, body: SystemInfo):
     try:
         client = clientContext.get_client()
         # Fast Info Actions (Single docker.info() call split up)
-        if actionType in ["general", "resources", "containers", "images", "network_config", "security", "drivers", "plugins"]:
+        if actionType in ["status", "general", "resources", "containers", "images", "network_config", "security", "drivers", "plugins"]:
             info = get_docker_info()
             
-            if actionType == "general":
+            if actionType == "status":
+                return {
+                    "error": False, 
+                    "data": {
+                        "ServerVersion": info.get("ServerVersion", "N/A"),
+                        "DockerRootDir": info.get("DockerRootDir", "N/A"),
+                        "Architecture": info.get("Architecture", "N/A"),
+                        "active_id": clientContext.get_engine_id()
+                    }
+                }
+            elif actionType == "general":
                 return {"error": False, "data": extract_general_info(info)}
             elif actionType == "resources":
                 return {"error": False, "data": extract_resources_info(info)}

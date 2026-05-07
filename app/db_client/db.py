@@ -94,6 +94,8 @@ DEFAULT_ADDONS = [
 ]
 
 def ensure_default_strategies(force: bool = False):
+    if os.getenv("RENDER_RELAY_BUILD_MODE") == "True":
+        return
     with Session(engine) as session:
         for strat in DEFAULT_STRATEGIES:
             existing = session.exec(select(DeploymentStrategy).where(DeploymentStrategy.id == strat["id"])).first()
@@ -106,6 +108,25 @@ def ensure_default_strategies(force: bool = False):
         session.commit()
 
 def ensure_default_essential_addons(force: bool = False):
+    if os.getenv("RENDER_RELAY_BUILD_MODE") == "True":
+        logger.info("Build mode detected, skipping addon seeding.")
+        return
+
+    from app.db_client.models.addon_plugin.addon_plugin import AddonPlugin
+    
+    # Check if we actually need to do anything before doing expensive setup
+    needs_seeding = False
+    with Session(engine) as session:
+        for addon_data in DEFAULT_ADDONS:
+            existing = session.exec(select(AddonPlugin).where(AddonPlugin.name == addon_data["name"])).first()
+            if not existing or (force or not existing.default_values):
+                needs_seeding = True
+                break
+    
+    if not needs_seeding:
+        logger.info("All essential addons already seeded. Skipping K8s/Helm setup.")
+        return
+
     from app.k8s_helper.core.helm_client import HelmClient
     helm_client = HelmClient()
     

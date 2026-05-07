@@ -13,6 +13,7 @@ from app.db_client.controllers.deployment_config import list_deployment_configs
 from app.db_client.controllers.source_code_build import get_source_code_build 
 from app.db_client.models.code_source_control.types import CodeSourceControlType
 from app.db_client.models.code_source_control_branch.types import CodeSourceControlBranchType
+from app.db_client.models.code_source_control.code_source_control import CodeSourceControl
 
 
 
@@ -31,8 +32,16 @@ class AllowedRepoUtils:
         if self.session_ctx:
             self.session_ctx.__exit__(None, None, None)
 
-    def get_builds(self,repo_name,base_branch):
-        return get_source_code_build(self.session,repo_name=repo_name,base_branch=base_branch)
+    def get_builds(self, repo_name: str, branch_name: Optional[str] = None):
+        # We filter by the target branch (base_branch_name) as requested
+        # Support ID lookup if repo_name is numeric
+        final_repo_name = repo_name
+        if repo_name.isdigit():
+            repo = self.session.get(CodeSourceControl, int(repo_name))
+            if repo:
+                final_repo_name = repo.name
+
+        return get_source_code_build(self.session, repo_name=final_repo_name, base_branch=branch_name)
     
     def get_last_builds_for_all_repo_branches(self)->Dict[str, Dict[str, Optional[SourceCodeBuildWithLogsType]]]:
         """
@@ -194,7 +203,12 @@ class AllowedRepoUtils:
 
     def get_repository(self, repo_name: str):
         repos = list_code_source_controls(self.session)
-        repo = next((r for r in repos if r.name == repo_name), None)
+        # Support ID lookup
+        if repo_name.isdigit():
+            repo = next((r for r in repos if str(r.id) == repo_name), None)
+        else:
+            repo = next((r for r in repos if r.name == repo_name), None)
+            
         repo_id = repo.id if repo else None
         if not repo or not repo_id:
             return None
@@ -221,7 +235,6 @@ class AllowedRepoUtils:
     def perform_full_deletion(self, repo_name: str):
         from app.db_client.models.code_source_control_branch.code_source_control_branch import CodeSourceControlBranch
         from app.db_client.models.source_code_build.source_code_build import SourceCodeBuild, SourceCodeBuildLog
-        from app.db_client.models.code_source_control.code_source_control import CodeSourceControl
         from sqlmodel import select, delete
         
         # Always use a fresh session for background tasks

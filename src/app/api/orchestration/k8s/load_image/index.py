@@ -10,7 +10,7 @@ import sys
 from contextlib import asynccontextmanager
 
 from app.k8s_helper.core.context_ops import ContextOperations
-from render_relay.utils import load_settings
+from kiwijs.utils import load_settings
 from app.docker_client import clientContext
 from app.github_client.config.registry_config import load_registries
 from app.docker_client.registry import RegistryManager

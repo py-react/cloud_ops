@@ -7,7 +7,7 @@ import type { ServicePortConfig } from './ServicePortConfig';
 export type DeploymentConfigType = {
 	id?: number | null;
 	type: string;
-	namespace: string;
+	namespace?: string | null;
 	deployment_name: string;
 	status?: string;
 	category?: string;
@@ -19,6 +19,8 @@ export type DeploymentConfigType = {
 	service_id?: number | null;
 	deployment_strategy_id?: number | null;
 	http_route_id?: number | null;
+	chart_name?: string | null;
+	env_name?: string | null;
 	replicas?: number | null;
 	package_type?: string | null;
 	release_strategy?: string | null;

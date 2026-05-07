@@ -162,7 +162,7 @@ export const PodComponent = memo(({
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">IP:</span>
-            <span>{data.ip}</span>
+            <span>{data.ip || "N/A"}</span>
           </div>
         </div>
 
@@ -206,8 +206,7 @@ export const ServiceComponent = memo(({
           </div>
         </div>
         <div className='mb-3'>
-            <h3 className="font-semibold text-blue-900 w-[70%]">{data.service_name}</h3>
-
+            <h3 className="font-semibold text-blue-900 w-[70%]">{data.name || data.service_name}</h3>
         </div>
 
         <div className="space-y-2 text-sm">
@@ -217,7 +216,7 @@ export const ServiceComponent = memo(({
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Cluster IP:</span>
-            <span>{data.clusterIP}</span>
+            <span>{data.clusterIP || "Pending"}</span>
           </div>
           {data.externalIP && (
             <div className="flex justify-between">
@@ -234,7 +233,7 @@ export const ServiceComponent = memo(({
         <div className="mt-3 pt-3 border-t">
           <h4 className="text-sm font-medium mb-2">Ports</h4>
           <div className="space-y-1">
-            {data.ports.map((port, idx) => (
+            {(data.ports || []).map((port, idx) => (
               <div
                 key={idx}
                 className="text-xs flex items-center justify-between"
@@ -404,21 +403,12 @@ export const DeploymentComponentV2 = memo(({
       [fitView],)
       
     const deploymentsInfoName = useMemo(()=>{
+        const rawName = data.name || data.deployment_name || data.statefulset_name || data.daemonset_name || "Unknown";
         return {
-            type:"deployment_name" in data
-                ? "ReplicaSet"
-                : "statefulset_name" in data
-                ? "StatefulSet"
-                : "daemonset_name" in data
-                ? "DaemonSets"
-                : data.belongs_to,
-            name:"deployment_name" in data
-                ? data.deployment_name
-                : "statefulset_name" in data
-                ? data.statefulset_name
-                : "daemonset_name" in data
-                ? data.daemonset_name
-                : ''
+            type: data.component_type 
+                ? (data.component_type.charAt(0).toUpperCase() + data.component_type.slice(1))
+                : data.deployment_name ? "Deployment" : data.statefulset_name ? "StatefulSet" : "Workload",
+            name: rawName
         }
     },[data]);
 
@@ -568,7 +558,7 @@ export const CustomIngressNode = memo(({
             </div>
           </div>
           <div className='mb-3'>
-            <h3 className="font-semibold text-blue-900 w-[70%]">{data.ingress_name}</h3>
+            <h3 className="font-semibold text-blue-900 w-[70%]">{data.name || data.ingress_name}</h3>
           </div>
   
           <div className="space-y-3">
@@ -585,7 +575,7 @@ export const CustomIngressNode = memo(({
                 <h4 className="text-sm font-medium text-gray-800">Connected Services</h4>
               </div>
               <div className="grid gap-2">
-                {data.paths.map((service, idx) => (
+                {(data.paths || []).map((service, idx) => (
                   <div
                     key={idx}
                     className="cursor-pointer flex items-center gap-2 text-sm bg-gray-50 hover:bg-gray-100 transition-colors duration-150 text-gray-700 px-3 py-2 rounded-md"

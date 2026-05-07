@@ -14,7 +14,6 @@ from app.db_client.models.docker_config.types import DockerConfigType
 async def GET(request: Request):
     with get_session() as session:
         configs = list_docker_configs(session)
-        active_config = get_active_docker_config(session)
         
         results = []
         # Add Local Engine
@@ -23,7 +22,6 @@ async def GET(request: Request):
             "name": "Local Engine (Default)",
             "base_url": "unix:///var/run/docker.sock",
             "verify": False,
-            "is_active": active_config is None,
             "is_default": True
         })
         

@@ -4,7 +4,7 @@ from fastapi import Request, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 from app.github_client.core.allowed_repo import AllowedRepoUtils
 from app.db_client.controllers.code_source_control.code_source_control import update_code_source_control_status
-from render_relay.utils.get_logger import get_logger
+from kiwijs.utils.get_logger import get_logger
 
 logger = get_logger("GitHub Repos API")
 

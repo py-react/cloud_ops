@@ -17,7 +17,7 @@ from app.github_client.triggers.rate_limiter import RateLimiter
 from app.docker_client import clientContext
 from app.db_client.db import get_session
 from app.utils.promise import Promise
-from render_relay.utils import load_settings
+from kiwijs.utils import load_settings
 from app.github_client.config.registry_config import load_registries
 from app.github_client.config.docker_config import load_docker_config
 
@@ -99,7 +99,7 @@ class RepoPoller:
                 logger.debug(f"RepoPoller (PAT:{self.pat_id}): No cached config available.")
                 return
 
-            _, branches_map, _, repo_pats, _, _, repo_polling_enabled = config
+            res_map, branches_map, _, repo_pats, _, _, repo_polling_enabled = config
             
             # Filter repos matching our PAT and where polling is enabled
             target_repos = [
@@ -133,10 +133,11 @@ class RepoPoller:
             
             promises = []
             for repo_name in target_repos:
+                repo_id = res_map.get(repo_name)
                 promises.append(
                     Promise(
                         self.process_branches_for_repo(
-                            repo_name, branches_map, user_login
+                            repo_name, branches_map, user_login, repo_id=repo_id
                         )
                     )
                 )
@@ -149,7 +150,7 @@ class RepoPoller:
                 self._stop = True
     
     async def process_branches_for_repo(
-        self, repo_name: str, branches_map: dict, user_login: str
+        self, repo_name: str, branches_map: dict, user_login: str, repo_id: Optional[str] = None
     ) -> None:
         """Process all branches for a given repository."""
         try:
@@ -161,7 +162,7 @@ class RepoPoller:
                 branch_name = branch_data["branch"] if isinstance(branch_data, dict) else branch_data
                 promises.append(
                     Promise(
-                        self.process_single_branch(branch_name, gh_repo, repo_name, user_login)
+                        self.process_single_branch(branch_name, gh_repo, repo_name, user_login, repo_id=repo_id)
                     )
                 )
             await Promise.all(promises)
@@ -169,7 +170,7 @@ class RepoPoller:
             logger.error(f"Failed to poll repo {repo_name}: {e}")
     
     async def process_single_branch(
-        self, branch: str, gh_repo: Any, repo_name: str, user_login: str
+        self, branch: str, gh_repo: Any, repo_name: str, user_login: str, repo_id: Optional[str] = None
     ) -> None:
         """Process all PRs for a single branch."""
         try:
@@ -183,19 +184,22 @@ class RepoPoller:
             else:
                 for pull in pulls:
                     logger.info(f"Found open PR #{pull.number} in repo {repo_name} branch {branch}")
-                    Promise(self.process_single_pr(pull, repo_name, branch, user_login))
+                    Promise(self.process_single_pr(pull, repo_name, branch, user_login, repo_id=repo_id))
         except Exception as e:
             logger.error(f"Failed to poll branch {branch} in repo {repo_name}: {e}")
             raise e
     
     async def process_single_pr(
-        self, pr: Any, repo_name: str, branch: str, user_login: str
+        self, pr: Any, repo_name: str, branch: str, user_login: str, repo_id: Optional[str] = None
     ) -> None:
         """Process a single PR: check triggers and process if needed."""
         try:
             settings = load_settings()
             url_with_protocol = "http://localhost:5001" if settings.get("DEBUG", False) else settings.get("URL")
-            check_status_url = f"{url_with_protocol}/settings/ci_cd/source_control/{pr.head.repo.name}/{pr.head.ref}"
+            
+            # Use ID for routing to avoid slash issues, fallback to name if ID not provided
+            id_for_url = repo_id or repo_name
+            check_status_url = f"{url_with_protocol}/settings/ci_cd/source_control/{id_for_url}/{pr.head.ref}"
             
             should_trigger, reason = self.trigger_detector.should_trigger_build(
                 pr, self.pr_service.pr_repository.session, branch, repo_name

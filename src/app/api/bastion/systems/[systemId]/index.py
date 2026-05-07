@@ -5,7 +5,8 @@ from sqlmodel import select, delete
 
 
 async def DELETE(request: Request, systemId: int):
-    """Delete a registered system and all its associated audit logs"""
+    """Soft-delete a registered system (mark as deleted, preserve audit logs)"""
+    from datetime import datetime
     with get_session() as db:
         system = db.get(System, systemId)
         if not system:
@@ -13,9 +14,31 @@ async def DELETE(request: Request, systemId: int):
 
         system_name = system.name
 
-        # Clean up audit logs for this system
-        db.exec(delete(SSHAuditLog).where(SSHAuditLog.system_id == systemId))
-        db.delete(system)
+        # Perform soft delete
+        system.status = "deleted"
+        system.deleted_at = datetime.utcnow()
+        db.add(system)
         db.commit()
 
-    return {"error": False, "message": f"System '{system_name}' and its audit logs have been removed"}
+    return {"error": False, "message": f"System '{system_name}' has been archived"}
+
+
+async def PATCH(request: Request, systemId: int):
+    """Update system status (active/inactive)"""
+    body = await request.json()
+    new_status = body.get("status")
+    
+    if new_status not in ["active", "inactive"]:
+        return {"error": True, "message": "Invalid status. Must be 'active' or 'inactive'."}
+
+    with get_session() as db:
+        system = db.get(System, systemId)
+        if not system:
+            return {"error": True, "message": "System not found"}
+
+        system.status = new_status
+        db.add(system)
+        db.commit()
+        db.refresh(system)
+
+    return {"error": False, "message": f"System '{system.name}' is now {new_status}", "system": system.dict()}

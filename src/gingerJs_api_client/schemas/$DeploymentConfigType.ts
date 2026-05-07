@@ -13,8 +13,12 @@ export const $DeploymentConfigType = {
 	isRequired: true,
 },
 		namespace: {
+	type: 'any-of',
+	contains: [{
 	type: 'string',
-	isRequired: true,
+}, {
+	type: 'null',
+}],
 },
 		deployment_name: {
 	type: 'string',
@@ -81,6 +85,22 @@ export const $DeploymentConfigType = {
 	type: 'any-of',
 	contains: [{
 	type: 'number',
+}, {
+	type: 'null',
+}],
+},
+		chart_name: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
+}, {
+	type: 'null',
+}],
+},
+		env_name: {
+	type: 'any-of',
+	contains: [{
+	type: 'string',
 }, {
 	type: 'null',
 }],

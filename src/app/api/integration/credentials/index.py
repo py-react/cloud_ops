@@ -12,7 +12,7 @@ from app.db_client.controllers.github_pat.github_pat import (
     get_credential,
     update_credential
 )
-from render_relay.utils.get_logger import get_logger
+from kiwijs.utils.get_logger import get_logger
 import httpx
 from app.utils.get_fernet import get_fernet
 

@@ -1,5 +1,7 @@
 import React, { useMemo } from "react";
-import { Activity, Rocket, Link, Hash, Tag, Globe } from "lucide-react";
+import { Activity, Rocket, Link, Hash, Tag, Globe, Github } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { z } from "zod";
 import { DefaultService } from "@/gingerJs_api_client/services/DefaultService";
 import type { DeploymentRunType } from "@/gingerJs_api_client/models/DeploymentRunType";
@@ -7,7 +9,9 @@ import { toast } from "sonner";
 import FormWizard from "@/components/wizard/form-wizard";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/libs/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TooltipWrapper } from "@/components/ui/tooltip";
 
 // Types
 export interface ServicePort {
@@ -51,6 +55,7 @@ export interface ReleaseConfigData {
   category?: string;
   deployment_strategy_id?: number;
   http_route_id?: number;
+  source_control_branch?: string;
 }
 
 export interface ReleaseRunData {
@@ -74,11 +79,8 @@ interface ReleaseRunProps {
 const releaseRunSchema = z.object({
   pr_url: z.string().optional(),
   jira: z.string().optional(),
-  images: z.record(z.string().min(1, "Image name is required")),
-  apply_derived_service: z.boolean(),
-  deployment_strategy_id: z.number().optional(),
-  http_route_id: z.number().optional(),
-  apply_derived_httproute: z.boolean(),
+  images_repo: z.record(z.string().min(1, "Repository is required")),
+  images_tag: z.record(z.string().min(1, "Tag is required")),
   // Package specific
   release_notes: z.string().optional(),
   is_public: z.boolean(),
@@ -99,11 +101,13 @@ export const ReleaseRun = ({
     const defaults = {
       pr_url: "",
       jira: "",
-      apply_derived_service: false,
-      apply_derived_httproute: false,
-      deployment_strategy_id: deployment_config?.deployment_strategy_id || undefined,
-      http_route_id: deployment_config?.http_route_id || undefined,
-      images: deployment_config?.category === 'package' 
+      images_repo: deployment_config?.category === 'package' 
+        ? { main: "" }
+        : (deployment_config?.containers || []).reduce((acc: any, c) => {
+            acc[c.name] = "";
+            return acc;
+          }, {}),
+      images_tag: deployment_config?.category === 'package' 
         ? { main: "" }
         : (deployment_config?.containers || []).reduce((acc: any, c) => {
             acc[c.name] = "";
@@ -118,14 +122,34 @@ export const ReleaseRun = ({
       return {
         ...defaults,
         ...defaultValues,
-        images: {
-          ...defaults.images,
-          ...(defaultValues.images || {})
-        }
       };
     }
     return defaults;
   }, [deployment_config, defaultValues]);
+
+  const [builds, setBuilds] = React.useState<any[]>([]);
+  const [loadingBuilds, setLoadingBuilds] = React.useState(false);
+  const [selectedImage, setSelectedImage] = React.useState<string | undefined>();
+
+  React.useEffect(() => {
+    if (open && deployment_config.code_source_control_name) {
+      const fetchBuilds = async () => {
+        setLoadingBuilds(true);
+        const repo = deployment_config.code_source_control_name;
+        const branch = deployment_config.source_control_branch || 'main';
+        try {
+          const res = await fetch(`/api/integration/github/builds?repo_name=${repo}&branch_name=${branch}`);
+          const data = await res.json();
+          setBuilds((data || []).filter((b: any) => b.status === 'success'));
+        } catch (e) {
+          console.error("[ReleaseRun] Failed to fetch builds", e);
+        } finally {
+          setLoadingBuilds(false);
+        }
+      };
+      fetchBuilds();
+    }
+  }, [open, deployment_config]);
 
   const onSubmit = async (values: ReleaseRunFormValues) => {
     if (deployment_config.status !== "active") {
@@ -137,8 +161,17 @@ You can only run releases for 'active' configurations. Please activate it first.
     }
 
     try {
+      // Merge images_repo and images_tag into a single images object for the backend
+      const images: Record<string, string> = {};
+      Object.keys(values.images_repo).forEach(key => {
+        if (values.images_repo[key] && values.images_tag[key]) {
+          images[key] = `${values.images_repo[key]}:${values.images_tag[key]}`;
+        }
+      });
+
       const payload: DeploymentRunType = {
         ...values,
+        images,
         deployment_config_id: deployment_config.id,
       };
       await DefaultService.apiIntegrationKubernetesReleaseRunPost({
@@ -201,7 +234,7 @@ You can only run releases for 'active' configurations. Please activate it first.
       longDescription: deployment_config.category === 'package' 
         ? "Specify the version tag and the PR image that contains your build artifacts."
         : "Specify the image name and tag for each container in this release.",
-      component: ({ control }: any) => (
+      component: ({ control, setValue }: any) => (
         <div className="space-y-6">
           {deployment_config.category === 'package' && (
             <div className="space-y-4 pb-4 border-b">
@@ -242,52 +275,156 @@ You can only run releases for 'active' configurations. Please activate it first.
             </div>
           )}
 
+          {/* Source Build Section */}
+          {deployment_config.code_source_control_name && (
+            <div className="space-y-4 p-4 bg-blue-50/50 rounded-lg border border-blue-100/50">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold flex items-center gap-2 text-blue-700">
+                  <Github className="h-4 w-4" /> Source Build Artifacts
+                </h4>
+                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">
+                   {deployment_config.source_control_branch || 'main'}
+                </Badge>
+              </div>
+              
+              <div className="space-y-2">
+                <FormLabel className="text-[10px] font-black uppercase text-blue-600/70">Select Recent Build</FormLabel>
+                <Select 
+                  key={builds.length}
+                  value={selectedImage}
+                  onValueChange={(val) => {
+                    setSelectedImage(val);
+                    const build = builds.find(b => b.image_name === val);
+                    if (build && setValue) {
+                      const containers = deployment_config.containers || [];
+                      // Parse image name: registry/repo:tag
+                      const lastColonIndex = build.image_name.lastIndexOf(':');
+                      if (lastColonIndex !== -1) {
+                        const repo = build.image_name.substring(0, lastColonIndex);
+                        const tag = build.image_name.substring(lastColonIndex + 1);
+                        
+                        if (deployment_config.category === 'package') {
+                          setValue('images_repo.main', repo);
+                          setValue('images_tag.main', tag);
+                        } else {
+                          containers.forEach(c => {
+                             setValue(`images_repo.${c.name}`, repo);
+                             setValue(`images_tag.${c.name}`, tag);
+                          });
+                        }
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder={loadingBuilds ? "Loading builds..." : "Choose an artifact..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {builds.map((build) => (
+                      <SelectItem key={build.id} value={build.image_name}>
+                        {build.image_name?.split('/').pop()}
+                      </SelectItem>
+                    ))}
+                    {builds.length === 0 && !loadingBuilds && (
+                      <div className="p-4 text-center text-xs text-muted-foreground">No builds found for this branch</div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {/* Image Selection Section */}
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold flex items-center gap-2">
-              <Activity className="h-4 w-4 text-muted-foreground" />
-              {deployment_config.category === 'package' ? "Source Build Image" : "Container Images"}
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                {deployment_config.category === 'package' ? "Source Build Image" : "Container Images"}
+              </h4>
+              {deployment_config.code_source_control_name && (
+                <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground border-dashed">
+                  Managed by Source
+                </Badge>
+              )}
+            </div>
             
-            {deployment_config.category === 'package' ? (
-              <FormField
-                control={control}
-                name="images.main"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[10px] font-black uppercase text-muted-foreground">Artifact Image Tag (from PR)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. library-name:pr-123" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ) : (
-              (deployment_config?.containers || []).map((container) => (
-                <FormField
-                  key={container.name}
-                  control={control}
-                  name={`images.${container.name}`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 font-black uppercase text-[10px] tracking-widest text-muted-foreground bg-muted/30 px-2 py-1 rounded w-fit">
+            {!deployment_config.code_source_control_name ? (
+              deployment_config.category === 'package' ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name="images_repo.main"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] font-black uppercase text-muted-foreground">Repository</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. library-name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={control}
+                    name="images_tag.main"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] font-black uppercase text-muted-foreground">Tag</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. pr-123" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ) : (
+                (deployment_config?.containers || []).map((container) => (
+                  <div key={container.name} className="space-y-2 p-3 rounded-lg border bg-muted/10">
+                     <FormLabel className="flex items-center gap-2 font-black uppercase text-[10px] tracking-widest text-muted-foreground bg-muted/30 px-2 py-1 rounded w-fit mb-2">
                         {container.name}
                       </FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. nginx:1.21-alpine" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={control}
+                          name={`images_repo.${container.name}`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input placeholder="Repository (e.g. nginx)" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={control}
+                          name={`images_tag.${container.name}`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input placeholder="Tag (e.g. 1.21)" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                  </div>
+                ))
+              )
+            ) : (
+              <div className="p-4 border rounded-lg bg-muted/5 border-dashed text-center">
+                 <p className="text-xs text-muted-foreground">
+                   Images are automatically derived from the selected source build above.
+                 </p>
+              </div>
             )}
           </div>
         </div>
       )
     }
-  ], [deployment_config]);
+  ], [deployment_config, builds, loadingBuilds]);
 
   // Insert Configuration step at the beginning if service_id exists (indicates derived service capability)
 

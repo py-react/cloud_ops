@@ -52,6 +52,7 @@ type RepoFormData = z.infer<typeof repoSchema>;
 
 interface FlatMappedRepo {
     id: string;
+    repoId: string;
     repository: string;
     branch: string;
     status: string;
@@ -336,8 +337,10 @@ const SourceControlPage = () => {
 
             branches.forEach((branchConfig: any) => {
                 const branchName = branchConfig.branch;
+                const repoId = data.allowed_repositories[repo];
                 result.push({
                     id: `${repo}:${branchName}`,
+                    repoId: repoId,
                     repository: repo,
                     branch: branchName,
                     status: 'Active',
@@ -509,7 +512,7 @@ const SourceControlPage = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40 bg-background/95 backdrop-blur-md border-border/50 shadow-xl">
                             <DropdownMenuItem
-                                onClick={() => navigate(`/settings/ci_cd/source_control/${row.repository}/${row.branch}`)}
+                                onClick={() => navigate(`/settings/ci_cd/source_control/${row.repoId}/${row.branch}`)}
                                 className="gap-2 text-[12px] font-medium py-2 cursor-pointer"
                             >
                                 <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />

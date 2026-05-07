@@ -202,14 +202,28 @@ const DockerConfigForm = ({ control }: { control: any }) => {
     )
 }
 
-const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
+const DockerConfig = () => {
     const [configs, setConfigs] = useState<any[]>([])
+    const [engineInfo, setEngineInfo] = useState<any>(null)
     const [loading, setLoading] = useState(false)
     const [isWizardOpen, setIsWizardOpen] = useState(false)
     const [editConfig, setEditConfig] = useState<any>(null)
     const [currentStep, setCurrentStep] = useState('setup')
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [configToDelete, setConfigToDelete] = useState<any>(null)
+
+    const fetchEngineStatus = async () => {
+        try {
+            const res = await (DefaultService as any).apiDockerSystemsPost({ requestBody: { action: 'status' } })
+            if (res && !res.error) {
+                setEngineInfo(res.data)
+            } else {
+                setEngineInfo({ ServerVersion: "Disconnected", error: res?.message })
+            }
+        } catch (error) {
+            setEngineInfo({ ServerVersion: "Disconnected", error: "Failed to connect" })
+        }
+    }
 
     const fetchConfigs = async () => {
         setLoading(true)
@@ -230,6 +244,7 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
 
     useEffect(() => {
         fetchConfigs()
+        fetchEngineStatus()
     }, [])
 
     const handleDelete = async (row: any) => {
@@ -261,6 +276,7 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
             })
             toast.success(`Switched to ${row.name}`)
             fetchConfigs()
+            fetchEngineStatus()
             // Optional: Refresh the page or trigger a global state update if needed
             // For now, fetchConfigs updates the local view
         } catch (error) {
@@ -332,8 +348,8 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
                             header: "Status", 
                             accessor: "is_active",
                             cell: (row: any) => (
-                                <Badge variant={row.is_active ? "success" : "secondary"} className="uppercase text-[10px]">
-                                    {row.is_active ? "Active" : "Inactive"}
+                                <Badge variant={row.id === engineInfo?.active_id ? "success" : "secondary"} className="uppercase text-[10px]">
+                                    {row.id === engineInfo?.active_id ? "Active" : "Inactive"}
                                 </Badge>
                             )
                         },
@@ -345,7 +361,7 @@ const DockerConfig = ({ engineInfo }: { engineInfo: any }) => {
                             label: "Use This",
                             icon: Activity,
                             onClick: handleActivate,
-                            show: (row: any) => !row.is_active
+                            show: (row: any) => row.id !== engineInfo?.active_id
                         }
                     ]}
                 />

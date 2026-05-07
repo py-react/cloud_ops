@@ -13,7 +13,7 @@ from sqlmodel import select
 from app.github_client.core.allowed_repo import AllowedRepoUtils
 from app.k8s_helper.core.context_ops import ContextOperations
 from app.db_client.models.ssh_management import System, SSHKey
-from render_relay.utils import load_settings
+from kiwijs.utils import load_settings
 
 # Simple Global Cache
 DASHBOARD_CACHE = {

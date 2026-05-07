@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from app.k8s_helper.core import access_registry_via_api_proxy
 from kubernetes import client as k8s_client, config as k8s_config
 from typing import Optional, Dict, Any, Literal
-from render_relay.utils import load_settings
+from kiwijs.utils import load_settings
 from app.docker_client.clientContext import get_client
 from docker.errors import APIError, ImageNotFound
 import docker

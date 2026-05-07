@@ -12,7 +12,7 @@ Unlike typical setups where Node.js serves as the backend for frontend applicati
 #### Python Environment and Requirements
 Create a virtual environment to manage dependencies locally:
 ```shell
-virtualenv env
+uv venv env
 ```
 Activate the virtual environment:
 ```shell
@@ -29,7 +29,7 @@ Now, you need to install GingerJS using `pip`. Open your terminal or command pro
 
 
 ```shell
-pip install git+https://github.com/ginger-society/ginger-js.git
+uv pip install /Users/deep/Projects/py-react/render_relay
 ```
 
 ### Create your app

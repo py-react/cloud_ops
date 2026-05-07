@@ -51,6 +51,7 @@ import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable"; // Added
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 import PageLayout from "@/components/PageLayout";
+import useNavigate from "@/libs/navigate";
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const getStatusColor = (status: string) => {
@@ -329,6 +330,7 @@ const ContainerDetails: React.FC<{ container: K8sContainer }> = ({ container }) 
 };
 
 const ReleaseConfigDetailedInfo = () => {
+  const navigate = useNavigate()
   const { config_name, namespace } = useParams();
   const [configData, setConfigData] = useState<any>(null);
   const [runData, setRunData] = useState<ReleaseRunData[]>([]);
@@ -339,9 +341,7 @@ const ReleaseConfigDetailedInfo = () => {
   const [rerunValues, setRerunValues] = useState<any>(null);
   const [serviceData, setServiceData] = useState<any>(null);
 
-  const [metadataProfile, setMetadataProfile] = useState<any>(null);
-  const [selectorProfile, setSelectorProfile] = useState<any>(null);
-  const [dynamicProfiles, setDynamicProfiles] = useState<any[]>([]);
+
 
   const category = configData?.category || (configData?.derived_deployment_id ? 'kubernetes' : 'package');
 
@@ -498,59 +498,7 @@ const ReleaseConfigDetailedInfo = () => {
   }, [namespace, config_name]); // Added config_name to dependencies
 
   useEffect(() => {
-    if (configData?.service_id && namespace) {
-      DefaultService.apiIntegrationKubernetesLibraryServiceGet({ namespace })
-        .then((res: any) => {
-          if (res && Array.isArray(res)) {
-            const svc = res.find((s: any) => s.id === configData.service_id);
-            if (svc) {
-              setServiceData(svc);
-
-              // Fetch Metadata Profile
-              if (svc.metadata_profile_id) {
-                DefaultService.apiIntegrationKubernetesLibraryServiceMetadataGet({ namespace })
-                  .then((metaRes: any) => {
-                    if (metaRes && Array.isArray(metaRes)) {
-                      const meta = metaRes.find((m: any) => m.id === svc.metadata_profile_id);
-                      if (meta) setMetadataProfile(meta);
-                    }
-                  })
-                  .catch(console.error);
-              }
-
-              // Fetch Selector Profile
-              if (svc.selector_profile_id) {
-                DefaultService.apiIntegrationKubernetesLibraryServiceSelectorGet({ namespace })
-                  .then((selRes: any) => {
-                    if (selRes && Array.isArray(selRes)) {
-                      const sel = selRes.find((s: any) => s.id === svc.selector_profile_id);
-                      if (sel) setSelectorProfile(sel);
-                    }
-                  })
-                  .catch(console.error);
-              }
-              // Fetch Dynamic Profiles (ServiceProfiles)
-              if (svc.dynamic_attr && Object.keys(svc.dynamic_attr).length > 0) {
-                DefaultService.apiIntegrationKubernetesLibraryServiceProfileGet({ namespace })
-                  .then((profilesRes: any) => {
-                    if (profilesRes && Array.isArray(profilesRes)) {
-                      const loadedProfiles: Record<string, any> = {};
-                      Object.entries(svc.dynamic_attr).forEach(([key, id]) => {
-                        const profile = profilesRes.find((p: any) => p.id === id);
-                        if (profile) {
-                          loadedProfiles[key] = profile;
-                        }
-                      });
-                      setDynamicProfiles(Object.values(loadedProfiles));
-                    }
-                  })
-                  .catch(console.error);
-              }
-            }
-          }
-        })
-        .catch(console.error);
-    }
+    // Legacy service fetching removed as it's handled by Helm now
   }, [configData, namespace]);
 
 
@@ -645,12 +593,51 @@ const ReleaseConfigDetailedInfo = () => {
                     </p>
                   </div>
                 )}
+                {configData?.chart_name && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Helm Chart</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                        <Library className="w-3.5 h-3.5 text-primary" />
+                        {configData.chart_name}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                        onClick={() => navigate(`/settings/ci_cd/library/${configData.chart_name}`)}
+                        title="View Chart Details"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {configData?.env_name && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Chart Environment</p>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20">
+                        {configData.env_name}
+                      </span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 rounded-full hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors"
+                        onClick={() => navigate(`/settings/ci_cd/library/${configData.chart_name}?selectedenv=${configData.env_name}`)}
+                        title="Edit Environment"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {category === 'kubernetes' ? (
                   <>
                     <div className="space-y-1">
                       <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Replicas</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-foreground tabular-nums">{configData?.replicas}</span>
+                        <span className="text-sm font-bold text-foreground tabular-nums">{configData?.replicas ?? "-"}</span>
                       </div>
                     </div>
                     <div className="space-y-1">
@@ -705,112 +692,10 @@ const ReleaseConfigDetailedInfo = () => {
           )}
         </div>
 
-        {/* Derived Service Card - Kubernetes Only */}
-        {category === 'kubernetes' && serviceData && (
-          <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
-            <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
-              <div className="p-2 rounded-md bg-purple-500/10 text-purple-500 ring-1 ring-purple-500/20">
-                <Network className="h-4 w-4" />
-              </div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Derived Service</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-1">
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Service Name</p>
-                <p className="text-sm font-medium text-foreground">{serviceData.name}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Metadata Profile</p>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    {metadataProfile ? (
-                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border/40">
-                        {JSON.stringify(metadataProfile.config)}
-                      </span>
-                    ) : (
-                      serviceData.metadata_profile_id && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-black uppercase tracking-tighter bg-muted text-muted-foreground ring-1 ring-border/50">
-                          Linked
-                        </span>
-                      )
-                    )}
-                  </div>
-                  {metadataProfile?.labels && Object.keys(metadataProfile.labels).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {Object.entries(metadataProfile.labels).map(([k, v]) => (
-                        <span key={k} className="text-[9px] px-1 py-0.5 rounded bg-muted/50 border border-border/30 text-muted-foreground">
-                          {k}={String(v)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {metadataProfile?.annotations && Object.keys(metadataProfile.annotations).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {Object.entries(metadataProfile.annotations).map(([k, v]) => (
-                        <span key={k} className="text-[9px] px-1 py-0.5 rounded bg-orange-500/5 border border-orange-500/10 text-orange-600/70">
-                          {k}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Selector Profile</p>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    {selectorProfile ? (
-                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border/40">
-                        {JSON.stringify(selectorProfile.selector)}
-                      </span>
-                    ) : (
-                      serviceData.selector_profile_id && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-black uppercase tracking-tighter bg-muted text-muted-foreground ring-1 ring-border/50">
-                          Linked
-                        </span>
-                      )
-                    )}
-                  </div>
-                  {selectorProfile?.labels && Object.keys(selectorProfile.labels).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {Object.entries(selectorProfile.labels).map(([k, v]) => (
-                        <span key={k} className="text-[9px] px-1 py-0.5 rounded bg-indigo-500/5 border border-indigo-500/10 text-indigo-600/70">
-                          {k}={String(v)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Ports</p>
-                {dynamicProfiles.length > 0 ? (
-                  <div className="flex flex-col gap-2">
-                    {dynamicProfiles.map((profile, idx) => (
-                      <div key={idx} className="flex flex-col gap-1">
-                        {/* Specific rendering for 'ports' key if profile has ports */}
-                        {(profile.type === 'ports') && ( // Assuming 'type' property to identify port profiles
-                          <div className="flex flex-wrap gap-1.5 pl-1">
-                            {profile.config?.map((port: any, pIdx: number) => (
-                              <span key={pIdx} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-muted text-muted-foreground border border-border/40" title={`${port.name || 'Port'} ${port.port}:${port.targetPort}`}>
-                                Ports: {port.port}/{port.protocol || 'TCP'}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-[11px] text-muted-foreground italic">No dynamic attributes</span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Network & Connectivity (Service Ports) - Kubernetes Only */}
-        {category === 'kubernetes' && (configData?.service || (configData?.service_ports && configData.service_ports.length > 0)) && (
+        {category === 'kubernetes' && (configData?.service || (configData?.service_ports && configData.service_ports.length > 0)) && !configData?.chart_name && (
           <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
             <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
               <div className="p-2 rounded-md bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20">
@@ -850,142 +735,142 @@ const ReleaseConfigDetailedInfo = () => {
         )}
 
         {/* Containers Section - Kubernetes Only */}
-        {category === 'kubernetes' && (
+        {category === 'kubernetes' && !configData?.chart_name && (
           <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm space-y-4">
-          <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
-            <div className="p-2 rounded-md bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/20">
-              <DockIcon className="h-4 w-4" />
-            </div>
-            <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Derived Deployment</h2>
-            <span className="ml-auto bg-muted text-muted-foreground px-2 py-0.5 rounded text-[10px] font-bold border border-border/40">
-              {configData?.containers?.length || 0} Unit{configData?.containers?.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            {configData?.containers && configData.containers.length > 0 ? (
-              configData.containers?.map((container: K8sContainer, idx: number) => (
-                <ContainerDetails key={idx} container={container} />
-              ))
-            ) : (
-              <div className="py-8 text-center text-muted-foreground italic text-sm">No containers defined for this configuration.</div>
-            )}
-          </div>
-          {/* Scheduling & Affinity */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
-              <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
-                <div className="p-2 rounded-md bg-purple-500/10 text-purple-500 ring-1 ring-purple-500/20">
-                  <Network className="h-4 w-4" />
-                </div>
-                <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Scheduling & Affinity</h2>
-              </div>
-
-              <div className="space-y-3">
-                {/* Node Affinity */}
-                <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
-                  <button
-                    onClick={() => setNodeAffinityExpanded(!nodeAffinityExpanded)}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Server className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">Node Affinity</span>
-                    </div>
-                    {nodeAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  </button>
-                  {nodeAffinityExpanded && (
-                    <div className="p-4 border-t border-border/40 bg-card/40">
-                      {configData?.affinity?.nodeAffinity ? (
-                        <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-emerald-400">
-                          {JSON.stringify(configData.affinity.nodeAffinity, null, 2)}
-                        </pre>
-                      ) : (
-                        <p className="text-xs text-muted-foreground italic px-2">No node affinity rules defined.</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Pod Affinity */}
-                <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
-                  <button
-                    onClick={() => setPodAffinityExpanded(!podAffinityExpanded)}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Boxes className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">Pod Affinity</span>
-                    </div>
-                    {podAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  </button>
-                  {podAffinityExpanded && (
-                    <div className="p-4 border-t border-border/40 bg-card/40">
-                      {configData?.affinity?.podAffinity ? (
-                        <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-blue-400">
-                          {JSON.stringify(configData.affinity.podAffinity, null, 2)}
-                        </pre>
-                      ) : (
-                        <p className="text-xs text-muted-foreground italic px-2">No pod affinity rules defined.</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Anti-Affinity */}
-                <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
-                  <button
-                    onClick={() => setPodAntiAffinityExpanded(!podAntiAffinityExpanded)}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">Anti-Affinity</span>
-                    </div>
-                    {podAntiAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  </button>
-                  {podAntiAffinityExpanded && (
-                    <div className="p-4 border-t border-border/40 bg-card/40">
-                      {configData?.affinity?.podAntiAffinity ? (
-                        <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-amber-400">
-                          {JSON.stringify(configData.affinity.podAntiAffinity, null, 2)}
-                        </pre>
-                      ) : (
-                        <p className="text-xs text-muted-foreground italic px-2">No anti-affinity rules defined.</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Annotations */}
-          <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
             <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
-              <div className="p-2 rounded-md bg-orange-500/10 text-orange-500 ring-1 ring-orange-500/20">
-                <Hash className="h-4 w-4" />
+              <div className="p-2 rounded-md bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/20">
+                <DockIcon className="h-4 w-4" />
               </div>
-              <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Annotations</h2>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Derived Deployment</h2>
+              <span className="ml-auto bg-muted text-muted-foreground px-2 py-0.5 rounded text-[10px] font-bold border border-border/40">
+                {configData?.containers?.length || 0} Unit{configData?.containers?.length !== 1 ? 's' : ''}
+              </span>
             </div>
 
-            <div className="px-1">
-              {Object.keys(configData?.annotations || {}).length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">No annotations defined.</p>
+            <div className="space-y-4">
+              {configData?.containers && configData.containers.length > 0 ? (
+                configData.containers?.map((container: K8sContainer, idx: number) => (
+                  <ContainerDetails key={idx} container={container} />
+                ))
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(configData?.annotations || {}).map(([k, v]) => (
-                    <div key={k} className="flex flex-col gap-1 p-2 rounded-md bg-muted/20 border border-border/40">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{k}</span>
-                      <span className="text-[11px] font-mono text-foreground break-all">{String(v)}</span>
-                    </div>
-                  ))}
-                </div>
+                <div className="py-8 text-center text-muted-foreground italic text-sm">No containers defined for this configuration.</div>
               )}
             </div>
+            {/* Scheduling & Affinity */}
+            <div className="grid grid-cols-1 gap-4">
+              <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
+                <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
+                  <div className="p-2 rounded-md bg-purple-500/10 text-purple-500 ring-1 ring-purple-500/20">
+                    <Network className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Scheduling & Affinity</h2>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Node Affinity */}
+                  <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
+                    <button
+                      onClick={() => setNodeAffinityExpanded(!nodeAffinityExpanded)}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Server className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-foreground">Node Affinity</span>
+                      </div>
+                      {nodeAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </button>
+                    {nodeAffinityExpanded && (
+                      <div className="p-4 border-t border-border/40 bg-card/40">
+                        {configData?.affinity?.nodeAffinity ? (
+                          <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-emerald-400">
+                            {JSON.stringify(configData.affinity.nodeAffinity, null, 2)}
+                          </pre>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic px-2">No node affinity rules defined.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pod Affinity */}
+                  <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
+                    <button
+                      onClick={() => setPodAffinityExpanded(!podAffinityExpanded)}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Boxes className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-foreground">Pod Affinity</span>
+                      </div>
+                      {podAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </button>
+                    {podAffinityExpanded && (
+                      <div className="p-4 border-t border-border/40 bg-card/40">
+                        {configData?.affinity?.podAffinity ? (
+                          <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-blue-400">
+                            {JSON.stringify(configData.affinity.podAffinity, null, 2)}
+                          </pre>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic px-2">No pod affinity rules defined.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Anti-Affinity */}
+                  <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm bg-muted/20">
+                    <button
+                      onClick={() => setPodAntiAffinityExpanded(!podAntiAffinityExpanded)}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-foreground">Anti-Affinity</span>
+                      </div>
+                      {podAntiAffinityExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </button>
+                    {podAntiAffinityExpanded && (
+                      <div className="p-4 border-t border-border/40 bg-card/40">
+                        {configData?.affinity?.podAntiAffinity ? (
+                          <pre className="text-[10px] font-mono p-3 bg-black/20 rounded-md overflow-x-auto text-amber-400">
+                            {JSON.stringify(configData.affinity.podAntiAffinity, null, 2)}
+                          </pre>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic px-2">No anti-affinity rules defined.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Annotations */}
+            <div className="bg-card/30 backdrop-blur-md rounded-xl border border-border/40 p-4 shadow-sm">
+              <div className="flex items-center gap-3 mb-6 border-b border-border/30 pb-3">
+                <div className="p-2 rounded-md bg-orange-500/10 text-orange-500 ring-1 ring-orange-500/20">
+                  <Hash className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-foreground">Annotations</h2>
+              </div>
+
+              <div className="px-1">
+                {Object.keys(configData?.annotations || {}).length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">No annotations defined.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(configData?.annotations || {}).map(([k, v]) => (
+                      <div key={k} className="flex flex-col gap-1 p-2 rounded-md bg-muted/20 border border-border/40">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{k}</span>
+                        <span className="text-[11px] font-mono text-foreground break-all">{String(v)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
 
 
@@ -1085,7 +970,7 @@ const ReleaseConfigDetailedInfo = () => {
               ...(category === 'kubernetes' ? [{
                 label: "View Deployment",
                 icon: ExternalLink,
-                onClick: (row) => window.open(`/kubernetes/deployments/${configData?.namespace}/${configData?.deployment_name}`, '_blank'),
+                onClick: () => window.open(`/orchestration/kubernetes/${configData?.namespace}/deployments/${configData?.kind?.toLowerCase() || "deployments"}/${configData?.deployment_name}`, '_blank'),
               }] : []),
               {
                 label: "Rerun",

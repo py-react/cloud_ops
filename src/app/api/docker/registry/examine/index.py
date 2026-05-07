@@ -8,7 +8,7 @@ import tarfile
 import io
 import json
 import logging
-from render_relay.utils import load_settings
+from kiwijs.utils import load_settings
 from app.db_client.models.registry_config import RegistryConfig
 from app.db_client.db import get_session
 from app.utils.crypto import decrypt

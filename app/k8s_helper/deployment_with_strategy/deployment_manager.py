@@ -33,6 +33,8 @@ from ...db_client.models.kubernetes_profiles.httproute_metadata_profile import K
 from ...db_client.models.kubernetes_profiles.httproute_rules_profile import K8sHTTPRouteRulesProfile
 from ...db_client.models.kubernetes_profiles.httproute_parent_refs_profile import K8sHTTPRouteParentRefsProfile
 from ...db_client.models.kubernetes_profiles.httproute_hostnames_profile import K8sHTTPRouteHostnamesProfile
+from app.services.library_manager import LibraryManager
+from app.services.helm_manager import HelmManager
 import json
 
 
@@ -235,6 +237,9 @@ class DeploymentManager:
                 return {"status": "success", "message": "Package released"}
 
             # 4. Handle Kubernetes Releases
+            if config_obj.chart_name:
+                return self.execute_helm_deployment(config_obj, run_obj)
+
             composer = DeploymentComposer(self.session)
             composed_data = composer.compose(config_obj)
             
@@ -252,9 +257,6 @@ class DeploymentManager:
             generator = DeploymentGenerator(self.session)
             deployment_spec = generator.generate(composed_data)
             
-            # (Rest of the K8s logic: Strategy, Labels, Apply...)
-            # We'll use apply_deployment_metadata helper or simply inline the logic
-            
             # Apply run-time overrides (annotations/labels)
             annotations = deployment_spec.setdefault("metadata", {}).setdefault("annotations", {})
             labels = deployment_spec.setdefault("metadata", {}).setdefault("labels", {})
@@ -262,10 +264,7 @@ class DeploymentManager:
 
             if run_obj.pr_url: annotations["pr_url"] = run_obj.pr_url
             if run_obj.jira: annotations["jira"] = run_obj.jira
-            if run_obj.environment:
-                labels["environment"] = run_obj.environment
-                pod_labels["environment"] = run_obj.environment
-
+            
             # Strategy Handling
             strategy_id = run_obj.deployment_strategy_id or config_obj.deployment_strategy_id or 1
             
@@ -281,11 +280,6 @@ class DeploymentManager:
             k8s_helper = KubernetesResourceHelper()
             k8s_helper.apply_resource(deployment_spec)
 
-            # Apply Service/Route if requested (extracting flags from run_obj and config)
-            # Simplified for now to follow the logic: 
-            # if run_obj.apply_derived_service: ...
-            # For now we'll assume the manager's logic is preserved.
-            
             self.update_deployment_run_status(run_obj.id, "deployed")
             sys.stderr.write(f"--- BACKGROUND EXECUTION COMPLETED FOR RUN #{run_id} ---\n")
             return {"status": "success"}
@@ -295,162 +289,56 @@ class DeploymentManager:
             self.update_deployment_run_status(run_id, "failed")
             return {"status": "failed", "error": str(e)}
 
-            composed_data = composer.compose(config_obj)
-            
-            if not composed_data:
-                raise Exception("Failed to compose deployment data: Result is empty")
+    def execute_helm_deployment(self, config_obj: DeploymentConfig, run_obj) -> dict:
+        """
+        Deploy using Helm Chart and Environment overrides.
+        """
+        try:
+            lib_manager = LibraryManager()
+            helm_manager = HelmManager()
 
-            # Apply run-time image overrides to composed_data BEFORE generation
-            # This avoids issues with container name sanitization in the generator
-            if getattr(run_data, "images", None):
-                for container in composed_data.get("containers", []):
-                    c_name = container.get("name")
-                    if c_name and c_name in run_data.images:
-                         container["image"] = run_data.images[c_name]
+            chart_path = lib_manager.get_template_path(config_obj.chart_name)
+            values_path = lib_manager._values_path(config_obj.chart_name, config_obj.env_name)
 
-            # 3. Generate deployment spec using DeploymentGenerator
-            generator = DeploymentGenerator(self.session)
-            deployment_spec = generator.generate(composed_data)
-            
-            if not deployment_spec:
-                raise Exception("Failed to generate deployment spec: Result is empty")
+            if not os.path.exists(values_path):
+                # Fallback to defaults if env file doesn't exist (though it should)
+                values_path = os.path.join(chart_path, "values.yaml")
 
-            # 4. Apply run-time overrides (pr_url, jira, environment)
-            if getattr(run_data, "pr_url", None):
-                deployment_spec.setdefault("metadata", {}).setdefault("annotations", {})["pr_url"] = run_data.pr_url
-            if getattr(run_data, "jira", None):
-                deployment_spec.setdefault("metadata", {}).setdefault("annotations", {})["jira"] = run_data.jira
-            if getattr(run_data, "environment", None):
-                deployment_spec.setdefault("metadata", {}).setdefault("labels", {})["environment"] = run_data.environment
-                deployment_spec.get("spec", {}).get("template", {}).setdefault("metadata", {}).setdefault("labels", {})["environment"] = run_data.environment
-            
-            # 5. Apply deployment strategy (fallback to 1 if missing)
-            # Use run override if provided, otherwise use config value, default to 1
-            strategy_id = getattr(run_data, "deployment_strategy_id", None)
-            if strategy_id is None:
-                strategy_id = getattr(config_obj, "deployment_strategy_id", None) or 1
+            # Extract image overrides for Helm
+            overrides = {}
+            if run_obj.images:
+                images_dict = run_obj.images if isinstance(run_obj.images, dict) else json.loads(run_obj.images)
+                # If there's a 'main' image or just the first image, use it for the standard Helm image.repository/tag placeholders
+                image_val = None
+                if "main" in images_dict:
+                    image_val = images_dict["main"]
+                elif images_dict:
+                    image_val = list(images_dict.values())[0]
 
-            # 5a. If complex strategy (Canary/Blue-Green), hand over to ReleaseOrchestrator
-            if StrategyHandler.is_complex_strategy(strategy_id):
-                sys.stderr.write(f"\n--- DETECTED COMPLEX STRATEGY (ID: {strategy_id}). DELEGATING TO ORCHESTRATOR ---\n")
+                if image_val:
+                    if ":" in image_val:
+                        repo, tag = image_val.rsplit(":", 1)
+                        overrides["image.repository"] = repo
+                        overrides["image.tag"] = tag
+                    else:
+                        overrides["image.repository"] = image_val
+                        overrides["image.tag"] = "latest"
 
-                k8s_helper = KubernetesResourceHelper()
-
-                # Verify if the Stable deployment already exists. If not, this is the very first rollout!
-                # We can't Canary if there's no baseline. Treat it as a standard rollout instead.
-                try:
-                    existing_stable = k8s_helper.get_resource(
-                        "apps/v1",
-                        "Deployment",
-                        deployment_spec["metadata"]["name"],
-                        deployment_spec["metadata"]["namespace"]
-                    )
-                except Exception as e:
-                    # Catch 404 Not Found error (or equivalent) raised by dynamic client
-                    existing_stable = None
-
-                if not existing_stable:
-                    sys.stderr.write(f"No stable deployment found for '{deployment_spec['metadata']['name']}'. Treating first release as a standard rollout to establish baseline.\n")
-                    # Override the complex strategy so the native K8s Deployment uses a valid strategy (RollingUpdate/Recreate)
-                    strategy_id = 1
-                else:
-                    from app.k8s_helper.deployment_with_strategy.release_orchestrator import ReleaseOrchestrator
-                    orchestrator = ReleaseOrchestrator(self.session)
-                    
-                    strategy_name = "canary" if strategy_id == 3 else "blue-green"
-                    orchestrator_messages = orchestrator.start_complex_release(config_obj, run_data, deployment_spec, strategy_name)
-                    self.update_deployment_run_status(run_obj.id, "deployed")
-                    return {
-                        "deployment_result": "; ".join(orchestrator_messages),
-                        "run": run_obj
-                    }
-
-            # Basic Strategy Application
-            deployment_spec = StrategyHandler.apply_strategy(
-                deployment_spec,
-                strategy_id
+            # Deploy using Helm
+            release_name = self.validate_and_sanitize_name(config_obj.deployment_name)
+            helm_manager.deploy(
+                release_name=release_name,
+                template_path=chart_path,
+                values_path=values_path,
+                namespace=config_obj.namespace,
+                overrides=overrides
             )
-            
-            # 6. Create the deployment and service in Kubernetes
-            from kubernetes.client.rest import ApiException
-            
-            # LOGGING THE MANIFEST
-            sys.stderr.write("\n--- APPLYING KUBERNETES MANIFEST ---\n")
-            sys.stderr.write(json.dumps(deployment_spec, indent=2, default=str))
-            sys.stderr.write("\n------------------------------------\n")
 
-            if 'k8s_helper' not in locals():
-                k8s_helper = KubernetesResourceHelper()
-            
-            try:
-                k8s_helper.apply_resource(deployment_spec)
-            except ApiException as e:
-                error_body = json.loads(e.body) if e.body else {}
-                sys.stderr.write(f"K8s API Error (Deployment): {error_body.get('message', str(e))}\n")
-                sys.stderr.write(f"Problematic Spec: {json.dumps(deployment_spec, indent=2)}\n")
-                raise Exception(f"Kubernetes rejected deployment: {error_body.get('message', str(e))}")
-                
-            result_messages = ["Deployment created in Kubernetes"]
-
-            # 8. Apply Derived Service if Requested (NEW)
-            if getattr(run_data, "apply_derived_service", False):
-                if config_obj.service_id:
-                    sys.stderr.write(f"\n--- APPLYING DERIVED SERVICE for {deployment_spec['metadata']['name']} ---\n")
-                    service_obj = self.session.get(K8sService, config_obj.service_id)
-                    if service_obj:
-                        svc_composer = ServiceComposer(self.session)
-                        svc_data = svc_composer.compose(service_obj)
-                        
-                        if svc_data:
-                            svc_generator = ServiceGenerator()
-                            svc_spec = svc_generator.generate(svc_data)
-                            
-                            if svc_spec:
-                                sys.stderr.write(f"Applying Service: {svc_spec['metadata']['name']}\n")
-                                sys.stderr.write(json.dumps(svc_spec, indent=2, default=str))
-                                sys.stderr.write("\n------------------------------------\n")
-                                k8s_helper.apply_resource(svc_spec)
-                                result_messages.append("Derived Service created")
-                            else:
-                                sys.stderr.write("Warning: Generated Service spec is empty.\n")
-                        else:
-                            sys.stderr.write("Warning: Composed Service data is empty.\n")
-                    else:
-                        sys.stderr.write(f"Warning: Service ID {config_obj.service_id} not found in DB.\n")
-            
-            # 9. Apply Derived HTTPRoute if Requested
-            # Use run override if provided, otherwise use config value
-            http_route_id = getattr(run_data, "http_route_id", None)
-            if http_route_id is None:
-                http_route_id = getattr(config_obj, "http_route_id", None)
-            apply_httproute = getattr(run_data, "apply_derived_httproute", False)
-            if apply_httproute and http_route_id:
-                sys.stderr.write(f"\n--- APPLYING DERIVED HTTPROUTE for {deployment_spec['metadata']['name']} ---\n")
-                httproute_obj = self.session.get(K8sHTTPRoute, http_route_id)
-                if httproute_obj:
-                    from src.app.api.integration.kubernetes.library.httproute.index import _build_httproute_manifest
-                    httproute_manifest = _build_httproute_manifest(self.session, httproute_obj)
-                    if httproute_manifest:
-                        sys.stderr.write(f"Applying HTTPRoute: {httproute_manifest['metadata']['name']}\n")
-                        sys.stderr.write(json.dumps(httproute_manifest, indent=2, default=str))
-                        sys.stderr.write("\n------------------------------------\n")
-                        k8s_helper.apply_resource(httproute_manifest)
-                        result_messages.append("Derived HTTPRoute created")
-                    else:
-                        sys.stderr.write("Warning: Generated HTTPRoute manifest is empty.\n")
-                else:
-                    sys.stderr.write(f"Warning: HTTPRoute ID {http_route_id} not found in DB.\n")
-            elif not apply_httproute and http_route_id:
-                sys.stderr.write(f"Note: HTTPRoute ID {http_route_id} is linked but apply_derived_httproute is false. Skipping.\n")
-            
-            # 7. Update run status
             self.update_deployment_run_status(run_obj.id, "deployed")
-            return {"run": run_obj, "deployment_result": "; ".join(result_messages)}
+            return {"status": "success", "message": f"Helm release '{release_name}' deployed"}
         except Exception as e:
             self.update_deployment_run_status(run_obj.id, "failed")
-            raise Exception(f"Unexpected error running deployment: {str(e)}")
-
- 
+            raise e
 
     def _build_k8s_service_spec(self, config_dict) -> dict:
         """

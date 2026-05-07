@@ -12,3 +12,4 @@ from .ssh_management import *
 from .service_settings import *
 from .kubeconfig_audit import *
 from .addon_plugin.addon_plugin import *
+from .library_setting.library_setting import *

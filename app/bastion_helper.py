@@ -74,6 +74,119 @@ class BastionManager:
 
             return private_key, public_key, existing_ssh_key.id
 
+    @staticmethod
+    def rotate_service_key():
+        """
+        Generates a new global service key pair, updates ServiceSettings,
+        and updates the registered SSHKey record.
+        Existing systems will NOT be automatically updated; they will require
+        re-provisioning or manual updates as this is a security fallback.
+        """
+        from app.db_client.models.ssh_management import SSHKey
+        SERVICE_KEY_NAME = "Bastion Service Identity Key"
+
+        with get_session() as db:
+            # Generate new RSA keypair
+            key = paramiko.RSAKey.generate(2048)
+            priv_io = io.StringIO()
+            key.write_private_key(priv_io)
+            private_key = priv_io.getvalue()
+            public_key = f"ssh-rsa {key.get_base64()} bastion-service"
+
+            # Update ServiceSettings
+            priv_setting = db.exec(select(ServiceSetting).where(ServiceSetting.key == "service_private_key")).first()
+            pub_setting = db.exec(select(ServiceSetting).where(ServiceSetting.key == "service_public_key")).first()
+
+            if not priv_setting:
+                priv_setting = ServiceSetting(key="service_private_key")
+            if not pub_setting:
+                pub_setting = ServiceSetting(key="service_public_key")
+            
+            priv_setting.value = private_key
+            pub_setting.value = public_key
+            db.add(priv_setting)
+            db.add(pub_setting)
+
+            # Update registered SSHKey
+            ssh_key = db.exec(select(SSHKey).where(SSHKey.name == SERVICE_KEY_NAME)).first()
+            if ssh_key:
+                ssh_key.public_key = public_key
+                db.add(ssh_key)
+            
+            db.commit()
+            logger.info("Rotated Bastion service identity key.")
+            return private_key, public_key
+
+    @staticmethod
+    def reprovision_all_systems(old_private_key: str, new_public_key: str):
+        """
+        Attempt to deploy the new service key to all systems that were previously
+        using the managed key. Uses parallel execution to avoid stalling.
+        """
+        from concurrent.futures import ThreadPoolExecutor
+        from app.utils.crypto import decrypt
+        
+        with get_session() as db:
+            statement = select(System).where(System.service_key_deployed == True).where(System.status != "deleted")
+            systems = db.exec(statement).all()
+            
+            # Batch update all systems to 'reprovisioning' status
+            for s in systems:
+                s.status = "reprovisioning"
+                db.add(s)
+            db.commit()
+            # Refresh systems list to have detached objects with the new status if needed, 
+            # though we'll re-fetch or use IDs in tasks.
+            system_ids = [s.id for s in systems]
+            
+        def _task(system_id):
+            with get_session() as db:
+                system = db.get(System, system_id)
+                if not system: return
+                
+                logger.info(f"Attempting to re-provision {system.name} ({system.ip_address}) with new service key...")
+                success = False
+                
+                # 1. Try using the OLD service key
+                try:
+                    BastionManager.deploy_public_key(
+                        system_ip=system.ip_address,
+                        public_key=new_public_key,
+                        user=system.username or "root",
+                        bootstrap_private_key=old_private_key
+                    )
+                    success = True
+                    logger.info(f"Re-provisioned {system.name} using old service key.")
+                except Exception as e:
+                    logger.warning(f"Old key auth failed for {system.name}: {e}")
+
+                # 2. If old key fails, try using the stored password
+                if not success and system.password:
+                    try:
+                        password = decrypt(system.password)
+                        BastionManager.deploy_public_key(
+                            system_ip=system.ip_address,
+                            public_key=new_public_key,
+                            user=system.username or "root",
+                            password=password
+                        )
+                        success = True
+                        logger.info(f"Re-provisioned {system.name} using stored password.")
+                    except Exception as e:
+                        logger.error(f"Password re-provisioning failed for {system.name}: {e}")
+
+                # Mark as active again (or handle failure)
+                system.status = "active" if success else "inactive"
+                db.add(system)
+                db.commit()
+
+                if not success:
+                    logger.error(f"Critical: System {system.name} ({system.ip_address}) is now disconnected from Managed Bastion. Manual intervention required.")
+
+        # Run sweep in parallel with up to 10 concurrent connections
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            executor.map(_task, system_ids)
+
 
     @staticmethod
     def generate_key_pair() -> Tuple[str, str]:
@@ -175,6 +288,19 @@ class BastionManager:
         """Bridge WebSocket to SSH channel using Paramiko. Prefers service key over password."""
         import asyncio
         from fastapi import WebSocketDisconnect
+        
+        # Check if this specific system is currently being re-provisioned
+        if system.status == "reprovisioning":
+            await websocket.send_text("\r\n\x1b[31m[BASTION ERROR] System is currently being re-provisioned after a service key rotation. Please try again in a few moments.\x1b[0m\r\n")
+            await websocket.close()
+            return
+
+        # Check if the system is active
+        if system.status != "active":
+            status_label = system.status or 'inactive'
+            await websocket.send_text(f"\r\n\x1b[31m[BASTION ERROR] System is currently {status_label}. Please activate it from the dashboard before connecting.\x1b[0m\r\n")
+            await websocket.close()
+            return
 
         # Import Fernet decrypt for password fallback
         try:
@@ -189,16 +315,20 @@ class BastionManager:
             connect_user = system.username or "root"
             connected = False
 
+            loop = asyncio.get_event_loop()
+            last_error = "Unknown error"
+
             # 1. Try user-provided direct identity key if present (Cloud PEM use case)
             if system.private_key:
                 try:
                     plain_key = fernet_decrypt(system.private_key) if fernet_decrypt else system.private_key
                     key_file = io.StringIO(plain_key)
                     pkey = paramiko.RSAKey.from_private_key(key_file)
-                    ssh.connect(system.ip_address, username=connect_user, pkey=pkey, timeout=10)
+                    await loop.run_in_executor(None, lambda: ssh.connect(system.ip_address, username=connect_user, pkey=pkey, timeout=10))
                     connected = True
                     logger.info(f"Connected to {system.ip_address} via user-provided private key")
                 except Exception as e:
+                    last_error = str(e)
                     logger.warning(f"User private key auth failed for {system.ip_address}: {e}")
 
             # 2. Try service identity key if it was deployed (Bootstrap use case)
@@ -207,10 +337,11 @@ class BastionManager:
                     private_key, _, _ = BastionManager.get_or_create_service_key()
                     key_file = io.StringIO(private_key)
                     pkey = paramiko.RSAKey.from_private_key(key_file)
-                    ssh.connect(system.ip_address, username=connect_user, pkey=pkey, timeout=10)
+                    await loop.run_in_executor(None, lambda: ssh.connect(system.ip_address, username=connect_user, pkey=pkey, timeout=10))
                     connected = True
                     logger.info(f"Connected to {system.ip_address} via service key")
                 except Exception as e:
+                    last_error = str(e)
                     logger.warning(f"Service key auth failed for {system.ip_address}: {e}, falling back to password")
 
             # 3. Fall back to stored password (decrypting Fernet ciphertext if present)
@@ -219,12 +350,18 @@ class BastionManager:
                     plain_password = fernet_decrypt(system.password) if fernet_decrypt else system.password
                 except Exception:
                     plain_password = system.password  # Legacy plaintext
-                ssh.connect(system.ip_address, username=connect_user, password=plain_password, timeout=10)
-                connected = True
-                logger.info(f"Connected to {system.ip_address} via password")
+                
+                try:
+                    await loop.run_in_executor(None, lambda: ssh.connect(system.ip_address, username=connect_user, password=plain_password, timeout=10))
+                    connected = True
+                    logger.info(f"Connected to {system.ip_address} via password")
+                except Exception as e:
+                    last_error = str(e)
+                    logger.warning(f"Password auth failed for {system.ip_address}: {e}")
 
             if not connected:
-                await websocket.send_text("\r\n\x1b[31mFailed to authenticate. No valid credentials configured.\x1b[0m\r\n")
+                error_msg = f"\r\n\x1b[31mFailed to connect to {system.ip_address}: {last_error}\x1b[0m\r\n"
+                await websocket.send_text(error_msg)
                 return
 
             channel = ssh.invoke_shell(term="xterm", width=80, height=24)

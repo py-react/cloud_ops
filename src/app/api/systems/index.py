@@ -61,14 +61,14 @@ def get_system_stats(client):
 
 async def POST(request:Request,body: SystemInfo):
     actionType = body.action
-    client = clientContext.get_client()
     try:
+        client = clientContext.get_client()
         if actionType == "info":
             return {"error":False, "info": get_system_stats(client)}
         else:
             print({"error":True,"message":f"Invalid action: {actionType}. Allowed actions are 'run' and 'remove'."})
         
     except Exception as e:
-        return {"error": True, "message": e.__dict__["explanation"]}
+        return {"error": True, "message": str(e)}
 
     return {"error":True, "message": "Action not found"}

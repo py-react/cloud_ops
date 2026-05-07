@@ -1,5 +1,5 @@
 import logging
-from render_relay.utils.load_settings import load_settings
+from kiwijs.utils.load_settings import load_settings
 
 logger = logging.getLogger(__name__)
 

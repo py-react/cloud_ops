@@ -1,15 +1,15 @@
 services:
-  app:
-    build: .
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.kube:/root/.kube
-    working_dir: /app
-    command: bash -c "socat TCP-LISTEN:50925,fork TCP:host.docker.internal:50925 & socat TCP-LISTEN:5432,fork TCP:host.docker.internal:5432 & npm start"
-    ports:
-      - 5002:5001
+  # app:
+  #   build: .
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ~/.kube:/root/.kube
+  #   working_dir: /app
+  #   command: bash -c "socat TCP-LISTEN:50925,fork TCP:host.docker.internal:50925 & socat TCP-LISTEN:5432,fork TCP:host.docker.internal:5432 & npm start"
+  #   ports:
+  #     - 5002:5001
   db:
     image: postgres
     restart: always

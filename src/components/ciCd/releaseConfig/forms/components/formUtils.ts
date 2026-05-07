@@ -37,17 +37,19 @@ export const releaseFormSchema = z.object({
   registry_id: z.number().optional().nullable(),
   registry_credential_id: z.number().optional().nullable(),
   release_strategy: z.string().optional().nullable(),
+  chart_name: z.string().optional().nullable(),
+  env_name: z.string().optional().nullable(),
 }).refine((data) => {
   // Kubernetes specific validation
   if (data.category === 'kubernetes') {
-    if (!data.derived_deployment_id || data.derived_deployment_id === 0) {
+    if (!data.chart_name || !data.env_name) {
       return false;
     }
   }
   return true;
 }, {
-  message: 'Derived deployment is required for Kubernetes releases',
-  path: ['derived_deployment_id'],
+  message: 'Chart and Environment are required for Kubernetes releases',
+  path: ['chart_name'],
 }).refine((data) => {
   // Package specific validation
   if (data.category === 'package') {

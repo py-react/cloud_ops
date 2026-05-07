@@ -5,10 +5,21 @@ import {
   Activity, Shield, Lock, Upload, X, FileCode
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from "@/libs/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useTerminal } from "@/components/bastion/TerminalContext";
 import useNavigate from "@/libs/navigate";
 import PageLayout from "@/components/PageLayout";
@@ -113,6 +124,7 @@ export default function BastionSystemsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [systemToDelete, setSystemToDelete] = useState<System | null>(null);
   const [currentStep, setCurrentStep] = useState('details');
   const [authType, setAuthType] = useState('managed'); // 'managed' or 'provided'
   const { addSession } = useTerminal();
@@ -157,18 +169,36 @@ export default function BastionSystemsPage() {
     navigate(`/bastion/console`);
   };
 
-  const handleDelete = async (system: System) => {
-    if (!confirm(`Remove "${system.name}" from the Bastion? This will also delete its audit logs.`)) return;
+  const handleDelete = async () => {
+    if (!systemToDelete) return;
     try {
-      const res = await fetch(`/api/bastion/systems/${system.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/bastion/systems/${systemToDelete.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!data.error) {
         toast.success(data.message);
-        setSystems(prev => prev.filter(s => s.id !== system.id));
+        setSystems(prev => prev.filter(s => s.id !== systemToDelete.id));
+        setSystemToDelete(null);
       } else {
         toast.error(data.message);
       }
-    } catch { toast.error('Failed to delete system'); }
+    } catch { toast.error('Failed to archive system'); }
+  };
+
+  const handleToggleStatus = async (system: System, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/bastion/systems/${system.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await res.json();
+      if (!data.error) {
+        toast.success(data.message);
+        fetchData();
+      } else {
+        toast.error(data.message);
+      }
+    } catch { toast.error('Failed to update status'); }
   };
 
   const filteredSystems = systems.filter(s =>
@@ -195,8 +225,32 @@ export default function BastionSystemsPage() {
     { header: 'SSH User', accessor: 'username' },
     { header: 'Provider', accessor: 'provider' },
     {
-      header: 'Security Status',
+      header: 'Status',
       accessor: 'status',
+      cell: (row: System) => {
+        let variant: 'success' | 'warning' | 'destructive' | 'default' = 'default';
+        let label = row.status || 'Active';
+        
+        if (row.status === 'active') variant = 'success';
+        else if (row.status === 'inactive') variant = 'warning';
+        else if (row.status === 'reprovisioning') variant = 'warning'; // Amber for transient state
+        
+        return (
+          <Badge 
+            variant={variant} 
+            className={cn(
+              "capitalize text-[10px] px-2 py-0.5",
+              row.status === 'reprovisioning' && "animate-pulse"
+            )}
+          >
+            {label}
+          </Badge>
+        );
+      }
+    },
+    {
+      header: 'Security Status',
+      accessor: 'security_status',
       cell: (row: System) => {
         if (row.private_key) {
           return (
@@ -226,6 +280,8 @@ export default function BastionSystemsPage() {
     provider: s.provider || 'Self-hosted',
     showEdit: false,
     showDelete: true,
+    showPlay: s.status === 'inactive',
+    showPause: s.status !== 'inactive'
   }));
 
   const metrics = useMemo(() => [
@@ -431,12 +487,15 @@ export default function BastionSystemsPage() {
                 />
               </div>
             }
-            onDelete={(row) => handleDelete(row)}
+            onDelete={(row) => setSystemToDelete(row)}
+            onPlay={(row) => handleToggleStatus(row, 'active')}
+            onPause={(row) => handleToggleStatus(row, 'inactive')}
             customActions={[
               {
                 label: "Connect Terminal",
                 icon: TerminalIcon,
-                onClick: (row) => handleConnect(row)
+                onClick: (row) => handleConnect(row),
+                show: (row) => row.status === 'active' || !row.status
               }
             ]}
           />
@@ -461,6 +520,51 @@ export default function BastionSystemsPage() {
         }}
         steps={steps}
       />
+
+      <AlertDialog open={!!systemToDelete} onOpenChange={(open) => !open && setSystemToDelete(null)}>
+        <AlertDialogContent className="max-w-md bg-background/95 backdrop-blur-xl border-border/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <ShieldAlert className="h-5 w-5" />
+              Archive System?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3 pt-2 text-sm">
+              <p>
+                You are about to archive <span className="font-bold text-foreground underline underline-offset-2 decoration-destructive/30">"{systemToDelete?.name}"</span>.
+              </p>
+              <div className="p-3 bg-muted/50 rounded-lg border border-border/50 space-y-2">
+                <div className="flex items-start gap-2">
+                  <div className="mt-1 p-0.5 bg-emerald-500/10 rounded-full">
+                    <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Historical audit logs will be <span className="font-bold text-foreground">permanently preserved</span> for compliance.
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="mt-1 p-0.5 bg-amber-500/10 rounded-full">
+                    <X className="h-3 w-3 text-amber-500" />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    The system will be hidden from the active inventory list.
+                  </p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel className="bg-muted hover:bg-muted/80 text-foreground border-none h-10 px-6">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground h-10 px-6 font-bold"
+            >
+              Archive System
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 }

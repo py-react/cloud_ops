@@ -29,5 +29,10 @@ async def index(websocket: WebSocket, session_id: str):
     except WebSocketDisconnect:
         pass
     except Exception as e:
+        error_msg = f"\r\n\x1b[31mBastion WebSocket Error: {str(e)}\x1b[0m\r\n"
         print(f"Bastion WebSocket Error: {e}")
+        try:
+            await websocket.send_text(error_msg)
+        except Exception:
+            pass
         await websocket.close(code=1011)

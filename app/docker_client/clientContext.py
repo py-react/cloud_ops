@@ -29,6 +29,20 @@ def set_engine_id(engine_id: int):
     """Set the Docker Engine ID for the current asyncio context."""
     _engine_id_context.set(engine_id)
 
+def get_engine_id(use_active: bool = True) -> Optional[int]:
+    """Resolves the current engine ID."""
+    engine_id = _engine_id_context.get()
+    if engine_id is None and use_active:
+        try:
+            with get_session() as session:
+                active_config = get_active_docker_config(session)
+                if active_config:
+                    return active_config.id
+                return 0 # Local
+        except Exception:
+            return 0
+    return engine_id or 0
+
 def reset():
     """Reset the asyncio-local Docker Engine context."""
     _engine_id_context.set(None)

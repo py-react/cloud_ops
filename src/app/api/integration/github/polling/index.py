@@ -6,7 +6,7 @@ from fastapi import Request, HTTPException, Query, BackgroundTasks
 import httpx
 from pydantic import BaseModel, Field
 from app.github_client.core import AllowedRepoUtils
-from render_relay.utils import load_settings
+from kiwijs.utils import load_settings
 from app.db_client.db import get_session
 from app.db_client.controllers.source_code_build import (
     SourceCodeBuildWithLogsType,
@@ -14,7 +14,7 @@ from app.db_client.controllers.source_code_build import (
 from app.db_client.controllers.github_pat.github_pat import (
     list_credentials,
 )
-from render_relay.utils.get_logger import get_logger
+from kiwijs.utils.get_logger import get_logger
 from app.github_client.poller import get_polling_manager
 
 logger = get_logger("SCM Polling API")

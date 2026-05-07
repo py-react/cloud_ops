@@ -3,11 +3,21 @@ import {
   Key, Plus, Search, Loader2, Trash2, Send, ShieldOff, Download,
   Terminal, Shield, ShieldAlert, KeyRound, HardDrive, CheckCircle2,
   Lock, Globe, ShieldCheck, Zap, RefreshCw, AlertCircle, Server,
-  UserCog, Fingerprint, Activity
+  UserCog, Fingerprint, Activity, RotateCcw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/libs/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -94,6 +104,7 @@ export default function BastionKeysPage() {
   // Deployments tracking
   const [allDeployments, setAllDeployments] = useState<Record<number, KeyDeployment[]>>({});
   const [showDeploymentsForKey, setShowDeploymentsForKey] = useState<number | null>(null);
+  const [isRotateDialogOpen, setIsRotateDialogOpen] = useState(false);
   const [retrying, setRetrying] = useState<number | null>(null);
 
 
@@ -253,6 +264,22 @@ export default function BastionKeysPage() {
         toast.error(data.message);
       }
     } catch { toast.error('Revocation failed'); }
+  };
+
+  const handleRotateServiceKey = async () => {
+    setIsRotateDialogOpen(false);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/bastion/keys/rotate', { method: 'POST' });
+      const data = await res.json();
+      if (!data.error) {
+        toast.success("Service Identity Key rotated and re-provisioning started!");
+        fetchData();
+      } else {
+        toast.error(data.message);
+      }
+    } catch { toast.error('Failed to rotate key'); }
+    finally { setLoading(false); }
   };
 
   const handleDeleteKey = async (key: SSHKey) => {
@@ -543,6 +570,12 @@ export default function BastionKeysPage() {
                   fetchDeployments(row.id);
                 },
                 show: (row) => row.user_id !== 'bastion-service'
+              },
+              {
+                label: "Rotate Key",
+                icon: RotateCcw,
+                onClick: () => setIsRotateDialogOpen(true),
+                show: (row) => row.user_id === 'bastion-service'
               }
             ]}
           />
@@ -913,6 +946,44 @@ export default function BastionKeysPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isRotateDialogOpen} onOpenChange={setIsRotateDialogOpen}>
+        <AlertDialogContent className="max-w-md bg-background/95 backdrop-blur-xl border-border/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+              <RotateCcw className="h-5 w-5" />
+              Rotate Service Identity Key?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3 pt-2 text-sm">
+              <p>
+                This is a <span className="font-bold text-foreground">critical security action</span>. 
+                Rotating the key will generate a new identity for this Bastion instance.
+              </p>
+              <div className="p-3 bg-amber-500/5 rounded-lg border border-amber-500/20 space-y-2">
+                <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
+                  1-Click Automation:
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-[10px] text-muted-foreground">
+                  <li>Existing systems will be <span className="font-bold text-foreground">automatically re-provisioned</span> in the background.</li>
+                  <li>Uses current managed key and stored passwords for seamless transition.</li>
+                  <li>Old audit trail remains safe; old private key is wiped after sweep.</li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel className="bg-muted hover:bg-muted/80 text-foreground border-none h-10 px-6">
+              Keep Existing Key
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRotateServiceKey}
+              className="bg-amber-600 hover:bg-amber-700 text-white h-10 px-6 font-bold"
+            >
+              Rotate & Sync All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 }

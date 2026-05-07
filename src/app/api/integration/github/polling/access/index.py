@@ -1,6 +1,6 @@
 from typing import Any, Dict
 from fastapi import Request, Query, HTTPException
-from render_relay.utils.get_logger import get_logger
+from kiwijs.utils.get_logger import get_logger
 import os
 from app.github_client.client.pat_client import get_github_client_from_pat
 from github import GithubException, UnknownObjectException
@@ -47,7 +47,8 @@ async def GET(request: Request, name: str = Query(..., description="full repo na
 
     # repo existence / read access
     try:
-        repo = gh.get_repo(f"{user_login}/{owner_repo}")
+        full_repo_name = owner_repo if "/" in owner_repo else f"{user_login}/{owner_repo}"
+        repo = gh.get_repo(full_repo_name)
         result["accessible"] = True
     except UnknownObjectException as e:
         # repository not found or no access

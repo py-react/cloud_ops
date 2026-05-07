@@ -25,6 +25,8 @@ def create_deployment_config(session: Session, data: DeploymentConfigType) -> De
         service_id=data.service_id,
         deployment_strategy_id=data.deployment_strategy_id,
         http_route_id=data.http_route_id,
+        chart_name=data.chart_name,
+        env_name=data.env_name,
         package_type=data.package_type,
         release_strategy=data.release_strategy,
         package_name=data.package_name,
@@ -43,11 +45,11 @@ from app.db_client.models.kubernetes_profiles.deployment import K8sDeployment
 
 def list_deployment_configs(
     session: Session,
-    namespace: str = "default"
+    namespace: Optional[str] = None
 ) -> List[DeploymentConfig]:
     """
-    List all deployment configs, excluding hard-deleted items.
-    Includes technical names for derived templates and services via joins.
+    List all deployment configs, optionally filtered by namespace.
+    Excludes hard-deleted items.
     """
     query = select(
         DeploymentConfig, 
@@ -57,10 +59,12 @@ def list_deployment_configs(
         K8sService, DeploymentConfig.service_id == K8sService.id
     ).outerjoin(
         K8sDeployment, DeploymentConfig.derived_deployment_id == K8sDeployment.id
-    ).where(
-        DeploymentConfig.namespace == namespace,
-        DeploymentConfig.hard_delete == False
     )
+
+    if namespace:
+        query = query.where(DeploymentConfig.namespace == namespace)
+    
+    query = query.where(DeploymentConfig.hard_delete == False)
     
     results = session.exec(query).all()
     
@@ -104,6 +108,8 @@ def update_deployment_config(session: Session, id: int, data: DeploymentConfigTy
     obj.service_id = data.service_id
     obj.deployment_strategy_id = data.deployment_strategy_id
     obj.http_route_id = data.http_route_id
+    obj.chart_name = data.chart_name
+    obj.env_name = data.env_name
     
     # Update package specific fields
     obj.package_type = data.package_type

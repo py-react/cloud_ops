@@ -33,6 +33,7 @@ class System(SQLModel, table=True):
     service_key_deployed: bool = Field(default=False, sa_column=Column(BOOLEAN))  # Bastion identity key installed
     default_key_id: Optional[int] = Field(default=None)  # FK to SSHKey used for connection
     created_at: datetime = Field(default_factory=datetime.utcnow, sa_column=Column(TIMESTAMP))
+    deleted_at: Optional[datetime] = Field(default=None, sa_column=Column(TIMESTAMP))
 
 class SystemAccess(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-from render_relay.utils.load_settings import load_settings
+from kiwijs.utils.load_settings import load_settings
 
 def get_fernet():
     settings = load_settings()

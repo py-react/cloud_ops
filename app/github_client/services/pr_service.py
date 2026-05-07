@@ -162,7 +162,7 @@ class PRService:
         """Create build data object."""
         from app.github_client.helpers import generate_image_name
         from app.db_client.models.source_code_build.types import SourceCodeBuildType
-        from render_relay.utils import load_settings
+        from kiwijs.utils import load_settings
         
         from app.db_client.db import get_session
         from app.db_client.models.registry_config import RegistryConfig as DBRegistryConfig
@@ -178,7 +178,10 @@ class PRService:
             _, allowed_branches, _, _, repo_registries, repo_engines, _ = utils.get_all()
             
             # 1. Check branch-specific config
-            branch_list = allowed_branches.get(repo.name, [])
+            branch_list = allowed_branches.get(repo.full_name, [])
+            if not branch_list:
+                 branch_list = allowed_branches.get(repo.name, [])
+                 
             branch_config = next((b for b in branch_list if b["branch"] == branch_name), None)
             
             if branch_config:
@@ -192,14 +195,14 @@ class PRService:
             
             # 2. Fallback to repo-specific config
             if not registry_url:
-                repo_registry_id = repo_registries.get(repo.name)
+                repo_registry_id = repo_registries.get(repo.full_name) or repo_registries.get(repo.name)
                 if repo_registry_id:
                     reg_config = session.get(DBRegistryConfig, repo_registry_id)
                     if reg_config:
                         registry_url = reg_config.url
             
             if not engine_id:
-                engine_id = repo_engines.get(repo.name)
+                engine_id = repo_engines.get(repo.full_name) or repo_engines.get(repo.name)
             
             # 3. Fallback to default registry
             if not registry_url:
@@ -236,7 +239,7 @@ class PRService:
     ) -> str:
         """Build and push PR image."""
         from app.github_client.helpers import generate_image_name
-        from render_relay.utils import load_settings
+        from kiwijs.utils import load_settings
         
         from app.db_client.db import get_session
         from app.db_client.models.registry_config import RegistryConfig as DBRegistryConfig
@@ -249,24 +252,34 @@ class PRService:
         branch_name = pr.head.ref
         
         with get_session() as session:
+            from app.db_client.controllers.source_code_build.source_code_build import get_source_code_build_by_id
+            build_record = get_source_code_build_by_id(session, build_id)
+            if not build_record:
+                raise Exception(f"Build record #{build_id} not found")
+            
+            base_image_name = build_record.image_name
+            
             utils = AllowedRepoUtils(session)
             _, allowed_branches, _, repo_pats, repo_registries, repo_engines, _ = utils.get_all()
             
             # 1. Check branch-specific config
-            branch_list = allowed_branches.get(repo.name, [])
-            branch_config = next((b for b in branch_list if b["branch"] == branch_name), None)
-            
+            branch_list = allowed_branches.get(repo.full_name, [])
+            if not branch_list:
+                 branch_list = allowed_branches.get(repo.name, [])
+
             target_registry_id = None
-            if branch_config:
-                target_registry_id = branch_config.get("registry_id")
-                engine_id = branch_config.get("docker_config_id")
+            if branch_list:
+                branch_config = next((b for b in branch_list if b["branch"] == branch_name), None)
+                if branch_config:
+                    target_registry_id = branch_config.get("registry_id")
+                    engine_id = branch_config.get("docker_config_id")
             
             # 2. Fallback to repo-specific config
             if not target_registry_id:
-                target_registry_id = repo_registries.get(repo.name)
+                target_registry_id = repo_registries.get(repo.full_name) or repo_registries.get(repo.name)
             
             if not engine_id:
-                engine_id = repo_engines.get(repo.name)
+                engine_id = repo_engines.get(repo.full_name) or repo_engines.get(repo.name)
             
             # Resolve registry details
             if target_registry_id:
@@ -291,10 +304,6 @@ class PRService:
         if not registry_url:
             raise Exception("No registry configured for repository (check Settings -> CI/CD -> Source Control or General Settings)")
         
-        base_image_name = generate_image_name(
-            repo.name, branch_name, registry_url=registry_url
-        )
-        
         unique_id = base_image_name.split(':')[-1]
         
         labels = {
@@ -305,10 +314,10 @@ class PRService:
         }
         
         try:
-            target_pat_id = repo_pats.get(repo.name)
+            target_pat_id = repo_pats.get(repo.full_name) or repo_pats.get(repo.name)
             pat = _get_pat_from_db(target_pat_id)
             if not pat:
-                from render_relay.utils.load_settings import load_settings
+                from kiwijs.utils.load_settings import load_settings
                 pat = load_settings().get("GITHUB_PAT")
             if not pat:
                 raise Exception(f"Failed to retrieve GitHub PAT for cloning repository {repo.full_name}")

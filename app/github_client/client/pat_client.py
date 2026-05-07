@@ -2,7 +2,7 @@ import os
 import logging
 from typing import Dict, Optional
 from github import Github
-from render_relay.utils.load_settings import load_settings
+from kiwijs.utils.load_settings import load_settings
 from app.db_client.db import get_session
 from app.db_client.controllers.github_pat.github_pat import get_active_credential, get_credential
 from app.db_client.controllers.github_pat.github_pat import mark_last_used

@@ -6,7 +6,7 @@ from datetime import date
 class DeploymentConfig(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     type: str = Field()
-    namespace: str = Field()
+    namespace: Optional[str] = Field(default=None)
     deployment_name: str = Field(unique=True)
     status: str = Field(default="active")  # active or inactive
     category: str = Field(default="kubernetes")  # kubernetes or package
@@ -21,6 +21,8 @@ class DeploymentConfig(SQLModel, table=True):
     service_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
     deployment_strategy_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
     http_route_id: Optional[int] = Field(default=None, sa_column=Column(INTEGER))
+    chart_name: Optional[str] = Field(default=None)
+    env_name: Optional[str] = Field(default=None)
     
     # Package Details (Package Category)
     package_type: Optional[str] = Field(default=None)  # npm, pypi, maven

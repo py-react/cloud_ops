@@ -40,6 +40,18 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
         icon: LayoutDashboard,
     },
     items: {
+        queues: {
+            title: "queues",
+            url: "/",
+            childs: [
+                {
+                    title: "queues",
+                    url: "queues",
+                    icon: Activity,
+                    items: [],
+                },
+            ]
+        },
         docker: {
             title: "CEE", // container excecution engine
             url: "/cee",
@@ -217,6 +229,12 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                     ],
                 },
                 {
+                    title: "Charts",
+                    url: "/charts",
+                    icon: Box,
+                    items: [],
+                },
+                {
                     title: "Credentials Hub",
                     url: "/credentials",
                     icon: Key,
@@ -247,111 +265,15 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
             ],
         },
         library: {
-            title: "CI/CD Library",
+            title: "Library",
             url: "/settings/ci_cd/library",
             color: "blue",
             childs: [
                 {
-                    title: "Spec",
-                    icon: Braces,
+                    title: "Charts",
                     url: "",
-                    items: [
-                        {
-                            title: "Derived Container",
-                            url: `/${selectedNamespace}/spec/container`,
-                            icon: SquareTerminal,
-                            items: [
-                                {
-                                    title: "Specifications",
-                                    url: `/profile`,
-                                    icon: Braces,
-                                },
-                            ],
-                        },
-                        {
-                            title: "Derived Pods",
-                            url: `/${selectedNamespace}/spec/pod`,
-                            icon: Box,
-                            items: [
-                                {
-                                    title: "Specifications",
-                                    url: `/profile`,
-                                    icon: Settings,
-                                },
-                                {
-                                    title: "Metadata",
-                                    url: `/metadata`,
-                                    icon: Layout,
-                                },
-                            ],
-                        },
-                        {
-                            title: "Derived Deployment",
-                            url: `/${selectedNamespace}/spec/deployment`,
-                            icon: Layers,
-                            items: [
-                                {
-                                    title: "Specifications",
-                                    url: `/profile`,
-                                    icon: Settings,
-                                },
-                                {
-                                    title: "Selectors",
-                                    url: `/selector`,
-                                    icon: Layout,
-                                },
-                            ],
-                        },
-                        {
-                            title: "Derived Services",
-                            url: `/${selectedNamespace}/spec/service`,
-                            icon: NetworkIcon,
-                            items: [
-                                {
-                                    title: "Specifications",
-                                    url: `/profile`,
-                                    icon: Settings,
-                                },
-                                {
-                                    title: "Metadata",
-                                    url: `/metadata`,
-                                    icon: Layout,
-                                },
-                                {
-                                    title: "Selectors",
-                                    url: `/selector`,
-                                    icon: Target,
-                                },
-                            ],
-                        },
-                        {
-                            title: "Derived HTTPRoute",
-                            url: `/${selectedNamespace}/spec/httproute`,
-                            icon: NetworkIcon,
-                            items: [
-                                {
-                                    title: "Metadata",
-                                    url: `/metadata`,
-                                    icon: Layout,
-                                },
-                                {
-                                    title: "Hostnames",
-                                    url: `/hostnames`,
-                                    icon: Globe,
-                                },
-                                {
-                                    title: "Rules",
-                                    url: `/rules`,
-                                    icon: WaypointsIcon,
-                                },
-                                {
-                                    title: "ParentRefs",
-                                    url: `/parent_refs`,
-                                    icon: Target,
-                                },
-                            ],
-                        },
-                    ],
+                    icon: Box,
+                    items: [],
                 },
             ],
         },

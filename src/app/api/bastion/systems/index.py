@@ -67,7 +67,7 @@ def _provision_service_key(system_id: int):
 async def GET(request: Request):
     """List all systems — never return passwords or private keys"""
     with get_session() as db:
-        statement = select(System)
+        statement = select(System).where(System.status != "deleted")
         systems = db.exec(statement).all()
         result = []
         for s in systems:

@@ -64,58 +64,73 @@ async def GET(request:Request):
     return {"user":"1"}
 
 async def POST(request:Request,body:CreateQueueJob):
-    client = clientContext.get_client()
-    queueName = body.queueName
-    data = body.data
-    meta = body.meta
-    all_queue_configs = await get_queues(client)
-    queue = create_queue_connection(queueName,all_queue_configs["containers"])
-    job_data = {
-        "obj":{
-            "meta": {"id":meta.id or "1","name":meta.name},
-            "data": data
+    try:
+        client = clientContext.get_client()
+        queueName = body.queueName
+        data = body.data
+        meta = body.meta
+        all_queue_configs = await get_queues(client)
+        queue = create_queue_connection(queueName,all_queue_configs["containers"])
+        job_data = {
+            "obj":{
+                "meta": {"id":meta.id or "1","name":meta.name},
+                "data": data
+            }
         }
-    }
 
-    if meta.repeat:
-        job_data["repeat"] = meta.repeat,
-        print(job_data,"findMe")
-        job = await queue.add("add_repeat_job",job_data,{
-            "delay":meta.delay,
-            "attempts":meta.attempts,
-            # "removeOnComplete":True
+        if meta.repeat:
+            job_data["repeat"] = meta.repeat,
+            print(job_data,"findMe")
+            job = await queue.add("add_repeat_job",job_data,{
+                "delay":meta.delay,
+                "attempts":meta.attempts,
+                # "removeOnComplete":True
 
-        })
-    else:
-        job = await queue.add("__default__",job_data,{
-            "delay":meta.delay,
-            "attempts":meta.attempts,
-        })
+            })
+        else:
+            job = await queue.add("__default__",job_data,{
+                "delay":meta.delay,
+                "attempts":meta.attempts,
+            })
 
-    to_return = {
-        "id":job.id,"state":await job.getState() ,"data":job.data
-    }
-    await queue.close()
-    return to_return
+        to_return = {
+            "id":job.id,"state":await job.getState() ,"data":job.data
+        }
+        await queue.close()
+        return to_return
+    except Exception as e:
+        return {"error": True, "message": str(e)}
 
 async def PUT(request:Request):
-    jobId = json.loads(await request.body())["id"]
-    queueName = json.loads(await request.body())["queueName"]
-    all_queue_configs = await get_queues()
+    try:
+        body_data = json.loads(await request.body())
+        jobId = body_data["id"]
+        queueName = body_data["queueName"]
+        client = clientContext.get_client()
+        all_queue_configs = await get_queues(client)
 
-    queue = create_queue_connection(queueName, all_queue_configs["containers"])
-    jobs = await queue.getJobs(["failed"])
-    for job in jobs:
-        if(job.id == jobId):
-            await job.retry()
-            break
-    return {"message":"done"}
+        queue = create_queue_connection(queueName, all_queue_configs["containers"])
+        jobs = await queue.getJobs(["failed"])
+        for job in jobs:
+            if(job.id == jobId):
+                await job.retry()
+                break
+        await queue.close()
+        return {"message":"done"}
+    except Exception as e:
+        return {"error": True, "message": str(e)}
 
 async def DELETE(request:Request):
-    jobId = json.loads(await request.body())["id"]
-    queueName = json.loads(await request.body())["queueName"]
-    all_queue_configs = await get_queues()
+    try:
+        body_data = json.loads(await request.body())
+        jobId = body_data["id"]
+        queueName = body_data["queueName"]
+        client = clientContext.get_client()
+        all_queue_configs = await get_queues(client)
 
-    queue = create_queue_connection(queueName, all_queue_configs["containers"])
-    await queue.remove(jobId)
-    return {"message":"done"}
+        queue = create_queue_connection(queueName, all_queue_configs["containers"])
+        await queue.remove(jobId)
+        await queue.close()
+        return {"message":"done"}
+    except Exception as e:
+        return {"error": True, "message": str(e)}

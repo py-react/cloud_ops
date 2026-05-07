@@ -337,7 +337,7 @@ export function ResourceTable<T>({
                       );
                     })}
                     {showActions ? (
-                      <TableCell className='px-4 py-1 text-center'>
+                      <TableCell className='px-4 py-1 text-center' onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">

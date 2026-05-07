@@ -145,7 +145,7 @@ class K8sVolume(BaseModel):
 class DeploymentConfigType(BaseModel):
     id: Optional[int] = None
     type: str
-    namespace: str
+    namespace: Optional[str] = None
     deployment_name: str
     status: str = "active"  # active or inactive
     category: str = "kubernetes"  # kubernetes or package
@@ -157,6 +157,8 @@ class DeploymentConfigType(BaseModel):
     service_id: Optional[int] = None
     deployment_strategy_id: Optional[int] = None
     http_route_id: Optional[int] = None
+    chart_name: Optional[str] = None
+    env_name: Optional[str] = None
     replicas: Optional[int] = 1
     
     # Package Details

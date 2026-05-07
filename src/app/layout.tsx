@@ -8,25 +8,14 @@ import { ClippyOverlay } from '@/components/ClippyOverlay'
 import { NamespaceContextProvider } from '@/components/kubernetes/contextProvider/NamespaceContext'
 import { KubeContextProvider } from '@/components/kubernetes/contextProvider/KubeContext'
 import { NavigationHistoryProvider } from '@/libs/navigationHistory'
+import { NotificationProvider } from '@/components/NotificationProvider'
 
 
 function AppLayout() {
-  useEffect(() => {
-    const mysocket = new WebSocket("ws://127.0.0.1:5001/ws/test");
-    mysocket.onmessage = function (event) {
-      console.log(event.data)
-    };
-    mysocket.onopen = function (event) {
-      mysocket.send("Hello, world!")
-    }
-    // return ()=>{
-    //   mysocket.close()
-    // }
-  }, [])
-
   return (
     <NavigationHistoryProvider>
-      <div key="AppLayout" className='p-0 w-full min-h-screen bg-background'>
+      <NotificationProvider>
+        <div key="AppLayout" className='p-0 w-full min-h-screen bg-background'>
         <SidebarProvider>
           <KubeContextProvider>
             <NamespaceContextProvider>
@@ -41,6 +30,7 @@ function AppLayout() {
         </SidebarProvider>
         <Toaster richColors position="bottom-right" />
       </div>
+      </NotificationProvider>
     </NavigationHistoryProvider>
   )
 }
