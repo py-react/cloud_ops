@@ -8,4 +8,20 @@ gingerjs.egg-info
 infra_data
 _gingerjs
 *.pyc
+
+# API clients & generated code
+src/gingerJs_api_client
 **/*/gingerJs_api_client
+
+# Dev / test artefacts
+test_docker/
+src/cloud_ops.egg-info/
+test_with_docker_push.py
+test.ipynb
+
+# Virtual environments
+.venv/
+
+# Internal tooling
+_kiwijs/
+.agents/
