@@ -3,10 +3,7 @@ import logging
 from typing import Dict, Optional
 from github import Github
 from kiwijs.utils.load_settings import load_settings
-from app.db_client.db import get_session
-from app.db_client.controllers.github_pat.github_pat import get_active_credential, get_credential
-from app.db_client.controllers.github_pat.github_pat import mark_last_used
-from app.utils.get_fernet import get_fernet
+from app.utils.credential_cache import get_credential_token
 
 logger = logging.getLogger(__name__)
 
@@ -14,51 +11,20 @@ def _get_pat_from_db(pat_id: Optional[int] = None) -> Optional[str]:
     """Retrieve and decrypt a specific GitHub credential from the database."""
     if not pat_id:
         return None
-        
-    with get_session() as session:
-        cred_obj = get_credential(session, pat_id)
-        
-        if not cred_obj:
-            return None
-        
-        # Ensure we only return credentials intended for GitHub
-        if cred_obj.provider != "github":
-            logger.warning(f"Credential {pat_id} is not a GitHub provider.")
-            return None
 
-        token_enc = cred_obj.token_encrypted
-        f = get_fernet()
-        if not f:
-            # No encryption key configured. 
-            try:
-                token_plain = token_enc if isinstance(token_enc, str) else token_enc.decode('utf-8')
-            except Exception:
-                token_plain = None
+    try:
+        token = get_credential_token(pat_id, provider="github")
+    except ValueError:
+        return None
+    except Exception as e:
+        logger.error(f"Failed to decrypt credential {pat_id}: {e}")
+        return None
 
-            if token_plain and (token_plain.startswith('ghp_') or token_plain.startswith('github_pat_') or len(token_plain) >= 36):
-                logger.warning(
-                    "GITHUB_PAT_ENCRYPTION_KEY is not set but an active credential exists in DB. "
-                    "Using stored token as plaintext fallback."
-                )
-                try:
-                    if cred_obj.id:
-                        mark_last_used(session, cred_obj.id)
-                except Exception:
-                    pass
-                return token_plain
+    if not token.startswith("ghp_") and not token.startswith("github_pat_") and len(token) < 36:
+        logger.warning(f"Credential {pat_id} is not a valid GitHub PAT.")
+        return None
 
-            return None
-        try:
-            token = f.decrypt(token_enc.encode('utf-8')).decode('utf-8')
-            try:
-                if cred_obj.id:
-                    mark_last_used(session, cred_obj.id)
-            except Exception:
-                pass
-            return token
-        except Exception as e:
-            logger.error(f"Failed to decrypt credential from DB: {e}")
-            return None
+    return token
 
 
 def get_github_client_from_pat(pat_id: Optional[int] = None) -> Github:

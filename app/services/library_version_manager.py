@@ -175,18 +175,8 @@ class LibraryVersionManager:
             if not setting or not setting.github_credential_id or not setting.repo_name:
                 raise Exception("GitOps settings not configured")
 
-            credential = session.get(IntegrationCredential, setting.github_credential_id)
-            if not credential:
-                raise Exception("GitHub credential not found")
-
-            # Decrypt token
-            from app.utils.get_fernet import get_fernet
-            f = get_fernet()
-            
-            try:
-                token = f.decrypt(credential.token_encrypted.encode('utf-8')).decode('utf-8')
-            except Exception:
-                raise Exception("Failed to decrypt token")
+            from app.utils.credential_cache import get_credential_token
+            token = get_credential_token(setting.github_credential_id, provider="github")
             
             owner = setting.repo_owner or "unknown"
             repo = setting.repo_name
@@ -222,21 +212,8 @@ class LibraryVersionManager:
             if not setting or not setting.github_credential_id or not setting.repo_name:
                 raise Exception("GitOps settings not configured (credential or repo missing)")
 
-            credential = session.get(IntegrationCredential, setting.github_credential_id)
-            if not credential:
-                raise Exception("Configured GitHub credential not found")
-
-            # Decrypt token
-            from app.utils.get_fernet import get_fernet
-            f = get_fernet()
-            if not f:
-                raise Exception("Server not configured with encryption key")
-            
-            try:
-                token = f.decrypt(credential.token_encrypted.encode('utf-8')).decode('utf-8')
-            except Exception as e:
-                logger.error(f"Failed to decrypt token: {e}")
-                raise Exception("Failed to decrypt GitHub token")
+            from app.utils.credential_cache import get_credential_token
+            token = get_credential_token(setting.github_credential_id, provider="github")
             
             owner = setting.repo_owner or "unknown"
             repo = setting.repo_name

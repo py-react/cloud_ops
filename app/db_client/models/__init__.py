@@ -18,4 +18,5 @@ from .user.user import *
 from .google_credential.google_credential import *
 from .tenant.tenant import *
 from .compute_instance import *
+from .session.session import *
 

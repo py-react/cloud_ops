@@ -270,16 +270,18 @@ class UpdateCredentialRequest(BaseModel):
 async def PUT(request: Request, id: int, body: Optional[UpdateCredentialRequest] = None):
     with get_session() as session:
         if body and body.verify:
+            from app.utils.credential_cache import get_credential_token
+
+            try:
+                token = get_credential_token(id)
+            except ValueError as e:
+                raise HTTPException(status_code=404, detail=str(e))
+
             credential = get_credential(session, id)
             if not credential:
-                 raise HTTPException(status_code=404, detail="Credential not found")
-            
-            f = get_fernet()
-            if not f:
-                 raise HTTPException(status_code=500, detail="Encryption key not configured")
-            
+                raise HTTPException(status_code=404, detail="Credential not found")
+
             try:
-                token = f.decrypt(credential.token_encrypted.encode('utf-8')).decode('utf-8')
                 if credential.provider == "github":
                     await validate_github_token(token)
                     return {"success": True, "valid": True, "message": "GitHub token is valid"}
@@ -291,13 +293,13 @@ async def PUT(request: Request, id: int, body: Optional[UpdateCredentialRequest]
                     return {"success": True, "valid": True, "message": "PyPI token is valid"}
                 elif credential.provider == "gcp":
                     from app.gcp_client import get_gcp_credentials, GCPAuthError
-                    
+
                     creds, project_id = get_gcp_credentials(credential.id)
-                    
+
                     return {"success": True, "valid": True, "message": f"GCP SA valid for project: {project_id}"}
                 elif not token.strip():
                     raise Exception("Token is empty")
-                
+
                 return {"success": True, "valid": True, "message": "Token is valid"}
             except Exception as e:
                 logger.error(f"Verification failed for credential {id}: {type(e).__name__}: {str(e)}")

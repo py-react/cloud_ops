@@ -5,10 +5,8 @@ import docker
 from sqlmodel import Session, select
 from app.db_client.models.deployment_config.deployment_config import DeploymentConfig
 from app.db_client.models.deployment_run.deployment_run import DeploymentRun
-from app.db_client.controllers.github_pat.github_pat import get_credential
 from app.docker_client.registry import RegistryManager
 from app.github_client.config.registry_config import load_registries, RegistryConfig
-from app.utils.get_fernet import get_fernet
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -60,11 +58,6 @@ class PackageReleaseService:
                 sys.stderr.write(f"DEBUG: _pull_image failed: {e}\n")
                 raise
             
-            # 3. Initialize Decryption
-            f = get_fernet()
-            if not f:
-                 logger.warning("Encryption key not configured. Attempting plaintext fallback for credentials.")
-            
             # 4. Get Registry Credentials
             package_type = config_obj.package_type.lower() if config_obj.package_type else "npm"
             
@@ -72,18 +65,8 @@ class PackageReleaseService:
             if not config_obj.registry_credential_id:
                 raise Exception(f"No publish credential configured in Release Config. Please link a credential in Release Config settings.")
             
-            registry_cred = get_credential(self.session, config_obj.registry_credential_id)
-            
-            if not registry_cred:
-                raise Exception(f"Configured credential not found. Please select a valid credential in Release Config.")
-            
-            registry_token = registry_cred.token_encrypted
-            if f:
-                try:
-                    registry_token = f.decrypt(registry_token.encode('utf-8')).decode('utf-8')
-                except Exception as e:
-                    logger.error(f"Failed to decrypt {package_type} token: {e}")
-                    raise Exception(f"Failed to decrypt {package_type} token. Please check your encryption configuration.")
+            from app.utils.credential_cache import get_credential_token
+            registry_token = get_credential_token(config_obj.registry_credential_id)
 
             # 5. Run Publication
             sys.stderr.write(f"Executing publication command inside container...\n")

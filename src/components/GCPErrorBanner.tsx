@@ -36,9 +36,13 @@ export const GCPErrorBanner: React.FC<GCPErrorBannerProps> = ({ error, onRetry }
         }
     };
 
-    const handleSignOut = () => {
-        // Clear cookies and redirect
-        document.cookie = "k1w1_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    const handleSignOut = async () => {
+        try {
+            await fetch('/api/v1/auth/logout', { method: 'POST' });
+        } catch {
+            // fallback: clear cookie directly
+            document.cookie = "k1w1_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        }
         window.location.href = '/login';
     };
 

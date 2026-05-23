@@ -8,10 +8,11 @@ from googleapiclient.discovery import build
 from app.db_client.db import get_session
 from app.db_client.models import User, GoogleCredential, Tenant
 from sqlmodel import select
-import jwt
-from datetime import datetime, timedelta
+from datetime import datetime
 from app.utils.encryption import encrypt_string
+from app.utils.session_manager import create_session, _get_session_ttl
 from kiwijs.utils.load_settings import load_settings
+
 async def GET(request: Request):
     code = request.query_params.get("code")
     if not code:
@@ -108,22 +109,17 @@ async def GET(request: Request):
             
         session.commit()
         
-        # Issue internal application JWT
-        payload = {
-            "user_id": user.id,
-            "tenant_id": user.tenant_id,
-            "email": user.email,
-            "exp": datetime.utcnow() + timedelta(days=7)
-        }
-        token = jwt.encode(payload, settings.get("JWT_SECRET", "k1w1-internal-secret"), algorithm="HS256")
+        # Create DB-backed session (opaque token stored in cookie)
+        session_token = create_session(user.id, user.tenant_id)
+        session_ttl = _get_session_ttl()
         
         # Redirect to root and set session cookie
         response = RedirectResponse(url="/")
         response.set_cookie(
             key="k1w1_token", 
-            value=token, 
-            httponly=False, # Set to False so frontend can read it if needed, or True if purely backend-side
-            max_age=7*24*3600,
+            value=session_token, 
+            httponly=False,
+            max_age=session_ttl,
             samesite="lax"
         )
         response.delete_cookie("oauth_state")

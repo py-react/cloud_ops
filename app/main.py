@@ -416,6 +416,13 @@ async def startup(app: FastAPI):
     except Exception as e:
         logger.error(f"Startup Seeding Error: {e}. Platform may be in a limited state if database is unreachable.")
 
+    # Clean up expired sessions on startup
+    try:
+        from app.utils.session_manager import clean_expired_sessions
+        clean_expired_sessions()
+    except Exception as e:
+        logger.warning(f"Session cleanup error: {e}")
+
     try:
         from app.github_client.poller import get_polling_manager
         manager = get_polling_manager()

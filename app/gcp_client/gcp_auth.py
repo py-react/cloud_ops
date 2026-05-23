@@ -12,10 +12,31 @@ from sqlmodel import select
 
 logger = logging.getLogger(__name__)
 
+GCP_CRED_CACHE_TTL = 600
+
 
 class GCPAuthError(Exception):
     """Raised when GCP credentials cannot be loaded."""
     pass
+
+
+def _cache_key(credential_id: Optional[int] = None) -> str:
+    return f"gcp_cred:{credential_id}" if credential_id else "gcp_cred:active"
+
+
+def _build_gcp_credentials(sa_json_str: str) -> Tuple[service_account.Credentials, str]:
+    sa_data = json.loads(sa_json_str)
+    for field in ("type", "project_id", "private_key", "client_email"):
+        if field not in sa_data:
+            raise GCPAuthError(f"Service account JSON missing required field: {field}")
+    project_id = sa_data["project_id"]
+    logger.info("  project=%s", project_id)
+    return (
+        service_account.Credentials.from_service_account_info(
+            sa_data, scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        ),
+        project_id,
+    )
 
 
 def get_active_gcp_credential() -> Optional[IntegrationCredential]:
@@ -77,51 +98,44 @@ def load_service_account_json(credential: IntegrationCredential) -> dict:
 
 def get_gcp_credentials(credential_id: Optional[int] = None) -> Tuple[service_account.Credentials, str]:
     """
-    Load GCP Service Account credentials.
-    
+    Load GCP Service Account credentials with two-tier caching.
+
+    Delegates to the generic `get_cached_credential` in credential_cache.py
+    so all credential types share the same cache lifecycle and logging.
+
+    L1 (in-memory, 60s TTL) — stores the parsed (Credentials, project_id) tuple.
+    L2 (Redis, 300s TTL) — stores the DB-encrypted Fernet token.
+
     Args:
-        credential_id: Optional specific credential ID. 
+        credential_id: Optional specific credential ID.
                       If not provided, uses the active GCP credential from DB.
-    
+
     Returns:
         Tuple of (credentials, project_id)
-    
+
     Raises:
         GCPAuthError: If credential is invalid or not found
     """
-    if credential_id:
-        credential = get_gcp_credential_by_id(credential_id)
-    else:
-        credential = get_active_gcp_credential()
-    
-    if not credential:
-        raise GCPAuthError("No active GCP credential found in the Credential Hub")
-    
-    sa_data = None
-    try:
-        sa_data = load_service_account_json(credential)
-        
-        # Validate required fields
-        required_fields = ["type", "project_id", "private_key", "client_email"]
-        for field in required_fields:
-            if field not in sa_data:
-                raise GCPAuthError(f"Service account JSON missing required field: {field}")
-        
-        credentials = service_account.Credentials.from_service_account_info(
-            sa_data,
-            scopes=["https://www.googleapis.com/auth/cloud-platform"]
-        )
-        project_id = sa_data["project_id"]
-        
-        logger.info(f"Loaded GCP credentials for project: {project_id}")
-        return credentials, project_id
+    from app.utils.credential_cache import get_cached_credential
 
+    ck = _cache_key(credential_id)
+
+    def _load():
+        if credential_id:
+            credential = get_gcp_credential_by_id(credential_id)
+        else:
+            credential = get_active_gcp_credential()
+        if not credential:
+            raise GCPAuthError("No active GCP credential found in the Credential Hub")
+        return credential.token_encrypted
+
+    try:
+        return get_cached_credential(ck, _load, transform=_build_gcp_credentials, l2_ttl=GCP_CRED_CACHE_TTL)
+    except GCPAuthError:
+        raise
     except Exception as e:
-        logger.error(f"Failed to create credentials from service account: {type(e).__name__}: {str(e)}")
-        raise GCPAuthError(f"Failed to create GCP credentials: {str(e)}")
-    finally:
-        if sa_data:
-            sa_data.clear()
+        logger.error("Failed to load GCP credentials: %s: %s", type(e).__name__, e)
+        raise GCPAuthError(f"Failed to create GCP credentials: {str(e)}") from e
 
 
 def get_billing_client(credential_id: Optional[int] = None) -> billing_v1.CloudCatalogClient:
