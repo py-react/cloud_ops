@@ -113,10 +113,15 @@ def find_services_for_ingress(namespace: str, ingress: client.V1Ingress, api_cor
     
     return services
 
-async def GET(request: Request, namespace: str, ingress_name: Optional[str] = None):
+async def GET(namespace: Optional[str] = None, ingress_name: Optional[str] = None):
     """Get detailed information for all ingress resources or a specific ingress in a namespace, with bubbled-up events."""
+    
+    if not namespace:
+        return JSONResponse(status_code=400, content={"error": "Namespace is required"})
+        
     try:
-        config.load_config()
+        from app.services.kube_config_service import KubeConfigService
+        KubeConfigService.load_active_config()
         api_core = client.CoreV1Api()
         networking_v1_api = client.NetworkingV1Api()
         
@@ -265,5 +270,9 @@ async def GET(request: Request, namespace: str, ingress_name: Optional[str] = No
                 "ingresses": ingress_infos,
                 "events": all_events
             })
+    except ValueError:
+        raise
     except ApiException as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})

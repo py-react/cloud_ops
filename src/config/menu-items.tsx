@@ -63,7 +63,7 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                     icon: Docker,
                     items: [
                         {
-                            title: "Conatiner",
+                            title: "Containers",
                             url: "/container",
                             icon: Server,
                         },
@@ -73,7 +73,7 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                             icon: Box,
                         },
                         {
-                            title: "Storages",
+                            title: "Volumes",
                             url: "/storages",
                             icon: Database,
                         },
@@ -154,10 +154,50 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
             color: "yellow",
             childs: [
                 {
+                    title: "Google Cloud",
+                    url: "/gcp",
+                    icon: Database,
+                    items: [
+                        {
+                            title: "Compute Engine",
+                            url: "/compute",
+                            icon: Cpu,
+                        },
+                        {
+                            title: "Cloud Storage",
+                            url: "/storage",
+                            icon: Box,
+                            items: [
+                                {
+                                    title: "Object Storage",
+                                    url: "/buckets",
+                                    icon: Box,
+                                },
+                                {
+                                    title: "Block Storage",
+                                    url: "/disks",
+                                    icon: Database,
+                                },
+                                {
+                                    title: "File Storage",
+                                    url: "/filestores",
+                                    icon: Folder,
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
                     title: "Kubernetes",
                     url: "/kubernetes",
                     icon: Layout,
                     items: [
+                        {
+                            title: "Configs",
+                            url: "/configs",
+                            icon: FileText,
+
+                        },
                         {
                             title: "Contexts",
                             url: "/contexts",
@@ -291,18 +331,5 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                 },
             ],
         },
-        // infraManager: {
-        //     title: "Infra",
-        //     url: "/infra",
-        //     color: "purple",
-        //     childs: [
-        //         {
-        //             title: "Manager",
-        //             url: "/manager",
-        //             icon: WaypointsIcon,
-        //             items: [],
-        //         },
-        //     ],
-        // },
     },
 });

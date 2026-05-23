@@ -55,13 +55,6 @@ def load_registries(settings: Dict[str, Any]) -> list[RegistryConfig]:
         except (json.JSONDecodeError, KeyError) as e:
             logger.error(f"Failed to parse REGISTRY_CONFIGS: {e}")
     
-    elif 'REGISTRY_HOST' in settings and settings['REGISTRY_HOST']:
-        registries.append(RegistryConfig(
-            url=settings['REGISTRY_HOST'],
-            name="default",
-            priority=1
-        ))
-    
     # Also load from database
     try:
         with get_session() as session:

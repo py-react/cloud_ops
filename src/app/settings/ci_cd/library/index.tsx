@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { ChartWizard } from '@/components/library/ChartWizard';
 import { CommitDialog } from '@/components/library/CommitDialog';
 import yaml from 'js-yaml';
+import { HelmErrorState } from '@/components/kubernetes/helm/HelmErrorState';
 
 interface Chart {
     type: 'template';
@@ -37,6 +38,7 @@ export default function LibraryPage() {
     const [isEditingChart, setIsEditingChart] = useState(false);
     const [initialChartValues, setInitialChartValues] = useState<any>(null);
     const [usageData, setUsageData] = useState<any[]>([]);
+    const [helmError, setHelmError] = useState<string | null>(null);
     const navigate = useNavigate();
 
     const fetchCharts = async () => {
@@ -55,7 +57,18 @@ export default function LibraryPage() {
         }
     };
 
-    useEffect(() => { fetchCharts(); }, []);
+    useEffect(() => { 
+        fetch('/api/system/install?tool=helm')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.error && data.is_installed === false) {
+                    setHelmError("Helm must be installed to manage chart templates.");
+                }
+            })
+            .catch(() => {});
+            
+        fetchCharts(); 
+    }, []);
 
     // Commit Dialog & Pending Data state
     const [commitDialogOpen, setCommitDialogOpen] = useState(false);
@@ -215,6 +228,10 @@ export default function LibraryPage() {
             )
         }
     ];
+
+    if (helmError) {
+        return <HelmErrorState error={helmError} />;
+    }
 
     return (
         <PageLayout

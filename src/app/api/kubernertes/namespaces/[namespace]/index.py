@@ -8,8 +8,8 @@ async def GET(namespace: str):
             "status": "success",
             "data": details
         }
+    except ValueError:
+        raise
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=500, content={"error": str(e)})

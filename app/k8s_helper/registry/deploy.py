@@ -24,10 +24,8 @@ def deploy_registry_on_k8s(
     Deploys a Docker Registry on Kubernetes.
     Returns a dict with url and other details.
     """
-    try:
-        config.load_kube_config()
-    except:
-        config.load_incluster_config()
+    from app.services.kube_config_service import KubeConfigService
+    KubeConfigService.load_active_config()
         
     v1 = client.CoreV1Api()
     apps_v1 = client.AppsV1Api()

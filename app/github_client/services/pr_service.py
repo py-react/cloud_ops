@@ -206,8 +206,11 @@ class PRService:
             
             # 3. Fallback to default registry
             if not registry_url:
+                 from app.github_client.config.registry_config import load_registries
                  settings = load_settings()
-                 registry_url = settings.get("REGISTRY_HOST")
+                 registries = load_registries(settings)
+                 if registries:
+                     registry_url = registries[0].url
 
         if registry_url:
             image_name = generate_image_name(
@@ -298,8 +301,11 @@ class PRService:
 
             # 3. Fallback to default if no specific registry found
             if not registry_url:
+                 from app.github_client.config.registry_config import load_registries
                  settings = load_settings()
-                 registry_url = settings.get("REGISTRY_HOST")
+                 registries = load_registries(settings)
+                 if registries:
+                     registry_url = registries[0].url
 
         if not registry_url:
             raise Exception("No registry configured for repository (check Settings -> CI/CD -> Source Control or General Settings)")

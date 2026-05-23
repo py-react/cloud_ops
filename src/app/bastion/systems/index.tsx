@@ -104,12 +104,16 @@ interface System {
   provider?: string;
   service_key_deployed?: boolean;
   private_key?: string;
+  connection_type?: 'ssh' | 'rdp';
+  os_type?: string;
 }
 
 const systemSchema = z.object({
   name: z.string().min(1, "Name is required"),
   ip_address: z.string().min(1, "IP address is required"),
   username: z.string().min(1, "Username is required"),
+  connection_type: z.enum(['ssh', 'rdp']).default('ssh'),
+  connection_port: z.coerce.number().int().min(1).max(65535).optional(),
   password: z.string().optional(),
   private_key: z.string().optional(),
 }).refine(data => data.password || data.private_key, {
@@ -126,7 +130,8 @@ export default function BastionSystemsPage() {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [systemToDelete, setSystemToDelete] = useState<System | null>(null);
   const [currentStep, setCurrentStep] = useState('details');
-  const [authType, setAuthType] = useState('managed'); // 'managed' or 'provided'
+  const [authType, setAuthType] = useState('managed');
+  const [connectionType, setConnectionType] = useState<'ssh' | 'rdp'>('ssh');
   const { addSession } = useTerminal();
   const navigate = useNavigate();
 
@@ -147,7 +152,12 @@ export default function BastionSystemsPage() {
       const res = await fetch('/api/bastion/systems', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, hostname: values.ip_address })
+        body: JSON.stringify({ 
+          ...values, 
+          hostname: values.ip_address,
+          connection_type: values.connection_type || 'ssh',
+          connection_port: values.connection_port || (values.connection_type === 'rdp' ? 3389 : 22)
+        })
       });
       const data = await res.json();
       if (!data.error) {
@@ -164,10 +174,7 @@ export default function BastionSystemsPage() {
     } catch { toast.error('Network error'); }
   };
 
-  const handleConnect = (system: System) => {
-    addSession({ systemId: system.id, systemName: system.name });
-    navigate(`/bastion/console`);
-  };
+
 
   const handleDelete = async () => {
     if (!systemToDelete) return;
@@ -213,13 +220,29 @@ export default function BastionSystemsPage() {
       cell: (row: System) => (
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg text-primary">
-            <Server size={18} />
+            {row.connection_type === 'rdp' ? <Monitor size={18} /> : <Server size={18} />}
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-foreground leading-none mb-1">{row.name}</span>
             <span className="text-[10px] text-muted-foreground font-mono">{row.ip_address}</span>
           </div>
         </div>
+      )
+    },
+    {
+      header: 'Protocol',
+      accessor: 'connection_type',
+      cell: (row: System) => (
+        <Badge 
+          variant={row.connection_type === 'rdp' ? 'default' : 'secondary'}
+          className={cn(
+            "capitalize text-[10px] px-2 py-0.5",
+            row.connection_type === 'rdp' && "bg-green-500/10 text-green-500 border-green-500/20",
+            (!row.connection_type || row.connection_type === 'ssh') && "bg-blue-500/10 text-blue-500 border-blue-500/20"
+          )}
+        >
+          {row.connection_type === 'rdp' ? 'RDP' : 'SSH'}
+        </Badge>
       )
     },
     { header: 'SSH User', accessor: 'username' },
@@ -233,7 +256,7 @@ export default function BastionSystemsPage() {
         
         if (row.status === 'active') variant = 'success';
         else if (row.status === 'inactive') variant = 'warning';
-        else if (row.status === 'reprovisioning') variant = 'warning'; // Amber for transient state
+        else if (row.status === 'reprovisioning') variant = 'warning';
         
         return (
           <Badge 
@@ -252,6 +275,14 @@ export default function BastionSystemsPage() {
       header: 'Security Status',
       accessor: 'security_status',
       cell: (row: System) => {
+        if (row.connection_type === 'rdp') {
+          return (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 w-fit">
+              <Monitor size={12} className="text-purple-500" />
+              <span className="text-[10px] font-bold text-purple-500 uppercase tracking-wider">RDP Auth</span>
+            </div>
+          );
+        }
         if (row.private_key) {
           return (
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 w-fit">
@@ -286,8 +317,8 @@ export default function BastionSystemsPage() {
 
   const metrics = useMemo(() => [
     { title: "Total Systems", count: systems.length, icon: <Monitor />, color: "bg-blue-500" },
-    { title: "Secured (Keys)", count: systems.filter(s => s.service_key_deployed || s.private_key).length, icon: <Shield />, color: "bg-emerald-500" },
-    { title: "Active Auth", count: systems.filter(s => !s.service_key_deployed && !s.private_key).length, icon: <Activity />, color: "bg-amber-500" },
+    { title: "SSH Systems", count: systems.filter(s => !s.connection_type || s.connection_type === 'ssh').length, icon: <TerminalIcon />, color: "bg-blue-500" },
+    { title: "RDP Systems", count: systems.filter(s => s.connection_type === 'rdp').length, icon: <Monitor />, color: "bg-green-500" },
   ], [systems]);
 
   const steps = [
@@ -346,9 +377,46 @@ export default function BastionSystemsPage() {
                   name="username"
                   render={({ field }) => (
                     <FormItem className="space-y-2">
-                      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">SSH Username</FormLabel>
+                      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Username</FormLabel>
                       <FormControl>
-                        <Input placeholder="root" {...field} className="h-10 border-border/60" />
+                        <Input placeholder={connectionType === 'rdp' ? 'Administrator' : 'root'} {...field} className="h-10 border-border/60" />
+                      </FormControl>
+                      <FormMessage className="text-[10px]" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Connection Protocol</Label>
+                <Tabs 
+                  variant="pill"
+                  activeTab={connectionType}
+                  onChange={(id) => {
+                    setConnectionType(id as 'ssh' | 'rdp');
+                    setValue('connection_type', id);
+                    setValue('connection_port', id === 'rdp' ? 3389 : 22);
+                  }}
+                  tabs={[
+                    { id: 'ssh', label: 'SSH' },
+                    { id: 'rdp', label: 'RDP' },
+                  ]}
+                  className="w-fit"
+                />
+
+                <FormField
+                  control={control}
+                  name="connection_port"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Connection Port</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder={connectionType === 'rdp' ? '3389' : '22'} 
+                          {...field} 
+                          className="h-10 border-border/60 font-mono text-xs w-32" 
+                        />
                       </FormControl>
                       <FormMessage className="text-[10px]" />
                     </FormItem>
@@ -451,6 +519,7 @@ export default function BastionSystemsPage() {
           <Button onClick={() => {
             setIsWizardOpen(true);
             setAuthType('managed');
+            setConnectionType('ssh');
           }} variant="gradient" className="h-9">
             <Plus size={16} className="mr-2" /> Add System
           </Button>
@@ -492,10 +561,22 @@ export default function BastionSystemsPage() {
             onPause={(row) => handleToggleStatus(row, 'inactive')}
             customActions={[
               {
-                label: "Connect Terminal",
+                label: "Connect SSH",
                 icon: TerminalIcon,
-                onClick: (row) => handleConnect(row),
-                show: (row) => row.status === 'active' || !row.status
+                onClick: (row) => {
+                  addSession({ systemId: row.id, systemName: row.name, connectionType: 'ssh' });
+                  navigate(`/bastion/console`);
+                },
+                show: (row) => (row.status === 'active' || !row.status) && row.connection_type !== 'rdp'
+              },
+              {
+                label: "Connect RDP",
+                icon: Monitor,
+                onClick: (row) => {
+                  addSession({ systemId: row.id, systemName: row.name, connectionType: 'rdp' });
+                  navigate(`/bastion/console`);
+                },
+                show: (row) => (row.status === 'active' || !row.status) && row.connection_type === 'rdp'
               }
             ]}
           />
@@ -508,7 +589,7 @@ export default function BastionSystemsPage() {
         setIsWizardOpen={setIsWizardOpen}
         currentStep={currentStep}
         setCurrentStep={setCurrentStep}
-        initialValues={{ name: '', ip_address: '', username: 'root', password: '', private_key: '' }}
+        initialValues={{ name: '', ip_address: '', username: 'root', connection_type: 'ssh', connection_port: 22, password: '', private_key: '' }}
         schema={systemSchema}
         onSubmit={handleCreateSystem}
         submitLabel="Register System"

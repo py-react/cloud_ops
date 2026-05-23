@@ -97,10 +97,15 @@ def find_pods_using_configmap(namespace: str, configmap_name: str, api_core: cli
             referencing_pods.append(pod_info)
     return referencing_pods
 
-async def GET(request: Request, namespace: str, configmap_name: str):
+async def GET(namespace: str, configmap_name: str):
     """Get details for a specific configmap in a namespace."""
+    if not namespace or not configmap_name:
+        return JSONResponse(status_code=400, content={"error": "Namespace and configmap_name are required"})
+        
     try:
-        config.load_config()
+        from app.services.kube_config_service import KubeConfigService
+        KubeConfigService.load_active_config()
+        
         api_core = client.CoreV1Api()
         cm = api_core.read_namespaced_config_map(configmap_name, namespace)
         cm_info = {
@@ -118,7 +123,11 @@ async def GET(request: Request, namespace: str, configmap_name: str):
             "namespace": namespace,
             "configmap": cm_info
         })
+    except ValueError:
+        raise
     except ApiException as e:
         if e.status == 404:
             return JSONResponse(status_code=404, content={"error": f"ConfigMap '{configmap_name}' not found in namespace '{namespace}'"})
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})

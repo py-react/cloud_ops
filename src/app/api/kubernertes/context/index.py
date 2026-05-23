@@ -1,4 +1,5 @@
-from fastapi import Request, HTTPException
+from fastapi import Request
+from fastapi.responses import JSONResponse
 from kubernetes import config
 
 import subprocess
@@ -21,15 +22,21 @@ def run_kubectl_command(command: list[str]) -> str:
         result = subprocess.run(command, text=True, capture_output=True, check=True)
         return result.stdout
     except subprocess.CalledProcessError as e:
-        raise HTTPException(status_code=500, detail=f"Error running kubectl: {e.stderr}, command: {command}")
+        return JSONResponse(status_code=500, content={"error": f"Error running kubectl: {e.stderr}, command: {command}"})
 
-async def GET(action:Literal["all","current"]):
-    settings = load_settings()
-    context_ops = ContextOperations(path=settings.get("KUBECONFIG","~/.kube/config"))
-    if action == "all":
-        return context_ops.load_kubeconfig()[0]
+async def GET(request: Request):
+    try:
+        action = request.query_params.get("action", "current")
+        # Use ContextOperations without path to trigger DB/Dynamic loading
+        context_ops = ContextOperations()
+        if action == "all":
+            return context_ops.load_kubeconfig()[0]
 
-    return {"current_context": context_ops.get_current_contex()}
+        return {"current_context": context_ops.get_current_contex()}
+    except ValueError as e:
+        return JSONResponse(status_code=403, content={"error": str(e)})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 class ContextPostType(Enum):
     SWITCH = "switch"
@@ -45,13 +52,23 @@ class ContextPostData(BaseModel):
 
 async def POST(request:Request,data: ContextPostData):
     """Set a new Kubernetes context."""
-    settings = load_settings()
-    if data.type == ContextPostType.SWITCH:
-        command = [
-            "kubectl", "config", "use-context", data.payload.switch
-        ]
-        output = run_kubectl_command(command)
-        return {"message": f"Context '{data.payload.switch}' set successfully", "output": output}
-    
-    context_ops = ContextOperations(path=data.payload.create.config_file)
-    return context_ops.create_context(data=data.payload.create)
+    try:
+        # Use ContextOperations without path to trigger DB/Dynamic loading
+        context_ops = ContextOperations()
+        
+        if data.type == ContextPostType.SWITCH:
+            # Load, modify current-context, and save
+            config_dict, _ = context_ops.load_kubeconfig()
+            config_dict['current-context'] = data.payload.switch
+            context_ops.save_kubeconfig(config_dict)
+            
+            return {"message": f"Context '{data.payload.switch}' set successfully"}
+        
+        # For creation, use the provided config file path if any, otherwise default
+        create_path = data.payload.create.config_file if data.payload.create else None
+        context_ops_create = ContextOperations(path=create_path)
+        return context_ops_create.create_context(data=data.payload.create)
+    except ValueError as e:
+        return JSONResponse(status_code=403, content={"error": str(e)})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})

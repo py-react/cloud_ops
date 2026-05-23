@@ -25,25 +25,32 @@ def normalize_kind(resource_type: str) -> str:
     }
     return mapping.get(resource_type.lower(), resource_type)
 
-async def GET(request: Request, type: str, namespace: Optional[str] = None, api_version: Optional[str] = None, field_selector: Optional[str] = None, label_selector: Optional[str] = None):
+async def GET(type: str, namespace: Optional[str] = None, field_selector: Optional[str] = None, label_selector: Optional[str] = None, api_version: Optional[str] = None):
     """
     Generic GET for any Kubernetes resource.
     Usage: /api/kubernertes/resources/[type]?namespace=...&api_version=...
     """
-    k8s_helper = KubernetesResourceHelper()
-    namespace = request.query_params.get("namespace")
-    field_selector = request.query_params.get("field_selector")
-    label_selector = request.query_params.get("label_selector")
-    api_version = request.query_params.get("api_version")
+    from fastapi.responses import JSONResponse
+    from kubernetes.client.rest import ApiException
     
-    data_list = k8s_helper.get_resource_details(
-        resource_type=type, 
-        namespace=namespace, 
-        field_selector=field_selector, 
-        label_selector=label_selector, 
-        api_version=api_version
-    )
-    return data_list
+    try:
+        print(f"DEBUG: Generic GET for type: {type}, namespace: {namespace}")
+        k8s_helper = KubernetesResourceHelper()
+        
+        data_list = k8s_helper.get_resource_details(
+            resource_type=type, 
+            namespace=namespace, 
+            field_selector=field_selector, 
+            label_selector=label_selector, 
+            api_version=api_version
+        )
+        return data_list
+    except ValueError:
+        raise
+    except ApiException as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 async def POST(type: str, resource: dict):
     k8s_helper = KubernetesResourceHelper()
@@ -54,11 +61,6 @@ async def PUT(request: Request, type: str, apiVersion: Optional[str] = None, nam
     Generic PUT for editing resources.
     """
     k8s_helper = KubernetesResourceHelper()
-    params = request.query_params
-    apiVersion = params.get("apiVersion")
-    name = params.get("name")
-    modifytype = params.get("modifytype")
-    namespace = params.get("namespace")
     
     data = await request.json()
     metadata = {"name": name}
@@ -77,16 +79,12 @@ async def PUT(request: Request, type: str, apiVersion: Optional[str] = None, nam
         return k8s_helper.edit_resource(resource, modify_fn)
     return "provide supported modifytype "
 
-async def DELETE(request: Request, type: str, apiVersion: Optional[str] = None, name: Optional[str] = None, namespace: Optional[str] = None):
+async def DELETE(type: str, apiVersion: Optional[str] = None, name: Optional[str] = None, namespace: Optional[str] = None):
     """
     Generic DELETE for any Kubernetes resource.
     Usage: /api/kubernertes/resources/[type]?apiVersion=...&name=...&namespace=...
     """
     k8s_helper = KubernetesResourceHelper()
-    params = request.query_params
-    apiVersion = params.get("apiVersion")
-    name = params.get("name")
-    namespace = params.get("namespace")
 
     metadata = {"name": name}
     if namespace:

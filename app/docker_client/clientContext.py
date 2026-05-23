@@ -38,10 +38,10 @@ def get_engine_id(use_active: bool = True) -> Optional[int]:
                 active_config = get_active_docker_config(session)
                 if active_config:
                     return active_config.id
-                return 0 # Local
+                return None
         except Exception:
-            return 0
-    return engine_id or 0
+            return None
+    return engine_id
 
 def reset():
     """Reset the asyncio-local Docker Engine context."""
@@ -51,10 +51,9 @@ def get_client(use_active: bool = True) -> docker.DockerClient:
     """Gets the correct Docker client based on the current thread's configured engine.
     
     Resolution priority:
-    1. _engine_id_context (if set and > 0) -> specific remote engine
-    2. _engine_id_context == 0 -> explicit local engine
-    3. _engine_id_context is None AND use_active=True -> globally active engine from DB
-    4. fallback -> local engine
+    1. _engine_id_context (if set) -> specific remote engine
+    2. _engine_id_context is None AND use_active=True -> globally active engine from DB
+    3. fallback -> raise Error (Zero Fallback)
     """
     engine_id = _engine_id_context.get()
     active_config = None
@@ -68,11 +67,10 @@ def get_client(use_active: bool = True) -> docker.DockerClient:
                     engine_id = active_config.id
         except Exception as e:
             raise Exception(f"Error fetching active docker config from DB: {e}")
-    # engine_id == 0 or (engine_id is None and active_config is None) means local
-    if engine_id is None or engine_id == 0:
-        if "local" not in _clients_cache:
-            _clients_cache["local"] = docker.from_env()
-        return _clients_cache["local"]
+            
+    # Zero Fallback Enforced
+    if engine_id is None:
+        raise ValueError("No active Docker Engine configuration found. Please add a Local or Remote engine in the Settings.")
     
     # If we already fetched active_config above, we can use it.
     # Otherwise, we need to fetch the specific engine_id.

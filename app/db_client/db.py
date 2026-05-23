@@ -1,30 +1,125 @@
+# pyrefly: ignore [missing-import]
 from sqlmodel import SQLModel, create_engine, Session
 import os
 from sqlmodel import Session, select
 from contextlib import contextmanager
+from .deployment_strategy import DeploymentStrategy
 import logging
 
 logger = logging.getLogger(__name__)
 
 # --- DB Engine and Session Management ---
+DB_TYPE = os.getenv("DB_TYPE", "postgresql").lower()
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "example")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "postgres")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-DATABASE_URL = (
-    f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
-)
+
+if DB_TYPE == "sqlite":
+    DATABASE_URL = "sqlite:///./kiwijs.db"
+    connect_args = {"check_same_thread": False}
+    engine = create_engine(DATABASE_URL, connect_args=connect_args)
+else:
+    DATABASE_URL = (
+        f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+    )
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"connect_timeout": 5},
+        pool_pre_ping=True
+    )
 
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
-engine = create_engine(DATABASE_URL)
+
 
 @contextmanager
 def get_session():
     with Session(engine) as session:
         yield session
+
+def create_db_and_tables():
+    """
+    Initializes the database schema and synchronizes with Alembic migrations.
+    This provides a 'self-healing' baseline for both SQLite and Postgres.
+    """
+    from sqlalchemy import inspect
+    from alembic.config import Config
+    from alembic import command
+    import os
+
+    # Ensure we use the correct version table name from alembic.ini or default
+    VERSION_TABLE = "alembic_version_cloud_ops"
+    alembic_cfg = Config("alembic.ini")
+    
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(conn)
+            has_version_table = inspector.has_table(VERSION_TABLE)
+            existing_tables = inspector.get_table_names()
+            
+            # Precisely check if OUR tables exist
+            our_metadata_tables = SQLModel.metadata.tables.keys()
+            has_our_tables = any(t in existing_tables for t in our_metadata_tables)
+
+        if not has_version_table:
+            if not has_our_tables:
+                logger.info("🚀 Fresh database detected. Building from migrations...")
+                command.upgrade(alembic_cfg, "head")
+            else:
+                logger.info("📋 Existing tables detected. Stamping migration version...")
+                command.stamp(alembic_cfg, "head")
+        else:
+            # Table exists, we trust the migration state
+            pass
+            
+    except Exception as e:
+        logger.warning(f"⚠️ Could not synchronize database with Alembic: {e}")
+        # Fallback to direct creation if migrations fail and we are in SQLite
+        if DB_TYPE == "sqlite":
+            logger.info("🔄 Falling back to SQLModel.metadata.create_all...")
+            SQLModel.metadata.create_all(engine)
+
+# --- SQLite Compatibility Shim for Postgres Dialects ---
+if DB_TYPE == "sqlite":
+    import sqlalchemy.dialects.postgresql as pg
+    from sqlalchemy.types import JSON
+    from sqlalchemy.ext.compiler import compiles
+
+    # 1. Compiler Rules: Tell SQLAlchemy how to RENDER these types in SQLite DDL
+    @compiles(pg.JSONB, "sqlite")
+    def compile_jsonb_sqlite(type_, compiler, **kw):
+        return "JSON"
+
+    @compiles(pg.ARRAY, "sqlite")
+    def compile_array_sqlite(type_, compiler, **kw):
+        return "JSON"
+
+    # 2. Class Shims: Handle model instantiation and argument stripping
+    class SQLiteJSONB(JSON):
+        def __init__(self, *args, **kwargs):
+            # Strip postgres-specific arguments that SQLite JSON doesn't support
+            kwargs.pop('astext_type', None)
+            super().__init__(*args, **kwargs)
+
+    class SQLiteARRAY(JSON):
+        def __init__(self, *args, **kwargs):
+            # SQLite doesn't have a native ARRAY type, so we use JSON to store lists
+            if args: args = [] # Strip item_type if passed as positional
+            kwargs.clear()
+            super().__init__()
+
+    # Map Postgres-specific types to our SQLite-friendly versions
+    pg.JSONB = SQLiteJSONB
+    pg.ARRAY = SQLiteARRAY
+    logger.info("Applied robust SQLite compatibility shim (Compiler + Classes) for Postgres types.")
+
+
+
+
+
 
 # --- Import all models to register them with SQLModel ---
 from .models import *
@@ -94,7 +189,7 @@ DEFAULT_ADDONS = [
 ]
 
 def ensure_default_strategies(force: bool = False):
-    if os.getenv("RENDER_RELAY_BUILD_MODE") == "True":
+    if os.getenv("KIWIJS_BUILD_MODE") == "True":
         return
     with Session(engine) as session:
         for strat in DEFAULT_STRATEGIES:
@@ -108,37 +203,42 @@ def ensure_default_strategies(force: bool = False):
         session.commit()
 
 def ensure_default_essential_addons(force: bool = False):
-    if os.getenv("RENDER_RELAY_BUILD_MODE") == "True":
+    if os.getenv("KIWIJS_BUILD_MODE") == "True":
         logger.info("Build mode detected, skipping addon seeding.")
         return
 
     from app.db_client.models.addon_plugin.addon_plugin import AddonPlugin
+    from app.services.kube_config_service import KubeConfigService
+    from app.k8s_helper.core.helm_client import HelmClient
     
-    # Check if we actually need to do anything before doing expensive setup
-    needs_seeding = False
+    # 1. First, always ensure the base database records exist
+    # This allows the library to be populated even before K8s is configured.
     with Session(engine) as session:
         for addon_data in DEFAULT_ADDONS:
             existing = session.exec(select(AddonPlugin).where(AddonPlugin.name == addon_data["name"])).first()
-            if not existing or (force or not existing.default_values):
-                needs_seeding = True
-                break
-    
-    if not needs_seeding:
-        logger.info("All essential addons already seeded. Skipping K8s/Helm setup.")
-        return
+            if not existing:
+                logger.info(f"Seeding addon record: {addon_data['name']}")
+                session.add(AddonPlugin(**addon_data))
+            elif force:
+                for key, value in addon_data.items():
+                    setattr(existing, key, value)
+                session.add(existing)
+        session.commit()
 
-    from app.k8s_helper.core.helm_client import HelmClient
-    helm_client = HelmClient()
-    
-    # Ensure 'standard' StorageClass exists directly via K8s API (more reliable than helm values for this specific legacy need)
+    # 2. Try to perform K8s-dependent setup (Fetching default values, StorageClass)
     try:
-        config.load_incluster_config()
-    except:
-        try:
-            config.load_kube_config()
-        except:
-            logger.warning("Failed to load kube config in seeder, StorageClass may not be created.")
+        if not KubeConfigService.load_active_config():
+            logger.info("No active Kubernetes configuration found yet. Skipping cluster-dependent seeding.")
+            return
+    except Exception as e:
+        logger.warning(f"Kubernetes configuration error during seeding: {e}. Skipping cluster-dependent resources.")
+        return
     
+    with Session(engine) as session:
+        kubeconfig_path = KubeConfigService.ensure_active_kubeconfig_path(session)
+        helm_client = HelmClient(kubeconfig_path=kubeconfig_path)
+    
+    # Ensure 'standard' StorageClass exists directly via K8s API
     storage_api = client.StorageV1Api()
     standard_sc = {
         "apiVersion": "storage.k8s.io/v1",
@@ -157,16 +257,18 @@ def ensure_default_essential_addons(force: bool = False):
     try:
         storage_api.create_storage_class(standard_sc)
         logger.info("Directly created 'standard' StorageClass via K8s API.")
-    except ApiException as e:
-        if e.status == 409: # Already exists
+    except Exception as e:
+        # 409 is 'Conflict/Already Exists'
+        if "already exists" in str(e).lower() or (hasattr(e, 'status') and e.status == 409):
+            logger.info("'standard' StorageClass already exists.")
             if force:
                 try:
                     storage_api.patch_storage_class("standard", standard_sc)
-                    logger.info("Patched existing 'standard' StorageClass via K8s API.")
+                    logger.info("Patched existing 'standard' StorageClass.")
                 except Exception as patch_e:
                     logger.warning(f"Failed to patch existing StorageClass: {patch_e}")
         else:
-            logger.warning(f"Failed to create StorageClass: {e}")
+            logger.warning(f"Failed to ensure default StorageClass: {e}")
 
     with Session(engine) as session:
         for addon_data in DEFAULT_ADDONS:

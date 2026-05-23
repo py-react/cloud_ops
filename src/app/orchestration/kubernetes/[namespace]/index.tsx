@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import useNavigate from "@/libs/navigate";
 import { Button } from "@/components/ui/button";
 import ApplyResourceDialog from '@/components/kubernetes/applyResource/ApplyResourceDialog';
+import { KubeErrorState } from "@/components/kubernetes/KubeErrorState";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext"
 import PageLayout from "@/components/PageLayout";
 import { useParams } from "react-router-dom";
@@ -81,6 +82,7 @@ function Kubernetes() {
     error: recentEventsError,
     resource: recentEvents,
     isLoading: isRecentEventsLoading,
+    isConfigMissing,
   } = useKubernertesResources({
     nameSpace: (namespace as any) || null,
     type: "events",
@@ -120,6 +122,10 @@ function Kubernetes() {
     fetchNamespaceDetails();
     fetchNamespaceMetrics();
   }, [namespace]);
+
+  if (isConfigMissing || recentEventsError === "No active Kubernetes configuration found") {
+    return <KubeErrorState error={recentEventsError || "No active Kubernetes configuration found"} isConfigMissing={true} />;
+  }
 
   return (
     <PageLayout

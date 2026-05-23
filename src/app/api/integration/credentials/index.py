@@ -22,7 +22,7 @@ logger = get_logger("Credentials API")
 class CreateCredentialRequest(BaseModel):
     name: str
     token: str
-    provider: str = "github"  # github, npm, pypi
+    provider: str = "github"  # github, npm, pypi, gcp
     active: bool = False
 
 
@@ -36,6 +36,9 @@ class CredentialListItem(BaseModel):
     scopes: Optional[List[str]] = None
     usage_count: int = 0
     used_repos: List[str] = []
+    # GCP-specific metadata
+    gcp_project_id: Optional[str] = None
+    gcp_client_email: Optional[str] = None
 
 async def validate_github_token(token: str, required_scopes: Optional[List[str]] = None) -> List[str]:
     """Validate GitHub token and return scopes."""
@@ -134,6 +137,8 @@ async def validate_pypi_token(token: str) -> str:
 
 
 async def GET(request: Request) -> List[CredentialListItem]:
+    from app.gcp_client import get_gcp_credential_by_id
+    
     with get_session() as session:
         credentials = list_credentials(session)
         result = []
@@ -144,6 +149,28 @@ async def GET(request: Request) -> List[CredentialListItem]:
             if getattr(c, 'scopes', None) and c.scopes:
                 scopes_list = [s.strip() for s in c.scopes.split(',') if s.strip()]
             
+            gcp_project_id = None
+            gcp_client_email = None
+            if c.provider == "gcp":
+                try:
+                    cred = get_gcp_credential_by_id(c.id)
+                    if cred:
+                        from app.gcp_client import load_service_account_json
+                        from app.utils.get_fernet import get_fernet
+                        f = get_fernet()
+                        if f:
+                            token = f.decrypt(cred.token_encrypted.encode('utf-8')).decode('utf-8')
+                            import json
+                            sa_data = json.loads(token)
+                            gcp_project_id = sa_data.get("project_id")
+                            gcp_client_email = sa_data.get("client_email")
+                        else:
+                            logger.warning(f"No Fernet key available for credential {c.id}")
+                    else:
+                        logger.warning(f"GCP credential {c.id} not found in GCP credential table")
+                except Exception as e:
+                    logger.error(f"Failed to get GCP metadata for credential {c.id}: {type(e).__name__}: {e}")
+            
             result.append(CredentialListItem(
                 id=c.id, 
                 name=c.name, 
@@ -151,7 +178,9 @@ async def GET(request: Request) -> List[CredentialListItem]:
                 active=c.active, 
                 created_at=c.created_at, 
                 last_used_at=c.last_used_at, 
-                scopes=scopes_list
+                scopes=scopes_list,
+                gcp_project_id=gcp_project_id,
+                gcp_client_email=gcp_client_email
             ))
         
         # Enrich with usage data
@@ -187,6 +216,16 @@ async def POST(request: Request, body: CreateCredentialRequest):
         await validate_npm_token(body.token)
     elif body.provider == "pypi":
         await validate_pypi_token(body.token)
+    elif body.provider == "gcp":
+        import json
+        try:
+            sa_data = json.loads(body.token)
+            if "type" not in sa_data or sa_data.get("type") != "service_account":
+                raise HTTPException(status_code=400, detail="Invalid GCP service account JSON")
+            if "private_key" not in sa_data:
+                raise HTTPException(status_code=400, detail="Service account JSON missing private_key")
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON format for GCP service account")
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported provider: {body.provider}")
 
@@ -243,15 +282,25 @@ async def PUT(request: Request, id: int, body: Optional[UpdateCredentialRequest]
                 token = f.decrypt(credential.token_encrypted.encode('utf-8')).decode('utf-8')
                 if credential.provider == "github":
                     await validate_github_token(token)
+                    return {"success": True, "valid": True, "message": "GitHub token is valid"}
                 elif credential.provider == "npm":
                     await validate_npm_token(token)
+                    return {"success": True, "valid": True, "message": "NPM token is valid"}
                 elif credential.provider == "pypi":
                     await validate_pypi_token(token)
+                    return {"success": True, "valid": True, "message": "PyPI token is valid"}
+                elif credential.provider == "gcp":
+                    from app.gcp_client import get_gcp_credentials, GCPAuthError
+                    
+                    creds, project_id = get_gcp_credentials(credential.id)
+                    
+                    return {"success": True, "valid": True, "message": f"GCP SA valid for project: {project_id}"}
                 elif not token.strip():
                     raise Exception("Token is empty")
                 
                 return {"success": True, "valid": True, "message": "Token is valid"}
             except Exception as e:
+                logger.error(f"Verification failed for credential {id}: {type(e).__name__}: {str(e)}")
                 return {"success": False, "valid": False, "message": str(e)}
 
         if body and body.active is not None:

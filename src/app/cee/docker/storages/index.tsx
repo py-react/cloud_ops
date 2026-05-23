@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { DefaultService } from '@/gingerJs_api_client';
 import { VolumeActionRequest } from '@/gingerJs_api_client/models/VolumeActionRequest';
+import { DockerErrorState } from "@/components/docker/DockerErrorState";
 import PageLayout from "@/components/PageLayout";
 
 const fetchStorages = async () => {
@@ -43,10 +44,21 @@ export default function StoragePage() {
   const [storages, setStorages] = useState<StorageInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   const getStorages = async () => {
-    const items = await fetchStorages();
-    setStorages(items);
+    setGlobalError(null);
+    try {
+      const statusRes = await DefaultService.apiDockerSystemsPost({ requestBody: { action: 'status' } }) as any;
+      if (statusRes.error) {
+         setGlobalError(statusRes.message || "Docker Engine Disconnected");
+         return;
+      }
+      const items = await fetchStorages();
+      setStorages(items);
+    } catch (error) {
+      toast.error('Failed to fetch storages');
+    }
   };
 
   useEffect(() => {
@@ -99,6 +111,10 @@ export default function StoragePage() {
     local: storages.filter(s => s.driver === 'local').length,
     other: storages.filter(s => s.driver !== 'local').length,
   };
+
+  if (globalError) {
+    return <DockerErrorState error={globalError} />;
+  }
 
   return (
     <PageLayout

@@ -20,6 +20,8 @@ import { KubeContextTable } from '@/components/kubernetes/settings/contexts/list
 import PageLayout from '@/components/PageLayout';
 import ResourceCard from '@/components/kubernetes/dashboard/resourceCard';
 import { Button } from '@/components/ui/button';
+import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext';
+import { KubeErrorState } from '@/components/kubernetes/KubeErrorState';
 function KubernetesSettings() {
   const {
     currentKubeContext,
@@ -27,6 +29,13 @@ function KubernetesSettings() {
     config,
     isLoading
   } = useContext(KubeContext);
+
+  const { error } = useContext(NamespaceContext);
+
+  if (error) {
+    const isMissing = error.includes("No active Kubernetes configuration found") || error.includes("missing") || error.includes("Forbidden");
+    return <KubeErrorState error={error} isConfigMissing={isMissing} />;
+  }
 
   return (
     <PageLayout

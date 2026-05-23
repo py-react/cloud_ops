@@ -154,19 +154,21 @@ function Clippy({ position, isVisible, message, showBubble }: {
 
 function FixedInputBar({
   isVisible,
-  onSend
+  onSend,
+  isLoading = false
 }: {
   isVisible: boolean;
   onSend: (message: string) => void;
+  isLoading?: boolean;
 }) {
   const [value, setValue] = React.useState('');
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   React.useEffect(() => {
-    if (isVisible && textareaRef.current) {
+    if (isVisible && textareaRef.current && !isLoading) {
       textareaRef.current.focus();
     }
-  }, [isVisible]);
+  }, [isVisible, isLoading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
@@ -175,7 +177,7 @@ function FixedInputBar({
   };
 
   const handleSend = () => {
-    if (value.trim()) {
+    if (value.trim() && !isLoading) {
       onSend(value);
       setValue('');
       if (textareaRef.current) {
@@ -198,6 +200,7 @@ function FixedInputBar({
       <button
         className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
         onClick={() => { }}
+        disabled={isLoading}
       >
         <Paperclip className="w-5 h-5" />
       </button>
@@ -207,20 +210,21 @@ function FixedInputBar({
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder="Ask Clippy..."
+        placeholder={isLoading ? "Thinking..." : "Ask Clippy..."}
         rows={4}
+        disabled={isLoading}
         className="
           flex-1 resize-none rounded-lg border border-gray-300 
           px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400
           focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400
-          bg-gray-50
+          bg-gray-50 disabled:opacity-50
         "
         style={{ minHeight: '40px', maxHeight: '150px' }}
       />
 
       <button
         onClick={handleSend}
-        disabled={!value.trim()}
+        disabled={!value.trim() || isLoading}
         className="
           flex-shrink-0 p-2 rounded-lg transition-colors
           bg-blue-500 text-white hover:bg-blue-600 
@@ -237,11 +241,44 @@ export function ClippyOverlay() {
   const { isVisible, mousePos, hide } = useClippyHotkey();
   const [message, setMessage] = React.useState("I'll help you with that!");
   const [showBubble, setShowBubble] = React.useState(false);
+  const [sessionId, setSessionId] = React.useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleSend = (text: string) => {
+  const handleSend = async (text: string) => {
     console.log('User message:', text);
-    setMessage(`You said: "${text}". I'm here to help!`);
+    setMessage("Thinking...");
     setShowBubble(true);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5001/api/agent/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: text,
+          stream: false
+        })
+      });
+      
+      const data = await response.json();
+      if (data.status === 'success') {
+        if (data.session_id) {
+          setSessionId(data.session_id);
+        }
+        
+        const reply = data.response || "I've processed your request.";
+          
+        setMessage(reply);
+      } else {
+        setMessage(`Error: ${data.message || "Something went wrong"}`);
+      }
+    } catch (error) {
+      console.error("Agent API error:", error);
+      setMessage("Error connecting to the agent.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isVisible) {
@@ -260,7 +297,7 @@ export function ClippyOverlay() {
         message={message}
         showBubble={showBubble}
       />
-      <FixedInputBar isVisible={isVisible} onSend={handleSend} />
+      <FixedInputBar isVisible={isVisible} onSend={handleSend} isLoading={isLoading} />
     </>
   );
 }

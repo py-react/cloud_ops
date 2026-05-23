@@ -38,23 +38,29 @@ export function NamespaceSelector({ size = "default", variant = "outline", class
     fetchNamespaces,
     setSelectedNamespace,
     selectedNamespace,
+    error,
   } = useContext(NamespaceContext);
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    if (namespaces.length === 0 && !isLoading) {
+    if (namespaces.length === 0 && !isLoading && !error) {
       fetchNamespaces();
     }
-  }, [isLoading, namespaces]);
+  }, [isLoading, namespaces.length, error]);
 
   // Filter namespaces based on search term
-  const filteredNamespaces = ([{ metadata: { name: "All" } }] as Namespace[])
-    .concat(namespaces || [])
-    .filter(namespace =>
-      namespace.metadata.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const filteredNamespaces = React.useMemo(() => {
+    const baseNamespaces = [{ metadata: { name: "All" } }] as Namespace[];
+    const safeNamespaces = Array.isArray(namespaces) ? namespaces : [];
+    
+    return baseNamespaces
+      .concat(safeNamespaces)
+      .filter(namespace => 
+        namespace?.metadata?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+  }, [namespaces, searchTerm]);
 
   const handleNamespaceChange = (namespaceName: string) => {
     if (namespaceName === "All") {

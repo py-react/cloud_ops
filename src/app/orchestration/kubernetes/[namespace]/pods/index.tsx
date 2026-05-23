@@ -11,7 +11,8 @@ import { BoxIcon } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import yaml from "js-yaml";
-import { useNavigate } from "react-router-dom";
+import useNavigate from "@/libs/navigate";
+import { KubeErrorState } from "@/components/kubernetes/KubeErrorState";
 
 const columns = [
   { header: "Name", accessor: "name" },
@@ -46,7 +47,9 @@ export default function PodsPage() {
   const [currentToEdit, setCurrentToEdit] = useState<PodData | null>(null);
   const {
     resource: pods,
+    isLoading,
     error,
+    isConfigMissing,
     refetch,
   } = useKubernertesResources({
     nameSpace: selectedNamespace,
@@ -58,8 +61,10 @@ export default function PodsPage() {
   };
 
   // Transform API data to match table format
-  const transformedPods: PodData[] =
-    pods?.map((pod: any) => {
+  const transformedPods = React.useMemo(() => {
+    if (!pods || !Array.isArray(pods)) return [];
+
+    return pods.map((pod: any) => {
       const containerStatuses = pod.status?.containerStatuses || [];
       const totalRestarts = containerStatuses.reduce(
         (sum: number, container: any) => sum + (container.restartCount || 0),
@@ -90,14 +95,11 @@ export default function PodsPage() {
         showEdit: true,
         showDelete: true,
       };
-    }) || [];
+    });
+  }, [pods]);
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-destructive">{error}</div>
-      </div>
-    );
+    return <KubeErrorState error={error} isConfigMissing={isConfigMissing} />;
   }
 
   return (

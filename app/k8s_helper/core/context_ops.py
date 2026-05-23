@@ -8,10 +8,31 @@ import tempfile
 import base64
 import yaml
 
+from app.services.kube_config_service import KubeConfigService
+from sqlmodel import Session
+from app.db_client.db import engine
+from app.db_client.models.kubernetes_configs.kube_config_file import KubeConfigFile
+from datetime import datetime
+
 class ContextOperations:
     """Class containing Context-related operations"""
-    def __init__(self, path:str):
-        self.config_file = os.path.expanduser(path or "~/.kube/config")
+    def __init__(self, path: Optional[str] = None):
+        self.db_config_id = None
+        self.config_file = None
+        
+        if path:
+            self.config_file = os.path.expanduser(path)
+        else:
+            with Session(engine) as session:
+                active = KubeConfigService.get_active_config(session)
+                if active:
+                    if active.is_system_config:
+                        self.config_file = os.path.expanduser(active.system_path)
+                    else:
+                        self.db_config_id = active.id
+                else:
+                    # No active config and no path provided - do not fall back
+                    self.config_file = None
 
     def test_connection(self, configuration: Configuration, auth_header: Optional[str] = None) -> bool:
         """Test if we can connect to the cluster with given configuration"""
@@ -28,39 +49,56 @@ class ContextOperations:
     
     def load_kubeconfig(self) -> Tuple[dict, dict]:
         """Load the kubeconfig file"""
-        if not os.path.exists(self.config_file):
-            return {
-                'apiVersion': 'v1',
-                'kind': 'Config',
-                'current-context': '',
-                'preferences': {},
-                'clusters': [],
-                'contexts': [],
-                'users': []
-            }, {}
+        if self.db_config_id:
+            with Session(engine) as session:
+                kube_file = session.get(KubeConfigFile, self.db_config_id)
+                if not kube_file:
+                    raise ValueError("Active Kubeconfig not found in DB")
+                content = KubeConfigService.decrypt_content(kube_file.content_encrypted)
+                config_dict = yaml.safe_load(content) or {}
+        else:
+            if not self.config_file:
+                raise ValueError("No active Kubernetes configuration selected. Please upload or activate a Kubeconfig in the Control Center.")
             
-        with open(self.config_file, 'r') as f:
-            config_dict = yaml.safe_load(f) or {}
-            if not isinstance(config_dict, dict):
+            if not os.path.exists(self.config_file):
                 config_dict = {}
-            # Ensure the basic structure exists
-            config_dict.setdefault('apiVersion', 'v1')
-            config_dict.setdefault('kind', 'Config')
-            config_dict.setdefault('current-context', '')
-            config_dict.setdefault('preferences', {})
-            config_dict.setdefault('clusters', [])
-            config_dict.setdefault('contexts', [])
-            config_dict.setdefault('users', [])
-            return config_dict, config_dict
+            else:
+                with open(self.config_file, 'r') as f:
+                    config_dict = yaml.safe_load(f) or {}
+            
+        if not isinstance(config_dict, dict):
+            config_dict = {}
+
+        # Ensure the basic structure exists
+        config_dict.setdefault('apiVersion', 'v1')
+        config_dict.setdefault('kind', 'Config')
+        config_dict.setdefault('current-context', '')
+        config_dict.setdefault('preferences', {})
+        config_dict.setdefault('clusters', [])
+        config_dict.setdefault('contexts', [])
+        config_dict.setdefault('users', [])
+        return config_dict, config_dict
     
     def save_kubeconfig(self, config_dict: dict):
         """Save the kubeconfig file"""
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-        
-        # Save with proper yaml formatting
-        with open(self.config_file, 'w') as f:
-            yaml.safe_dump(config_dict, f, default_flow_style=False)
+        if self.db_config_id:
+            with Session(engine) as session:
+                kube_file = session.get(KubeConfigFile, self.db_config_id)
+                if kube_file:
+                    content = yaml.dump(config_dict, default_flow_style=False)
+                    kube_file.content_encrypted = KubeConfigService.encrypt_content(content)
+                    kube_file.updated_at = datetime.utcnow()
+                    session.add(kube_file)
+                    session.commit()
+                    # Reload global config if it's the active one
+                    if kube_file.is_active:
+                        KubeConfigService.load_active_config()
+        else:
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            # Save with proper yaml formatting
+            with open(self.config_file, 'w') as f:
+                yaml.safe_dump(config_dict, f, default_flow_style=False)
 
     def get_current_contex(self):
         try:

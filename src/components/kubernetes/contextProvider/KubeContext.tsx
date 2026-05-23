@@ -98,12 +98,24 @@ export const KubeContextProvider = ({ children }: KubeContextProviderProps) => {
   const fetchconfig = async () => {
     setIsLoading(true);
     try {
-      const response = await DefaultService.apiKubernertesContextGet({
-        action: "all",
-      });
-      setConfig(response as KubeConfig);
-    } catch (err) {
-      toast.error("Failed to fetch services");
+      const res = await fetch("/api/kubernertes/context?action=all");
+      const response = await res.json();
+      
+      if (res.ok && response && response.contexts) {
+        setConfig(response as KubeConfig);
+      } else if (response && response.error) {
+        throw new Error(response.error);
+      } else {
+        throw new Error("Failed to fetch kubeconfig: Invalid format");
+      }
+    } catch (err: any) {
+      let message = "Failed to fetch kubeconfig";
+      if (err.body && err.body.error) {
+        message = err.body.error;
+      } else if (err.message) {
+        message = err.message;
+      }
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

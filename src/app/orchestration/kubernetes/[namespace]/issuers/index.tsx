@@ -2,6 +2,7 @@ import React, { useContext } from 'react'
 import { Button } from "@/components/ui/button"
 import PageLayout from "@/components/PageLayout";
 import { Shield } from "lucide-react";
+import { KubeErrorState } from "@/components/kubernetes/KubeErrorState";
 
 import KubernetesIssuerList, { IssuerType } from '@/components/kubernetes/issuer'
 import { NamespaceContext } from '@/components/kubernetes/contextProvider/NamespaceContext'
@@ -14,16 +15,13 @@ export default function IngressPage() {
   const {
     resource: issuer,
     isLoading,
-    error
+    error,
+    isConfigMissing,
   } = useKubernertesResources({ nameSpace: selectedNamespace, type: "issuer" })
 
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-destructive">{error}</div>
-      </div>
-    );
+    return <KubeErrorState error={error} isConfigMissing={isConfigMissing} />;
   }
 
   return (

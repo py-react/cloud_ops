@@ -27,6 +27,7 @@ class SystemCreate(BaseModel):
     private_key: Optional[str] = None
     os_type: str = "linux"
     connection_type: str = "ssh"
+    connection_port: Optional[int] = None
     provider: Optional[str] = None
 
 
@@ -64,6 +65,64 @@ def _provision_service_key(system_id: int):
         logger.error(f"Auto-provisioning failed for system {system_id}: {e}")
 
 
+def register_system(
+    name: str,
+    hostname: str,
+    ip_address: str,
+    username: Optional[str] = "root",
+    password: Optional[str] = None,
+    private_key: Optional[str] = None,
+    os_type: str = "linux",
+    connection_type: str = "ssh",
+    connection_port: Optional[int] = None,
+    provider: Optional[str] = None,
+    auto_provisioned: bool = False,
+) -> System:
+    """Register a new system and return the system object.
+    
+    If auto_provisioned is True, the system is marked as service_key_deployed
+    and linked to the Bastion Service Identity Key automatically.
+    """
+    if not ENCRYPTION_AVAILABLE and (password or private_key):
+        raise ValueError("Cannot store credentials: encryption key not configured.")
+
+    encrypted_password = None
+    if password:
+        encrypted_password = encrypt(password) if ENCRYPTION_AVAILABLE else None
+
+    encrypted_private_key = None
+    if private_key:
+        encrypted_private_key = encrypt(private_key) if ENCRYPTION_AVAILABLE else None
+
+    resolved_port = connection_port
+    if resolved_port is None:
+        resolved_port = 3389 if connection_type == "rdp" else 22
+
+    with get_session() as db:
+        new_system = System(
+            name=name,
+            hostname=hostname,
+            ip_address=ip_address,
+            username=username,
+            password=encrypted_password,
+            private_key=encrypted_private_key,
+            os_type=os_type,
+            connection_type=connection_type,
+            connection_port=resolved_port,
+            provider=provider,
+        )
+        
+        if auto_provisioned:
+            _, _, key_id = BastionManager.get_or_create_service_key()
+            new_system.service_key_deployed = True
+            new_system.default_key_id = key_id
+        
+        db.add(new_system)
+        db.commit()
+        db.refresh(new_system)
+        return new_system
+
+
 async def GET(request: Request):
     """List all systems — never return passwords or private keys"""
     with get_session() as db:
@@ -87,40 +146,27 @@ async def POST(request: Request, body: SystemCreate, background_tasks: Backgroun
             "message": "Cannot store credentials: encryption key not configured."
         }
 
-    encrypted_password = None
-    if body.password:
-        encrypted_password = encrypt(body.password) if ENCRYPTION_AVAILABLE else None
+    new_system = register_system(
+        name=body.name,
+        hostname=body.hostname,
+        ip_address=body.ip_address,
+        username=body.username,
+        password=body.password,
+        private_key=body.private_key,
+        os_type=body.os_type,
+        connection_type=body.connection_type,
+        connection_port=body.connection_port,
+        provider=body.provider,
+    )
 
-    encrypted_private_key = None
-    if body.private_key:
-        encrypted_private_key = encrypt(body.private_key) if ENCRYPTION_AVAILABLE else None
-
-    with get_session() as db:
-        new_system = System(
-            name=body.name,
-            hostname=body.hostname,
-            ip_address=body.ip_address,
-            username=body.username,
-            password=encrypted_password,
-            private_key=encrypted_private_key,
-            os_type=body.os_type,
-            connection_type=body.connection_type,
-            provider=body.provider,
-        )
-        db.add(new_system)
-        db.commit()
-        db.refresh(new_system)
-        system_id = new_system.id
-
-    # Only provision if password is provided (Managed Key flow)
-    # If private_key is provided, we skip bootstrap and use it directly for sessions
     will_provision = bool(body.password and not body.private_key and body.connection_type == "ssh")
     if will_provision:
-        background_tasks.add_task(_provision_service_key, system_id)
+        background_tasks.add_task(_provision_service_key, new_system.id)
 
     d = new_system.dict()
     d.pop("password", None)
     d.pop("private_key", None)
+
     return {
         "error": False,
         "system": d,

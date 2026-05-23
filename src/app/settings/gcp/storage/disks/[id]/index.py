@@ -1,0 +1,5 @@
+# frontend only
+from fastapi import Request
+
+async def index(request: Request):
+    return {}

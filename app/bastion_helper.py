@@ -1,5 +1,6 @@
 import paramiko
 import io
+import json
 from typing import Optional, Tuple
 from app.db_client.models.ssh_management import SSHKey, System
 from app.db_client.models.service_settings import ServiceSetting
@@ -284,24 +285,72 @@ class BastionManager:
             client.close()
 
     @staticmethod
-    async def handle_ssh_session(websocket, system: System, audit_logger):
-        """Bridge WebSocket to SSH channel using Paramiko. Prefers service key over password."""
+    async def handle_connection(websocket, system: System, audit_logger):
+        """Bridge WebSocket to SSH channel or RDP session based on connection_type."""
         import asyncio
         from fastapi import WebSocketDisconnect
         
-        # Check if this specific system is currently being re-provisioned
         if system.status == "reprovisioning":
             await websocket.send_text("\r\n\x1b[31m[BASTION ERROR] System is currently being re-provisioned after a service key rotation. Please try again in a few moments.\x1b[0m\r\n")
             await websocket.close()
             return
 
-        # Check if the system is active
         if system.status != "active":
             status_label = system.status or 'inactive'
             await websocket.send_text(f"\r\n\x1b[31m[BASTION ERROR] System is currently {status_label}. Please activate it from the dashboard before connecting.\x1b[0m\r\n")
             await websocket.close()
             return
 
+        if system.connection_type == "rdp":
+            await BastionManager._handle_rdp_session(websocket, system, audit_logger)
+        else:
+            await BastionManager._handle_ssh_session_internal(websocket, system, audit_logger)
+
+    @staticmethod
+    async def _handle_rdp_session(websocket, system: System, audit_logger):
+        """Handle RDP connection by sending connection details to the frontend."""
+        try:
+            from app.utils.crypto import decrypt as fernet_decrypt
+
+            password = None
+            if system.password:
+                try:
+                    password = fernet_decrypt(system.password)
+                except Exception:
+                    password = None
+
+            rdp_config = {
+                "type": "rdp_config",
+                "system_id": system.id,
+                "system_name": system.name,
+                "ip_address": system.ip_address,
+                "port": system.connection_port or 3389,
+                "username": system.username or "Administrator",
+                "password": password,
+            }
+            await websocket.send_text(json.dumps(rdp_config))
+            await audit_logger.close()
+            
+            # Keep connection open for potential future signaling
+            while True:
+                try:
+                    await websocket.receive_text()
+                except WebSocketDisconnect:
+                    break
+        except Exception as e:
+            logger.error(f"RDP session error for {system.name}: {e}")
+            try:
+                await websocket.send_text(json.dumps({"type": "error", "message": f"RDP session error: {e}"}))
+            except Exception:
+                pass
+            await audit_logger.close()
+
+    @staticmethod
+    async def _handle_ssh_session_internal(websocket, system: System, audit_logger):
+        """Bridge WebSocket to SSH channel using Paramiko. Prefers service key over password."""
+        import asyncio
+        from fastapi import WebSocketDisconnect
+        
         # Import Fernet decrypt for password fallback
         try:
             from app.utils.crypto import decrypt as fernet_decrypt
@@ -407,6 +456,11 @@ class BastionManager:
         finally:
             await audit_logger.close()
             ssh.close()
+
+    @staticmethod
+    async def handle_ssh_session(websocket, system: System, audit_logger):
+        """Legacy wrapper — delegates to handle_connection for protocol routing."""
+        await BastionManager.handle_connection(websocket, system, audit_logger)
 
 
 

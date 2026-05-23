@@ -9,6 +9,7 @@ import { NamespaceSelector } from '@/components/kubernetes/NamespaceSelector';
 import PageLayout from "@/components/PageLayout";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { KubeErrorState } from "@/components/kubernetes/KubeErrorState";
 
 export default function ResourceTypePage() {
   const { resourceType } = useParams();
@@ -17,6 +18,7 @@ export default function ResourceTypePage() {
   const [resources, setResources] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isConfigMissing, setIsConfigMissing] = useState(false);
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -30,9 +32,21 @@ export default function ResourceTypePage() {
         });
 
         setResources(Array.isArray(result) ? result : []);
-      } catch (error) {
-        console.error('Failed to fetch resources:', error);
-        setError("Failed to fetch resources")
+      } catch (err: any) {
+        console.error('Failed to fetch resources:', err);
+        let message = "Failed to fetch resources";
+        if (err.body && err.body.error) {
+          message = err.body.error;
+          if (err.body.is_active_config_missing) {
+            setIsConfigMissing(true);
+          }
+        } else if (err.message) {
+          message = err.message;
+          if (message.includes("No active Kubernetes configuration found")) {
+            setIsConfigMissing(true);
+          }
+        }
+        setError(message);
         setResources([]);
       } finally {
         setIsLoading(false);
@@ -42,24 +56,27 @@ export default function ResourceTypePage() {
     fetchResources();
   }, [resourceType, isNamespacesLoading, selectedNamespace]);
 
-  const _columns = Object.keys((!isLoading && resources.length) ? resources[0].metadata : {}).reduce((acc, item) => {
-    if (["managedfields", "labels", "annotations", "uid", "resourceversion"].includes(item.toLowerCase())) return acc
-    acc.push({ accessor: `metadata.${item}`, header: item.toUpperCase() })
-    return acc
-  }, [] as { header: string; accessor: string }[])
+  const _columns = React.useMemo(() => {
+    if (isLoading || !resources || resources.length === 0 || !resources[0].metadata) {
+      return [];
+    }
+    return Object.keys(resources[0].metadata).reduce((acc, item) => {
+      if (["managedfields", "labels", "annotations", "uid", "resourceversion"].includes(item.toLowerCase())) return acc;
+      acc.push({ accessor: `metadata.${item}`, header: item.toUpperCase() });
+      return acc;
+    }, [] as { header: string; accessor: string }[]);
+  }, [isLoading, resources]);
 
-  const filteredResources =
-    resources?.filter(
+  const filteredResources = React.useMemo(() => {
+    if (!resources || !Array.isArray(resources)) return [];
+    return resources.filter(
       (resource) =>
-        resource.metadata.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+        resource.metadata?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [resources, searchTerm]);
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-destructive">{error}</div>
-      </div>
-    );
+    return <KubeErrorState error={error} isConfigMissing={isConfigMissing} />;
   }
 
   return (

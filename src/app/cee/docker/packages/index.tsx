@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PackageRunnerForm } from '@/components/docker/packages/forms/PackagePullerForm';
 import { PackageCreatorForm } from '@/components/docker/packages/forms/PackageCreatorForm';
+import { DockerErrorState } from "@/components/docker/DockerErrorState";
 import PageLayout from "@/components/PageLayout";
 import useNavigate from "@/libs/navigate";
 
@@ -61,6 +62,7 @@ const PackagesPage = () => {
   const [packages, setPackages] = useState<PackageInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   const filteredPackages = packages.filter(pkg => 
     pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,7 +71,15 @@ const PackagesPage = () => {
 
   const refreshData = async () => {
     setIsLoading(true);
+    setGlobalError(null);
     try {
+      const statusRes = await DefaultService.apiDockerSystemsPost({ requestBody: { action: 'status' } }) as any;
+      if (statusRes.error) {
+         setGlobalError(statusRes.message || "Docker Engine Disconnected");
+         setIsLoading(false);
+         return;
+      }
+      
       // Phase 1: Fast Summary Load (~8s)
       const res = await fetchPackages(true);
       setPackages(res);
@@ -194,6 +204,10 @@ const PackagesPage = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
+
+  if (globalError) {
+    return <DockerErrorState error={globalError} />;
+  }
 
   return (
     <PageLayout

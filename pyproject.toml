@@ -102,9 +102,15 @@ dependencies = [
     "yarl==1.20.1",
     "paramiko>=3.4.0",
     "pyguacamole>=0.9.0",
-    "kiwijs @ file:///Users/deep/Projects/py-react/render_relay",
+    "kiwijs",
+    "google-cloud-storage>=3.10.1",
+    "google-cloud-billing>=1.19.0",
+    "google-cloud-filestore>=1.16.0",
 ]
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.uv.sources]
+kiwijs = { path = "../render_relay" }

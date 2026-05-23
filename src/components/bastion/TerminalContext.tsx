@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 
+export type ConnectionType = 'ssh' | 'rdp';
+
 export interface TerminalSession {
   id: string;
   systemId: number;
   systemName: string;
+  connectionType: ConnectionType;
 }
 
 interface TerminalContextType {
@@ -25,7 +28,6 @@ export const TerminalProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Initial load from localStorage (Client-only)
   useEffect(() => {
     try {
       const savedSessions = localStorage.getItem(SESSIONS_KEY);
@@ -43,13 +45,11 @@ export const TerminalProvider: React.FC<{ children: ReactNode }> = ({ children }
     setIsLoaded(true);
   }, []);
 
-  // Sync sessions to localStorage - ONLY after initial load is complete
   useEffect(() => {
     if (!isLoaded) return;
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
   }, [sessions, isLoaded]);
 
-  // Sync activeId to localStorage - ONLY after initial load is complete
   useEffect(() => {
     if (!isLoaded) return;
     if (activeId) {
@@ -60,7 +60,6 @@ export const TerminalProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [activeId, isLoaded]);
 
   const addSession = useCallback((data: Omit<TerminalSession, 'id'>) => {
-    // Generate ID first so we can use it in state updates
     const id = `sess-${data.systemId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     
     setSessions(prev => {

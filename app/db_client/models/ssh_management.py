@@ -28,6 +28,7 @@ class System(SQLModel, table=True):
     private_key: Optional[str] = Field(default=None, sa_column=Column(TEXT))  # User-provided identity key
     os_type: str = Field(default="linux")  # linux, windows
     connection_type: str = Field(default="ssh")  # ssh, rdp
+    connection_port: int = Field(default=22)  # 22 for SSH, 3389 for RDP
     provider: Optional[str] = Field(default=None)  # aws, azure, etc.
     status: str = Field(default="active")
     service_key_deployed: bool = Field(default=False, sa_column=Column(BOOLEAN))  # Bastion identity key installed

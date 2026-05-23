@@ -22,27 +22,44 @@ export const useKubernertesResources = ({
   const [isRefetching, setIsRefetching] = useState(false);
   const [isFetched, setIsFetched] = useState(false);
   const [isRefetched, setIsRefetched] = useState(false);
+  const [isConfigMissing, setIsConfigMissing] = useState(false);
 
   const fetchResource = async () => {
-    if (!nameSpace && !type) return;
+    if (!type) return;
     setIsLoading(true);
     setError(null);
+    setIsConfigMissing(false);
     try {
+      // Pass namespace only if it's a non-empty string; undefined = cluster-wide
       const response = await DefaultService.apiKubernertesResourcesTypeGet({
-        namespace: nameSpace,
+        namespace: nameSpace || undefined,
         type,
         fieldSelector,
         labelSelector,
         apiVersion,
       });
-      if (response) {
-        setResource(response as Record<string, any>[]);
+      if (Array.isArray(response)) {
+        setResource(response);
         setIsFetched(true);
+      } else if (response && (response as any).error) {
+        throw new Error((response as any).error);
       } else {
-        throw new Error("Failed to fetch resources");
+        throw new Error("Failed to fetch resources: Invalid response format");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+    } catch (err: any) {
+      let message = "An error occurred";
+      if (err.body && err.body.error) {
+        message = err.body.error;
+        if (err.body.is_active_config_missing) {
+          setIsConfigMissing(true);
+        }
+      } else if (err.message) {
+        message = err.message;
+        if (message.includes("No active Kubernetes configuration found")) {
+          setIsConfigMissing(true);
+        }
+      }
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -67,6 +84,7 @@ export const useKubernertesResources = ({
     isRefetching,
     isFetched,
     isRefetched,
+    isConfigMissing,
     refetch,
   };
 };

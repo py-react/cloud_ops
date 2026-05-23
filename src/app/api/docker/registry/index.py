@@ -458,6 +458,8 @@ def clean_image_name(name: str) -> str:
     return re.sub(r'@sha256:[a-f0-9]{64}$', '', name)
 
 
+from app.github_client.config.registry_config import load_registries
+
 def push_image(
     image_name: str,
     source_tag: str,
@@ -467,14 +469,16 @@ def push_image(
     try:
         # Load configuration
         settings = load_settings()
-        registry_host = settings.get("REGISTRY_HOST")
-        if not registry_host:
+        registries = load_registries(settings)
+        
+        if not registries:
             raise HTTPException(
                 status_code=500, 
-                detail="Registry host not configured"
+                detail="No container registry configured. Please add one in the Control Center."
             )
         
-        registry_url = f"{registry_host}"
+        # Use the first registry (highest priority)
+        registry_url = registries[0].url
         source_image = f"{image_name}:{source_tag}"
         image_name = clean_image_name(image_name)
         repo_name = image_name.replace('/', '-')

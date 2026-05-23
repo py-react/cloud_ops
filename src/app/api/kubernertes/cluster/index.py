@@ -1,4 +1,5 @@
 from fastapi import Request
+from fastapi.responses import JSONResponse
 from app.k8s_helper import KubernetesResourceHelper
 
 
@@ -12,8 +13,7 @@ async def GET(request:Request):
             "status":"success",
             "data":cluster_info
         }
+    except ValueError:
+        raise
     except Exception as e:
-        return {
-            "status":"error",
-            "message":str(e)
-        }
+        return JSONResponse(status_code=500, content={"error": str(e)})

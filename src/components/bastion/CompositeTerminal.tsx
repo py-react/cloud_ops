@@ -1,11 +1,13 @@
 import React from 'react';
 import SSHClient from './SSHClient';
-import { X, Plus, Terminal, LayoutDashboard, Copy } from 'lucide-react';
+import { X, Plus, Terminal, LayoutDashboard, Copy, Monitor } from 'lucide-react';
+import type { ConnectionType } from './TerminalContext';
 
 interface TerminalSession {
   id: string;
   systemId: number;
   systemName: string;
+  connectionType: ConnectionType;
 }
 
 interface CompositeTerminalProps {
@@ -28,9 +30,7 @@ const CompositeTerminal: React.FC<CompositeTerminalProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#010409] text-[#c9d1d9]">
-      {/* Multiplexer Tab Bar */}
       <div className="flex items-center bg-[#161b22] border-b border-[#30363d] px-2 h-12 overflow-x-auto scroller-hide shrink-0">
-        {/* Rapid Navigation Tab */}
         <div
           onClick={() => onSwitchSession('dashboard')}
           className={`flex items-center px-4 h-full cursor-pointer transition-all border-r border-[#30363d] group ${
@@ -53,10 +53,21 @@ const CompositeTerminal: React.FC<CompositeTerminalProps> = ({
             }`}
           >
             <div className="flex items-center">
-              <Terminal size={12} className={`mr-2 ${activeSessionId === session.id ? 'text-[#1f6feb]' : 'group-hover:text-[#1f6feb]'}`} />
+              {session.connectionType === 'rdp' ? (
+                <Monitor size={12} className={`mr-2 ${activeSessionId === session.id ? 'text-[#238636]' : 'group-hover:text-[#238636]'}`} />
+              ) : (
+                <Terminal size={12} className={`mr-2 ${activeSessionId === session.id ? 'text-[#1f6feb]' : 'group-hover:text-[#1f6feb]'}`} />
+              )}
             </div>
             <span className="text-[11px] font-medium mr-3 truncate max-w-[100px]">
               {session.systemName}
+            </span>
+            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded mr-2 ${
+              session.connectionType === 'rdp' 
+                ? 'bg-[#238636]/20 text-[#3fb950]' 
+                : 'bg-[#1f6feb]/20 text-[#58a6ff]'
+            }`}>
+              {session.connectionType}
             </span>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
               <button
@@ -73,7 +84,6 @@ const CompositeTerminal: React.FC<CompositeTerminalProps> = ({
           </div>
         ))}
 
-        {/* Multiplexing Rapid-Add Button */}
         <button 
           type="button"
           className="px-4 h-full hover:bg-[#1f6feb]/10 flex items-center transition-colors text-[#1f6feb] border-r border-[#30363d]"
@@ -87,9 +97,6 @@ const CompositeTerminal: React.FC<CompositeTerminalProps> = ({
         </button>
       </div>
 
-
-
-      {/* Persistent Terminal Viewport */}
       <div className="flex-1 relative bg-[#010409] overflow-hidden">
         {sessions.length === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-[#484f58]">
@@ -107,6 +114,7 @@ const CompositeTerminal: React.FC<CompositeTerminalProps> = ({
               systemId={session.systemId}
               sessionId={session.id}
               userId={userId}
+              connectionType={session.connectionType}
               onClose={() => onCloseSession(session.id)}
             />
           </div>

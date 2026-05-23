@@ -8,6 +8,7 @@ import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 import { useParams } from "react-router-dom";
+import { KubeErrorState } from "@/components/kubernetes/KubeErrorState";
 
 export interface ResourceInfo {
   name: string;
@@ -24,6 +25,7 @@ export default function KubernetesResourcesPage() {
   const [resources, setResources] = useState<ResourceInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isConfigMissing, setIsConfigMissing] = useState(false);
 
 
 
@@ -33,11 +35,22 @@ export default function KubernetesResourcesPage() {
       setError(null);
       try {
         const response = await fetch('/api/kubernertes/resources');
-        if (!response.ok) throw new Error('Failed to fetch resources');
+        if (!response.ok) {
+          try {
+            const errorData = await response.json();
+            throw new Error(errorData.error || errorData.message || 'Failed to fetch resources');
+          } catch (e) {
+            throw new Error(`Failed to fetch resources (Status ${response.status})`);
+          }
+        }
         const data = await response.json();
         setResources(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        let message = err instanceof Error ? err.message : 'An error occurred';
+        setError(message);
+        if (message.includes("No active Kubernetes configuration found") || message.includes("missing")) {
+          setIsConfigMissing(true);
+        }
       } finally {
         setLoading(false);
       }
@@ -88,19 +101,18 @@ export default function KubernetesResourcesPage() {
   };
 
 
-  const filteredResources = resources.filter(resource =>
-    resource.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    resource.kind.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    resource.api_version.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    resource.short_names.includes(searchTerm)
-  );
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-destructive">{error}</div>
-      </div>
+  const filteredResources = React.useMemo(() => {
+    if (!resources || !Array.isArray(resources)) return [];
+    return resources.filter(resource =>
+      (resource.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (resource.kind?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (resource.api_version?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (resource.short_names || []).some(sn => sn.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+  }, [resources, searchTerm]);
+
+  if (error || isConfigMissing) {
+    return <KubeErrorState error={error || "No active Kubernetes configuration found"} isConfigMissing={true} />;
   }
 
   return (

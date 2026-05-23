@@ -14,6 +14,7 @@ import { ContainersTable } from "@/components/docker/containers/list/ContainersT
 import { ContainerRunnerUpdateModal } from "@/components/docker/containers/forms/ContainerRunnerUpdateModal";
 import { ContainerDetails } from "@/components/docker/containers/details/ContainerDetails";
 import { DefaultService, ContainerInfo } from "@/gingerJs_api_client";
+import { DockerErrorState } from "@/components/docker/DockerErrorState";
 import { toast } from "sonner";
 import PageLayout from "@/components/PageLayout";
 
@@ -23,10 +24,18 @@ const ContainersPage = () => {
   const [showRunnerModal, setShowRunnerModal] = useState(false);
   const [editingContainer, setEditingContainer] = useState<ContainerInfo | null>(null);
   const [selectedContainer, setSelectedContainer] = useState<ContainerInfo | null>(null);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   const refetch = async () => {
     setIsLoading(true);
+    setGlobalError(null);
     try {
+      const statusRes = await DefaultService.apiDockerSystemsPost({ requestBody: { action: 'status' } }) as any;
+      if (statusRes.error) {
+         setGlobalError(statusRes.message || "Docker Engine Disconnected");
+         setIsLoading(false);
+         return;
+      }
       const response = await DefaultService.apiDockerContainersGet();
       setData(response.containers || []);
     } catch (error: any) {
@@ -64,6 +73,10 @@ const ContainersPage = () => {
     running: data.filter(c => c && c.status === 'running').length,
     images: Array.from(new Set(data.filter(c => c && c.image).map(c => c.image))).length
   };
+
+  if (globalError) {
+    return <DockerErrorState error={globalError} />;
+  }
 
   return (
     <PageLayout

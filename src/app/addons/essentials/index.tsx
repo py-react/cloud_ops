@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { DynamicAddonCard, DynamicAddon } from '@/components/addons/DynamicAddonCard'
 import { RegisterAddonWizard } from '@/components/addons/RegisterAddonWizard'
 import { MonitoringAddon } from '@/components/addons/monitoring/MonitoringAddon'
+import { HelmErrorState } from '@/components/kubernetes/helm/HelmErrorState'
 
 const CategoryIconMap: Record<string, any> = {
     'Alerting & Notifications': AlertCircle,
@@ -38,11 +39,17 @@ export default function Essentials() {
     const [loading, setLoading] = useState(true)
     const [isRegisterOpen, setIsRegisterOpen] = useState(false)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+    const [helmError, setHelmError] = useState<string | null>(null)
 
     const fetchAddons = async () => {
         try {
             const res = await fetch('/api/addons')
             const result = await res.json()
+            if (result.helm_error) {
+                setHelmError(result.helm_error)
+            } else {
+                setHelmError(null)
+            }
             if (result.data) {
                 setAddons(result.data)
             }
@@ -87,6 +94,10 @@ export default function Essentials() {
             Register Addon
         </Button>
     )
+
+    if (helmError) {
+        return <HelmErrorState error={helmError} />
+    }
 
     return (
         <PageLayout

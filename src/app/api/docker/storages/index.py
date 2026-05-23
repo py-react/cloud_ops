@@ -138,7 +138,7 @@ async def GET(request:Request):
         return {"storages": sorted(volumes, key=lambda x: datetime.fromisoformat(x['created'].replace('Z', '+00:00')),reverse=True)}
     except Exception as e:
         # Return a custom error if listing volumes fails
-        return {"error": True, "message": e.__dict__["explanation"]}
+        return {"error": True, "message": getattr(e, "explanation", str(e))}
 
 async def POST(request: VolumeActionRequest):
     action = request.action
@@ -160,5 +160,5 @@ async def POST(request: VolumeActionRequest):
     
     except Exception as e:
         # Handle the custom exception
-        return {"error": True, "message": e.__dict__["explanation"]}
+        return {"error": True, "message": getattr(e, "explanation", str(e))}
 

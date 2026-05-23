@@ -15,6 +15,9 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
+# Unique version table name for cloud_ops to avoid collisions in shared DBs
+VERSION_TABLE = "alembic_version_cloud_ops"
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -51,6 +54,8 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        version_table=VERSION_TABLE,
+        render_as_batch=True,
     )
 
     with context.begin_transaction():
@@ -64,16 +69,56 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    from app.db_client.db import DATABASE_URL
+    from sqlalchemy import create_engine
+    
+    # Use the centralized DATABASE_URL from our app config
+    connectable = create_engine(
+        DATABASE_URL,
         poolclass=pool.NullPool,
     )
 
+
+
+    # --- SELF-HEALING LOGIC ---
+    # If our app's tables aren't present and we aren't in a migration sub-process,
+    # automatically upgrade to 'head' to establish a baseline.
+    import os
     with connectable.connect() as connection:
+        # --- SQLite Batch Monkeypatch ---
+        # SQLite doesn't support ALTER TABLE directly for many operations.
+        # This shim transparently wraps op calls in a batch context.
+        if connection.dialect.name == 'sqlite':
+            from alembic.operations import Operations
+            
+            original_alter = Operations.alter_column
+            original_add = Operations.add_column
+            original_drop = Operations.drop_column
+            
+            def patched_alter(self, table_name, *args, **kwargs):
+                with self.batch_alter_table(table_name) as batch_op:
+                    return original_alter(batch_op, table_name, *args, **kwargs)
+            
+            def patched_add(self, table_name, *args, **kwargs):
+                with self.batch_alter_table(table_name) as batch_op:
+                    return original_add(batch_op, table_name, *args, **kwargs)
+            
+            def patched_drop(self, table_name, *args, **kwargs):
+                with self.batch_alter_table(table_name) as batch_op:
+                    return original_drop(batch_op, table_name, *args, **kwargs)
+            
+            Operations.alter_column = patched_alter
+            Operations.add_column = patched_add
+            Operations.drop_column = patched_drop
+        # -------------------------------
+
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection, 
+            target_metadata=target_metadata,
+            version_table=VERSION_TABLE,
+            render_as_batch=True
         )
+
 
         with context.begin_transaction():
             context.run_migrations()

@@ -1,7 +1,8 @@
 import asyncio
 import ssl
 import websockets
-from fastapi import FastAPI, Request, WebSocket
+from fastapi import FastAPI, Request, WebSocket, Response
+from fastapi.responses import JSONResponse
 from starlette.websockets import WebSocketDisconnect
 import httpx
 from starlette.responses import Response
@@ -12,6 +13,7 @@ from kubernetes import client, config
 import os
 import json
 from fastapi.routing import APIRoute
+from app.services.kube_config_service import KubeConfigService
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,15 @@ async def cluster_proxy(request: Request, service: str, namespace: str, path: st
                     service_port = plugin.service_port
                     logger.info(f"Intelligent Port Discovery: Using port {service_port} for service '{service}'")
 
-        config.load_config()
+        try:
+            success = KubeConfigService.load_active_config()
+            if not success:
+                return Response(
+                    content="No active Kubernetes configuration found. Please upload or activate a Kubeconfig in the Control Center.", 
+                    status_code=403
+                )
+        except Exception as e:
+            return Response(content=f"Configuration Error: {str(e)}", status_code=400)
             
         configuration = client.Configuration.get_default_copy()
         api_server = configuration.host
@@ -217,7 +227,17 @@ async def cluster_websocket_proxy(websocket: WebSocket):
     path = websocket.path_params.get("path", "")
     
     try:
-        config.load_config()
+        try:
+            success = KubeConfigService.load_active_config()
+            if not success:
+                logger.warning("WebSocket Proxy: No active Kubeconfig found.")
+                await websocket.close(code=1008, reason="No active Kubernetes configuration")
+                return
+        except Exception as e:
+            logger.error(f"WebSocket Proxy Config Error: {e}")
+            await websocket.close(code=1008, reason=str(e))
+            return
+
         configuration = client.Configuration.get_default_copy()
         api_server = configuration.host.replace("https://", "wss://").replace("http://", "ws://")
         
@@ -301,6 +321,42 @@ async def cluster_websocket_proxy(websocket: WebSocket):
 
 # Function to extend the app by adding routes (following your exact pattern)
 def extend_app(app: FastAPI):
+    @app.exception_handler(ValueError)
+    async def value_error_handler(request: Request, exc: ValueError):
+        """Global handler for configuration and validation errors"""
+        error_msg = str(exc)
+        is_k8s_error = any(keyword in error_msg for keyword in ["Kubernetes", "Kubeconfig", "context", "active configuration"])
+        
+        return JSONResponse(
+            status_code=403 if is_k8s_error else 400,
+            content={
+                "error": error_msg,
+                "type": "configuration_error" if is_k8s_error else "validation_error",
+                "instruction": "Please visit the Kubeconfig Management page to set up your cluster connection." if is_k8s_error else None,
+                "is_active_config_missing": is_k8s_error
+            }
+        )
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        """Global fallback handler for unhandled exceptions (e.g., DB connection failures)"""
+        logger.error(f"Global Exception: {str(exc)}", exc_info=True)
+        
+        # Check if it's likely a DB error
+        error_msg = str(exc).lower()
+        is_db_error = any(kw in error_msg for kw in ["connection", "psycopg", "database", "dial-up", "unreachable"])
+        
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "Internal Server Error" if not is_db_error else "Infrastructure/Database Connection Error",
+                "message": str(exc) if is_db_error else "An unexpected error occurred. Please check the logs.",
+                "type": "database_error" if is_db_error else "unhandled_exception",
+                "is_infrastructure_down": is_db_error
+            }
+        )
+
+
     origins = [
         "http://localhost:5001",
         "http://127.0.0.1:5001",
@@ -348,15 +404,26 @@ def extend_app(app: FastAPI):
 
 async def startup(app: FastAPI):
     # Database system seeding (after schema sync)
-    from app.db_client.db import ensure_default_essential_addons, ensure_default_strategies
-    ensure_default_strategies(force=False)
-    # Seed essentials (fetches helm values in user env) - force=True updates existing broken system values
-    ensure_default_essential_addons(force=False)
+    try:
+        from app.db_client.db import create_db_and_tables, ensure_default_essential_addons, ensure_default_strategies
+        # Ensure tables exist (crucial for SQLite)
+        create_db_and_tables()
+        
+        ensure_default_strategies(force=False)
 
-    from app.github_client.poller import get_polling_manager
-    manager = get_polling_manager()
-    # Initialize and sync pollers in the background
-    asyncio.create_task(manager.sync_pollers())
+        # Seed essentials (fetches helm values in user env) - force=True updates existing broken system values
+        ensure_default_essential_addons(force=False)
+    except Exception as e:
+        logger.error(f"Startup Seeding Error: {e}. Platform may be in a limited state if database is unreachable.")
+
+    try:
+        from app.github_client.poller import get_polling_manager
+        manager = get_polling_manager()
+        # Initialize and sync pollers in the background
+        asyncio.create_task(manager.sync_pollers())
+    except Exception as e:
+        logger.error(f"Poller Startup Error: {e}")
+
 
 async def shutdown(app: FastAPI):
     from app.github_client.poller import get_polling_manager

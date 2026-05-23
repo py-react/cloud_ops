@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { DefaultService, NetworkInfo } from '@/gingerJs_api_client';
+import { DockerErrorState } from "@/components/docker/DockerErrorState";
 import PageLayout from "@/components/PageLayout";
 
 const fetchNetworks = async () => {
@@ -41,10 +42,18 @@ export default function NetworkPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   const getNetworks = async () => {
     setLoading(true);
+    setGlobalError(null);
     try {
+      const statusRes = await DefaultService.apiDockerSystemsPost({ requestBody: { action: 'status' } }) as any;
+      if (statusRes.error) {
+         setGlobalError(statusRes.message || "Docker Engine Disconnected");
+         setLoading(false);
+         return;
+      }
       const items = await fetchNetworks();
       setNetworks(items);
     } catch (error) {
@@ -103,6 +112,10 @@ export default function NetworkPage() {
     overlay: networks.filter(n => n.Driver === 'overlay').length,
     other: networks.filter(n => n.Driver !== 'bridge' && n.Driver !== 'overlay').length,
   };
+
+  if (globalError) {
+    return <DockerErrorState error={globalError} />;
+  }
 
   return (
     <PageLayout

@@ -46,4 +46,4 @@ async def index(request:Request):
         return {"error": False,"storageInfo": sorted(volumes, key=lambda x: datetime.fromisoformat(x['created'].replace('Z', '+00:00')),reverse=True)}
     except Exception as e:
         # Return a custom error if listing volumes fails
-        return {"error": True, "message": e.__dict__["explanation"]}
+        return {"error": True, "message": getattr(e, "explanation", str(e))}

@@ -156,16 +156,23 @@ async def bridge_context(host_port: int):
         yield host_port
 
 
+from app.db_client.db import get_session
+from app.services.kube_config_service import KubeConfigService
+
 async def POST(request: Request, body: LoadImageRequest):
     """
     Load a docker image into the current Kind or Minikube cluster.
     """
     try:
         settings = load_settings()
-        kubeconfig_path = settings.get("KUBECONFIG", "~/.kube/config")
         
-        # 1. Provide Context & Cluster Detection
-        context_ops = ContextOperations(kubeconfig_path)
+        with get_session() as session:
+            kubeconfig_path = KubeConfigService.ensure_active_kubeconfig_path(session)
+            if not kubeconfig_path:
+                raise HTTPException(status_code=400, detail="No active Kubernetes configuration found.")
+            
+            # 1. Provide Context & Cluster Detection
+            context_ops = ContextOperations(kubeconfig_path)
         try:
             current_context = context_ops.get_current_contex()
         except:

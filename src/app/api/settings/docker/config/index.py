@@ -16,14 +16,6 @@ async def GET(request: Request):
         configs = list_docker_configs(session)
         
         results = []
-        # Add Local Engine
-        results.append({
-            "id": 0,
-            "name": "Local Engine (Default)",
-            "base_url": "unix:///var/run/docker.sock",
-            "verify": False,
-            "is_default": True
-        })
         
         for c in configs:
             d = c.dict()

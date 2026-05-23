@@ -121,7 +121,8 @@ class KubeconfigGenerator:
     def get_cluster_info(self) -> Dict[str, Any]:
         """Get current cluster information from kubeconfig"""
         try:
-            k8s_config.load_kube_config(api_client=self.api_client)
+            from app.services.kube_config_service import KubeConfigService
+            KubeConfigService.load_active_config()
         except:
             pass
         
@@ -542,27 +543,32 @@ class KubeconfigGenerator:
         ]
     
     def _get_current_cluster(self) -> Dict[str, Any]:
-        """Get current cluster info from kubeconfig"""
+        """Get current cluster info from active config in DB"""
+        from app.services.kube_config_service import KubeConfigService
+        from sqlmodel import Session
+        from app.db_client.db import engine
+        import yaml
+        
         try:
-            import os
-            config_file = os.path.expanduser("~/.kube/config")
-            if os.path.exists(config_file):
-                with open(config_file, 'r') as f:
-                    kubeconfig = yaml.safe_load(f)
-                
-                current_ctx = kubeconfig.get("current-context", "")
-                for ctx in kubeconfig.get("contexts", []):
-                    if ctx.get("name") == current_ctx:
-                        cluster_name = ctx["context"]["cluster"]
-                        for cluster in kubeconfig.get("clusters", []):
-                            if cluster["name"] == cluster_name:
-                                return {
-                                    "context_name": current_ctx,
-                                    "server": cluster["cluster"].get("server", "https://kubernetes.default.svc"),
-                                    "ca_data": cluster["cluster"].get("certificate-authority-data", "")
-                                }
-        except:
-            pass
+            with Session(engine) as session:
+                active = KubeConfigService.get_active_config(session)
+                if active:
+                    content = KubeConfigService.decrypt_content(active.content_encrypted)
+                    kubeconfig = yaml.safe_load(content)
+                    
+                    current_ctx = kubeconfig.get("current-context", "")
+                    for ctx in kubeconfig.get("contexts", []):
+                        if ctx.get("name") == current_ctx:
+                            cluster_name = ctx["context"]["cluster"]
+                            for cluster in kubeconfig.get("clusters", []):
+                                if cluster["name"] == cluster_name:
+                                    return {
+                                        "context_name": current_ctx,
+                                        "server": cluster["cluster"].get("server", "https://kubernetes.default.svc"),
+                                        "ca_data": cluster["cluster"].get("certificate-authority-data", "")
+                                    }
+        except Exception as e:
+            logger.error(f"Error getting current cluster from DB: {e}")
         
         return {
             "context_name": "default",

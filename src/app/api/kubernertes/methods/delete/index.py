@@ -31,9 +31,12 @@ async def POST(request: Request, body: ApplyBody):
                 "processed_yaml": body  # For debugging
             }
         
+    except ValueError:
+        raise
     except Exception as e:
-        return {
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=500, content={
             "success": False,
             "error": str(e)
-        }
+        })
 

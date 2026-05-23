@@ -152,6 +152,7 @@ class ResourceOperations:
 
 
                 # Get resources based on namespace scope
+                print(f"DEBUG: Fetching {resource_type}, namespace: {namespace}, namespaced_resource: {resource.namespaced}")
                 if namespace and resource.namespaced:
                     response = resource.get(namespace=namespace, **params)
                 else:

@@ -5,8 +5,12 @@ from app.k8s_helper.models.resources import ResourceScope, ResourceInfo
 class ResourceResponse(ResourceInfo):
     count:Optional[int]=0
 
-async def GET(scope:Optional[ResourceScope]=ResourceScope.ALL,resources:Optional[str]=None,namespace:Optional[str]=None)->List[ResourceResponse]:
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+async def GET(scope: ResourceScope = ResourceScope.ALL, resources: Optional[str] = None, namespace: Optional[str] = None):
     print("hello")
+    
     try:
         k8s_helper = KubernetesResourceHelper()
         allResources = k8s_helper.get_api_resources(scope=scope)
@@ -29,8 +33,12 @@ async def GET(scope:Optional[ResourceScope]=ResourceScope.ALL,resources:Optional
                     continue
         return filteredResources
         
+    except ValueError:
+        # Re-raise ValueError so global exception handler in main.py catches it
+        raise
     except Exception as e:
-        return {e}, 500
+        # For other unexpected errors, return a structured error
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
     
     

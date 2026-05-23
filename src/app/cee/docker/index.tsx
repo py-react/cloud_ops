@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { MemroryStatsDetail } from "@/components/docker/systemOverview/MemoryStatsDetail";
 import { NetworkStatsDetail } from "@/components/docker/systemOverview/NetworkStatsDetail";
 import { LifecycleChart } from "@/components/docker/systemOverview/LifecycleChart";
+import { DockerErrorState } from "@/components/docker/DockerErrorState";
 import { toast } from "sonner";
 import useNavigate from "@/libs/navigate";
 
@@ -34,6 +35,7 @@ const ContainerListPage: React.FC = () => {
   const [systemInfo, setSystemInfo] = useState<any>({});
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
   const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(true);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   const fetchGranularData = async (action: string, stateKey?: string) => {
     const key = stateKey || action;
@@ -45,11 +47,6 @@ const ContainerListPage: React.FC = () => {
 
       if (!response.error && response.data) {
         setSystemInfo(prev => {
-          // Deep merge or specific mapping
-          // The API returns pieces like { ID: ... } or { Containers: ... }
-          // We need to merge them into the flat 'systemInfo' structure expected by <SystemInfo />
-
-          // Special handling for nested stats structure if consistent with previous SystemInfo component
           if (action === "network_io") {
             return {
               ...prev,
@@ -68,13 +65,18 @@ const ContainerListPage: React.FC = () => {
               }
             };
           }
-
-          // For flat data (general, resources, etc.)
           return { ...prev, ...response.data };
         });
+      } else if (response.error) {
+        if (action === "general" || action === "status" || action === "resources") {
+            setGlobalError(response.message || "Failed to connect to Docker daemon");
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Failed to fetch ${action}`, error);
+      if (action === "general" || action === "status" || action === "resources") {
+          setGlobalError(error.message || "Failed to connect to Docker daemon");
+      }
     } finally {
       setLoadingStates(prev => ({ ...prev, [key]: false }));
     }
@@ -82,10 +84,10 @@ const ContainerListPage: React.FC = () => {
 
   const refreshAll = useCallback(async () => {
     setIsGlobalRefreshing(true);
+    setGlobalError(null);
 
-    // Define all the granular fetches
-    // We run the fast ones in parallel
     const fastActions = [
+      "status",
       "general",
       "resources",
       "containers",
@@ -101,24 +103,23 @@ const ContainerListPage: React.FC = () => {
       "memory_usage"
     ];
 
-    // Trigger fast actions
     const fastPromises = fastActions.map(action => fetchGranularData(action));
-
-    // Trigger heavy actions
     const heavyPromises = heavyActions.map(action => fetchGranularData(action));
 
     await Promise.all([...fastPromises, ...heavyPromises]);
     setIsGlobalRefreshing(false);
   }, []);
 
-  // Initial Fetch on Mount
   useEffect(() => {
     refreshAll();
   }, [refreshAll]);
 
-  // Check if any critical data is loading
   const isLoading = Object.values(loadingStates).some(state => state);
   const navigate = useNavigate();
+
+  if (globalError) {
+    return <DockerErrorState error={globalError} />;
+  }
 
   return (
     <PageLayout

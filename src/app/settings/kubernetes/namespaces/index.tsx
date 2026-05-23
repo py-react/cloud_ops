@@ -19,6 +19,7 @@ import PageLayout from "@/components/PageLayout";
 import ResourceCard from "@/components/kubernetes/dashboard/resourceCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { KubeErrorState } from "@/components/kubernetes/KubeErrorState";
 
 
 export const Namespaces = () => {
@@ -88,6 +89,11 @@ export const Namespaces = () => {
           ?.toLowerCase()
           .includes(limitRangeSearchTerm.toLowerCase())
     ) || [];
+
+  if (error) {
+    const isMissing = error.includes("No active Kubernetes configuration found") || error.includes("missing") || error.includes("Forbidden");
+    return <KubeErrorState error={error} isConfigMissing={isMissing} />;
+  }
 
   return (
     <PageLayout

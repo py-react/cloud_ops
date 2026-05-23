@@ -14,6 +14,7 @@ import { Wizard } from "@/components/wizard/wizard";
 import yaml from "js-yaml"
 import { useParams } from "react-router-dom";
 import useNavigate from "@/libs/navigate";
+import { KubeErrorState } from "@/components/kubernetes/KubeErrorState";
 
 const columns = [
   { header: "Name", accessor: "name" },
@@ -37,6 +38,7 @@ export default function DeploymentsPage() {
   const {
     resource: deployments,
     error,
+    isConfigMissing,
     refetch,
   } = useKubernertesResources({
     nameSpace: selectedNamespace,
@@ -44,9 +46,10 @@ export default function DeploymentsPage() {
   });
 
   // Transform API data to match DeploymentItem type
-  const transformedDeployments =
-    deployments?.map((dep: any) => {
-      // Conditionally set replicas and readyReplicas based on resource type
+  const transformedDeployments = React.useMemo(() => {
+    if (!deployments || !Array.isArray(deployments)) return [];
+    
+    return deployments.map((dep: any) => {
       let replicas = 0;
       let readyReplicas = 0;
       let strategy = "";
@@ -62,9 +65,8 @@ export default function DeploymentsPage() {
       } else if (resourceType === "replicasets") {
         replicas = dep.spec?.replicas || 0;
         readyReplicas = dep.status?.readyReplicas || 0;
-        strategy = "ReplicaSet"; // ReplicaSets don't have update strategies
+        strategy = "ReplicaSet";
       } else {
-        // Default for deployments and other resources
         replicas = dep.spec?.replicas || 0;
         readyReplicas = dep.status?.readyReplicas || 0;
         strategy = dep.spec?.strategy?.type || "RollingUpdate";
@@ -85,7 +87,7 @@ export default function DeploymentsPage() {
           dep.status?.conditions
         ),
         last_applied:
-          dep.metadata?.annotations[
+          dep.metadata?.annotations?.[
           "kubectl.kubernetes.io/last-applied-configuration"
           ],
         fullData: dep,
@@ -93,18 +95,15 @@ export default function DeploymentsPage() {
         showDelete: true,
         showViewDetails: true,
       };
-    }) || [];
+    });
+  }, [deployments, resourceType]);
 
   const handleViewDetails = (deployment: any) => {
     navigate(`/orchestration/kubernetes/${deployment.namespace}/deployments/${type}/${deployment.name}`)
   };
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-destructive">{error}</div>
-      </div>
-    );
+    return <KubeErrorState error={error} isConfigMissing={isConfigMissing} />;
   }
 
   return (

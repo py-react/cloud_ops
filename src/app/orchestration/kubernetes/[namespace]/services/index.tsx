@@ -11,6 +11,7 @@ import { NetworkIcon } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import { ResourceTable } from "@/components/kubernetes/resources/resourceTable";
 import yaml from "js-yaml";
+import { KubeErrorState } from "@/components/kubernetes/KubeErrorState";
 import useNavigate from "@/libs/navigate";
 
 const columns = [
@@ -44,7 +45,9 @@ export default function ServicesPage() {
   const [currentToEdit, setCurrentToEdit] = useState<ServiceData | null>(null);
   const {
     resource: services,
+    isLoading,
     error,
+    isConfigMissing,
     refetch,
   } = useKubernertesResources({
     nameSpace: selectedNamespace,
@@ -84,11 +87,7 @@ export default function ServicesPage() {
     }) || [];
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-destructive">{error}</div>
-      </div>
-    );
+    return <KubeErrorState error={error} isConfigMissing={isConfigMissing} />;
   }
 
   return (

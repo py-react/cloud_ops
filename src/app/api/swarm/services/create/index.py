@@ -1,3 +1,4 @@
+from app.docker_client import clientContext
 import docker
 from pydantic import BaseModel
 from typing import Optional, List, Dict
@@ -42,9 +43,9 @@ class ServiceCreationSpec(BaseModel):
 async def POST(service_data: ServiceCreationSpec):
     try:
         # Initialize Docker client
-        client = docker.from_env()
+        client = clientContext.get_client()
         # Create a new service in the swarm
-        service = client.services.create(**service_data)
+        service = client.services.create(**service_data.model_dump(exclude_unset=True))
         return {"status": "Service created successfully", "service_id": service.id}
-    except docker.errors.APIError as e:
-        return {"error":True,"message": f"Error creating service: {e}"}
+    except (ValueError, docker.errors.APIError, Exception) as e:
+        return {"error":True,"message": f"Error creating service: {str(e)}"}

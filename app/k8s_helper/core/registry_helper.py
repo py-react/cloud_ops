@@ -6,8 +6,9 @@ def access_registry_via_api_proxy(namespace="image-registry", service_name="dock
     """
     Access Docker registry via Kubernetes API proxy - no port forwarding needed
     """
+    from app.services.kube_config_service import KubeConfigService
     try:
-        config.load_config()
+        KubeConfigService.load_active_config()
         
         configuration = client.Configuration.get_default_copy()
         

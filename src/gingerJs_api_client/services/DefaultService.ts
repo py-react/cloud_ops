@@ -3,7 +3,6 @@ import type { ConfigUpdate } from '../models/ConfigUpdate';
 import type { ContextPostData } from '../models/ContextPostData';
 import type { CreateAccessBody } from '../models/CreateAccessBody';
 import type { CreateCredentialRequest } from '../models/CreateCredentialRequest';
-import type { CreateNamespacePayload } from '../models/CreateNamespacePayload';
 import type { CreateQueueJob } from '../models/CreateQueueJob';
 import type { CreateRegistryRequest } from '../models/CreateRegistryRequest';
 import type { CredentialListItem } from '../models/CredentialListItem';
@@ -22,7 +21,6 @@ import type { keys___keyId___DeployRequest } from '../models/keys___keyId___Depl
 import type { keys___keyId___RetryRequest } from '../models/keys___keyId___RetryRequest';
 import type { keys___keyId___RevokeRequest } from '../models/keys___keyId___RevokeRequest';
 import type { LoadImageRequest } from '../models/LoadImageRequest';
-import type { NamespaceInfo } from '../models/NamespaceInfo';
 import type { NetworkCreateParams } from '../models/NetworkCreateParams';
 import type { NetworkCreateResponse } from '../models/NetworkCreateResponse';
 import type { NetworkDeleteParams } from '../models/NetworkDeleteParams';
@@ -30,11 +28,11 @@ import type { NetworkDeleteResponse } from '../models/NetworkDeleteResponse';
 import type { NetworkListResponse } from '../models/NetworkListResponse';
 import type { NetworkUpdateParams } from '../models/NetworkUpdateParams';
 import type { nodes___node_id___NodeSpec } from '../models/nodes___node_id___NodeSpec';
+import type { OnboardingCompleteRequest } from '../models/OnboardingCompleteRequest';
 import type { PollingConfigRequest } from '../models/PollingConfigRequest';
 import type { PollingStatusResponse } from '../models/PollingStatusResponse';
 import type { rbac___id___UpdateAccessBody } from '../models/rbac___id___UpdateAccessBody';
 import type { RepoRequest } from '../models/RepoRequest';
-import type { ResourceResponse } from '../models/ResourceResponse';
 import type { ResourceScope } from '../models/ResourceScope';
 import type { RunContainer } from '../models/RunContainer';
 import type { RunImage } from '../models/RunImage';
@@ -57,77 +55,128 @@ import { request as __request } from '../core/request';
 export type TDataProxyApiDockerHubPathGet = {
                 path: string
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete = {
                 namespace: string
 path: string
 rewriteV2Location?: boolean
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost1 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete1 = {
                 namespace: string
 path: string
 rewriteV2Location?: boolean
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost2 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete2 = {
                 namespace: string
 path: string
 rewriteV2Location?: boolean
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost3 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete3 = {
                 namespace: string
 path: string
 rewriteV2Location?: boolean
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost4 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete4 = {
                 namespace: string
 path: string
 rewriteV2Location?: boolean
 service: string
 servicePort?: number
             }
-export type TDataClusterProxyClusterProxyServiceNamespacePathPost5 = {
+export type TDataClusterProxyClusterProxyServiceNamespacePathDelete5 = {
                 namespace: string
 path: string
 rewriteV2Location?: boolean
 service: string
 servicePort?: number
             }
-export type TDataV2ProxyV2ServiceNamespacePathPost = {
+export type TDataV2ProxyV2ServiceNamespacePathDelete = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPost1 = {
+export type TDataV2ProxyV2ServiceNamespacePathDelete1 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPost2 = {
+export type TDataV2ProxyV2ServiceNamespacePathDelete2 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPost3 = {
+export type TDataV2ProxyV2ServiceNamespacePathDelete3 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPost4 = {
+export type TDataV2ProxyV2ServiceNamespacePathDelete4 = {
                 namespace: string
 path: string
 service: string
             }
-export type TDataV2ProxyV2ServiceNamespacePathPost5 = {
+export type TDataV2ProxyV2ServiceNamespacePathDelete5 = {
                 namespace: string
 path: string
 service: string
+            }
+export type TDataApiV1GcpFilestoreDelete = {
+                instanceId: string
+            }
+export type TDataApiV1GcpFilestoreInstanceIdExpandPost = {
+                instanceId: string
+            }
+export type TDataApiV1GcpComputeDisksDiskNameGet = {
+                diskName: string
+            }
+export type TDataApiV1GcpComputeDisksDiskNameDelete = {
+                diskName: string
+            }
+export type TDataApiV1GcpComputeDisksDiskNameSnapshotPost = {
+                diskName: string
+            }
+export type TDataApiV1GcpComputeDisksDiskNameResizePost = {
+                diskName: string
+            }
+export type TDataApiV1GcpComputeInstancesInstanceNameGet = {
+                instanceName: string
+            }
+export type TDataApiV1GcpComputeInstancesInstanceNameDelete = {
+                instanceName: string
+            }
+export type TDataApiV1GcpComputeInstancesInstanceNameStartPost = {
+                instanceName: string
+            }
+export type TDataApiV1GcpComputeInstancesInstanceNameStopPost = {
+                instanceName: string
+            }
+export type TDataApiV1GcpComputeInstancesInstanceNamePurgePasswordPost = {
+                instanceName: string
+            }
+export type TDataApiV1StorageBucketsBucketNameGet = {
+                bucketName: string
+            }
+export type TDataApiV1StorageBucketsBucketNamePost = {
+                bucketName: string
+            }
+export type TDataApiV1StorageBucketsBucketNameDelete = {
+                bucketName: string
+            }
+export type TDataApiV1StorageBucketsBucketNameObjectsGet = {
+                bucketName: string
+            }
+export type TDataApiV1StorageBucketsBucketNameObjectsDelete = {
+                bucketName: string
+            }
+export type TDataApiV1StorageBucketsBucketNameUploadPost = {
+                bucketName: string
             }
 export type TDataApiPackgesPost = {
                 requestBody: RunImage
@@ -266,9 +315,6 @@ export type TDataApiDockerContainersStatsContainerIdGet = {
 export type TDataApiDockerSystemsPost = {
                 requestBody: SystemInfo
             }
-export type TDataApiKubernertesRbacGet = {
-                namespace?: string
-            }
 export type TDataApiKubernertesRbacPost = {
                 requestBody: CreateAccessBody
             }
@@ -289,23 +335,14 @@ export type TDataApiKubernertesClusterMetricsNamespaceNamespaceGet = {
 export type TDataApiKubernertesClusterNamespaceGet = {
                 labelSelector?: string | null
             }
-export type TDataApiKubernertesClusterNamespacePost = {
-                requestBody: CreateNamespacePayload
-            }
 export type TDataApiKubernertesClusterNamespaceDelete = {
-                name: string
-            }
-export type TDataApiKubernertesMethodsGet = {
-                type: string
+                name?: string | null
             }
 export type TDataApiKubernertesMethodsApplyPost = {
                 requestBody: ApplyBody
             }
 export type TDataApiKubernertesMethodsDeletePost = {
                 requestBody: ApplyBody
-            }
-export type TDataApiKubernertesContextGet = {
-                action: 'all' | 'current'
             }
 export type TDataApiKubernertesContextPost = {
                 requestBody: ContextPostData
@@ -316,16 +353,16 @@ namespace: string
             }
 export type TDataApiKubernertesIngressGet = {
                 ingressName?: string | null
-namespace: string
+namespace?: string | null
             }
 export type TDataApiKubernertesSecretsGet = {
-                namespace: string
+                namespace?: string | null
 secretName?: string | null
             }
 export type TDataApiKubernertesResourcesGet = {
                 namespace?: string | null
 resources?: string | null
-scope?: ResourceScope | null
+scope?: ResourceScope
             }
 export type TDataApiKubernertesResourcesTypeGet = {
                 apiVersion?: string | null
@@ -351,36 +388,21 @@ name?: string | null
 namespace?: string | null
 type: string
             }
-export type TDataApiKubernertesUserGet = {
-                namespace?: string | null
-            }
 export type TDataApiKubernertesNamespacesNamespaceGet = {
                 namespace: string
             }
 export type TDataApiKubernertesPodsGet = {
-                namespace: string
+                namespace?: string | null
 podName?: string | null
             }
 export type TDataApiKubernertesServiceGet = {
-                namespace: string
+                namespace?: string | null
 serviceName?: string | null
-            }
-export type TDataApiKubernertesLimitRangeGet = {
-                namespace?: string | null
-            }
-export type TDataApiKubernertesResourceQuotaGet = {
-                namespace?: string | null
             }
 export type TDataApiKubernertesDeploymentsGet = {
                 deploymentName?: string | null
-namespace: string
+namespace?: string | null
 resourceType?: string | null
-            }
-export type TDataApiKubernertesFlowV1Get = {
-                namespace: string
-            }
-export type TDataApiKubernertesFlowV2Get = {
-                namespace: string
             }
 export type TDataApiBastionKeysPost = {
                 requestBody: KeyCreate
@@ -410,6 +432,9 @@ export type TDataApiBastionSystemsSystemIdDelete = {
                 systemId: number
             }
 export type TDataApiBastionSystemsSystemIdPatch = {
+                systemId: number
+            }
+export type TDataApiBastionSystemsSystemIdRdpFileGet = {
                 systemId: number
             }
 export type TDataApiIntegrationGithubReposPost = {
@@ -514,6 +539,9 @@ export type TDataApiLibraryHistoryGet = {
 commitHash?: string | null
 envName?: string | null
             }
+export type TDataApiSystemOnboardingPost = {
+                requestBody: OnboardingCompleteRequest
+            }
 export type TDataApiQueuePost = {
                 requestBody: RunQueue
             }
@@ -550,6 +578,9 @@ export type TDataApiSystemsPost = {
 export type TDataApiQueueJobPost = {
                 requestBody: CreateQueueJob
             }
+export type TDataComputeInstanceNameGet = {
+                instanceName: string
+            }
 
 export class DefaultService {
 
@@ -583,7 +614,7 @@ path,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost(data: TDataClusterProxyClusterProxyServiceNamespacePathPost): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathDelete(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -592,7 +623,7 @@ service,
 servicePort = 80,
 } = data;
 		return __request(OpenAPI, {
-			method: 'POST',
+			method: 'DELETE',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -614,100 +645,7 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost1(data: TDataClusterProxyClusterProxyServiceNamespacePathPost1): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-rewriteV2Location = true,
-service,
-servicePort = 80,
-} = data;
-		return __request(OpenAPI, {
-			method: 'GET',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			query: {
-				service_port: servicePort, rewrite_v2_location: rewriteV2Location
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).
- * Uses intelligent port discovery: if port is 80 (default), it looks up the
- * actual service port in the Addon Registry.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost2(data: TDataClusterProxyClusterProxyServiceNamespacePathPost2): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-rewriteV2Location = true,
-service,
-servicePort = 80,
-} = data;
-		return __request(OpenAPI, {
-			method: 'PATCH',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			query: {
-				service_port: servicePort, rewrite_v2_location: rewriteV2Location
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).
- * Uses intelligent port discovery: if port is 80 (default), it looks up the
- * actual service port in the Addon Registry.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost3(data: TDataClusterProxyClusterProxyServiceNamespacePathPost3): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-rewriteV2Location = true,
-service,
-servicePort = 80,
-} = data;
-		return __request(OpenAPI, {
-			method: 'HEAD',
-			url: '/cluster/proxy/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			query: {
-				service_port: servicePort, rewrite_v2_location: rewriteV2Location
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * Cluster Proxy
-	 * Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).
- * Uses intelligent port discovery: if port is 80 (default), it looks up the
- * actual service port in the Addon Registry.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost4(data: TDataClusterProxyClusterProxyServiceNamespacePathPost4): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathDelete1(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -738,7 +676,7 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static clusterProxyClusterProxyServiceNamespacePathPost5(data: TDataClusterProxyClusterProxyServiceNamespacePathPost5): CancelablePromise<unknown> {
+	public static clusterProxyClusterProxyServiceNamespacePathDelete2(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete2): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -747,7 +685,100 @@ service,
 servicePort = 80,
 } = data;
 		return __request(OpenAPI, {
-			method: 'DELETE',
+			method: 'POST',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			query: {
+				service_port: servicePort, rewrite_v2_location: rewriteV2Location
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).
+ * Uses intelligent port discovery: if port is 80 (default), it looks up the
+ * actual service port in the Addon Registry.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathDelete3(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete3): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+rewriteV2Location = true,
+service,
+servicePort = 80,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PATCH',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			query: {
+				service_port: servicePort, rewrite_v2_location: rewriteV2Location
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).
+ * Uses intelligent port discovery: if port is 80 (default), it looks up the
+ * actual service port in the Addon Registry.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathDelete4(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete4): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+rewriteV2Location = true,
+service,
+servicePort = 80,
+} = data;
+		return __request(OpenAPI, {
+			method: 'HEAD',
+			url: '/cluster/proxy/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			query: {
+				service_port: servicePort, rewrite_v2_location: rewriteV2Location
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Cluster Proxy
+	 * Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).
+ * Uses intelligent port discovery: if port is 80 (default), it looks up the
+ * actual service port in the Addon Registry.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static clusterProxyClusterProxyServiceNamespacePathDelete5(data: TDataClusterProxyClusterProxyServiceNamespacePathDelete5): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+rewriteV2Location = true,
+service,
+servicePort = 80,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
 			url: '/cluster/proxy/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -768,14 +799,14 @@ servicePort = 80,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPost(data: TDataV2ProxyV2ServiceNamespacePathPost): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathDelete(data: TDataV2ProxyV2ServiceNamespacePathDelete): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'POST',
+			method: 'DELETE',
 			url: '/v2/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -793,82 +824,7 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPost1(data: TDataV2ProxyV2ServiceNamespacePathPost1): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'GET',
-			url: '/v2/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * V2 Proxy
-	 * Specialized proxy for Docker Registry V2 API.
- * Always uses port 5000 and the /v2 prefix.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static v2ProxyV2ServiceNamespacePathPost2(data: TDataV2ProxyV2ServiceNamespacePathPost2): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'PATCH',
-			url: '/v2/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * V2 Proxy
-	 * Specialized proxy for Docker Registry V2 API.
- * Always uses port 5000 and the /v2 prefix.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static v2ProxyV2ServiceNamespacePathPost3(data: TDataV2ProxyV2ServiceNamespacePathPost3): CancelablePromise<unknown> {
-		const {
-namespace,
-path,
-service,
-} = data;
-		return __request(OpenAPI, {
-			method: 'HEAD',
-			url: '/v2/{service}/{namespace}/{path}',
-			path: {
-				service, namespace, path
-			},
-			errors: {
-				422: `Validation Error`,
-			},
-		});
-	}
-
-	/**
-	 * V2 Proxy
-	 * Specialized proxy for Docker Registry V2 API.
- * Always uses port 5000 and the /v2 prefix.
-	 * @returns unknown Successful Response
-	 * @throws ApiError
-	 */
-	public static v2ProxyV2ServiceNamespacePathPost4(data: TDataV2ProxyV2ServiceNamespacePathPost4): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathDelete1(data: TDataV2ProxyV2ServiceNamespacePathDelete1): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
@@ -893,14 +849,89 @@ service,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static v2ProxyV2ServiceNamespacePathPost5(data: TDataV2ProxyV2ServiceNamespacePathPost5): CancelablePromise<unknown> {
+	public static v2ProxyV2ServiceNamespacePathDelete2(data: TDataV2ProxyV2ServiceNamespacePathDelete2): CancelablePromise<unknown> {
 		const {
 namespace,
 path,
 service,
 } = data;
 		return __request(OpenAPI, {
-			method: 'DELETE',
+			method: 'POST',
+			url: '/v2/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * V2 Proxy
+	 * Specialized proxy for Docker Registry V2 API.
+ * Always uses port 5000 and the /v2 prefix.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static v2ProxyV2ServiceNamespacePathDelete3(data: TDataV2ProxyV2ServiceNamespacePathDelete3): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'PATCH',
+			url: '/v2/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * V2 Proxy
+	 * Specialized proxy for Docker Registry V2 API.
+ * Always uses port 5000 and the /v2 prefix.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static v2ProxyV2ServiceNamespacePathDelete4(data: TDataV2ProxyV2ServiceNamespacePathDelete4): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'HEAD',
+			url: '/v2/{service}/{namespace}/{path}',
+			path: {
+				service, namespace, path
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * V2 Proxy
+	 * Specialized proxy for Docker Registry V2 API.
+ * Always uses port 5000 and the /v2 prefix.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static v2ProxyV2ServiceNamespacePathDelete5(data: TDataV2ProxyV2ServiceNamespacePathDelete5): CancelablePromise<unknown> {
+		const {
+namespace,
+path,
+service,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
 			url: '/v2/{service}/{namespace}/{path}',
 			path: {
 				service, namespace, path
@@ -921,6 +952,631 @@ service,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/v2/',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1AuthLogoutPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/auth/logout',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1AuthMeGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/auth/me',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1AuthCallbackGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/auth/callback',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1AuthLoginGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/auth/login',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpProvisionPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/gcp/provision',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpProjectsGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/gcp/projects',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpFilestoreGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/gcp/filestore',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpFilestoreDelete(data: TDataApiV1GcpFilestoreDelete): CancelablePromise<unknown> {
+		const {
+instanceId,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/v1/gcp/filestore',
+			query: {
+				instance_id: instanceId
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpFilestoreInstanceIdExpandPost(data: TDataApiV1GcpFilestoreInstanceIdExpandPost): CancelablePromise<unknown> {
+		const {
+instanceId,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/gcp/filestore/{instance_id}/expand',
+			path: {
+				instance_id: instanceId
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Dynamically fetch all GCP metadata options via SDK discovery services.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpMetaGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/gcp/meta',
+		});
+	}
+
+	/**
+	 * Fetch live GCP image catalog with official API resolution.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeImagesGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/gcp/compute/images',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeDiskTypesGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/gcp/compute/disk-types',
+		});
+	}
+
+	/**
+	 * List all persistent disks in the selected project.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeDisksGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/gcp/compute/disks',
+		});
+	}
+
+	/**
+	 * Create a new persistent disk.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeDisksPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/gcp/compute/disks',
+		});
+	}
+
+	/**
+	 * Get details for a specific persistent disk.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeDisksDiskNameGet(data: TDataApiV1GcpComputeDisksDiskNameGet): CancelablePromise<unknown> {
+		const {
+diskName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/gcp/compute/disks/{disk_name}',
+			path: {
+				disk_name: diskName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Delete a persistent disk.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeDisksDiskNameDelete(data: TDataApiV1GcpComputeDisksDiskNameDelete): CancelablePromise<unknown> {
+		const {
+diskName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/v1/gcp/compute/disks/{disk_name}',
+			path: {
+				disk_name: diskName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeDisksDiskNameSnapshotPost(data: TDataApiV1GcpComputeDisksDiskNameSnapshotPost): CancelablePromise<unknown> {
+		const {
+diskName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/gcp/compute/disks/{disk_name}/snapshot',
+			path: {
+				disk_name: diskName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeDisksDiskNameResizePost(data: TDataApiV1GcpComputeDisksDiskNameResizePost): CancelablePromise<unknown> {
+		const {
+diskName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/gcp/compute/disks/{disk_name}/resize',
+			path: {
+				disk_name: diskName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * List all instances across all zones in the selected project.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeInstancesGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/gcp/compute/instances',
+		});
+	}
+
+	/**
+	 * Provision a new VM instance using SSH key authentication.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeInstancesPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/gcp/compute/instances',
+		});
+	}
+
+	/**
+	 * Fetch deep details for a specific VM instance.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeInstancesInstanceNameGet(data: TDataApiV1GcpComputeInstancesInstanceNameGet): CancelablePromise<unknown> {
+		const {
+instanceName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/gcp/compute/instances/{instance_name}',
+			path: {
+				instance_name: instanceName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Trigger asynchronous deletion of a VM instance using background tasks.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeInstancesInstanceNameDelete(data: TDataApiV1GcpComputeInstancesInstanceNameDelete): CancelablePromise<unknown> {
+		const {
+instanceName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/v1/gcp/compute/instances/{instance_name}',
+			path: {
+				instance_name: instanceName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Start a stopped or terminated VM instance.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeInstancesInstanceNameStartPost(data: TDataApiV1GcpComputeInstancesInstanceNameStartPost): CancelablePromise<unknown> {
+		const {
+instanceName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/gcp/compute/instances/{instance_name}/start',
+			path: {
+				instance_name: instanceName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Stop a running VM instance (graceful shutdown).
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeInstancesInstanceNameStopPost(data: TDataApiV1GcpComputeInstancesInstanceNameStopPost): CancelablePromise<unknown> {
+		const {
+instanceName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/gcp/compute/instances/{instance_name}/stop',
+			path: {
+				instance_name: instanceName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Purge the temporary admin onboarding password for a compute instance.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1GcpComputeInstancesInstanceNamePurgePasswordPost(data: TDataApiV1GcpComputeInstancesInstanceNamePurgePasswordPost): CancelablePromise<unknown> {
+		const {
+instanceName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/gcp/compute/instances/{instance_name}/purge-password',
+			path: {
+				instance_name: instanceName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * List all GCS buckets.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageBucketsGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/storage/buckets',
+		});
+	}
+
+	/**
+	 * Create a new GCS bucket.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageBucketsPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/storage/buckets',
+		});
+	}
+
+	/**
+	 * List all objects inside a bucket with optional prefix (folder) filtering.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageBucketsBucketNameGet(data: TDataApiV1StorageBucketsBucketNameGet): CancelablePromise<unknown> {
+		const {
+bucketName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/storage/buckets/{bucket_name}',
+			path: {
+				bucket_name: bucketName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Create a virtual folder (zero-byte placeholder blob ending with '/').
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageBucketsBucketNamePost(data: TDataApiV1StorageBucketsBucketNamePost): CancelablePromise<unknown> {
+		const {
+bucketName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/storage/buckets/{bucket_name}',
+			path: {
+				bucket_name: bucketName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Delete a bucket and all its contents.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageBucketsBucketNameDelete(data: TDataApiV1StorageBucketsBucketNameDelete): CancelablePromise<unknown> {
+		const {
+bucketName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/v1/storage/buckets/{bucket_name}',
+			path: {
+				bucket_name: bucketName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Generate a signed download URL for an object (expires in 15 min).
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageBucketsBucketNameObjectsGet(data: TDataApiV1StorageBucketsBucketNameObjectsGet): CancelablePromise<unknown> {
+		const {
+bucketName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/storage/buckets/{bucket_name}/objects',
+			path: {
+				bucket_name: bucketName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Delete a specific object from a bucket.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageBucketsBucketNameObjectsDelete(data: TDataApiV1StorageBucketsBucketNameObjectsDelete): CancelablePromise<unknown> {
+		const {
+bucketName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/v1/storage/buckets/{bucket_name}/objects',
+			path: {
+				bucket_name: bucketName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Upload a file to a specific bucket with an optional folder prefix.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageBucketsBucketNameUploadPost(data: TDataApiV1StorageBucketsBucketNameUploadPost): CancelablePromise<unknown> {
+		const {
+bucketName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/storage/buckets/{bucket_name}/upload',
+			path: {
+				bucket_name: bucketName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageExplorerGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/storage/explorer',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageExplorerPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/storage/explorer',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageExplorerObjectsGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/storage/explorer/objects',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageExplorerObjectsPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/storage/explorer/objects',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageExplorerObjectsDelete(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/v1/storage/explorer/objects',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1StorageExplorerFoldersPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/v1/storage/explorer/folders',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1PricingEstimateGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/pricing/estimate',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiV1PricingDebugGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/v1/pricing/debug',
 		});
 	}
 
@@ -1711,19 +2367,10 @@ requestBody,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesRbacGet(data: TDataApiKubernertesRbacGet = {}): CancelablePromise<unknown> {
-		const {
-namespace = 'default',
-} = data;
-		return __request(OpenAPI, {
+	public static apiKubernertesRbacGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/kubernertes/rbac',
-			query: {
-				namespace
-			},
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 
@@ -1890,18 +2537,10 @@ labelSelector,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesClusterNamespacePost(data: TDataApiKubernertesClusterNamespacePost): CancelablePromise<unknown> {
-		const {
-requestBody,
-} = data;
-		return __request(OpenAPI, {
+	public static apiKubernertesClusterNamespacePost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'POST',
 			url: '/api/kubernertes/cluster/namespace',
-			body: requestBody,
-			mediaType: 'application/json',
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 
@@ -1909,7 +2548,7 @@ requestBody,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesClusterNamespaceDelete(data: TDataApiKubernertesClusterNamespaceDelete): CancelablePromise<unknown> {
+	public static apiKubernertesClusterNamespaceDelete(data: TDataApiKubernertesClusterNamespaceDelete = {}): CancelablePromise<unknown> {
 		const {
 name,
 } = data;
@@ -1929,19 +2568,10 @@ name,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesMethodsGet(data: TDataApiKubernertesMethodsGet): CancelablePromise<unknown> {
-		const {
-type,
-} = data;
-		return __request(OpenAPI, {
+	public static apiKubernertesMethodsGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/kubernertes/methods',
-			query: {
-				type
-			},
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 
@@ -1987,19 +2617,10 @@ requestBody,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesContextGet(data: TDataApiKubernertesContextGet): CancelablePromise<unknown> {
-		const {
-action,
-} = data;
-		return __request(OpenAPI, {
+	public static apiKubernertesContextGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/kubernertes/context',
-			query: {
-				action
-			},
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 
@@ -2050,7 +2671,7 @@ namespace,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesIngressGet(data: TDataApiKubernertesIngressGet): CancelablePromise<unknown> {
+	public static apiKubernertesIngressGet(data: TDataApiKubernertesIngressGet = {}): CancelablePromise<unknown> {
 		const {
 ingressName,
 namespace,
@@ -2072,7 +2693,7 @@ namespace,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesSecretsGet(data: TDataApiKubernertesSecretsGet): CancelablePromise<unknown> {
+	public static apiKubernertesSecretsGet(data: TDataApiKubernertesSecretsGet = {}): CancelablePromise<unknown> {
 		const {
 namespace,
 secretName,
@@ -2090,14 +2711,14 @@ secretName,
 	}
 
 	/**
-	 * @returns ResourceResponse Successful Response
+	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesResourcesGet(data: TDataApiKubernertesResourcesGet = {}): CancelablePromise<Array<ResourceResponse>> {
+	public static apiKubernertesResourcesGet(data: TDataApiKubernertesResourcesGet = {}): CancelablePromise<unknown> {
 		const {
 namespace,
 resources,
-scope,
+scope = 'all',
 } = data;
 		return __request(OpenAPI, {
 			method: 'GET',
@@ -2132,7 +2753,7 @@ type,
 				type
 			},
 			query: {
-				namespace, api_version: apiVersion, field_selector: fieldSelector, label_selector: labelSelector
+				namespace, field_selector: fieldSelector, label_selector: labelSelector, api_version: apiVersion
 			},
 			errors: {
 				422: `Validation Error`,
@@ -2223,19 +2844,10 @@ type,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesUserGet(data: TDataApiKubernertesUserGet = {}): CancelablePromise<unknown> {
-		const {
-namespace,
-} = data;
-		return __request(OpenAPI, {
+	public static apiKubernertesUserGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/kubernertes/user',
-			query: {
-				namespace
-			},
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 
@@ -2275,7 +2887,7 @@ namespace,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesPodsGet(data: TDataApiKubernertesPodsGet): CancelablePromise<unknown> {
+	public static apiKubernertesPodsGet(data: TDataApiKubernertesPodsGet = {}): CancelablePromise<unknown> {
 		const {
 namespace,
 podName,
@@ -2293,11 +2905,47 @@ podName,
 	}
 
 	/**
+	 * List all available Kubeconfigs.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiKubernertesConfigsGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/kubernertes/configs',
+		});
+	}
+
+	/**
+	 * Handle adding, activating, or switching contexts in a Kubeconfig.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiKubernertesConfigsPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/kubernertes/configs',
+		});
+	}
+
+	/**
+	 * Delete a Kubeconfig file from the database.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiKubernertesConfigsDelete(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'DELETE',
+			url: '/api/kubernertes/configs',
+		});
+	}
+
+	/**
 	 * Get detailed information for all services or a specific service in a namespace, with bubbled-up events.
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesServiceGet(data: TDataApiKubernertesServiceGet): CancelablePromise<unknown> {
+	public static apiKubernertesServiceGet(data: TDataApiKubernertesServiceGet = {}): CancelablePromise<unknown> {
 		const {
 namespace,
 serviceName,
@@ -2318,19 +2966,10 @@ serviceName,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesLimitRangeGet(data: TDataApiKubernertesLimitRangeGet = {}): CancelablePromise<unknown> {
-		const {
-namespace,
-} = data;
-		return __request(OpenAPI, {
+	public static apiKubernertesLimitRangeGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/kubernertes/limit-range',
-			query: {
-				namespace
-			},
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 
@@ -2338,19 +2977,10 @@ namespace,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesResourceQuotaGet(data: TDataApiKubernertesResourceQuotaGet = {}): CancelablePromise<unknown> {
-		const {
-namespace,
-} = data;
-		return __request(OpenAPI, {
+	public static apiKubernertesResourceQuotaGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/kubernertes/resource-quota',
-			query: {
-				namespace
-			},
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 
@@ -2359,7 +2989,7 @@ namespace,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesDeploymentsGet(data: TDataApiKubernertesDeploymentsGet): CancelablePromise<unknown> {
+	public static apiKubernertesDeploymentsGet(data: TDataApiKubernertesDeploymentsGet = {}): CancelablePromise<unknown> {
 		const {
 deploymentName,
 namespace,
@@ -2381,39 +3011,21 @@ resourceType,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesFlowV1Get(data: TDataApiKubernertesFlowV1Get): CancelablePromise<unknown> {
-		const {
-namespace,
-} = data;
-		return __request(OpenAPI, {
+	public static apiKubernertesFlowV1Get(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/kubernertes/flow/v1',
-			query: {
-				namespace
-			},
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 
 	/**
-	 * @returns NamespaceInfo Successful Response
+	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
-	public static apiKubernertesFlowV2Get(data: TDataApiKubernertesFlowV2Get): CancelablePromise<NamespaceInfo> {
-		const {
-namespace,
-} = data;
-		return __request(OpenAPI, {
+	public static apiKubernertesFlowV2Get(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/api/kubernertes/flow/v2',
-			query: {
-				namespace
-			},
-			errors: {
-				422: `Validation Error`,
-			},
 		});
 	}
 
@@ -2665,6 +3277,27 @@ systemId,
 		return __request(OpenAPI, {
 			method: 'PATCH',
 			url: '/api/bastion/systems/{systemId}',
+			path: {
+				systemId
+			},
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * Generates a secure, memory-isolated RDP initialization manifest stream.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiBastionSystemsSystemIdRdpFileGet(data: TDataApiBastionSystemsSystemIdRdpFileGet): CancelablePromise<unknown> {
+		const {
+systemId,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/bastion/systems/{systemId}/rdp-file',
 			path: {
 				systemId
 			},
@@ -3500,6 +4133,60 @@ envName,
 	 * @returns unknown Successful Response
 	 * @throws ApiError
 	 */
+	public static apiSystemInstallGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/system/install',
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiSystemInstallPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/system/install',
+		});
+	}
+
+	/**
+	 * Check if onboarding is required for the current user's tenant.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiSystemOnboardingGet(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/api/system/onboarding',
+		});
+	}
+
+	/**
+	 * Mark onboarding as completed for the current user's tenant.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static apiSystemOnboardingPost(data: TDataApiSystemOnboardingPost): CancelablePromise<unknown> {
+		const {
+requestBody,
+} = data;
+		return __request(OpenAPI, {
+			method: 'POST',
+			url: '/api/system/onboarding',
+			body: requestBody,
+			mediaType: 'application/json',
+			errors: {
+				422: `Validation Error`,
+			},
+		});
+	}
+
+	/**
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
 	public static apiQueueGet(): CancelablePromise<unknown> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -4031,6 +4718,127 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static settingsGcpGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpStorageGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/storage',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpStorageBucketsGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/storage/buckets',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpStorageBucketsIdGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/storage/buckets/{id}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpStorageFilestoresGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/storage/filestores',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpStorageFilestoresIdGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/storage/filestores/{id}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpStorageDisksGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/storage/disks',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpStorageDisksIdGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/storage/disks/{id}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpComputeGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/compute',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpComputeInstancesGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/compute/instances',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsGcpComputeInstancesInstanceNameGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/gcp/compute/instances/{instance_name}',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static settingsKubernetesGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -4068,6 +4876,17 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/settings/kubernetes/namespaces',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static settingsKubernetesConfigsGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/settings/kubernetes/configs',
 		});
 	}
 
@@ -4189,6 +5008,27 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/addons/essentials',
+		});
+	}
+
+	/**
+	 * Server-side props loader for the VM Details page.
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static computeInstanceNameGet(data: TDataComputeInstanceNameGet): CancelablePromise<string> {
+		const {
+instanceName,
+} = data;
+		return __request(OpenAPI, {
+			method: 'GET',
+			url: '/compute/{instance_name}',
+			path: {
+				instance_name: instanceName
+			},
+			errors: {
+				422: `Validation Error`,
+			},
 		});
 	}
 
@@ -4482,6 +5322,17 @@ requestBody,
 	 * @returns string Successful Response
 	 * @throws ApiError
 	 */
+	public static loginGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/login',
+		});
+	}
+
+	/**
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
 	public static ceeGet(): CancelablePromise<string> {
 				return __request(OpenAPI, {
 			method: 'GET',
@@ -4563,6 +5414,32 @@ requestBody,
 				return __request(OpenAPI, {
 			method: 'GET',
 			url: '/cee/docker/hub',
+		});
+	}
+
+	/**
+	 * Explicitly accept the request object. 
+ * KiwiJs view_func expects this to be passed down correctly.
+	 * @returns string Successful Response
+	 * @throws ApiError
+	 */
+	public static onboardingGet(): CancelablePromise<string> {
+				return __request(OpenAPI, {
+			method: 'GET',
+			url: '/onboarding',
+		});
+	}
+
+	/**
+	 * Livereload Notify
+	 * Internal endpoint: DevChangeHandler POSTs here to trigger browser notifications.
+	 * @returns unknown Successful Response
+	 * @throws ApiError
+	 */
+	public static livereloadNotifyLiveReloadNotifyPost(): CancelablePromise<unknown> {
+				return __request(OpenAPI, {
+			method: 'POST',
+			url: '/__live_reload_notify',
 		});
 	}
 

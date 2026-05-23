@@ -100,10 +100,15 @@ def find_pods_using_secret(namespace: str, secret_name: str, api_core: client.Co
             referencing_pods.append(pod_info)
     return referencing_pods
 
-async def GET(request: Request, namespace: str, secret_name: Optional[str] = None):
+async def GET(namespace: Optional[str] = None, secret_name: Optional[str] = None):
     """Get detailed information for all secrets or a specific secret in a namespace, with bubbled-up events."""
+    
+    if not namespace:
+        return JSONResponse(status_code=400, content={"error": "Namespace is required"})
+        
     try:
-        config.load_config()
+        from app.services.kube_config_service import KubeConfigService
+        KubeConfigService.load_active_config()
         api_core = client.CoreV1Api()
         if secret_name:
             try:
@@ -150,5 +155,9 @@ async def GET(request: Request, namespace: str, secret_name: Optional[str] = Non
                 "secrets": secret_infos,
                 "events": all_events
             })
+    except ValueError:
+        raise
     except ApiException as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})

@@ -1,3 +1,4 @@
+from app.docker_client import clientContext
 import docker
 from typing import Optional
 from pydantic import BaseModel
@@ -24,9 +25,9 @@ class SwarmUpdateSpec(BaseModel):
 async def PUT(params: SwarmUpdateSpec):
     try:
         # Initialize Docker client
-        client = docker.from_env()
+        client = clientContext.get_client()
         # Update swarm configuration with the provided parameters
         success = client.swarm.update(**params.model_dump(exclude_unset=True))
         return {"status": "Swarm updated successfully", "result": success}
-    except docker.errors.APIError as e:
-        return {"error":True,"message": f"Error updating swarm: {e}"}
+    except (ValueError, docker.errors.APIError, Exception) as e:
+        return {"error":True,"message": f"Error updating swarm: {str(e)}"}

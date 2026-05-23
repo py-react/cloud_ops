@@ -23,7 +23,7 @@ COPY requirements.txt package.json package-lock.json ./
 RUN python3 -m venv /app/venv
 ENV PATH="/app/venv/bin:$PATH"
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install git+https://github.com/py-react/render_relay.git --force-reinstall
+    pip install kiwijs --force-reinstall
 
 # 2. Install Node deps locally into /app/node_modules
 #    Using `npm ci` for reproducible installs from package-lock.json

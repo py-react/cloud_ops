@@ -11,7 +11,7 @@ from app.db_client.controllers.docker_config.docker_config import (
 from app.db_client.models.registry_config import RegistryConfig
 from sqlmodel import select
 from app.github_client.core.allowed_repo import AllowedRepoUtils
-from app.k8s_helper.core.context_ops import ContextOperations
+from app.services.kube_config_service import KubeConfigService
 from app.db_client.models.ssh_management import System, SSHKey
 from kiwijs.utils import load_settings
 
@@ -47,15 +47,6 @@ async def fetch_docker_engines():
             active_config = get_active_docker_config(session)
             
             engines = []
-            # Local Engine (ID 0)
-            engines.append({
-                "id": 0,
-                "name": "Local Engine",
-                "base_url": "unix:///var/run/docker.sock",
-                "is_active": active_config is None,
-                "is_default": True
-            })
-            
             for c in configs:
                 engines.append({
                     "id": c.id,
@@ -108,27 +99,41 @@ async def fetch_cicd_data():
         return {"error": str(e)}
 
 async def fetch_k8s_contexts():
-    """Fetch Kubernetes context list and current active context."""
+    """Fetch Kubernetes context list and current active context from Vault."""
     try:
-        settings = load_settings()
-        config_path = settings.get("KUBECONFIG", "~/.kube/config")
-        context_ops = ContextOperations(path=config_path)
-        
-        # Use to_thread for the synchronous kubeconfig read
-        data = await asyncio.to_thread(context_ops.get_contexts)
-        
-        contexts = []
-        for ctx in data.get("contexts", []):
-            contexts.append({
-                "name": ctx["name"],
-                "is_active": ctx["name"] == data["current_context"]
-            })
+        with get_session() as session:
+            active_config = KubeConfigService.get_active_config(session)
+            if not active_config:
+                return {
+                    "contexts": [],
+                    "current_context": None,
+                    "total": 0
+                }
             
-        return {
-            "contexts": contexts,
-            "current_context": data["current_context"],
-            "total": len(contexts)
-        }
+            import yaml
+            if active_config.is_system_config:
+                import os
+                path = os.path.expanduser(active_config.system_path)
+                with open(path, 'r') as f:
+                    config_dict = yaml.safe_load(f)
+            else:
+                content = KubeConfigService.decrypt_content(active_config.content_encrypted)
+                config_dict = yaml.safe_load(content)
+                
+            current_context = config_dict.get('current-context')
+            
+            contexts = []
+            for ctx in config_dict.get("contexts", []):
+                contexts.append({
+                    "name": ctx["name"],
+                    "is_active": ctx["name"] == current_context
+                })
+                
+            return {
+                "contexts": contexts,
+                "current_context": current_context,
+                "total": len(contexts)
+            }
     except Exception as e:
         return {"error": str(e)}
 

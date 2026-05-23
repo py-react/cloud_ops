@@ -684,10 +684,17 @@ def fetch_namespace_hierarchy(namespace: str) -> Dict:
         raise Exception(f"Error fetching resources: {e}")
 
 # FastAPI asynchronous handler to retrieve namespace hierarchy.
-async def GET(request: Request, namespace: str):
+async def GET(request: Request):
+    namespace = request.query_params.get("namespace")
+    if not namespace:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=400, content={"error": "Missing namespace"})
     # Load Kubernetes configuration (assumes kubeconfig is set up locally)
     try:
-        config.load_kube_config()
+        from app.services.kube_config_service import KubeConfigService
+        KubeConfigService.load_active_config()
+    except ValueError:
+        raise
     except Exception as e:
         raise Exception(f"Error loading kubeconfig: {e}")
     # Fetch the hierarchical structure of the namespace

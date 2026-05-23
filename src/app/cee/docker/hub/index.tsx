@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutGrid, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ImageList } from '@/components/hubRegistry/ImageList';
 import { SearchBar } from '@/components/hubRegistry/SearchBar';
@@ -6,6 +6,8 @@ import PageLayout from '@/components/PageLayout';
 import { useDockerImages } from '@/components/hubRegistry/hooks/useDockerImages';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DefaultService } from '@/gingerJs_api_client';
+import { DockerErrorState } from "@/components/docker/DockerErrorState";
 
 const ContainerListPage = () => {
   const {
@@ -19,6 +21,26 @@ const ContainerListPage = () => {
     setSearchQuery,
     setCurrentPage,
   } = useDockerImages();
+
+  const [globalError, setGlobalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkDockerStatus = async () => {
+      try {
+        const statusRes = await DefaultService.apiDockerSystemsPost({ requestBody: { action: 'status' } }) as any;
+        if (statusRes.error) {
+           setGlobalError(statusRes.message || "Docker Engine Disconnected");
+        }
+      } catch (e) {
+        setGlobalError("Failed to verify Docker Engine status");
+      }
+    };
+    checkDockerStatus();
+  }, []);
+
+  if (globalError) {
+    return <DockerErrorState error={globalError} />;
+  }
 
   return (
     <PageLayout

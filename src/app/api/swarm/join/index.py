@@ -1,3 +1,4 @@
+from app.docker_client import clientContext
 import docker
 from typing import List, Optional
 from pydantic import BaseModel
@@ -12,7 +13,7 @@ class SwarmJoinParams(BaseModel):
 
 async def POST(params: SwarmJoinParams):
     try:
-        client = docker.from_env()
+        client = clientContext.get_client()
         # Join the swarm with given parameters
         success = client.swarm.join(
             remote_addrs=params.remote_addrs,
@@ -22,5 +23,5 @@ async def POST(params: SwarmJoinParams):
             data_path_addr=params.data_path_addr
         )
         return {"status": "Node joined swarm successfully", "result": success}
-    except docker.errors.APIError as e:
-        return {"error":True,"message": f"Error joining swarm: {e}"}
+    except (ValueError, docker.errors.APIError, Exception) as e:
+        return {"error":True,"message": f"Error joining swarm: {str(e)}"}

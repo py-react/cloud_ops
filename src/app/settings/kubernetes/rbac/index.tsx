@@ -44,6 +44,7 @@ import {
 import PageLayout from "@/components/PageLayout";
 import { NamespaceContext } from "@/components/kubernetes/contextProvider/NamespaceContext";
 import { useContext } from "react";
+import { KubeErrorState } from "@/components/kubernetes/KubeErrorState";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -634,7 +635,7 @@ const AccessFormStep3 = ({ watch }: { watch: any }) => {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const RBACPage = () => {
-    const { selectedNamespace, namespaces, fetchNamespaces } = useContext(NamespaceContext);
+    const { selectedNamespace, namespaces, fetchNamespaces, error } = useContext(NamespaceContext);
 
     const [users, setUsers] = useState<UserAccess[]>([]);
     const [loading, setLoading] = useState(false);
@@ -1021,6 +1022,11 @@ users:
 
     const activeUsers = users.filter((u) => u.is_active);
     const revokedUsers = users.filter((u) => !u.is_active);
+
+    if (error) {
+        const isMissing = error.includes("No active Kubernetes configuration found") || error.includes("missing") || error.includes("Forbidden");
+        return <KubeErrorState error={error} isConfigMissing={isMissing} />;
+    }
 
     return (
         <PageLayout

@@ -30,15 +30,19 @@ def _decrypt_val(val: Optional[str]) -> Optional[str]:
         return val # Fallback to plaintext if decryption fails
 
 def create_docker_config(session: Session, data: DockerConfigType) -> DockerConfig:
+    # Check if there are any existing configs
+    existing_config = session.exec(select(DockerConfig).where(DockerConfig.soft_delete == False)).first()
+    is_first = existing_config is None
+    
     config = DockerConfig(
         name=data.name,
         base_url=data.base_url,
         client_cert=_encrypt_val(data.client_cert),
         client_key=_encrypt_val(data.client_key),
         ca_cert=_encrypt_val(data.ca_cert),
-        verify=data.verify if data.verify is not None else True, # Reverted to original logic for verify
-        status=data.status or "active", # Reverted to original logic for status
-        is_active=data.is_active or False
+        verify=data.verify if data.verify is not None else True,
+        status=data.status or "active",
+        is_active=is_first if data.is_active is None else data.is_active
     )
     session.add(config)
     session.commit()

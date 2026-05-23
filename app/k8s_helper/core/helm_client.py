@@ -46,9 +46,9 @@ class HelmClient:
     def __init__(self, kubeconfig_path: Optional[str] = None):
         """
         Args:
-            kubeconfig_path: Absolute path to a kubeconfig file.  When provided
-                it is passed as --kubeconfig to all cluster-facing helm commands.
-                Falls back to KUBECONFIG env var or ~/.kube/config when None.
+            kubeconfig_path: Absolute path to a managed kubeconfig file.
+                This is REQUIRED for all cluster-facing operations.
+                The platform no longer falls back to system-wide configurations.
         """
         self.kubeconfig_path = kubeconfig_path
 
@@ -75,12 +75,17 @@ class HelmClient:
     def _run_cluster(self, cmd: List[str]) -> str:
         """Run a helm command that requires Kubernetes cluster access.
         
-        Injects --kubeconfig when a path is known so helm never defaults to
-        http://localhost:8080.
+        Injects --kubeconfig. This is MANDATORY to ensure helm never falls back
+        to the system-wide ~/.kube/config or http://localhost:8080.
         """
-        if self.kubeconfig_path:
-            # Insert right after 'helm <subcommand>'
-            cmd = cmd[:2] + ["--kubeconfig", self.kubeconfig_path] + cmd[2:]
+        if not self.kubeconfig_path:
+            raise RuntimeError(
+                f"Managed kubeconfig path is required for cluster operation: {' '.join(cmd)}. "
+                "The platform must maintain its own source of truth for Kubernetes state."
+            )
+            
+        # Insert right after 'helm <subcommand>'
+        cmd = cmd[:2] + ["--kubeconfig", self.kubeconfig_path] + cmd[2:]
         return self._run(cmd)
 
     # ------------------------------------------------------------------
@@ -166,12 +171,12 @@ class HelmClient:
             raise
 
     def list_releases(self, namespace: str = "default") -> List[Dict[str, Any]]:
-        output = self._run_cluster(["helm", "list", "--namespace", namespace, "-a", "-o", "json"])
+        output = self._run_cluster(["helm", "list", "--namespace", namespace, "-o", "json"])
         return json.loads(output)
 
     def list_all_releases(self) -> List[Dict[str, Any]]:
         """List all releases in all namespaces."""
-        output = self._run_cluster(["helm", "list", "-A", "-a", "-o", "json"])
+        output = self._run_cluster(["helm", "list", "-A", "-o", "json"])
         return json.loads(output)
 
     def get_chart_values(self, repo_name: str, repo_url: str, chart: str) -> str:

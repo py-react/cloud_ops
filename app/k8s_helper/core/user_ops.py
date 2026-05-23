@@ -7,26 +7,71 @@ import yaml
 
 from pydantic import BaseModel, Field
 
+import logging
+from datetime import datetime
+from app.services.kube_config_service import KubeConfigService
+from app.db_client.models.kubernetes_configs.kube_config_file import KubeConfigFile
+import yaml
+from sqlmodel import Session
+from app.db_client.db import engine
+
+logger = logging.getLogger(__name__)
+
 class UserOperations:
-    def __init__(self,api_client: client.ApiClient = None, path: Optional[str] = None):
-        # Expand and load kubeconfig
-        self.config_file = os.path.expanduser(path or "~/.kube/config")
-        # Load into kubernetes client
-        config.load_kube_config(config_file=self.config_file)
-        self.api_client = api_client or client.ApiClient()
-        self._load_kubeconfig()
+    def __init__(self, api_client: client.ApiClient = None, path: Optional[str] = None):
+        """
+        Initialize UserOperations.
+        If no path is provided, it attempts to load the active config from the database.
+        """
+        self.api_client = api_client
+        self.db_config_id = None
+        self._kcfg = None
+
+        if path:
+            self.config_file = os.path.expanduser(path)
+            config.load_kube_config(config_file=self.config_file)
+            self._load_from_file()
+        else:
+            # Try to load active from DB
+            with Session(engine) as session:
+                active = KubeConfigService.get_active_config(session)
+                if active:
+                    self.db_config_id = active.id
+                    content = KubeConfigService.decrypt_content(active.content_encrypted)
+                    self._kcfg = yaml.safe_load(content)
+                    config.kube_config.load_kube_config_from_dict(self._kcfg)
+                    logger.info(f"UserOperations initialized with DB config: {active.name}")
+                else:
+                    raise ValueError("No active Kubernetes configuration found. Please upload or activate a Kubeconfig in the Control Center.")
+
+        self.api_client = self.api_client or client.ApiClient()
         self.rbac_api = client.RbacAuthorizationV1Api(self.api_client)
         self.core_V1_Api = client.CoreV1Api(self.api_client)
 
     # ─── KUBECONFIG USER CRUD ─────────────────────────────────────────────────────
 
-    def _load_kubeconfig(self):
+    def _load_from_file(self):
         with open(self.config_file, 'r') as f:
             self._kcfg = yaml.safe_load(f)
 
     def _save_kubeconfig(self):
-        with open(self.config_file, 'w') as f:
-            yaml.safe_dump(self._kcfg, f)
+        if self.db_config_id:
+            # Save back to DB
+            with Session(engine) as session:
+                kube_file = session.get(KubeConfigFile, self.db_config_id)
+                if kube_file:
+                    content = yaml.dump(self._kcfg)
+                    kube_file.content_encrypted = KubeConfigService.encrypt_content(content)
+                    kube_file.updated_at = datetime.utcnow()
+                    session.add(kube_file)
+                    session.commit()
+                    # Reload global config if it's the active one
+                    if kube_file.is_active:
+                        KubeConfigService.load_active_config()
+        else:
+            # Save to file
+            with open(self.config_file, 'w') as f:
+                yaml.safe_dump(self._kcfg, f)
 
     def list_users(self) -> List[Dict]:
         users = []

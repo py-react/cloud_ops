@@ -1,15 +1,16 @@
 from fastapi import Request, HTTPException
-from sqlmodel import select
+from sqlmodel import select, Session
 from app.db_client.db import get_session
 from app.db_client.models.addon_plugin.addon_plugin import AddonPlugin
 from app.k8s_helper.core.helm_client import HelmClient
 from kiwijs.utils import load_settings
 import os
 
-def _get_helm_client() -> HelmClient:
-    """Create a HelmClient using the KUBECONFIG from app settings."""
-    settings = load_settings()
-    kubeconfig_path = os.path.expanduser(settings.get("KUBECONFIG", "~/.kube/config"))
+from app.services.kube_config_service import KubeConfigService
+
+def _get_helm_client(session: Session) -> HelmClient:
+    """Create a HelmClient using the active KUBECONFIG from the database."""
+    kubeconfig_path = KubeConfigService.ensure_active_kubeconfig_path(session)
     return HelmClient(kubeconfig_path=kubeconfig_path)
 
 async def GET(request: Request):
@@ -21,32 +22,34 @@ async def GET(request: Request):
     """
     action = request.query_params.get("action")
     
-    if action == "fetch_values":
-        repo_name  = request.query_params.get("repo_name", "").strip()
-        repo_url   = request.query_params.get("repo_url", "").strip()
-        chart_name = request.query_params.get("chart_name", "").strip()
-        
-        if not repo_name or not repo_url or not chart_name:
-            raise HTTPException(status_code=400, detail="repo_name, repo_url, and chart_name are required")
-        
-        try:
-            helm = _get_helm_client()
-            yaml_values = helm.get_chart_values(repo_name, repo_url, chart_name)
-            return {"values": yaml_values}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to fetch chart values: {str(e)}")
-    
-    # Bulk fetch all Helm releases once for efficiency
-    helm = _get_helm_client()
-    try:
-        all_releases = helm.list_all_releases()
-        # Create a lookup map for quick access: {(name, namespace): release_dict}
-        release_map = {(r['name'], r['namespace']): r for r in all_releases}
-    except Exception as e:
-        logger.warning(f"Failed to bulk-list helm releases: {e}")
-        release_map = {}
-
     with get_session() as session:
+        if action == "fetch_values":
+            repo_name  = request.query_params.get("repo_name", "").strip()
+            repo_url   = request.query_params.get("repo_url", "").strip()
+            chart_name = request.query_params.get("chart_name", "").strip()
+            
+            if not repo_name or not repo_url or not chart_name:
+                raise HTTPException(status_code=400, detail="repo_name, repo_url, and chart_name are required")
+            
+            try:
+                helm = _get_helm_client(session)
+                yaml_values = helm.get_chart_values(repo_name, repo_url, chart_name)
+                return {"values": yaml_values}
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to fetch chart values: {str(e)}")
+        
+        # Bulk fetch all Helm releases once for efficiency
+        helm = _get_helm_client(session)
+        helm_error = None
+        try:
+            all_releases = helm.list_all_releases()
+            # Create a lookup map for quick access: {(name, namespace): release_dict}
+            release_map = {(r['name'], r['namespace']): r for r in all_releases}
+        except Exception as e:
+            print(f"Failed to bulk-list helm releases: {e}")
+            release_map = {}
+            helm_error = str(e)
+
         plugins = session.exec(select(AddonPlugin)).all()
         result = []
         for p in plugins:
@@ -66,7 +69,7 @@ async def GET(request: Request):
             
             result.append(p_dict)
             
-        return {"data": result}
+        return {"data": result, "helm_error": helm_error}
         
 async def POST(request: Request):
     """Handle creation, install, or uninstall based on action"""
@@ -95,7 +98,7 @@ async def POST(request: Request):
                 raise HTTPException(status_code=404, detail="Plugin not found")
                 
             try:
-                helm = _get_helm_client()
+                helm = _get_helm_client(session)
                 helm.add_repo(plugin.helm_repo_name, plugin.helm_repo_url)
                 helm.update_repos()
             except Exception as e:
@@ -129,7 +132,7 @@ async def POST(request: Request):
                 raise HTTPException(status_code=404, detail="Plugin not found")
                 
             try:
-                helm = _get_helm_client()
+                helm = _get_helm_client(session)
                 helm.uninstall_chart(plugin.name, plugin.namespace)
                 return {"status": "success", "message": f"{plugin.name} uninstalled."}
             except Exception as e:

@@ -9,6 +9,8 @@ import {
     Lock,
     Package,
     Terminal,
+    Upload,
+    FileJson,
 } from 'lucide-react';
 import { DefaultService } from '@/gingerJs_api_client';
 import { toast } from 'sonner';
@@ -18,6 +20,7 @@ import { ResourceCard } from "@/components/kubernetes/dashboard/resourceCard";
 import { ResourceTable } from '@/components/kubernetes/resources/resourceTable';
 import FormWizard from '@/components/wizard/form-wizard';
 import * as z from 'zod';
+import { useFormContext } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,7 +47,7 @@ import PageLayout from "@/components/PageLayout";
 interface CredentialItem {
     id: number;
     name: string;
-    provider: 'github' | 'npm' | 'pypi';
+    provider: 'github' | 'npm' | 'pypi' | 'gcp';
     active: boolean;
     created_at: string;
     last_used_at?: string;
@@ -55,18 +58,61 @@ interface CredentialItem {
 
 const credentialSchema = z.object({
     name: z.string().min(1, "Display name is required"),
-    provider: z.enum(['github', 'npm', 'pypi']),
+    provider: z.enum(['github', 'npm', 'pypi', 'gcp']),
     token: z.string().min(1, "Token is required").superRefine((val, ctx) => {
         // We'll handle refined validation in the submit logic or via dynamic schema switching if needed
         // For now, let's just ensure it's not empty. Basic validation is handled in the backend anyway.
     }),
 });
 
-const CredentialForm = ({ control, watch }: { control: any, watch: any }) => {
+const CredentialForm = () => {
+    const { control, watch, setValue } = useFormContext();
     const provider = watch('provider');
+    const tokenValue = watch('token');
+    const [fileName, setFileName] = useState<string | null>(null);
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            const json = JSON.parse(text);
+            
+            if (!json.type || json.type !== 'service_account') {
+                toast.error('Invalid GCP Service Account JSON file');
+                return;
+            }
+            
+            setValue('token', text);
+            setFileName(file.name);
+            toast.success(`Loaded ${file.name} successfully`);
+        } catch (err) {
+            toast.error('Failed to parse JSON file');
+        }
+    };
+
+    const hasFile = fileName || (provider === 'gcp' && tokenValue);
 
     return (
         <div className="space-y-6">
+            <FormField
+                control={control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Display Name <RequiredBadge /></FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Production GitHub Token" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                            A friendly name to identify this credential.
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
             <FormField
                 control={control}
                 name="provider"
@@ -98,6 +144,12 @@ const CredentialForm = ({ control, watch }: { control: any, watch: any }) => {
                                         <span>PyPI / Pip Token</span>
                                     </div>
                                 </SelectItem>
+                                <SelectItem value="gcp">
+                                    <div className="flex items-center gap-2">
+                                        <Zap className="w-3.5 h-3.5 text-orange-500" />
+                                        <span>GCP Service Account</span>
+                                    </div>
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         <FormDescription>
@@ -108,41 +160,74 @@ const CredentialForm = ({ control, watch }: { control: any, watch: any }) => {
                 )}
             />
 
-            <FormField
-                control={control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Display Name <RequiredBadge /></FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., Production Build Token" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                            A friendly name to identify this token in the system.
-                        </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <FormField
-                control={control}
-                name="token"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Secret Token <RequiredBadge /></FormLabel>
-                        <FormControl>
-                            <Input type="password" placeholder="Paste your secret token here..." {...field} className="font-mono" />
-                        </FormControl>
-                        <FormDescription>
-                            {provider === 'github' && "GitHub tokens usually start with 'ghp_'. Required scopes: repo, workflow."}
-                            {provider === 'npm' && "Scoped or Classic NPM tokens for package publication."}
-                            {provider === 'pypi' && "PyPI API tokens for package uploads."}
-                        </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            {provider === 'gcp' ? (
+                <FormField
+                    control={control}
+                    name="token"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Service Account Key File <RequiredBadge /></FormLabel>
+                            
+                            {!hasFile ? (
+                                <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:bg-muted/30 transition-colors cursor-pointer">
+                                    <label className="cursor-pointer">
+                                        <FileJson className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                                        <p className="text-sm font-medium mb-1">Drop GCP Service Account JSON here</p>
+                                        <p className="text-xs text-muted-foreground mb-3">or click to browse</p>
+                                        <input 
+                                            type="file" 
+                                            accept=".json" 
+                                            onChange={handleFileUpload}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                                        <FileJson className="w-5 h-5 text-emerald-600" />
+                                        <span className="text-sm font-medium text-emerald-700">{fileName || 'Service Account JSON loaded'}</span>
+                                        <Button 
+                                            type="button" 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="ml-auto text-muted-foreground hover:text-red-500"
+                                            onClick={() => { setFileName(null); field.onChange(''); }}
+                                        >
+                                            Clear
+                                        </Button>
+                                    </div>
+                                    <input type="hidden" {...field} />
+                                </div>
+                            )}
+                            
+                            <FormDescription className="mt-2">
+                                Download from GCP Console: IAM & Admin → Service Accounts → Keys → Add Key → Create new key (JSON)
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            ) : (
+                <FormField
+                    control={control}
+                    name="token"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Secret Token <RequiredBadge /></FormLabel>
+                            <FormControl>
+                                <Input type="password" placeholder="Paste your secret token here..." {...field} className="font-mono" />
+                            </FormControl>
+                            <FormDescription>
+                                {provider === 'github' && "GitHub tokens usually start with 'ghp_'. Required scopes: repo, workflow."}
+                                {provider === 'npm' && "Scoped or Classic NPM tokens for package publication."}
+                                {provider === 'pypi' && "PyPI API tokens for package uploads."}
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
 
             <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl text-primary/80 text-[11px] font-medium flex gap-3">
                 <ShieldCheck className="w-4 h-4 shrink-0 text-primary" />
@@ -159,7 +244,7 @@ const CredentialsHubPage = () => {
     const [currentStep, setCurrentStep] = useState('details');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [idToDelete, setIdToDelete] = useState<number | null>(null);
-    const [verificationStatus, setVerificationStatus] = useState<Record<number, 'unverified' | 'valid' | 'invalid' | 'loading'>>({});
+    const [verificationStatus, setVerificationStatus] = useState<Record<number, { status: 'unverified' | 'valid' | 'invalid' | 'loading', error?: string }>>({});
 
     const fetchCredentials = async () => {
         setLoading(true);
@@ -212,19 +297,20 @@ const CredentialsHubPage = () => {
 
     const handleVerify = async (id: number, silent = false) => {
         if (!silent) toast.loading("Verifying token...", { id: `verify-${id}` });
-        setVerificationStatus(prev => ({ ...prev, [id]: 'loading' }));
+        setVerificationStatus(prev => ({ ...prev, [id]: { status: 'loading' } }));
         try {
             const res: any = await DefaultService.apiIntegrationCredentialsPut({ id, requestBody: { verify: true } });
             if (res.valid) {
                 if (!silent) toast.success("Token is valid", { id: `verify-${id}` });
-                setVerificationStatus(prev => ({ ...prev, [id]: 'valid' }));
+                setVerificationStatus(prev => ({ ...prev, [id]: { status: 'valid' } }));
             } else {
                 if (!silent) toast.error(`Invalid: ${res.message}`, { id: `verify-${id}` });
-                setVerificationStatus(prev => ({ ...prev, [id]: 'invalid' }));
+                setVerificationStatus(prev => ({ ...prev, [id]: { status: 'invalid', error: res.message, gcp_status: res.gcp_status, failed_api: res.failed_api } }));
             }
         } catch (err: any) {
-            if (!silent) toast.error(err.message || String(err), { id: `verify-${id}` });
-            setVerificationStatus(prev => ({ ...prev, [id]: 'invalid' }));
+            const errorMsg = err.message || String(err);
+            if (!silent) toast.error(errorMsg, { id: `verify-${id}` });
+            setVerificationStatus(prev => ({ ...prev, [id]: { status: 'invalid', error: errorMsg } }));
         }
     };
 
@@ -256,9 +342,20 @@ const CredentialsHubPage = () => {
             accessor: 'status',
             cell: (row: CredentialItem) => {
                 const status = verificationStatus[row.id];
-                if (status === 'valid') return <Badge className="bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/20 text-[10px]">Verified</Badge>;
-                if (status === 'invalid') return <Badge variant="destructive" className="h-4 text-[10px]">Invalid</Badge>;
-                if (status === 'loading') return <span className="text-[10px] text-muted-foreground animate-pulse">Checking...</span>;
+                if (status?.status === 'valid') return <Badge className="bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/20 text-[10px]">Verified</Badge>;
+                if (status?.status === 'invalid') {
+                    const cleanError = status.error?.replace(/&#34;/g, '"').replace(/&quot;/g, '"').replace(/&amp;/g, '&') || 'Unknown error';
+                    return (
+                        <Badge 
+                            variant="destructive" 
+                            className="h-4 text-[10px] cursor-help"
+                            title={cleanError}
+                        >
+                            Invalid
+                        </Badge>
+                    );
+                }
+                if (status?.status === 'loading') return <span className="text-[10px] text-muted-foreground animate-pulse">Checking...</span>;
                 if (row.provider === 'pypi') return <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 text-[10px]">Format</Badge>;
                 return <span className="text-[10px] text-muted-foreground italic">Pending</span>;
             }

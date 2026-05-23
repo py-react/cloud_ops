@@ -1,3 +1,4 @@
+from app.docker_client import clientContext
 import docker
 from typing import List, Dict, Optional
 from pydantic import BaseModel
@@ -32,7 +33,7 @@ class SwarmInitParams(BaseModel):
 async def POST(params: SwarmInitParams):
     # Initialize Docker client
     try:
-        client = docker.from_env()
+        client = clientContext.get_client()
         # Initialize swarm with given parameters
         swarm = client.swarm.init(
             advertise_addr=params.advertise_addr,
@@ -60,5 +61,5 @@ async def POST(params: SwarmInitParams):
             log_driver=params.log_driver
         )
         return {"status": "Swarm initialized successfully", "swarm": swarm.attrs}
-    except docker.errors.APIError as e:
-        return {"error":True,"message": f"Error initializing swarm: {e}"}
+    except (ValueError, docker.errors.APIError, Exception) as e:
+        return {"error":True,"message": f"Error initializing swarm: {str(e)}"}

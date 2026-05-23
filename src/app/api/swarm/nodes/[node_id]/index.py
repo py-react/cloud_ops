@@ -1,3 +1,4 @@
+from app.docker_client import clientContext
 import docker
 from fastapi import FastAPI, HTTPException, Body
 
@@ -15,22 +16,22 @@ class NodeSpec(BaseModel):
 async def GET(node_id: str):
     try:
         # Initialize Docker client
-        client = docker.from_env()
+        client = clientContext.get_client()
         # Retrieve node details by ID
         node = client.nodes.get(node_id)
         return {"node_id": node.id, "node_details": node.attrs}
-    except docker.errors.APIError as e:
-        return {"message": f"Error fetching node details: {e}"}
+    except (ValueError, docker.errors.APIError, Exception) as e:
+        return {"error":True,"message": f"Error fetching node details: {str(e)}"}
     
 
 async def PUT(node_id: str, spec: NodeSpec):
     try:
         # Initialize Docker client
-        client = docker.from_env()
+        client = clientContext.get_client()
         node = client.nodes.get(node_id)
         node_spec_dict = spec.model_dump(exclude_unset=True)
         # Update node with provided spec
         result = node.update(node_spec_dict)
         return {"status": "Node updated successfully", "result": result}
-    except docker.errors.APIError as e:
-        return {"error":True,"message": f"Error updating node: {e}"}
+    except (ValueError, docker.errors.APIError, Exception) as e:
+        return {"error":True,"message": f"Error updating node: {str(e)}"}

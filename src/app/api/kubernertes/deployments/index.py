@@ -669,7 +669,8 @@ def fetch_specific_deployment(namespace: str, deployment_name: str, resource_typ
     """Fetch information for a specific deployment"""
     try:
         # Initialize Kubernetes client
-        config.load_config()
+        from app.services.kube_config_service import KubeConfigService
+        KubeConfigService.load_active_config()
 
         # Get the resource based on the specified type
         if resource_type.lower() == "deployments":
@@ -1169,11 +1170,15 @@ def fetch_all_deployments(namespace: str, apps_v1_api: client.AppsV1Api, core_v1
     
     return deployments, related_events
 
-async def GET(request: Request, namespace: str, deployment_name: Optional[str] = None, resource_type: Optional[str] = None):
-    """FastAPI endpoint to get comprehensive namespace information with optional deployment filtering"""
+async def GET(namespace: Optional[str] = None, deployment_name: Optional[str] = None, resource_type: Optional[str] = None):
+    """FastAPI endpoint to get comprehensive namespace information with optional deployment filtering"""    
+    if not namespace:
+        return JSONResponse(status_code=400, content={"error": "Namespace is required"})
+        
     try:
         # Initialize Kubernetes client
-        config.load_config()
+        from app.services.kube_config_service import KubeConfigService
+        KubeConfigService.load_active_config()
         apps_v1_api = client.AppsV1Api()
         core_v1_api = client.CoreV1Api()
         networking_v1_api = client.NetworkingV1Api()
@@ -1193,8 +1198,7 @@ async def GET(request: Request, namespace: str, deployment_name: Optional[str] =
                 "related_events": related_events
             })
             
+    except ValueError:
+        raise
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)}
-        )
+        return JSONResponse(status_code=500, content={"error": str(e)})

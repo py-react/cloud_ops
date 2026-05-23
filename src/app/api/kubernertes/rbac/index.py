@@ -22,8 +22,9 @@ class UpdateAccessBody(BaseModel):
     role_template: Optional[str] = None
 
 
-async def GET(request: Request, namespace: str = "default"):
+async def GET(request: Request):
     try:
+        namespace = request.query_params.get("namespace", "default")
         from app.db_client.db import get_session
         from app.db_client.controllers.kubeconfig_audit.kubeconfig_audit import list_access
         

@@ -34,6 +34,7 @@ import { FormWizard } from "@/components/wizard/form-wizard";
 import * as z from 'zod';
 import { getGitOpsSteps } from '@/components/library/forms/GitOpsSteps';
 import Editor from '@monaco-editor/react';
+import { HelmErrorState } from '@/components/kubernetes/helm/HelmErrorState';
 
 interface HistoryItem {
     hash: string;
@@ -87,8 +88,18 @@ export default function ChartsSettingsPage() {
     // Wizard state
     const [isConfigWizardOpen, setIsConfigWizardOpen] = useState(false);
     const [currentWizardStep, setCurrentWizardStep] = useState('repository');
+    const [helmError, setHelmError] = useState<string | null>(null);
 
     useEffect(() => {
+        fetch('/api/system/install?tool=helm')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.error && data.is_installed === false) {
+                    setHelmError("Helm must be installed to manage chart configurations.");
+                }
+            })
+            .catch(() => {});
+            
         fetchData();
         fetchHistory();
         checkConflicts(); // Auto-open resolver if in conflict state
@@ -399,6 +410,10 @@ export default function ChartsSettingsPage() {
 
         return { metadata: null, diff: diffContent };
     }, [diffContent]);
+
+    if (helmError) {
+        return <HelmErrorState error={helmError} />;
+    }
 
     return (
         <PageLayout

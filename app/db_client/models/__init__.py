@@ -13,3 +13,9 @@ from .service_settings import *
 from .kubeconfig_audit import *
 from .addon_plugin.addon_plugin import *
 from .library_setting.library_setting import *
+from .kubernetes_configs.kube_config_file import *
+from .user.user import *
+from .google_credential.google_credential import *
+from .tenant.tenant import *
+from .compute_instance import *
+

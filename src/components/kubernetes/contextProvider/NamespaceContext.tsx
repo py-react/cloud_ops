@@ -27,41 +27,61 @@ export const NamespaceContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const navigate = useNavigate()
-  const {namespace} = useParams()
+  const navigate = useNavigate();
+  
+  const getNamespaceFromUrl = () => {
+    const path = window.location.pathname;
+    const match = path.match(/\/(?:orchestration\/kubernetes|settings\/ci_cd\/library)\/([^\/]+)/);
+    return match ? match[1] : "default";
+  };
+
   const [namespaces, setNamespaces] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedNamespace, setSelectedNamespace] = useState<string>(namespace || "default");
+  const [selectedNamespace, setSelectedNamespace] = useState<string>(getNamespaceFromUrl());
+
+  // Listen to URL changes to keep selectedNamespace in sync
+  useEffect(() => {
+    const urlNamespace = getNamespaceFromUrl();
+    if (urlNamespace !== selectedNamespace && urlNamespace !== "default") {
+      setSelectedNamespace(urlNamespace);
+    }
+  }, [window.location.pathname]);
 
   const fetchNamespaces = async () => {
     setIsLoading(true);
     try {
       const response = await DefaultService.apiKubernertesClusterNamespaceGet();
-      if ((response as any).status !== "error") {
-        setNamespaces((response as any).data as []);
+      if (response && (response as any).status === "success" && Array.isArray((response as any).data)) {
+        setNamespaces((response as any).data);
+        setError("");
+      } else if (response && (response as any).error) {
+        throw new Error((response as any).error);
+      } else if (response && (response as any).message) {
+        throw new Error((response as any).message);
       } else {
-        throw (response as any).message;
+        throw new Error("Failed to fetch namespaces");
       }
-    } catch (err) {
-      setError("Failed to fetch services");
-      toast.error("Failed to fetch services");
+    } catch (err: any) {
+      let message = "Failed to fetch namespaces";
+      if (err.body && err.body.error) {
+        message = err.body.error;
+      } else if (err.message) {
+        message = err.message;
+      }
+      setError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (namespaces.length) return;
-    if (!error) {
+    if (namespaces.length === 0) {
       fetchNamespaces();
-      return;
     }
-    const timeout = setTimeout(() => {
-      fetchNamespaces();
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [namespaces, error]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <NamespaceContext.Provider
@@ -69,15 +89,19 @@ export const NamespaceContextProvider = ({
         namespaces,
         isLoading,
         fetchNamespaces,
-        setSelectedNamespace:(namespace)=>{
+        setSelectedNamespace: (namespace) => {
           const currentPath = window.location.pathname;
-          const pathSegments = currentPath.split('/');
-          const namespaceIndex = pathSegments.findIndex(segment => segment === selectedNamespace);
-          if (namespaceIndex !== -1) {
-            pathSegments[namespaceIndex] = namespace as string;
-            navigate(pathSegments.join('/'));
-            setSelectedNamespace(namespace);
+          const match = currentPath.match(/(\/(?:orchestration\/kubernetes|settings\/ci_cd\/library)\/)[^\/]+/);
+          if (match) {
+            const newPath = currentPath.replace(
+              /(\/(?:orchestration\/kubernetes|settings\/ci_cd\/library)\/)[^\/]+/,
+              `$1${namespace}`
+            );
+            if (newPath !== currentPath) {
+              navigate(newPath);
+            }
           }
+          setSelectedNamespace(namespace as string);
         },
         selectedNamespace,
         error,

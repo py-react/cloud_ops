@@ -18,6 +18,7 @@ def get_class_methods(cls):
     return [
         name for name, member in inspect.getmembers(cls, predicate=inspect.isfunction)
     ]
+from app.services.kube_config_service import KubeConfigService
 
 class KubernetesResourceHelper:
     """Main class to interact with Kubernetes resources"""
@@ -27,21 +28,33 @@ class KubernetesResourceHelper:
         Initialize the Kubernetes client
         
         Args:
-            kubeconfig_path: Path to kubeconfig file. If None, uses default config
+            kubeconfig_path: Path to kubeconfig file. If None, uses active config from DB or default
         """
         # Initialize Kubernetes client
+        success = False
         if kubeconfig_path:
-            config.load_kube_config(kubeconfig_path)
+            try:
+                config.load_kube_config(kubeconfig_path)
+                success = True
+            except Exception as e:
+                raise ValueError(f"Failed to load Kubeconfig from path '{kubeconfig_path}': {e}")
         else:
-            config.load_kube_config()
+            # Dynamically load from DB
+            success = KubeConfigService.load_active_config()
         
+        if not success:
+            raise ValueError("No active Kubernetes configuration found. Please upload or activate a Kubeconfig in the Control Center.")
+
         # Initialize API clients
-        self.api_client = client.ApiClient()
-        self.dyn_client = DynamicClient(self.api_client)
-        self.core_api = client.CoreV1Api()
-        self.apps_api = client.AppsV1Api()
-        self.rbac_api = client.RbacAuthorizationV1Api()
-        self.custom_objects_api = client.CustomObjectsApi()
+        try:
+            self.api_client = client.ApiClient()
+            self.dyn_client = DynamicClient(self.api_client)
+            self.core_api = client.CoreV1Api()
+            self.apps_api = client.AppsV1Api()
+            self.rbac_api = client.RbacAuthorizationV1Api()
+            self.custom_objects_api = client.CustomObjectsApi()
+        except Exception as e:
+            raise ValueError(f"Failed to initialize Kubernetes API clients: {e}. Ensure your configuration is valid and reachable.")
         
         # Initialize operation classes
         self.resource_ops = ResourceOperations(

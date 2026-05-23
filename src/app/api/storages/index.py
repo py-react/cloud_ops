@@ -131,18 +131,17 @@ async def remove_volume(volume_id: str,client):
         raise ex
 
 async def GET(request:Request):
-    client = clientContext.get_client()
     try:
+        client = clientContext.get_client()
         volumes = await list_volumes(client)
         return {"storages": sorted(volumes, key=lambda x: datetime.fromisoformat(x['created'].replace('Z', '+00:00')),reverse=True)}
-    except Exception as e:
-        # Return a custom error if listing volumes fails
-        return {"error": True, "message": e.__dict__["explanation"]}
+    except (ValueError, Exception) as e:
+        return {"error": True, "message": getattr(e, "explanation", str(e))}
 
 async def POST(request: VolumeActionRequest):
-    action = request.action
-    client = clientContext.get_client()
     try:
+        action = request.action
+        client = clientContext.get_client()
         if action == VolumeActionEnum.PRUNE:
             await prune_volumes(client)
             return {"error":False,"message":f"Removed All"}
@@ -157,6 +156,5 @@ async def POST(request: VolumeActionRequest):
             raise Exception("Invalid action. Use 'prune' or 'remove'.")
     
     except Exception as e:
-        # Handle the custom exception
-        return {"error": True, "message": e.__dict__["explanation"]}
+        return {"error": True, "message": getattr(e, "explanation", str(e))}
 

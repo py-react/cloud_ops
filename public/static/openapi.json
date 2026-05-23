@@ -44,306 +44,10 @@
       }
     },
     "/cluster/proxy/{service}/{namespace}/{path}": {
-      "post": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          },
-          {
-            "name": "rewrite_v2_location",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Rewrite V2 Location"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          },
-          {
-            "name": "rewrite_v2_location",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Rewrite V2 Location"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          },
-          {
-            "name": "rewrite_v2_location",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Rewrite V2 Location"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "head": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          },
-          {
-            "name": "rewrite_v2_location",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Rewrite V2 Location"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
       "put": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -417,7 +121,303 @@
       "delete": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__post",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -490,226 +490,10 @@
       }
     },
     "/v2/{service}/{namespace}/{path}": {
-      "post": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "head": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
       "put": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -763,7 +547,223 @@
       "delete": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__post",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__put",
         "parameters": [
           {
             "name": "service",
@@ -820,6 +820,1016 @@
         "summary": "V2 Root",
         "description": "Handle Docker's initial 'GET /v2/' check.",
         "operationId": "v2_root_v2__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/callback": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_auth_callback_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_auth_login_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/provision": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_gcp_provision_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/projects": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_gcp_projects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/filestore": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_gcp_filestore_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_v1_gcp_filestore_delete",
+        "parameters": [
+          {
+            "name": "instance_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/filestore/{instance_id}/expand": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_gcp_filestore__instance_id__expand_post",
+        "parameters": [
+          {
+            "name": "instance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/meta": {
+      "get": {
+        "summary": "",
+        "description": "Dynamically fetch all GCP metadata options via SDK discovery services.",
+        "operationId": "_api_v1_gcp_meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/images": {
+      "get": {
+        "summary": "",
+        "description": "Fetch live GCP image catalog with official API resolution.",
+        "operationId": "_api_v1_gcp_compute_images_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/disk-types": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_gcp_compute_disk_types_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/disks": {
+      "get": {
+        "summary": "",
+        "description": "List all persistent disks in the selected project.",
+        "operationId": "_api_v1_gcp_compute_disks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Create a new persistent disk.",
+        "operationId": "_api_v1_gcp_compute_disks_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/disks/{disk_name}": {
+      "get": {
+        "summary": "",
+        "description": "Get details for a specific persistent disk.",
+        "operationId": "_api_v1_gcp_compute_disks__disk_name__get",
+        "parameters": [
+          {
+            "name": "disk_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Disk Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "description": "Delete a persistent disk.",
+        "operationId": "_api_v1_gcp_compute_disks__disk_name__delete",
+        "parameters": [
+          {
+            "name": "disk_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Disk Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/disks/{disk_name}/snapshot": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_gcp_compute_disks__disk_name__snapshot_post",
+        "parameters": [
+          {
+            "name": "disk_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Disk Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/disks/{disk_name}/resize": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_gcp_compute_disks__disk_name__resize_post",
+        "parameters": [
+          {
+            "name": "disk_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Disk Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/instances": {
+      "get": {
+        "summary": "",
+        "description": "List all instances across all zones in the selected project.",
+        "operationId": "_api_v1_gcp_compute_instances_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Provision a new VM instance using SSH key authentication.",
+        "operationId": "_api_v1_gcp_compute_instances_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/instances/{instance_name}": {
+      "get": {
+        "summary": "",
+        "description": "Fetch deep details for a specific VM instance.",
+        "operationId": "_api_v1_gcp_compute_instances__instance_name__get",
+        "parameters": [
+          {
+            "name": "instance_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "description": "Trigger asynchronous deletion of a VM instance using background tasks.",
+        "operationId": "_api_v1_gcp_compute_instances__instance_name__delete",
+        "parameters": [
+          {
+            "name": "instance_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/instances/{instance_name}/start": {
+      "post": {
+        "summary": "",
+        "description": "Start a stopped or terminated VM instance.",
+        "operationId": "_api_v1_gcp_compute_instances__instance_name__start_post",
+        "parameters": [
+          {
+            "name": "instance_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/instances/{instance_name}/stop": {
+      "post": {
+        "summary": "",
+        "description": "Stop a running VM instance (graceful shutdown).",
+        "operationId": "_api_v1_gcp_compute_instances__instance_name__stop_post",
+        "parameters": [
+          {
+            "name": "instance_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gcp/compute/instances/{instance_name}/purge-password": {
+      "post": {
+        "summary": "",
+        "description": "Purge the temporary admin onboarding password for a compute instance.",
+        "operationId": "_api_v1_gcp_compute_instances__instance_name__purge_password_post",
+        "parameters": [
+          {
+            "name": "instance_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/storage/buckets": {
+      "get": {
+        "summary": "",
+        "description": "List all GCS buckets.",
+        "operationId": "_api_v1_storage_buckets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Create a new GCS bucket.",
+        "operationId": "_api_v1_storage_buckets_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/storage/buckets/{bucket_name}": {
+      "get": {
+        "summary": "",
+        "description": "List all objects inside a bucket with optional prefix (folder) filtering.",
+        "operationId": "_api_v1_storage_buckets__bucket_name__get",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Create a virtual folder (zero-byte placeholder blob ending with '/').",
+        "operationId": "_api_v1_storage_buckets__bucket_name__post",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "description": "Delete a bucket and all its contents.",
+        "operationId": "_api_v1_storage_buckets__bucket_name__delete",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/storage/buckets/{bucket_name}/objects": {
+      "get": {
+        "summary": "",
+        "description": "Generate a signed download URL for an object (expires in 15 min).",
+        "operationId": "_api_v1_storage_buckets__bucket_name__objects_get",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "description": "Delete a specific object from a bucket.",
+        "operationId": "_api_v1_storage_buckets__bucket_name__objects_delete",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/storage/buckets/{bucket_name}/upload": {
+      "post": {
+        "summary": "",
+        "description": "Upload a file to a specific bucket with an optional folder prefix.",
+        "operationId": "_api_v1_storage_buckets__bucket_name__upload_post",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/storage/explorer": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_storage_explorer_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_storage_explorer_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/storage/explorer/objects": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_storage_explorer_objects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_storage_explorer_objects_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_v1_storage_explorer_objects_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/storage/explorer/folders": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_storage_explorer_folders_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pricing/estimate": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_pricing_estimate_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pricing/debug": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_pricing_debug_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2428,34 +3438,12 @@
       "get": {
         "summary": "",
         "operationId": "_api_kubernertes_rbac_get",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "default",
-              "title": "Namespace"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -2465,14 +3453,14 @@
         "summary": "",
         "operationId": "_api_kubernertes_rbac_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateAccessBody"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -2754,32 +3742,12 @@
       "post": {
         "summary": "",
         "operationId": "_api_kubernertes_cluster_namespace_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateNamespacePayload"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -2792,9 +3760,16 @@
           {
             "name": "name",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Name"
             }
           }
@@ -2825,33 +3800,12 @@
       "get": {
         "summary": "",
         "operationId": "_api_kubernertes_methods_get",
-        "parameters": [
-          {
-            "name": "type",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Type"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -2934,37 +3888,12 @@
       "get": {
         "summary": "",
         "operationId": "_api_kubernertes_context_get",
-        "parameters": [
-          {
-            "name": "action",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "enum": [
-                "all",
-                "current"
-              ],
-              "type": "string",
-              "title": "Action"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -2975,14 +3904,14 @@
         "description": "Set a new Kubernetes context.",
         "operationId": "_api_kubernertes_context_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ContextPostData"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -3062,9 +3991,16 @@
           {
             "name": "namespace",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Namespace"
             }
           },
@@ -3116,9 +4052,16 @@
           {
             "name": "namespace",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Namespace"
             }
           },
@@ -3171,16 +4114,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/ResourceScope"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": "all",
-              "title": "Scope"
+              "$ref": "#/components/schemas/ResourceScope",
+              "default": "all"
             }
           },
           {
@@ -3221,13 +4156,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ResourceResponse"
-                  },
-                  "title": "Response  Api Kubernertes Resources Get"
-                }
+                "schema": {}
               }
             }
           },
@@ -3276,22 +4205,6 @@
             }
           },
           {
-            "name": "api_version",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Api Version"
-            }
-          },
-          {
             "name": "field_selector",
             "in": "query",
             "required": false,
@@ -3321,6 +4234,22 @@
                 }
               ],
               "title": "Label Selector"
+            }
+          },
+          {
+            "name": "api_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Api Version"
             }
           }
         ],
@@ -3581,40 +4510,12 @@
       "get": {
         "summary": "",
         "operationId": "_api_kubernertes_user_get",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Namespace"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -3683,9 +4584,16 @@
           {
             "name": "namespace",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Namespace"
             }
           },
@@ -3728,6 +4636,53 @@
         }
       }
     },
+    "/api/kubernertes/configs": {
+      "get": {
+        "summary": "",
+        "description": "List all available Kubeconfigs.",
+        "operationId": "_api_kubernertes_configs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Handle adding, activating, or switching contexts in a Kubeconfig.",
+        "operationId": "_api_kubernertes_configs_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "description": "Delete a Kubeconfig file from the database.",
+        "operationId": "_api_kubernertes_configs_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/kubernertes/service": {
       "get": {
         "summary": "",
@@ -3737,9 +4692,16 @@
           {
             "name": "namespace",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Namespace"
             }
           },
@@ -3786,40 +4748,12 @@
       "get": {
         "summary": "",
         "operationId": "_api_kubernertes_limit_range_get",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Namespace"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -3830,40 +4764,12 @@
       "get": {
         "summary": "",
         "operationId": "_api_kubernertes_resource_quota_get",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Namespace"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -3879,9 +4785,16 @@
           {
             "name": "namespace",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Namespace"
             }
           },
@@ -3944,33 +4857,12 @@
       "get": {
         "summary": "",
         "operationId": "_api_kubernertes_flow_v1_get",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -3981,35 +4873,12 @@
       "get": {
         "summary": "",
         "operationId": "_api_kubernertes_flow_v2_get",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NamespaceInfo"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": {}
               }
             }
           }
@@ -4429,6 +5298,44 @@
         "summary": "",
         "description": "Update system status (active/inactive)",
         "operationId": "_api_bastion_systems__systemId__patch",
+        "parameters": [
+          {
+            "name": "systemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Systemid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bastion/systems/{systemId}/rdp-file": {
+      "get": {
+        "summary": "",
+        "description": "Generates a secure, memory-isolated RDP initialization manifest stream.",
+        "operationId": "_api_bastion_systems__systemId__rdp_file_get",
         "parameters": [
           {
             "name": "systemId",
@@ -5999,6 +6906,88 @@
         }
       }
     },
+    "/api/system/install": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_system_install_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_system_install_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/onboarding": {
+      "get": {
+        "summary": "",
+        "description": "Check if onboarding is required for the current user's tenant.",
+        "operationId": "_api_system_onboarding_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "description": "Mark onboarding as completed for the current user's tenant.",
+        "operationId": "_api_system_onboarding_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingCompleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/queue": {
       "get": {
         "summary": "",
@@ -6918,6 +7907,204 @@
         }
       }
     },
+    "/settings/gcp": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/storage": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_storage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/storage/buckets": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_storage_buckets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/storage/buckets/{id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_storage_buckets__id__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/storage/filestores": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_storage_filestores_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/storage/filestores/{id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_storage_filestores__id__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/storage/disks": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_storage_disks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/storage/disks/{id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_storage_disks__id__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/compute": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_compute_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/compute/instances": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_compute_instances_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/gcp/compute/instances/{instance_name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_gcp_compute_instances__instance_name__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/settings/kubernetes": {
       "get": {
         "summary": "",
@@ -6976,6 +8163,24 @@
       "get": {
         "summary": "",
         "operationId": "_settings_kubernetes_namespaces_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/kubernetes/configs": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_kubernetes_configs_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -7181,6 +8386,46 @@
               "text/html": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compute/{instance_name}": {
+      "get": {
+        "summary": "",
+        "description": "Server-side props loader for the VM Details page.",
+        "operationId": "_compute__instance_name__get",
+        "parameters": [
+          {
+            "name": "instance_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -7656,6 +8901,24 @@
         }
       }
     },
+    "/login": {
+      "get": {
+        "summary": "",
+        "operationId": "_login_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/cee": {
       "get": {
         "summary": "",
@@ -7786,6 +9049,25 @@
       "get": {
         "summary": "",
         "operationId": "_cee_docker_hub_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/onboarding": {
+      "get": {
+        "summary": "",
+        "description": "Explicitly accept the request object. \nKiwiJs view_func expects this to be passed down correctly.",
+        "operationId": "_onboarding_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -8595,33 +9877,6 @@
         ],
         "title": "CreateCredentialRequest"
       },
-      "CreateNamespacePayload": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Labels"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "title": "CreateNamespacePayload"
-      },
       "CreateQueueJob": {
         "properties": {
           "queueName": {
@@ -8848,6 +10103,28 @@
             "type": "array",
             "title": "Used Repos",
             "default": []
+          },
+          "gcp_project_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gcp Project Id"
+          },
+          "gcp_client_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gcp Client Email"
           }
         },
         "type": "object",
@@ -8860,68 +10137,6 @@
           "last_used_at"
         ],
         "title": "CredentialListItem"
-      },
-      "CronJobInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "cronjob_name": {
-            "type": "string",
-            "title": "Cronjob Name"
-          },
-          "pods": {
-            "items": {
-              "$ref": "#/components/schemas/PodInfo"
-            },
-            "type": "array",
-            "title": "Pods"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "cronjob_name",
-          "pods"
-        ],
-        "title": "CronJobInfo"
-      },
-      "DaemonSetInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "daemonset_name": {
-            "type": "string",
-            "title": "Daemonset Name"
-          },
-          "available_replicas": {
-            "type": "integer",
-            "title": "Available Replicas"
-          },
-          "expected_replicas": {
-            "type": "integer",
-            "title": "Expected Replicas"
-          },
-          "pods": {
-            "items": {
-              "$ref": "#/components/schemas/PodInfo"
-            },
-            "type": "array",
-            "title": "Pods"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "daemonset_name",
-          "available_replicas",
-          "expected_replicas",
-          "pods"
-        ],
-        "title": "DaemonSetInfo"
       },
       "DeleteRegistryRequest": {
         "properties": {
@@ -9314,42 +10529,6 @@
           "deployment_name"
         ],
         "title": "DeploymentConfigType"
-      },
-      "DeploymentInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "deployment_name": {
-            "type": "string",
-            "title": "Deployment Name"
-          },
-          "available_replicas": {
-            "type": "integer",
-            "title": "Available Replicas"
-          },
-          "expected_replicas": {
-            "type": "integer",
-            "title": "Expected Replicas"
-          },
-          "pods": {
-            "items": {
-              "$ref": "#/components/schemas/PodInfo"
-            },
-            "type": "array",
-            "title": "Pods"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "deployment_name",
-          "available_replicas",
-          "expected_replicas",
-          "pods"
-        ],
-        "title": "DeploymentInfo"
       },
       "DeploymentRunType": {
         "properties": {
@@ -9948,81 +11127,6 @@
         ],
         "title": "InfraPutResponse"
       },
-      "IngressInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "ingress_name": {
-            "type": "string",
-            "title": "Ingress Name"
-          },
-          "host": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Host"
-          },
-          "paths": {
-            "items": {
-              "$ref": "#/components/schemas/IngressPath"
-            },
-            "type": "array",
-            "title": "Paths"
-          },
-          "services": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/ServiceInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Services"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "ingress_name",
-          "host",
-          "paths"
-        ],
-        "title": "IngressInfo"
-      },
-      "IngressPath": {
-        "properties": {
-          "service_name": {
-            "type": "string",
-            "title": "Service Name"
-          },
-          "path": {
-            "type": "string",
-            "title": "Path"
-          },
-          "path_type": {
-            "type": "string",
-            "title": "Path Type"
-          }
-        },
-        "type": "object",
-        "required": [
-          "service_name",
-          "path",
-          "path_type"
-        ],
-        "title": "IngressPath"
-      },
       "InstallLocalRequest": {
         "properties": {
           "key_name": {
@@ -10040,32 +11144,6 @@
           "private_key"
         ],
         "title": "InstallLocalRequest"
-      },
-      "JobInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "job_name": {
-            "type": "string",
-            "title": "Job Name"
-          },
-          "pods": {
-            "items": {
-              "$ref": "#/components/schemas/PodInfo"
-            },
-            "type": "array",
-            "title": "Pods"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "job_name",
-          "pods"
-        ],
-        "title": "JobInfo"
       },
       "K8sAffinity": {
         "properties": {
@@ -10437,120 +11515,6 @@
           "tag"
         ],
         "title": "LoadImageRequest"
-      },
-      "NamespaceInfo": {
-        "properties": {
-          "ingresses": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/IngressInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ingresses"
-          },
-          "services": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/ServiceInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Services"
-          },
-          "deployments": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/DeploymentInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Deployments"
-          },
-          "statefulsets": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/StatefulSetInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Statefulsets"
-          },
-          "daemonsets": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/DaemonSetInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Daemonsets"
-          },
-          "cronJobs": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/CronJobInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cronjobs"
-          },
-          "jobs": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/JobInfo"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Jobs"
-          },
-          "nodes": {
-            "items": {
-              "$ref": "#/components/schemas/NodeInfo"
-            },
-            "type": "array",
-            "title": "Nodes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "nodes"
-        ],
-        "title": "NamespaceInfo"
       },
       "NetworkCreateParams": {
         "properties": {
@@ -11010,100 +11974,6 @@
         "type": "object",
         "title": "NodeAffinity"
       },
-      "NodeInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "role": {
-            "type": "string",
-            "title": "Role"
-          },
-          "age": {
-            "type": "string",
-            "title": "Age"
-          },
-          "version": {
-            "type": "string",
-            "title": "Version"
-          },
-          "internalIP": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Internalip"
-          },
-          "externalIP": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Externalip"
-          },
-          "os": {
-            "type": "string",
-            "title": "Os"
-          },
-          "architecture": {
-            "type": "string",
-            "title": "Architecture"
-          },
-          "resources": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            "type": "object",
-            "title": "Resources"
-          },
-          "conditions": {
-            "items": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Conditions"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "name",
-          "status",
-          "role",
-          "age",
-          "version",
-          "internalIP",
-          "externalIP",
-          "os",
-          "architecture",
-          "resources",
-          "conditions"
-        ],
-        "title": "NodeInfo"
-      },
       "NodeSelector": {
         "properties": {
           "nodeSelectorTerms": {
@@ -11155,6 +12025,23 @@
         },
         "type": "object",
         "title": "NodeSelectorTerm"
+      },
+      "OnboardingCompleteRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "OnboardingCompleteRequest"
       },
       "PodAffinity": {
         "properties": {
@@ -11262,74 +12149,6 @@
         },
         "type": "object",
         "title": "PodAntiAffinity"
-      },
-      "PodInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "restarts": {
-            "type": "integer",
-            "title": "Restarts"
-          },
-          "age": {
-            "type": "string",
-            "title": "Age"
-          },
-          "ip": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ip"
-          },
-          "node": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Node"
-          },
-          "resources": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            "type": "object",
-            "title": "Resources"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "name",
-          "status",
-          "restarts",
-          "age",
-          "ip",
-          "node",
-          "resources"
-        ],
-        "title": "PodInfo"
       },
       "PollingConfigRequest": {
         "properties": {
@@ -11729,54 +12548,6 @@
         },
         "type": "object",
         "title": "ResourceRequirements"
-      },
-      "ResourceResponse": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "kind": {
-            "type": "string",
-            "title": "Kind"
-          },
-          "namespaced": {
-            "type": "boolean",
-            "title": "Namespaced"
-          },
-          "api_version": {
-            "type": "string",
-            "title": "Api Version"
-          },
-          "short_names": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Short Names"
-          },
-          "count": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Count",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "kind",
-          "namespaced",
-          "api_version",
-          "short_names"
-        ],
-        "title": "ResourceResponse"
       },
       "ResourceScope": {
         "type": "string",
@@ -12395,123 +13166,6 @@
         ],
         "title": "ServiceCreationSpec"
       },
-      "ServiceInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "service_name": {
-            "type": "string",
-            "title": "Service Name"
-          },
-          "type": {
-            "type": "string",
-            "title": "Type"
-          },
-          "clusterIP": {
-            "type": "string",
-            "title": "Clusterip"
-          },
-          "externalIP": {
-            "type": "string",
-            "title": "Externalip"
-          },
-          "age": {
-            "type": "string",
-            "title": "Age"
-          },
-          "ports": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Ports"
-          },
-          "replicasets": {
-            "items": {
-              "$ref": "#/components/schemas/DeploymentInfo"
-            },
-            "type": "array",
-            "title": "Replicasets",
-            "default": []
-          },
-          "deployments": {
-            "items": {
-              "$ref": "#/components/schemas/DeploymentInfo"
-            },
-            "type": "array",
-            "title": "Deployments",
-            "default": []
-          },
-          "daemonsets": {
-            "items": {
-              "$ref": "#/components/schemas/DaemonSetInfo"
-            },
-            "type": "array",
-            "title": "Daemonsets",
-            "default": []
-          },
-          "statefulsets": {
-            "items": {
-              "$ref": "#/components/schemas/StatefulSetInfo"
-            },
-            "type": "array",
-            "title": "Statefulsets",
-            "default": []
-          },
-          "jobs": {
-            "items": {
-              "$ref": "#/components/schemas/JobInfo"
-            },
-            "type": "array",
-            "title": "Jobs",
-            "default": []
-          },
-          "cronjobs": {
-            "items": {
-              "$ref": "#/components/schemas/CronJobInfo"
-            },
-            "type": "array",
-            "title": "Cronjobs",
-            "default": []
-          },
-          "node_names": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Node Names",
-            "default": []
-          },
-          "selector": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Selector"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "service_name",
-          "type",
-          "clusterIP",
-          "externalIP",
-          "age",
-          "ports"
-        ],
-        "title": "ServiceInfo"
-      },
       "ServicePortConfig": {
         "properties": {
           "port": {
@@ -12675,42 +13329,6 @@
           "logs"
         ],
         "title": "SourceCodeBuildWithLogsType"
-      },
-      "StatefulSetInfo": {
-        "properties": {
-          "component_type": {
-            "type": "string",
-            "title": "Component Type"
-          },
-          "statefulset_name": {
-            "type": "string",
-            "title": "Statefulset Name"
-          },
-          "available_replicas": {
-            "type": "integer",
-            "title": "Available Replicas"
-          },
-          "expected_replicas": {
-            "type": "integer",
-            "title": "Expected Replicas"
-          },
-          "pods": {
-            "items": {
-              "$ref": "#/components/schemas/PodInfo"
-            },
-            "type": "array",
-            "title": "Pods"
-          }
-        },
-        "type": "object",
-        "required": [
-          "component_type",
-          "statefulset_name",
-          "available_replicas",
-          "expected_replicas",
-          "pods"
-        ],
-        "title": "StatefulSetInfo"
       },
       "StopQueue": {
         "properties": {
@@ -13293,6 +13911,17 @@
             "type": "string",
             "title": "Connection Type",
             "default": "ssh"
+          },
+          "connection_port": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Port"
           },
           "provider": {
             "anyOf": [
