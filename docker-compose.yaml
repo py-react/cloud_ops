@@ -10,15 +10,15 @@ services:
   #   command: bash -c "socat TCP-LISTEN:50925,fork TCP:host.docker.internal:50925 & socat TCP-LISTEN:5432,fork TCP:host.docker.internal:5432 & npm start"
   #   ports:
   #     - 5002:5001
-  # db:
-  #   image: postgres:16.13
-  #   restart: always
-  #   environment:
-  #     POSTGRES_PASSWORD: example
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data 
-  #   ports:
-  #     - 5432:5432
+  db:
+    image: postgres:16.13
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+    volumes:
+      - pgdata:/var/lib/postgresql/data 
+    ports:
+      - 5432:5432
 
   # pg_admin:
   #   image: dpage/pgadmin4
@@ -35,20 +35,20 @@ services:
   #     - db
 
   guacd:
-    image: guacamole/guacd:latest
+    image: guacamole/guacd:1.6.0
     container_name: dev-guacd
     restart: unless-stopped
     ports:
       - "4822:4822"
 
-  # httpd-proxy:
-  #   image: httpd:2.4
-  #   container_name: dev-httpd
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+  httpd-proxy:
+    image: httpd:2.4
+    container_name: dev-httpd
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
 
 volumes:
   pgdata:
