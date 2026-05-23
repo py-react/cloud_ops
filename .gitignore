@@ -25,3 +25,4 @@ test.ipynb
 # Internal tooling
 _kiwijs/
 .agents/
+kiwijs.db
