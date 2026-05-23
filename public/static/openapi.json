@@ -118,7 +118,7 @@
           }
         }
       },
-      "delete": {
+      "get": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
         "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
@@ -192,7 +192,7 @@
           }
         }
       },
-      "post": {
+      "delete": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
         "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
@@ -340,7 +340,7 @@
           }
         }
       },
-      "head": {
+      "post": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
         "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
@@ -414,7 +414,7 @@
           }
         }
       },
-      "get": {
+      "head": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
         "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__put",
@@ -544,7 +544,7 @@
           }
         }
       },
-      "delete": {
+      "get": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
         "operationId": "v2_proxy_v2__service___namespace___path__put",
@@ -598,7 +598,7 @@
           }
         }
       },
-      "post": {
+      "delete": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
         "operationId": "v2_proxy_v2__service___namespace___path__put",
@@ -706,7 +706,7 @@
           }
         }
       },
-      "head": {
+      "post": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
         "operationId": "v2_proxy_v2__service___namespace___path__put",
@@ -760,7 +760,7 @@
           }
         }
       },
-      "get": {
+      "head": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
         "operationId": "v2_proxy_v2__service___namespace___path__put",

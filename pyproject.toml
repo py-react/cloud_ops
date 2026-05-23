@@ -106,6 +106,9 @@ dependencies = [
     "google-cloud-storage>=3.10.1",
     "google-cloud-billing>=1.19.0",
     "google-cloud-filestore>=1.16.0",
+    "google-cloud-compute>=1.47.0",
+    "google-api-python-client>=2.196.0",
+    "google-auth-oauthlib>=1.4.0",
 ]
 
 [build-system]
