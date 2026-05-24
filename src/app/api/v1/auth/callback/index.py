@@ -1,5 +1,4 @@
 import os
-os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 from fastapi import Request
 from fastapi.responses import RedirectResponse
@@ -40,7 +39,6 @@ async def GET(request: Request):
             "openid",
             "https://www.googleapis.com/auth/userinfo.email",
             "https://www.googleapis.com/auth/userinfo.profile",
-            "https://www.googleapis.com/auth/cloud-platform"
         ],
         state=state,
         redirect_uri=redirect_uri

@@ -1,6 +1,4 @@
 import os
-os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 from fastapi import Request
 from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
@@ -8,6 +6,7 @@ from kiwijs.utils.load_settings import load_settings
 
 # Required OAuth Scopes
 SCOPES = [
+    "openid",
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile"
 ]

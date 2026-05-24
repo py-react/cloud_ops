@@ -18,4 +18,4 @@ source .venv/bin/activate
 
 npm run reset_db
 npm run sync_db
-npm run dev
+OAUTHLIB_RELAX_TOKEN_SCOPE=1 npm run dev
