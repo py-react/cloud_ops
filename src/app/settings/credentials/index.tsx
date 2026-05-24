@@ -11,6 +11,7 @@ import {
     Terminal,
     Upload,
     FileJson,
+    Cloud,
 } from 'lucide-react';
 import { DefaultService } from '@/gingerJs_api_client';
 import { toast } from 'sonner';
@@ -47,7 +48,7 @@ import PageLayout from "@/components/PageLayout";
 interface CredentialItem {
     id: number;
     name: string;
-    provider: 'github' | 'npm' | 'pypi' | 'gcp';
+    provider: 'github' | 'npm' | 'pypi' | 'gcp' | 'aws';
     active: boolean;
     created_at: string;
     last_used_at?: string;
@@ -58,11 +59,14 @@ interface CredentialItem {
 
 const credentialSchema = z.object({
     name: z.string().min(1, "Display name is required"),
-    provider: z.enum(['github', 'npm', 'pypi', 'gcp']),
+    provider: z.enum(['github', 'npm', 'pypi', 'gcp', 'aws']),
     token: z.string().min(1, "Token is required").superRefine((val, ctx) => {
         // We'll handle refined validation in the submit logic or via dynamic schema switching if needed
         // For now, let's just ensure it's not empty. Basic validation is handled in the backend anyway.
     }),
+    access_key_id: z.string().optional().default(''),
+    secret_access_key: z.string().optional().default(''),
+    endpoint_url: z.string().optional().default(''),
 });
 
 const CredentialForm = () => {
@@ -70,6 +74,20 @@ const CredentialForm = () => {
     const provider = watch('provider');
     const tokenValue = watch('token');
     const [fileName, setFileName] = useState<string | null>(null);
+    const awsAccessKeyId = watch('access_key_id');
+    const awsSecretAccessKey = watch('secret_access_key');
+    const awsEndpointUrl = watch('endpoint_url');
+
+    useEffect(() => {
+        if (provider === 'aws') {
+            const payload: Record<string, string> = {
+                access_key_id: awsAccessKeyId || '',
+                secret_access_key: awsSecretAccessKey || '',
+            };
+            if (awsEndpointUrl?.trim()) payload.endpoint_url = awsEndpointUrl.trim();
+            setValue('token', JSON.stringify(payload));
+        }
+    }, [provider, awsAccessKeyId, awsSecretAccessKey, awsEndpointUrl, setValue]);
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -150,6 +168,12 @@ const CredentialForm = () => {
                                         <span>GCP Service Account</span>
                                     </div>
                                 </SelectItem>
+                                <SelectItem value="aws">
+                                    <div className="flex items-center gap-2">
+                                        <Cloud className="w-3.5 h-3.5 text-yellow-500" />
+                                        <span>AWS IAM Credentials</span>
+                                    </div>
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         <FormDescription>
@@ -208,6 +232,58 @@ const CredentialForm = () => {
                         </FormItem>
                     )}
                 />
+            ) : provider === 'aws' ? (
+                <>
+                    <FormField
+                        control={control}
+                        name="access_key_id"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Access Key ID <RequiredBadge /></FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., AKIAIOSFODNN7EXAMPLE" {...field} className="font-mono" />
+                                </FormControl>
+                                <FormDescription>
+                                    Found in AWS IAM → Security credentials → Access keys.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={control}
+                        name="secret_access_key"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Secret Access Key <RequiredBadge /></FormLabel>
+                                <FormControl>
+                                    <Input type="password" placeholder="Paste your secret access key..." {...field} className="font-mono" />
+                                </FormControl>
+                                <FormDescription>
+                                    Keep this confidential — it grants access to your AWS resources.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={control}
+                        name="endpoint_url"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Endpoint URL <span className="text-[10px] text-muted-foreground font-normal">(optional)</span></FormLabel>
+                                <FormControl>
+                                    <Input placeholder="http://localhost:4566" {...field} className="font-mono" />
+                                </FormControl>
+                                <FormDescription>
+                                    Leave empty for real AWS. Set to your LocalStack or custom endpoint URL for local development.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <input type="hidden" name="token" />
+                </>
             ) : (
                 <FormField
                     control={control}
@@ -333,6 +409,8 @@ const CredentialsHubPage = () => {
                     {row.provider === 'github' && <Zap className="w-3.5 h-3.5 text-blue-500" />}
                     {row.provider === 'npm' && <Package className="w-3.5 h-3.5 text-red-500" />}
                     {row.provider === 'pypi' && <Terminal className="w-3.5 h-3.5 text-blue-400" />}
+                    {row.provider === 'gcp' && <Zap className="w-3.5 h-3.5 text-orange-500" />}
+                    {row.provider === 'aws' && <Cloud className="w-3.5 h-3.5 text-yellow-500" />}
                     <span className="text-xs font-bold uppercase tracking-wider">{row.provider}</span>
                 </div>
             )
@@ -468,7 +546,7 @@ const CredentialsHubPage = () => {
                 steps={credentialSteps}
                 currentStep={currentStep}
                 setCurrentStep={setCurrentStep}
-                initialValues={{ name: '', provider: 'github', token: '' }}
+                initialValues={{ name: '', provider: 'github', token: '', access_key_id: '', secret_access_key: '', region: 'us-east-1' }}
                 schema={credentialSchema}
                 onSubmit={handleCreateCredential}
                 heading={{

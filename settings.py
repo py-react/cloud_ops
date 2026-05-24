@@ -8,10 +8,11 @@ class Settings(BaseSettings):
     GOOGLE_REDIRECT_URI: str
     JWT_SECRET: str
     SESSION_TTL: int
+    AWS_ENDPOINT_URL: str
     model_config = SettingsConfigDict(env_file=".env",env_file_encoding="utf-8",
         extra="ignore")
 
-settings = Settings()
+env = Settings()
 
 
 NAME="app"
@@ -28,11 +29,11 @@ TAILWIND=True
 LOG_LEVEL="DEBUG"
 UVICORN_WORKERS="1"
 
-GOOGLE_CLIENT_ID=settings.GOOGLE_CLIENT_ID
-GOOGLE_CLIENT_SECRET=settings.GOOGLE_CLIENT_SECRET
-GOOGLE_REDIRECT_URI=settings.GOOGLE_REDIRECT_URI
-JWT_SECRET=settings.JWT_SECRET
-SESSION_TTL=settings.SESSION_TTL
+GOOGLE_CLIENT_ID=env.GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET=env.GOOGLE_CLIENT_SECRET
+GOOGLE_REDIRECT_URI=env.GOOGLE_REDIRECT_URI
+JWT_SECRET=env.JWT_SECRET
+SESSION_TTL=env.SESSION_TTL
 
 # Optional: Redis configuration
 # REDIS_URL="redis://localhost:6379/0"

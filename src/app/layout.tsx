@@ -10,6 +10,7 @@ import { KubeContextProvider } from '@/components/kubernetes/contextProvider/Kub
 import { NavigationHistoryProvider } from '@/libs/navigationHistory'
 import { NotificationProvider } from '@/components/NotificationProvider'
 import { GCPContextProvider } from '@/components/gcp/contextProvider/GCPContext'
+import { AWSContextProvider } from '@/components/aws/contextProvider/AWSContext'
 
 
 function AppLayout() {
@@ -79,6 +80,7 @@ function AppLayout() {
       <NotificationProvider>
         <div key="AppLayout" className='p-0 w-full min-h-screen bg-background'>
         <GCPContextProvider>
+        <AWSContextProvider>
         <SidebarProvider>
           {!hideFrame && <KubeContextProvider>
             <NamespaceContextProvider>
@@ -94,6 +96,7 @@ function AppLayout() {
             <Outlet />
           </main>}
         </SidebarProvider>
+        </AWSContextProvider>
         </GCPContextProvider>
         <Toaster richColors position="bottom-right" />
       </div>

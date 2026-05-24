@@ -28,6 +28,19 @@ services:
     volumes:
       - redis_data:/data
 
+  localstack:
+    image: localstack/localstack:4.2
+    restart: always
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=ec2,s3,sts
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - localstack_data:/var/lib/localstack
+
   # pg_admin:
   #   image: dpage/pgadmin4
   #   container_name: pgadmin4_container
@@ -62,4 +75,5 @@ volumes:
   pgdata:
   pgadmin-data:
   registry_data:
+  localstack_data:
   redis_data:

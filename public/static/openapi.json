@@ -118,154 +118,6 @@
           }
         }
       },
-      "delete": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          },
-          {
-            "name": "rewrite_v2_location",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Rewrite V2 Location"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Cluster Proxy",
-        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
-        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          },
-          {
-            "name": "service_port",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 80,
-              "title": "Service Port"
-            }
-          },
-          {
-            "name": "rewrite_v2_location",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Rewrite V2 Location"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
       "head": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
@@ -415,6 +267,154 @@
         }
       },
       "patch": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Cluster Proxy",
+        "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
+        "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "service_port",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 80,
+              "title": "Service Port"
+            }
+          },
+          {
+            "name": "rewrite_v2_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Rewrite V2 Location"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
         "summary": "Cluster Proxy",
         "description": "Proxy requests to Kubernetes services (Prometheus/Grafana/Registry).\nUses intelligent port discovery: if port is 80 (default), it looks up the \nactual service port in the Addon Registry.",
         "operationId": "cluster_proxy_cluster_proxy__service___namespace___path__get",
@@ -544,114 +544,6 @@
           }
         }
       },
-      "delete": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__get",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "V2 Proxy",
-        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
-        "operationId": "v2_proxy_v2__service___namespace___path__get",
-        "parameters": [
-          {
-            "name": "service",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Service"
-            }
-          },
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Namespace"
-            }
-          },
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Path"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
       "head": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
@@ -761,6 +653,114 @@
         }
       },
       "patch": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__get",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "V2 Proxy",
+        "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
+        "operationId": "v2_proxy_v2__service___namespace___path__get",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service"
+            }
+          },
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Namespace"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
         "summary": "V2 Proxy",
         "description": "Specialized proxy for Docker Registry V2 API.\nAlways uses port 5000 and the /v2 prefix.",
         "operationId": "v2_proxy_v2__service___namespace___path__get",
@@ -1798,6 +1798,787 @@
       "post": {
         "summary": "",
         "operationId": "_api_v1_storage_explorer_folders_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/meta": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/storage/buckets": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_buckets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_buckets_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/storage/buckets/{bucket_name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_buckets__bucket_name__get",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_buckets__bucket_name__post",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_buckets__bucket_name__delete",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/storage/buckets/{bucket_name}/config": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_buckets__bucket_name__config_get",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_buckets__bucket_name__config_put",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/storage/buckets/{bucket_name}/upload": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_buckets__bucket_name__upload_get",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_buckets__bucket_name__upload_post",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/storage/lightsail-buckets": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_lightsail_buckets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_lightsail_buckets_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/storage/lightsail-buckets/{bucket_name}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_lightsail_buckets__bucket_name__get",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_lightsail_buckets__bucket_name__delete",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/storage/lightsail-buckets/{bucket_name}/objects": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_lightsail_buckets__bucket_name__objects_get",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_lightsail_buckets__bucket_name__objects_delete",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/storage/lightsail-buckets/{bucket_name}/upload": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_lightsail_buckets__bucket_name__upload_get",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_lightsail_buckets__bucket_name__upload_post",
+        "parameters": [
+          {
+            "name": "bucket_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bucket Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/storage/lightsail-buckets/bundles": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_storage_lightsail_buckets_bundles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/compute/meta": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_compute_meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_aws_compute_meta_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/compute/instances": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_compute_instances_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_aws_compute_instances_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/compute/instances/{instance_id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_compute_instances__instance_id__get",
+        "parameters": [
+          {
+            "name": "instance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "",
+        "operationId": "_api_v1_aws_compute_instances__instance_id__delete",
+        "parameters": [
+          {
+            "name": "instance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/compute/instances/{instance_id}/start": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_aws_compute_instances__instance_id__start_post",
+        "parameters": [
+          {
+            "name": "instance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/compute/instances/{instance_id}/stop": {
+      "post": {
+        "summary": "",
+        "operationId": "_api_v1_aws_compute_instances__instance_id__stop_post",
+        "parameters": [
+          {
+            "name": "instance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Instance Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/aws/pricing/estimate": {
+      "get": {
+        "summary": "",
+        "operationId": "_api_v1_aws_pricing_estimate_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -8105,6 +8886,168 @@
         }
       }
     },
+    "/settings/aws": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_aws_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/aws/storage": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_aws_storage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/aws/storage/buckets": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_aws_storage_buckets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/aws/storage/buckets/{id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_aws_storage_buckets__id__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/aws/storage/lightsail-buckets": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_aws_storage_lightsail_buckets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/aws/storage/lightsail-buckets/{id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_aws_storage_lightsail_buckets__id__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/aws/compute": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_aws_compute_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/aws/compute/instances": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_aws_compute_instances_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/aws/compute/instances/{instance_id}": {
+      "get": {
+        "summary": "",
+        "operationId": "_settings_aws_compute_instances__instance_id__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/settings/kubernetes": {
       "get": {
         "summary": "",
@@ -10125,6 +11068,17 @@
               }
             ],
             "title": "Gcp Client Email"
+          },
+          "aws_access_key_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aws Access Key Id"
           }
         },
         "type": "object",

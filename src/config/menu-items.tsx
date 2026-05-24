@@ -31,6 +31,8 @@ import {
     Activity,
     AlertCircle,
     FileText,
+    Cloud,
+    HardDrive,
 } from "lucide-react";
 
 export const getMenuItems = (selectedNamespace: string = "default") => ({
@@ -182,6 +184,35 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
                                     title: "File Storage",
                                     url: "/filestores",
                                     icon: Folder,
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    title: "AWS",
+                    url: "/aws",
+                    icon: Cloud,
+                    items: [
+                        {
+                            title: "Compute Engines",
+                            url: "/compute",
+                            icon: Cpu,
+                        },
+                        {
+                            title: "Cloud Storage",
+                            url: "/storage",
+                            icon: HardDrive,
+                            items: [
+                                {
+                                    title: "S3 Buckets",
+                                    url: "/buckets",
+                                    icon: Box,
+                                },
+                                {
+                                    title: "Lightsail Buckets",
+                                    url: "/storage/lightsail-buckets",
+                                    icon: Database,
                                 },
                             ],
                         },

@@ -109,6 +109,7 @@ dependencies = [
     "google-api-python-client>=2.196.0",
     "google-auth-oauthlib>=1.4.0",
     "pydantic-settings>=2.14.1",
+    "boto3>=1.43.14",
 ]
 
 [build-system]

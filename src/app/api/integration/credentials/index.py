@@ -39,6 +39,8 @@ class CredentialListItem(BaseModel):
     # GCP-specific metadata
     gcp_project_id: Optional[str] = None
     gcp_client_email: Optional[str] = None
+    # AWS-specific metadata
+    aws_access_key_id: Optional[str] = None
 
 async def validate_github_token(token: str, required_scopes: Optional[List[str]] = None) -> List[str]:
     """Validate GitHub token and return scopes."""
@@ -170,7 +172,23 @@ async def GET(request: Request) -> List[CredentialListItem]:
                         logger.warning(f"GCP credential {c.id} not found in GCP credential table")
                 except Exception as e:
                     logger.error(f"Failed to get GCP metadata for credential {c.id}: {type(e).__name__}: {e}")
-            
+
+            aws_access_key_id = None
+            gcp_project_id = None
+            gcp_client_email = None
+            if c.provider == "aws":
+                try:
+                    from app.utils.get_fernet import get_fernet
+                    f = get_fernet()
+                    if f:
+                        token = f.decrypt(c.token_encrypted.encode('utf-8')).decode('utf-8')
+                        import json
+                        aws_data = json.loads(token)
+                        key_id = aws_data.get("access_key_id", "")
+                        aws_access_key_id = (key_id[:8] + "...") if len(key_id) > 8 else key_id
+                except Exception as e:
+                    logger.error(f"Failed to get AWS metadata for credential {c.id}: {type(e).__name__}: {e}")
+
             result.append(CredentialListItem(
                 id=c.id, 
                 name=c.name, 
@@ -180,7 +198,8 @@ async def GET(request: Request) -> List[CredentialListItem]:
                 last_used_at=c.last_used_at, 
                 scopes=scopes_list,
                 gcp_project_id=gcp_project_id,
-                gcp_client_email=gcp_client_email
+                gcp_client_email=gcp_client_email,
+                aws_access_key_id=aws_access_key_id,
             ))
         
         # Enrich with usage data
@@ -226,6 +245,16 @@ async def POST(request: Request, body: CreateCredentialRequest):
                 raise HTTPException(status_code=400, detail="Service account JSON missing private_key")
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid JSON format for GCP service account")
+    elif body.provider == "aws":
+        import json
+        try:
+            aws_data = json.loads(body.token)
+            if "access_key_id" not in aws_data:
+                raise HTTPException(status_code=400, detail="AWS credential JSON missing access_key_id")
+            if "secret_access_key" not in aws_data:
+                raise HTTPException(status_code=400, detail="AWS credential JSON missing secret_access_key")
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON format for AWS credential")
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported provider: {body.provider}")
 
@@ -297,6 +326,14 @@ async def PUT(request: Request, id: int, body: Optional[UpdateCredentialRequest]
                     creds, project_id = get_gcp_credentials(credential.id)
 
                     return {"success": True, "valid": True, "message": f"GCP SA valid for project: {project_id}"}
+                elif credential.provider == "aws":
+                    from app.aws_client import validate_aws_credential
+
+                    result = validate_aws_credential(credential.id)
+                    if result.get("valid"):
+                        return {"success": True, "valid": True, "message": f"AWS credential valid for account: {result.get('account_id')}"}
+                    else:
+                        return {"success": False, "valid": False, "message": result.get("error", "Validation failed")}
                 elif not token.strip():
                     raise Exception("Token is empty")
 
