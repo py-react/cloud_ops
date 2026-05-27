@@ -19,6 +19,7 @@ def create_compute_instance(
         boot_disk_size_gb=data.boot_disk_size_gb,
         created_by_user_id=data.created_by_user_id,
         gcp_resource_id=data.gcp_resource_id,
+        provider=data.provider,
         ssh_username=data.ssh_username,
         status=data.status,
         temporary_admin_password=data.temporary_admin_password,
@@ -33,11 +34,14 @@ def create_compute_instance(
 def list_compute_instances(
     session: Session,
     user_id: Optional[int] = None,
+    provider: Optional[str] = None,
 ) -> List[ComputeInstance]:
-    """List all compute instances, optionally filtered by user ownership."""
+    """List all compute instances, optionally filtered by user ownership and provider."""
     query = select(ComputeInstance)
     if user_id is not None:
         query = query.where(ComputeInstance.created_by_user_id == user_id)
+    if provider is not None:
+        query = query.where(ComputeInstance.provider == provider)
     return session.exec(query).all()
 
 
@@ -77,6 +81,8 @@ def update_compute_instance(
         obj.boot_disk_size_gb = data.boot_disk_size_gb
     if data.gcp_resource_id is not None:
         obj.gcp_resource_id = data.gcp_resource_id
+    if data.provider is not None:
+        obj.provider = data.provider
     if data.ssh_username is not None:
         obj.ssh_username = data.ssh_username
     if data.status is not None:

@@ -199,6 +199,7 @@ export default function ComputeOrchestrator() {
                     key_name: values.key_name || undefined,
                     subnet_id: values.subnet_id || undefined,
                     security_group_ids: values.security_group_id ? [values.security_group_id] : [],
+                    bastion_enabled: values.bastion_enabled,
                     tags: Object.keys(tagObj).length ? tagObj : {},
                 })
             });

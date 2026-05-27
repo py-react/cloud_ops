@@ -11,7 +11,8 @@ class ComputeInstance(SQLModel, table=True):
     machine_type: str
     boot_disk_size_gb: int
     created_by_user_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    gcp_resource_id: str
+    gcp_resource_id: Optional[str] = Field(default=None, nullable=True)
+    provider: str = Field(default="gcp", index=True)
     ssh_username: Optional[str] = Field(default=None)
     status: str = Field(default="PROVISIONING")
     temporary_admin_password: Optional[str] = Field(default=None)

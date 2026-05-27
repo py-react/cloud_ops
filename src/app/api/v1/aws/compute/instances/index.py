@@ -19,6 +19,17 @@ from app.aws_client import (
 from app.db_client.db import get_session
 from app.db_client.models.ssh_management import SSHKey
 from sqlmodel import select
+from app.utils.auth import get_current_user
+from app.db_client.controllers.compute_instance import (
+    create_compute_instance,
+    update_compute_instance,
+    list_compute_instances,
+    update_instance_status,
+)
+from app.db_client.controllers.compute_instance.types import (
+    ComputeInstanceCreateType,
+    ComputeInstanceUpdateType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -97,20 +108,43 @@ def _bastion_register_worker(
     endpoint_url: str | None,
     instance_id: str,
     instance_name: str,
+    db_instance_id: int,
 ):
     """Background task: wait for public IP, register in Bastion."""
     try:
-        time.sleep(5)
-        instance_detail = EC2InstanceFactory.get_instance(
-            access_key, secret_key, region, instance_id, endpoint_url=endpoint_url
-        )
-        public_ip = instance_detail.get("public_ip", "")
+        # Polling loop for public IP
+        public_ip = ""
+        max_ip_attempts = 12
+        for attempt in range(max_ip_attempts):
+            try:
+                instance_detail = EC2InstanceFactory.get_instance(
+                    access_key, secret_key, region, instance_id, endpoint_url=endpoint_url
+                )
+                public_ip = instance_detail.get("public_ip", "")
+                if public_ip:
+                    break
+            except Exception as e:
+                logger.warning(f"Attempt {attempt+1}: failed to describe instance {instance_name}: {e}")
+            time.sleep(5)
+
         if not public_ip:
             logger.warning(f"EC2 instance {instance_name} has no public IP — skipping Bastion registration")
+            with get_session() as db_session:
+                update_instance_status(db_session, instance_name, "FAILED")
             return
 
         logger.info(f"EC2 instance {instance_name} has public IP {public_ip} — checking SSH port 22")
-        ssh_reachable = _check_port(public_ip, 22, timeout=8)
+        
+        # Retry loop checking SSH port 22
+        ssh_reachable = False
+        max_ssh_attempts = 8
+        for attempt in range(max_ssh_attempts):
+            ssh_reachable = _check_port(public_ip, 22, timeout=5)
+            if ssh_reachable:
+                break
+            logger.info(f"SSH port 22 not ready on {public_ip} (attempt {attempt + 1}/{max_ssh_attempts}), retrying...")
+            time.sleep(10)
+
         bastion_status = "configured" if ssh_reachable else "ssh_unreachable"
 
         bastion_system = register_system(
@@ -127,8 +161,23 @@ def _bastion_register_worker(
             f"Registered Bastion SSH system for {instance_name} "
             f"(ID: {bastion_system.id}, status: {bastion_status})"
         )
-    except Exception:
-        logger.error(f"Failed to register Bastion system for {instance_name}", exc_info=True)
+
+        with get_session() as db_session:
+            update_compute_instance(
+                db_session,
+                instance_name,
+                ComputeInstanceUpdateType(
+                    bastion_system_id=bastion_system.id,
+                    status="RUNNING" if ssh_reachable else "FAILED"
+                ),
+            )
+    except Exception as e:
+        logger.error(f"Failed to register Bastion system for {instance_name}: {e}", exc_info=True)
+        try:
+            with get_session() as db_session:
+                update_instance_status(db_session, instance_name, "FAILED")
+        except Exception:
+            pass
 
 
 @aws_error_interceptor
@@ -141,6 +190,19 @@ async def GET(request: Request):
         access_key, secret_key, _, endpoint_url = get_aws_credentials(cred_id)
     except AWSAuthError as e:
         raise HTTPException(status_code=401, detail=str(e))
+
+    local_instances = {}
+    try:
+        with get_session() as db_session:
+            db_records = list_compute_instances(db_session, provider="aws")
+            for record in db_records:
+                local_instances[record.instance_name] = {
+                    "ssh_username": record.ssh_username,
+                    "status": record.status,
+                    "bastion_system_id": record.bastion_system_id,
+                }
+    except Exception as e:
+        logger.error(f"Failed to query local DB AWS instances: {e}")
 
     try:
         if region:
@@ -166,6 +228,14 @@ async def GET(request: Request):
                         instances.extend(region_instances)
                     except Exception:
                         logger.warning(f"Failed to list instances in region {r}", exc_info=True)
+
+        # Merge local DB status/ssh_username details
+        for inst in instances:
+            local = local_instances.get(inst["name"], {})
+            inst["ssh_username"] = local.get("ssh_username", "admin")
+            if local.get("status") in ("PROVISIONING", "FAILED"):
+                inst["state"] = local["status"].lower()
+
         return {"instances": instances}
     except EC2ProvisioningError as e:
         raise HTTPException(status_code=e.code, detail=e.message)
@@ -173,6 +243,7 @@ async def GET(request: Request):
 
 @aws_error_interceptor
 async def POST(request: Request, background_tasks: BackgroundTasks):
+    user = get_current_user(request)
     credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
 
@@ -221,6 +292,24 @@ async def POST(request: Request, background_tasks: BackgroundTasks):
         except EC2ProvisioningError as e:
             raise HTTPException(status_code=e.code, detail=e.message)
 
+    # Create local DB record
+    db_instance = None
+    try:
+        with get_session() as db_session:
+            create_data = ComputeInstanceCreateType(
+                instance_name=instance_name,
+                zone=req.region,
+                machine_type=req.instance_type,
+                boot_disk_size_gb=10,
+                created_by_user_id=user.id,
+                provider="aws",
+                ssh_username="admin",
+                status="PROVISIONING",
+            )
+            db_instance = create_compute_instance(db_session, create_data)
+    except Exception as e:
+        logger.error(f"Failed to create local DB record for {instance_name}: {e}")
+
     try:
         result = EC2InstanceFactory.create_instance(
             access_key=access_key,
@@ -237,9 +326,26 @@ async def POST(request: Request, background_tasks: BackgroundTasks):
             endpoint_url=endpoint_url,
         )
     except EC2ProvisioningError as e:
+        if db_instance:
+            try:
+                with get_session() as db_session:
+                    update_instance_status(db_session, instance_name, "FAILED")
+            except Exception:
+                pass
         raise HTTPException(status_code=e.code, detail=e.message)
 
-    if bastion_public_key and result.get("instance_id"):
+    if result.get("instance_id") and db_instance:
+        try:
+            with get_session() as db_session:
+                update_compute_instance(
+                    db_session,
+                    instance_name,
+                    ComputeInstanceUpdateType(gcp_resource_id=result["instance_id"]),
+                )
+        except Exception as e:
+            logger.error(f"Failed to update resource ID for {instance_name}: {e}")
+
+    if bastion_public_key and result.get("instance_id") and db_instance:
         background_tasks.add_task(
             _bastion_register_worker,
             access_key,
@@ -248,8 +354,16 @@ async def POST(request: Request, background_tasks: BackgroundTasks):
             endpoint_url,
             result["instance_id"],
             instance_name,
+            db_instance.id,
         )
         bastion_status = "pending"
+    else:
+        if db_instance:
+            try:
+                with get_session() as db_session:
+                    update_instance_status(db_session, instance_name, "RUNNING")
+            except Exception:
+                pass
 
     return {
         "message": "EC2 Instance provisioning queued",

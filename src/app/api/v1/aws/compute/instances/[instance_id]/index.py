@@ -13,6 +13,7 @@ from app.aws_client import (
 )
 from app.db_client.db import get_session
 from app.db_client.models.ssh_management import System
+from app.db_client.models.compute_instance import ComputeInstance
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ def _cleanup_worker(
     endpoint_url: str | None,
     instance_id: str,
     instance_name: str,
+    bastion_system_id: int | None,
 ):
     """Background task: terminate instance, remove volumes, snapshots, Elastic IPs, archive Bastion."""
     try:
@@ -59,7 +61,24 @@ def _cleanup_worker(
     except Exception as e:
         logger.error(f"Failed to clean up resources for {instance_name}: {e}")
 
+    # Delete local DB record
     if instance_name:
+        try:
+            with get_session() as db_session:
+                from app.db_client.controllers.compute_instance import delete_compute_instance
+                delete_compute_instance(db_session, instance_name)
+                logger.info(f"Deleted local DB ComputeInstance record for {instance_name}")
+        except Exception as e:
+            logger.error(f"Failed to delete local DB record for {instance_name}: {e}")
+
+    # Archive Bastion system
+    if bastion_system_id:
+        try:
+            archive_system_by_id(bastion_system_id)
+            logger.info(f"Archived linked Bastion system ID {bastion_system_id} for {instance_name}")
+        except Exception as e:
+            logger.error(f"Failed to archive Bastion system ID {bastion_system_id}: {e}")
+    elif instance_name:
         try:
             with get_session() as db:
                 system = db.exec(
@@ -71,9 +90,9 @@ def _cleanup_worker(
                 ).first()
                 if system:
                     archive_system_by_id(system.id)
-                    logger.info(f"Archived Bastion system '{instance_name}' (ID: {system.id})")
+                    logger.info(f"Archived Bastion system '{instance_name}' (ID: {system.id}) via name fallback")
         except Exception as e:
-            logger.error(f"Failed to archive Bastion system for {instance_name}: {e}")
+            logger.error(f"Failed fallback archive Bastion system for {instance_name}: {e}")
 
 
 @aws_error_interceptor
@@ -89,6 +108,29 @@ async def GET(request: Request, instance_id: str):
 
     try:
         instance = EC2InstanceFactory.get_instance(access_key, secret_key, region, instance_id, endpoint_url=endpoint_url)
+
+        # Merge local DB properties
+        db_record = None
+        try:
+            with get_session() as db_session:
+                db_record = db_session.exec(
+                    select(ComputeInstance).where(
+                        ComputeInstance.gcp_resource_id == instance_id,
+                        ComputeInstance.provider == "aws"
+                    )
+                ).first()
+        except Exception as e:
+            logger.error(f"Failed to query DB for details: {e}")
+
+        if db_record:
+            instance["ssh_username"] = db_record.ssh_username or "admin"
+            instance["bastion_system_id"] = db_record.bastion_system_id
+            if db_record.status in ("PROVISIONING", "FAILED"):
+                instance["state"] = db_record.status.lower()
+        else:
+            instance["ssh_username"] = "admin"
+            instance["bastion_system_id"] = None
+
         return instance
     except EC2ProvisioningError as e:
         raise HTTPException(status_code=e.code, detail=e.message)
@@ -106,13 +148,31 @@ async def DELETE(request: Request, instance_id: str, background_tasks: Backgroun
         raise HTTPException(status_code=401, detail=str(e))
 
     instance_name = None
+    bastion_system_id = None
     try:
-        instance_detail = EC2InstanceFactory.get_instance(
-            access_key, secret_key, region, instance_id, endpoint_url=endpoint_url
-        )
-        instance_name = instance_detail.get("name", "")
-    except Exception:
-        logger.warning(f"Could not fetch instance {instance_id} details before deletion")
+        with get_session() as db_session:
+            db_record = db_session.exec(
+                select(ComputeInstance).where(
+                    ComputeInstance.gcp_resource_id == instance_id,
+                    ComputeInstance.provider == "aws"
+                )
+            ).first()
+            if db_record:
+                instance_name = db_record.instance_name
+                bastion_system_id = db_record.bastion_system_id
+                from app.db_client.controllers.compute_instance import update_instance_status
+                update_instance_status(db_session, instance_name, "STOPPING")
+    except Exception as e:
+        logger.error(f"Failed to lookup DB record before delete: {e}")
+
+    if not instance_name:
+        try:
+            instance_detail = EC2InstanceFactory.get_instance(
+                access_key, secret_key, region, instance_id, endpoint_url=endpoint_url
+            )
+            instance_name = instance_detail.get("name", "")
+        except Exception:
+            logger.warning(f"Could not fetch instance {instance_id} details before deletion")
 
     background_tasks.add_task(
         _cleanup_worker,
@@ -122,6 +182,7 @@ async def DELETE(request: Request, instance_id: str, background_tasks: Backgroun
         endpoint_url,
         instance_id,
         instance_name,
+        bastion_system_id,
     )
 
     return {
