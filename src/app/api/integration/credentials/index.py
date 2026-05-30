@@ -174,8 +174,6 @@ async def GET(request: Request) -> List[CredentialListItem]:
                     logger.error(f"Failed to get GCP metadata for credential {c.id}: {type(e).__name__}: {e}")
 
             aws_access_key_id = None
-            gcp_project_id = None
-            gcp_client_email = None
             if c.provider == "aws":
                 try:
                     from app.utils.get_fernet import get_fernet
