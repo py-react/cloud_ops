@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from '@/gingerJs_api_client/services/DefaultService';
 import { useGCP } from '@/components/gcp/contextProvider/GCPContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
@@ -206,13 +206,11 @@ export function StorageExplorerPage({ resourceType, backRoute }: StorageExplorer
     const fetchResource = useCallback(async () => {
         if (!id || !selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
         setLoading(true);
-        const token = getAuthToken();
         const credId = selectedGcpCredential.id;
         const projectId = selectedGcpCredential.project_id;
         try {
             if (resourceType === 'OBJECT_STORAGE') {
-                const res = await fetch(`/api/v1/storage/explorer?type=OBJECT_STORAGE&id=${encodeURIComponent(id)}&path=${encodePath(currentPath)}&project_id=${projectId}&credential_id=${credId}`, { headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
+                const data: any = await DefaultService.apiV1StorageExplorerGet({ credentialId: credId, projectId, type: 'OBJECT_STORAGE', id, path: currentPath });
                 if (data.status === 'error') { toast.error(data.message); setItems([]); return; }
                 const NO_EXTRAS = { showPlay: false, showStop: false, showPause: false, showClone: false, showUndo: false, showViewLogs: false, showViewConfig: false, showEdit: false, showPush: false, showViewDetails: false };
                 const folderRows = (data.folders || []).map((f: any) => ({ ...f, ...NO_EXTRAS, is_folder: true, display_name: f.name.replace(currentPath, '').replace(/\/$/, ''), showDelete: true }));
@@ -220,13 +218,11 @@ export function StorageExplorerPage({ resourceType, backRoute }: StorageExplorer
                 setItems([...folderRows, ...objectRows]);
                 setResource({ name: id, type: 'bucket' });
             } else if (resourceType === 'BLOCK_STORAGE') {
-                const res = await fetch(`/api/v1/storage/explorer?type=BLOCK_STORAGE&id=${encodeURIComponent(id)}&project_id=${projectId}&credential_id=${credId}`, { headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
+                const data: any = await DefaultService.apiV1StorageExplorerGet({ credentialId: credId, projectId, type: 'BLOCK_STORAGE', id });
                 if (data.status === 'error') { toast.error(data.message); return; }
                 setResource(data.selected_disk || null); setItems([]);
             } else if (resourceType === 'FILE_STORAGE') {
-                const res = await fetch(`/api/v1/storage/explorer?type=FILE_STORAGE&id=${encodeURIComponent(id)}&project_id=${projectId}&credential_id=${credId}`, { headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
+                const data: any = await DefaultService.apiV1StorageExplorerGet({ credentialId: credId, projectId, type: 'FILE_STORAGE', id });
                 if (data.status === 'error') { toast.error(data.message); return; }
                 setResource(data.selected_instance || null); setItems([]);
             }
@@ -237,16 +233,18 @@ export function StorageExplorerPage({ resourceType, backRoute }: StorageExplorer
     const fetchCostEstimate = useCallback(async () => {
         if (!id || !selectedGcpCredential?.project_id || !selectedGcpCredential?.id || !resource) return;
         setCostLoading(true);
-        const token = getAuthToken();
         const credId = selectedGcpCredential.id;
         const projectId = selectedGcpCredential.project_id;
         try {
-            const params = new URLSearchParams({ project_id: projectId, credential_id: String(credId) });
-            if (resourceType === 'OBJECT_STORAGE') { params.set('resource_type', 'bucket'); params.set('size_gb', '10'); }
-            else if (resourceType === 'BLOCK_STORAGE') { params.set('resource_type', 'disk'); params.set('size_gb', String(resource.size_gb || 100)); params.set('disk_type', resource.type || 'pd-balanced'); params.set('zone', resource.zone || 'us-central1-a'); }
-            else if (resourceType === 'FILE_STORAGE') { params.set('resource_type', 'filestore'); params.set('size_gb', String(resource.file_shares?.[0]?.capacity_gb || 1024)); params.set('tier', resource.tier || 'STANDARD'); params.set('zone', resource.location || 'us-central1-a'); }
-            const res = await fetch(`/api/v1/pricing/estimate?${params}`, { headers: { Authorization: `Bearer ${token}` } });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1PricingEstimateGet({
+                credentialId: credId,
+                resourceType: resourceType === 'OBJECT_STORAGE' ? 'bucket' : resourceType === 'BLOCK_STORAGE' ? 'disk' : 'filestore',
+                sizeGb: resourceType === 'OBJECT_STORAGE' ? 10 : resourceType === 'BLOCK_STORAGE' ? resource.size_gb || 100 : resource.file_shares?.[0]?.capacity_gb || 1024,
+                diskType: resourceType === 'BLOCK_STORAGE' ? resource.type || 'pd-balanced' : undefined,
+                zone: resourceType === 'BLOCK_STORAGE' ? resource.zone || 'us-central1-a' : resourceType === 'FILE_STORAGE' ? resource.location || 'us-central1-a' : undefined,
+                tier: resourceType === 'FILE_STORAGE' ? resource.tier || 'STANDARD' : undefined,
+                location: resourceType === 'OBJECT_STORAGE' ? 'US' : undefined,
+            });
             if (data.estimated_cost_monthly !== undefined) {
                 const monthly = data.estimated_cost_monthly;
                 const perGb = data.breakdown?.per_gb_price || (monthly / 10);
@@ -266,10 +264,9 @@ export function StorageExplorerPage({ resourceType, backRoute }: StorageExplorer
 
     const handleDownload = async (item: ExplorerItem) => {
         if (!selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
+        const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
         try {
-            const res = await fetch(`/api/v1/storage/explorer/objects?bucket=${encodeURIComponent(id || '')}&object=${encodeURIComponent(item.name)}&project_id=${projectId}&credential_id=${credId}`, { headers: { Authorization: `Bearer ${token}` } });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1StorageExplorerObjectsGet({ bucket: id, credentialId: credId, object: item.name, projectId });
             if (data.download_url) window.open(data.download_url, '_blank'); else toast.error(data.message || 'Download failed');
         } catch { toast.error('Failed to generate download link'); }
     };
@@ -279,20 +276,16 @@ export function StorageExplorerPage({ resourceType, backRoute }: StorageExplorer
         const { item } = deleteModal;
         if (!id || !selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
         setDeleteLoading(true);
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
+        const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
         try {
             if (item && resourceType === 'OBJECT_STORAGE') {
-                const res = await fetch(`/api/v1/storage/explorer/objects?bucket=${encodeURIComponent(id)}&object=${encodeURIComponent(item.name)}&is_folder=${item.is_folder}&project_id=${projectId}&credential_id=${credId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
+                const data: any = await DefaultService.apiV1StorageExplorerObjectsDelete({ bucket: id, credentialId: credId, object: item.name, isFolder: item.is_folder, projectId });
                 if (data.status === 'error') toast.error(data.message); else { toast.success(`"${item.display_name}" deleted`); fetchResource(); }
             } else if (resourceType === 'BLOCK_STORAGE') {
-                const res = await fetch(`/api/v1/gcp/compute/disks/${encodeURIComponent(id)}?project_id=${projectId}&zone=${resource?.zone}&credential_id=${credId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
+                const data: any = await DefaultService.apiV1GcpComputeDisksDiskNameDelete({ credentialId: credId, diskName: id, projectId, zone: resource?.zone });
                 if (data.status === 'error') toast.error(data.message); else { toast.success(`Disk "${id}" deleted`); navigate(backRoute); }
             } else if (resourceType === 'FILE_STORAGE') {
-                const loc = resource?.location || '';
-                const res = await fetch(`/api/v1/gcp/filestore/${encodeURIComponent(id)}?project_id=${projectId}&location=${loc}&credential_id=${credId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
+                const data: any = await DefaultService.apiV1GcpFilestoreDelete({ credentialId: credId, instanceId: id, projectId, zone: resource?.location });
                 if (data.status === 'error') toast.error(data.message); else { toast.success(`Filestore "${id}" deleted`); navigate(backRoute); }
             }
         } catch { toast.error('Failed to delete'); }
@@ -304,15 +297,11 @@ export function StorageExplorerPage({ resourceType, backRoute }: StorageExplorer
         const { item } = moveModal;
         if (!item || !id || !selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
         setMoveLoading(true);
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
+        const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
         const destPrefix = destPath === '/' ? '' : destPath + '/';
         const destName = destPrefix + item.display_name + (item.is_folder ? '/' : '');
         try {
-            const res = await fetch(`/api/v1/storage/explorer/objects?bucket=${encodeURIComponent(id)}&action=move&project_id=${projectId}&credential_id=${credId}`, {
-                method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ source_object: item.name, destination_object: destName, is_folder: item.is_folder })
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1StorageExplorerObjectsPost({ bucket: id, credentialId: credId, projectId, action: 'move', prefix: destName });
             if (data.status === 'error') toast.error(data.message);
             else { toast.success(`"${item.display_name}" moved`); fetchResource(); }
         } catch { toast.error('Failed to move item'); }
@@ -322,13 +311,12 @@ export function StorageExplorerPage({ resourceType, backRoute }: StorageExplorer
     const handleUploadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files?.length || !selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
+        const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
         let ok = 0;
         for (const file of Array.from(files)) {
-            const fd = new FormData(); fd.append('file', file);
             try {
-                const res = await fetch(`/api/v1/storage/explorer/objects?bucket=${encodeURIComponent(id || '')}&prefix=${encodePath(currentPath)}&project_id=${projectId}&credential_id=${credId}&action=upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
-                const d = await res.json(); if (d.status !== 'error') ok++;
+                const d: any = await DefaultService.apiV1StorageExplorerObjectsPost({ bucket: id, credentialId: credId, projectId, prefix: currentPath, action: 'upload' });
+                if (d.status !== 'error') ok++;
             } catch { /* continue */ }
         }
         toast.success(`${ok}/${files.length} file(s) uploaded`);
@@ -338,26 +326,23 @@ export function StorageExplorerPage({ resourceType, backRoute }: StorageExplorer
 
     const handleCreateFolder = async () => {
         if (!folderName.trim() || !selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
-        const res = await fetch(`/api/v1/storage/explorer?type=${resourceType}&id=${encodeURIComponent(id || '')}&project_id=${projectId}&credential_id=${credId}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create_folder', folder_name: folderName.trim(), prefix: currentPath }) });
-        const data = await res.json();
+        const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
+        const data: any = await DefaultService.apiV1StorageExplorerPost({ credentialId: credId, projectId, type: resourceType, id });
         if (data.status === 'error') toast.error(data.message); else { toast.success(`Folder "${folderName}" created`); setFolderOpen(false); setFolderName(''); fetchResource(); }
     };
 
     const handleResizeDisk = async () => {
         if (!selectedGcpCredential?.project_id || !selectedGcpCredential?.id || !resource) return;
         const newSize = (resource.size_gb || 0) + 10;
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
-        const res = await fetch(`/api/v1/gcp/compute/disks/${encodeURIComponent(id || '')}/resize?project_id=${projectId}&zone=${resource.zone}&credential_id=${credId}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ new_size_gb: newSize }) });
-        const data = await res.json();
+        const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
+        const data: any = await DefaultService.apiV1GcpComputeDisksDiskNameResizePost({ credentialId: credId, diskName: id });
         if (data.status === 'error') toast.error(data.message); else { toast.success(`Disk resized to ${newSize} GB`); fetchResource(); }
     };
 
     const handleSnapshotDisk = async () => {
         if (!selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
-        const res = await fetch(`/api/v1/gcp/compute/disks/${encodeURIComponent(id || '')}/snapshot?project_id=${projectId}&zone=${resource?.zone}&credential_id=${credId}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-        const data = await res.json();
+        const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
+        const data: any = await DefaultService.apiV1GcpComputeDisksDiskNameSnapshotPost({ credentialId: credId, diskName: id });
         if (data.status === 'error') toast.error(data.message); else toast.success(`Snapshot "${data.snapshot_name}" created`);
     };
 
@@ -366,9 +351,8 @@ export function StorageExplorerPage({ resourceType, backRoute }: StorageExplorer
         const newCap = (resource.file_shares?.[0]?.capacity_gb || 0) + 1024;
         const shareName = resource.file_shares?.[0]?.name;
         const loc = resource.location || '';
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
-        const res = await fetch(`/api/v1/gcp/filestore/${encodeURIComponent(id || '')}/expand?project_id=${projectId}&location=${loc}&credential_id=${credId}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ share_name: shareName, new_capacity_gb: newCap }) });
-        const data = await res.json();
+        const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
+        const data: any = await DefaultService.apiV1GcpFilestoreInstanceIdExpandPost({ credentialId: credId, instanceId: id });
         if (data.status === 'error') toast.error(data.message); else { toast.success(`Filestore expanded to ${newCap} GB`); fetchResource(); }
     };
 

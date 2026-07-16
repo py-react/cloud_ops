@@ -40,10 +40,7 @@ async def GET(request: Request, bucket_name: str):
 
 
 @aws_error_interceptor
-async def DELETE(request: Request, bucket_name: str):
-    region = request.query_params.get("region", "us-east-1")
-    credential_id = request.query_params.get("credential_id")
-
+async def DELETE(request: Request, bucket_name: str, credential_id: str | None = None, region: str = "us-east-1"):
     cred_id = _parse_cred_id(credential_id)
     try:
         access_key, secret_key, _, endpoint_url = get_aws_credentials(cred_id)

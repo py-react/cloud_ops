@@ -1,13 +1,17 @@
 import logging
 import importlib.util
 import os
-from fastapi import Request, HTTPException, BackgroundTasks
+from fastapi import Request, HTTPException, BackgroundTasks, Body, Query
 from google.cloud import compute_v1
-from app.gcp_client import get_gcp_credentials, load_service_account_json
-from app.gcp_client.gcp_auth import GCPAuthError
+from app.gcp_client import (
+    get_gcp_credentials,
+    load_service_account_json,
+    GCPInstanceFactory,
+    GCPProvisioningError,
+)
+from app.gcp_client.gcp_auth import GCPAuthError, get_active_gcp_credential, get_gcp_credential_by_id
 from app.gcp_client.gcp_error_handler import gcp_error_interceptor
 from app.gcp_client.gcp_preflight_checker import gcp_preflight_guard
-from app.gcp_client.gcp_storage_factory import ComputeDiscovery
 from app.db_client.db import get_session
 from app.db_client.models.github_pat.github_pat import IntegrationCredential
 from app.db_client.models.ssh_management import SSHKey
@@ -70,6 +74,19 @@ def _parse_cred_id(credential_id: str | None) -> int | None:
         return None
 
 
+def _get_sa_data(cred_id: int | None) -> tuple[dict, str]:
+    """Resolve a credential to raw SA JSON dict + project_id for factory calls."""
+    if cred_id:
+        credential = get_gcp_credential_by_id(cred_id)
+    else:
+        credential = get_active_gcp_credential()
+    if not credential:
+        raise GCPAuthError("No GCP credential found")
+    sa_data = load_service_account_json(credential)
+    project_id = sa_data.get("project_id", "")
+    return sa_data, project_id
+
+
 def _auto_archive_bastion_system(bastion_system_id: int):
     """Background task: Archive the Bastion system using existing service pipeline."""
     try:
@@ -91,72 +108,53 @@ def async_gcp_provision_worker(
     bastion_public_key: str | None,
     os_family: str = "linux-debian",
 ):
-    """Background worker that executes the GCP SDK insert call with OS-aware configuration."""
+    """Background worker that provisions a GCP VM via GCPInstanceFactory with OS-aware configuration."""
     import time
     import socket
     import secrets
     import string
 
-    creds = None
-    instance_client = None
+    sa_data = None
     bastion_key = bastion_public_key
     windows_password = None
     is_windows = os_family == "windows"
     is_ubuntu = os_family == "linux-ubuntu"
     try:
-        creds, _ = get_gcp_credentials(credential_id)
-        instance_client = compute_v1.InstancesClient(credentials=creds)
+        sa_data, _ = _get_sa_data(credential_id)
 
-        instance = compute_v1.Instance()
-        instance.name = instance_name
-        instance.machine_type = f"zones/{zone}/machineTypes/{machine_type}"
+        # --- Build OS-specific metadata and tags (same logic, now separated from SDK wiring) ---
+        logger.info(f"Disk Config: source_image={os_image}, size={boot_disk_size_gb}GB, type={boot_disk_type}")
 
-        network_interface = compute_v1.NetworkInterface()
-        network_interface.network = "global/networks/default"
-        access_config = compute_v1.AccessConfig()
-        access_config.name = "External NAT"
-        access_config.type_ = "ONE_TO_ONE_NAT"
-        network_interface.access_configs = [access_config]
-        instance.network_interfaces = [network_interface]
-
-        disk = compute_v1.AttachedDisk()
-        disk.boot = True
-        disk.auto_delete = True
-        initialize_params = compute_v1.AttachedDiskInitializeParams()
-        initialize_params.source_image = os_image
-        initialize_params.disk_size_gb = boot_disk_size_gb
-        initialize_params.disk_type = f"zones/{zone}/diskTypes/{boot_disk_type}"
-        disk.initialize_params = initialize_params
-        instance.disks = [disk]
-        logger.info(f"SDK Disk Config: source_image={os_image}, size={boot_disk_size_gb}GB, type={boot_disk_type}")
-
-        instance.metadata = compute_v1.Metadata()
-        metadata_items = [
-            compute_v1.Items(key="created-by", value="k1w1-orchestrator"),
-        ]
+        metadata_items: list[dict] = [{"key": "created-by", "value": "k1w1-orchestrator"}]
+        target_tags = None
+        firewall_rule_name = None
+        instance_specific_tag = None
 
         if is_windows:
             alphabet = string.ascii_letters + string.digits + "-_"
             windows_password = ''.join(secrets.choice(alphabet) for _ in range(16))
-            
+
             windows_init_ps1 = (
                 f'$Password = ConvertTo-SecureString "{windows_password}" -AsPlainText -Force\n'
                 f'New-LocalUser -Name "admin" -Password $Password -Description "Bastion Admin Profile" -FullName "Admin"\n'
                 f'Add-LocalGroupMember -Group "Administrators" -Member "admin"\n'
                 f'Add-LocalGroupMember -Group "Remote Desktop Users" -Member "admin"\n'
-                # Enable RDP and Firewall rules
                 f'Set-ItemProperty -Path "HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server" -name "fDenyTSConnections" -value 0\n'
                 f'Enable-NetFirewallRule -DisplayGroup "Remote Desktop"\n'
                 f'netsh advfirewall firewall add rule name="Allow RDP" dir=in action=allow protocol=TCP localport=3389\n'
-                # FIX: Ensure terminal server graphics buffer is enabled for remote sessions
                 f'Set-ItemProperty -Path "HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server" -Name "fAllowToGetHelp" -Value 1\n'
                 f'reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server" /v "fEnableTemps" /t REG_DWORD /d 1 /f\n'
             )
-            
-            metadata_items.append(compute_v1.Items(key="windows-startup-script-ps1", value=windows_init_ps1))
+            metadata_items.append({"key": "windows-startup-script-ps1", "value": windows_init_ps1})
             logger.info("Windows Core Provisioning: Injected PowerShell RDP activation manifests")
+
+            base_name = instance_name[:40]
+            instance_specific_tag = f"rdp-target-{base_name}"
+            firewall_rule_name = f"allow-rdp-{base_name}"
+            target_tags = [instance_specific_tag, "http-server", "https-server"]
+            logger.info(f"Assigned isolated target tag {instance_specific_tag} to Windows VM")
         else:
-            metadata_items.append(compute_v1.Items(key="enable-oslogin", value="FALSE"))
+            metadata_items.append({"key": "enable-oslogin", "value": "FALSE"})
             if bastion_key:
                 if is_ubuntu:
                     ubuntu_user_script = (
@@ -171,61 +169,47 @@ def async_gcp_provision_worker(
                         'chmod 600 /home/admin/.ssh/authorized_keys\n'
                         'chown -R admin:admin /home/admin/.ssh\n'
                     )
-                    metadata_items.append(compute_v1.Items(key="startup-script", value=ubuntu_user_script))
-                    logger.info(f"Ubuntu SSH key injection configured for user 'admin' via startup-script")
+                    metadata_items.append({"key": "startup-script", "value": ubuntu_user_script})
+                    logger.info("Ubuntu SSH key injection configured for user 'admin' via startup-script")
                 else:
                     gcp_ssh_metadata_value = f"admin:{bastion_key} admin"
-                    metadata_items.append(compute_v1.Items(key="ssh-keys", value=gcp_ssh_metadata_value))
+                    metadata_items.append({"key": "ssh-keys", "value": gcp_ssh_metadata_value})
                     logger.info(f"Debian/Rocky SSH key prefix: {bastion_key[:80]}...")
-        
-        instance.metadata.items = metadata_items
 
-        if is_windows:
-            base_name = instance_name[:40]
-            instance_specific_tag = f"rdp-target-{base_name}"
-            firewall_rule_name = f"allow-rdp-{base_name}"
-            instance.tags = compute_v1.Tags(items=[instance_specific_tag, "http-server", "https-server"])
-            logger.info(f"Assigned isolated target tag {instance_specific_tag} to Windows VM")
+        logger.info(f"Metadata audit - keys: {[m['key'] for m in metadata_items]}")
+        logger.info(f"Triggering instance creation via GCPInstanceFactory for: {instance_name}")
 
-        logger.info(f"PAYLOAD METADATA AUDIT - Outgoing Key Items: {[(item.key, item.value[:50] + '...' if item.value and len(item.value) > 50 else item.value) for item in metadata_items]}")
-
-        logger.info(f"Triggering instance creation payload for: {instance_name}")
-        operation = instance_client.insert(
-            project=project_id,
+        # Delegate the entire VM insert + firewall to the factory
+        result = GCPInstanceFactory.create_instance(
+            sa_data=sa_data,
+            project_id=project_id,
+            instance_name=instance_name,
             zone=zone,
-            instance_resource=instance
+            machine_type=machine_type,
+            boot_disk_size_gb=boot_disk_size_gb,
+            boot_disk_type=boot_disk_type,
+            os_image=os_image,
+            metadata_items=metadata_items,
+            target_tags=target_tags,
+            firewall_rule_name=firewall_rule_name if is_windows else None,
         )
-        operation_name = operation.name
 
-        if is_windows:
-            try:
-                firewalls_client = compute_v1.FirewallsClient(credentials=creds)
-                individual_firewall = compute_v1.Firewall(
-                    name=firewall_rule_name,
-                    direction="INGRESS",
-                    allowed=[compute_v1.Allowed(I_p_protocol="tcp", ports=["3389"])],
-                    source_ranges=["0.0.0.0/0"],
-                    target_tags=[instance_specific_tag],
-                    network=f"projects/{project_id}/global/networks/default",
-                    description=f"Automated isolated RDP ingress rule for instance {instance_name}"
-                )
-                logger.info(f"Triggering individual firewall rule creation: {firewall_rule_name}")
-                fw_operation = firewalls_client.insert(project=project_id, firewall_resource=individual_firewall)
-                fw_operation.result()
-                logger.info(f"Individual network firewall rule {firewall_rule_name} successfully initialized")
-            except Exception as fw_err:
-                logger.error(f"Failed to provision individual firewall rule {firewall_rule_name}: {fw_err}")
-
-        operation.result()
-        logger.info(f"GCP Instance resource {instance_name} fully deployed")
-
-        instance_data = instance_client.get(project=project_id, zone=zone, instance=instance_name)
-        external_ip = None
-        if instance_data.network_interfaces and instance_data.network_interfaces[0].access_configs:
-            external_ip = instance_data.network_interfaces[0].access_configs[0].nat_i_p
+        external_ip = result.get("external_ip")
+        internal_ip = result.get("internal_ip")
+        gcp_resource_id = result.get("gcp_resource_id", "")
+        operation_name = instance_name  # factory already waited; use name as ref
 
         with get_session() as db_session:
-            update_instance_status(db_session, instance_name, "RUNNING")
+            update_compute_instance(
+                db_session,
+                instance_name,
+                ComputeInstanceUpdateType(
+                    status="RUNNING",
+                    internal_ip=internal_ip,
+                    external_ip=external_ip,
+                    gcp_resource_id=gcp_resource_id,
+                ),
+            )
 
         if external_ip:
             if is_windows:
@@ -322,49 +306,33 @@ def async_gcp_provision_worker(
         logger.info(f"Background provision operation {operation_name} completed for {instance_name} in {zone}")
 
     except Exception as e:
-        logger.error(f"Background GCP provision failed for {instance_name}: {e}")
+        error_msg = str(e)
+        logger.error(f"Background GCP provision failed for {instance_name}: {error_msg}")
         try:
             with get_session() as db_session:
-                update_instance_status(db_session, instance_name, "FAILED")
+                update_instance_status(db_session, instance_name, "FAILED", error_message=error_msg)
         except Exception:
             pass
     finally:
         bastion_key = None
         windows_password = None
-        try:
-            del bastion_key
-        except NameError:
-            pass
-        try:
-            del windows_password
-        except NameError:
-            pass
-        if instance_client:
-            del instance_client
-        if creds:
-            del creds
+        sa_data = None
 
 @gcp_error_interceptor
 @gcp_preflight_guard("compute.googleapis.com")
-async def GET(request: Request):
+async def GET(request: Request, project_id: str = Query(...), credential_id: str = Query(None)):
     """List all instances across all zones in the selected project."""
-    project_id = request.query_params.get("project_id")
     if not project_id:
         return {"instances": []}
 
-    credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
     try:
-        creds, _ = get_gcp_credentials(cred_id)
+        sa_data, _ = _get_sa_data(cred_id)
     except GCPAuthError as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-    instance_client = compute_v1.InstancesClient(credentials=creds)
-
-    request_list = compute_v1.AggregatedListInstancesRequest(project=project_id)
-    pager = instance_client.aggregated_list(request=request_list)
-
-    local_instances = {}
+    # Load local DB augmentation (status overrides, ssh_username)
+    local_instances: dict = {}
     try:
         with get_session() as db_session:
             db_records = list_compute_instances(db_session)
@@ -376,38 +344,35 @@ async def GET(request: Request):
     except Exception:
         pass
 
-    instances = []
-    for zone, response in pager:
-        if response.instances:
-            for instance in response.instances:
-                external_ip = "N/A"
-                internal_ip = "N/A"
-                for interface in instance.network_interfaces:
-                    internal_ip = interface.network_i_p
-                    for access_config in interface.access_configs:
-                        if access_config.nat_i_p:
-                            external_ip = access_config.nat_i_p
+    # Delegate the actual GCP API call to the factory
+    try:
+        raw_instances = GCPInstanceFactory.list_instances(sa_data, project_id)
+    except GCPProvisioningError as e:
+        raise HTTPException(status_code=e.code, detail=e.message)
 
-                local = local_instances.get(instance.name, {})
-                instances.append({
-                    "name": instance.name,
-                    "status": local.get("status", instance.status),
-                    "zone": zone.split("/")[-1],
-                    "machine_type": instance.machine_type.split("/")[-1],
-                    "internal_ip": internal_ip,
-                    "external_ip": external_ip,
-                    "creation_timestamp": instance.creation_timestamp,
-                    "ssh_username": local.get("ssh_username", "admin")
-                })
+    instances = []
+    for inst in raw_instances:
+        local = local_instances.get(inst["name"], {})
+        ls = local.get("status")
+        if ls == "FAILED":
+            status = "FAILED"
+        elif ls == "PROVISIONING" and inst["status"] in ("PROVISIONING", "STAGING", ""):
+            status = "PROVISIONING"
+        else:
+            status = inst["status"]
+        instances.append({
+            **inst,
+            "status": status,
+            "ssh_username": local.get("ssh_username", "admin"),
+        })
 
     return {"instances": instances}
 
 @gcp_error_interceptor
 @gcp_preflight_guard("compute.googleapis.com")
-async def POST(request: Request, background_tasks: BackgroundTasks):
+async def POST(request: Request, background_tasks: BackgroundTasks, credential_id: str | None = None, body: VMCreateRequest = Body(...)):
     """Provision a new VM instance using SSH key authentication."""
     user = get_current_user(request)
-    credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
 
     try:
@@ -415,9 +380,7 @@ async def POST(request: Request, background_tasks: BackgroundTasks):
     except GCPAuthError as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-    body = await request.json()
-    logger.info(f"DATA DISCOVERY AUDIT - Raw Incoming Body: {body}")
-    req = VMCreateRequest(**body)
+    req = body
     logger.info(f"DATA DISCOVERY AUDIT - Parsed Pydantic Model: project_id={req.project_id}, instance_name={req.instance_name}, selected_os_key={req.selected_os_key}, os_image={req.os_image}, boot_disk_size_gb={req.boot_disk_size_gb}")
 
     selected_os_key = req.selected_os_key or "debian-12"

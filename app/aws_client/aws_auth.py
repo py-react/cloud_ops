@@ -15,6 +15,7 @@ from sqlmodel import select
 logger = logging.getLogger(__name__)
 
 AWS_CRED_CACHE_TTL = 600
+DEFAULT_AWS_REGION = "ap-south-2"
 
 
 class AWSAuthError(Exception):
@@ -31,7 +32,8 @@ def _parse_aws_creds(token_str: str) -> Tuple[str, str, str, Optional[str]]:
         if field not in data:
             raise AWSAuthError(f"AWS credential JSON missing required field: {field}")
     endpoint_url = data.get("endpoint_url", "") or None
-    return data["access_key_id"], data["secret_access_key"], "", endpoint_url
+    region = data.get("region", "").strip() or DEFAULT_AWS_REGION
+    return data["access_key_id"], data["secret_access_key"], region, endpoint_url
 
 
 def get_active_aws_credential() -> Optional[IntegrationCredential]:
@@ -126,24 +128,24 @@ def aws_resource(service: str, access_key: str, secret_key: str, region: str, en
             os.environ['AWS_ENDPOINT_URL'] = old
 
 
-def get_ec2_client(credential_id: Optional[int] = None):
-    access_key, secret_key, region, endpoint_url = get_aws_credentials(credential_id)
-    return aws_client("ec2", access_key, secret_key, region, endpoint_url)
+def get_ec2_client(credential_id: Optional[int] = None, region: Optional[str] = None):
+    access_key, secret_key, cred_region, endpoint_url = get_aws_credentials(credential_id)
+    return aws_client("ec2", access_key, secret_key, region or cred_region, endpoint_url)
 
 
-def get_s3_client(credential_id: Optional[int] = None):
-    access_key, secret_key, region, endpoint_url = get_aws_credentials(credential_id)
-    return aws_client("s3", access_key, secret_key, region, endpoint_url)
+def get_s3_client(credential_id: Optional[int] = None, region: Optional[str] = None):
+    access_key, secret_key, cred_region, endpoint_url = get_aws_credentials(credential_id)
+    return aws_client("s3", access_key, secret_key, region or cred_region, endpoint_url)
 
 
-def get_s3_resource(credential_id: Optional[int] = None):
-    access_key, secret_key, region, endpoint_url = get_aws_credentials(credential_id)
-    return aws_resource("s3", access_key, secret_key, region, endpoint_url)
+def get_s3_resource(credential_id: Optional[int] = None, region: Optional[str] = None):
+    access_key, secret_key, cred_region, endpoint_url = get_aws_credentials(credential_id)
+    return aws_resource("s3", access_key, secret_key, region or cred_region, endpoint_url)
 
 
-def get_ec2_resource(credential_id: Optional[int] = None):
-    access_key, secret_key, region, endpoint_url = get_aws_credentials(credential_id)
-    return aws_resource("ec2", access_key, secret_key, region, endpoint_url)
+def get_ec2_resource(credential_id: Optional[int] = None, region: Optional[str] = None):
+    access_key, secret_key, cred_region, endpoint_url = get_aws_credentials(credential_id)
+    return aws_resource("ec2", access_key, secret_key, region or cred_region, endpoint_url)
 
 
 def list_aws_credentials() -> list:
@@ -175,8 +177,16 @@ def list_aws_credentials() -> list:
 
 def validate_aws_credential(credential_id: int) -> dict:
     try:
-        access_key, secret_key, region, endpoint_url = get_aws_credentials(credential_id)
-        sts = aws_client("sts", access_key, secret_key, region, endpoint_url)
+        access_key, secret_key, _region, endpoint_url = get_aws_credentials(credential_id)
+        # Use the global STS endpoint for validation — region-agnostic and works
+        # with admin keys that have access across multiple regions.
+        sts = aws_client(
+            "sts",
+            access_key,
+            secret_key,
+            region=DEFAULT_AWS_REGION,
+            endpoint_url=endpoint_url or "https://sts.amazonaws.com",
+        )
         identity = sts.get_caller_identity()
         return {"valid": True, "account_id": identity.get("Account"), "arn": identity.get("Arn")}
     except AWSAuthError as e:

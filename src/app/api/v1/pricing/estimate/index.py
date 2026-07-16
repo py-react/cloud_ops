@@ -25,25 +25,31 @@ from app.gcp_client import GCPAuthError
 logger = logging.getLogger(__name__)
 
 
-async def GET(request: Request):
-    resource_type = request.query_params.get("resource_type", "").lower()
-    credential_id = request.headers.get("X-GCP-Credential-ID")
+async def GET(
+    request: Request,
+    resource_type: str = "",
+    credential_id: str | None = None,
+    storage_class: str = "STANDARD",
+    size_gb: float = 10,
+    location: str = "US",
+    zone: str = "us-central1-a",
+    disk_type: str = "pd-balanced",
+    machine_type: str = "e2-medium",
+    tier: str = "STANDARD",
+    autoclass_enabled: bool = False,
+    versioning_enabled: bool = False,
+    soft_delete_days: int | None = None,
+    encryption_kms_key: str | None = None,
+    hierarchical_namespace_enabled: bool = False,
+):
     credential_id_int = int(credential_id) if credential_id and credential_id != "undefined" else None
+    resource_type = resource_type.lower()
 
     if not resource_type:
         raise HTTPException(status_code=400, detail="resource_type is required (bucket | disk | filestore | vm)")
 
     try:
         if resource_type == "bucket":
-            storage_class = request.query_params.get("storage_class", "STANDARD")
-            size_gb = float(request.query_params.get("size_gb", "10"))
-            location = request.query_params.get("location", "US")
-            autoclass_enabled = request.query_params.get("autoclass_enabled", "false").lower() == "true"
-            versioning_enabled = request.query_params.get("versioning_enabled", "false").lower() == "true"
-            soft_delete_days = int(request.query_params["soft_delete_days"]) if request.query_params.get("soft_delete_days") else None
-            encryption_kms_key = request.query_params.get("encryption_kms_key") or None
-            hierarchical_namespace_enabled = request.query_params.get("hierarchical_namespace_enabled", "false").lower() == "true"
-
             result = estimate_storage_cost(
                 size_gb, location, storage_class, credential_id_int,
                 autoclass_enabled=autoclass_enabled,
@@ -55,28 +61,19 @@ async def GET(request: Request):
             return result
 
         elif resource_type == "disk":
-            disk_type = request.query_params.get("disk_type", "pd-balanced")
-            size_gb = float(request.query_params.get("size_gb", "50"))
-            zone = request.query_params.get("zone", "us-central1-a")
             result = estimate_disk_cost(size_gb, zone, disk_type, credential_id_int)
             if result.get("available"):
                 logger.info(f"✓ Matched SKU: {result.get('sku_description')}")
             return result
 
         elif resource_type == "filestore":
-            tier = request.query_params.get("tier", "STANDARD")
-            size_gb = float(request.query_params.get("size_gb", "1024"))
-            zone = request.query_params.get("zone", "us-central1-a")
             result = estimate_filestore_cost(size_gb, zone, tier, credential_id_int)
             if result.get("available"):
                 logger.info(f"✓ Matched Filestore SKU: {result.get('sku_description')}")
             return result
 
         elif resource_type == "vm":
-            machine_type = request.query_params.get("machine_type", "e2-medium")
-            zone = request.query_params.get("zone", "us-central1-a")
-            boot_disk_size_gb = float(request.query_params.get("size_gb", "10"))
-            result = estimate_vm_cost(machine_type, zone, boot_disk_size_gb, credential_id_int)
+            result = estimate_vm_cost(machine_type, zone, size_gb, credential_id_int)
             return result
 
         else:

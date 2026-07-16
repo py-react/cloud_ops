@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Box, Plus, RefreshCw, Layers, Edit } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from "@/gingerJs_api_client";
 import PageLayout from '@/components/PageLayout';
 import { AWSCredentialSelector } from '@/components/aws/AWSCredentialSelector';
 import { useAWS } from '@/components/aws/contextProvider/AWSContext';
@@ -54,13 +54,9 @@ export default function BucketsList() {
     const fetchBuckets = useCallback(async () => {
         if (!selectedAwsCredential?.id) return;
         setLoading(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(`/api/v1/aws/storage/buckets?credential_id=${credId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageBucketsGet({ credentialId: credId });
             if (data.status !== 'error') setBuckets(data.buckets || []);
         } catch (e) { toast.error('Failed to sync buckets: ' + (e instanceof Error ? e.message : String(e))); }
         finally { setLoading(false); }
@@ -70,13 +66,9 @@ export default function BucketsList() {
 
     const handleDelete = async (bucket: Bucket) => {
         if (!selectedAwsCredential?.id) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(`/api/v1/aws/storage/buckets/${bucket.name}?credential_id=${credId}`, {
-                method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageBucketsBucketNameDelete({ bucketName: bucket.name, credentialId: credId });
             if (data.status === 'error') toast.error(data.message);
             else { toast.success(`Bucket "${bucket.name}" deleted`); fetchBuckets(); }
         } catch { toast.error('Failed to delete bucket'); }
@@ -84,13 +76,9 @@ export default function BucketsList() {
 
     const handleEdit = async (bucket: Bucket) => {
         if (!selectedAwsCredential?.id) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(`/api/v1/aws/storage/buckets/${bucket.name}/config?credential_id=${credId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageBucketsBucketNameConfigGet({ bucketName: bucket.name, credentialId: credId });
             if (data.status === 'error') { toast.error(data.message); return; }
 
             const tagArray: { key: string; value: string }[] = [];
@@ -122,7 +110,6 @@ export default function BucketsList() {
 
     const handleWizardSubmit = async (values: CreateS3BucketValues) => {
         if (!selectedAwsCredential?.id) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         const tagObj: Record<string, string> = {};
         (values.tags || []).filter(t => t.key.trim()).forEach(t => { tagObj[t.key.trim()] = t.value.trim(); });
@@ -131,7 +118,7 @@ export default function BucketsList() {
             try {
                 const res = await fetch(`/api/v1/aws/storage/buckets/${editingBucket}/config?credential_id=${credId}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         versioning_enabled: values.versioning_enabled,
                         versioning_expire_days: values.versioning_enabled ? values.versioning_expire_days : 0,
@@ -147,10 +134,9 @@ export default function BucketsList() {
             } catch { toast.error('Failed to update bucket'); }
         } else {
             try {
-                const res = await fetch(`/api/v1/aws/storage/buckets?credential_id=${credId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({
+                const data: any = await DefaultService.apiV1AwsStorageBucketsPost({
+                    credentialId: credId,
+                    requestBody: {
                         bucket_name: values.bucket_name.trim(),
                         region: values.region,
                         storage_class: values.storage_class,
@@ -163,9 +149,8 @@ export default function BucketsList() {
                         kms_key_id: values.encryption === 'aws:kms' ? values.kms_key_id : '',
                         bucket_policy: values.bucket_policy || '',
                         tags: Object.keys(tagObj).length ? tagObj : {},
-                    })
+                    }
                 });
-                const data = await res.json();
                 if (data.status === 'error') toast.error(data.message);
                 else {
                     toast.success('Bucket created successfully');

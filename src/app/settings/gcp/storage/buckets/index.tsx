@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Box, Plus, RefreshCw, Layers, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from '@/gingerJs_api_client';
 import PageLayout from '@/components/PageLayout';
 import { GCPCredentialSelector } from '@/components/gcp/GCPCredentialSelector';
 import { useGCP } from '@/components/gcp/contextProvider/GCPContext';
@@ -31,12 +31,11 @@ export default function BucketsList() {
     const fetchBuckets = useCallback(async () => {
         if (!selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
         setLoading(true);
-        const token = getAuthToken();
-        const credId = selectedGcpCredential.id;
-        const projectId = selectedGcpCredential.project_id;
         try {
-            const res = await fetch(`/api/v1/storage/buckets?project_id=${projectId}&credential_id=${credId}`, { headers: { Authorization: `Bearer ${token}` } });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1StorageBucketsGet({
+                credentialId: String(selectedGcpCredential.id),
+                projectId: selectedGcpCredential.project_id,
+            });
             if (data.status !== 'error') setBuckets(data.buckets || []);
         } catch { toast.error('Failed to sync buckets'); }
         finally { setLoading(false); }
@@ -46,10 +45,12 @@ export default function BucketsList() {
 
     const handleDelete = async (bucket: Bucket) => {
         if (!selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
         try {
-            const res = await fetch(`/api/v1/storage/buckets/${bucket.name}?project_id=${projectId}&credential_id=${credId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1StorageBucketsBucketNameDelete({
+                bucketName: bucket.name,
+                credentialId: String(selectedGcpCredential.id),
+                projectId: selectedGcpCredential.project_id,
+            });
             if (data.status === 'error') toast.error(data.message);
             else { toast.success(`Bucket "${bucket.name}" deleted`); fetchBuckets(); }
         } catch { toast.error('Failed to delete bucket'); }
@@ -57,13 +58,22 @@ export default function BucketsList() {
 
     const handleCreate = async (values: CreateStorageValues) => {
         if (!selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
-        const token = getAuthToken(); const credId = selectedGcpCredential.id; const projectId = selectedGcpCredential.project_id;
         try {
-            const res = await fetch(`/api/v1/storage/buckets?credential_id=${credId}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ project_id: projectId, bucket_name: values.name, location: values.location, storage_class: values.storage_class, autoclass_enabled: values.autoclass_enabled, hierarchical_namespace_enabled: values.hierarchical_namespace_enabled, rapid_cache_enabled: values.rapid_cache_enabled, soft_delete_days: values.soft_delete_days, versioning_enabled: values.versioning_enabled, encryption_kms_key: values.encryption_kms_key })
+            const data: any = await DefaultService.apiV1StorageBucketsPost({
+                credentialId: String(selectedGcpCredential.id),
+                requestBody: {
+                    project_id: selectedGcpCredential.project_id,
+                    bucket_name: values.name,
+                    location: values.location,
+                    storage_class: values.storage_class,
+                    autoclass_enabled: values.autoclass_enabled,
+                    hierarchical_namespace_enabled: values.hierarchical_namespace_enabled,
+                    rapid_cache_enabled: values.rapid_cache_enabled,
+                    soft_delete_days: values.soft_delete_days,
+                    versioning_enabled: values.versioning_enabled,
+                    encryption_kms_key: values.encryption_kms_key,
+                },
             });
-            const data = await res.json();
             if (data.status === 'error') toast.error(data.message);
             else { toast.success('Bucket created'); setShowCreateDialog(false); fetchBuckets(); }
         } catch { toast.error('Failed to create bucket'); }

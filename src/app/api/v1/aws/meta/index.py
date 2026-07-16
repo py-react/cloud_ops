@@ -19,9 +19,7 @@ def _parse_cred_id(credential_id: str | None) -> int | None:
         return None
 
 
-async def GET(request: Request):
-    credential_id = request.query_params.get("credential_id")
-
+async def GET(request: Request, credential_id: str | None = None):
     cred_id = _parse_cred_id(credential_id)
     try:
         access_key, secret_key, _, endpoint_url = get_aws_credentials(cred_id)

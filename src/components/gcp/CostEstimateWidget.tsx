@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DollarSign, Loader2, AlertCircle, TrendingUp } from 'lucide-react';
-import { getAuthToken } from '@/libs/auth';
 import { cn } from '@/libs/utils';
+import { DefaultService } from '@/gingerJs_api_client';
 import { useGCP } from '@/components/gcp/contextProvider/GCPContext';
 import { GCPErrorBanner, GCPError } from '@/components/GCPErrorBanner';
 
@@ -100,14 +100,22 @@ export function CostEstimateWidget({ params, className, onLoadingChange }: CostE
             onLoadingChange?.(true);
             
             try {
-                const token = getAuthToken();
-                const res = await fetch(`/api/v1/pricing/estimate?${query}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'X-GCP-Credential-ID': String(selectedGcpCredential!.id),
-                    },
-                });
-                const data = await res.json();
+                const data: any = await DefaultService.apiV1PricingEstimateGet({
+                    credentialId: String(selectedGcpCredential!.id),
+                    resourceType: params.resource_type,
+                    storageClass: params.storage_class,
+                    sizeGb: params.size_gb,
+                    location: params.location,
+                    diskType: params.disk_type,
+                    zone: params.zone,
+                    machineType: params.machine_type,
+                    tier: params.tier,
+                    autoclassEnabled: params.autoclass_enabled,
+                    versioningEnabled: params.versioning_enabled,
+                    softDeleteDays: params.soft_delete_days,
+                    encryptionKmsKey: params.encryption_kms_key,
+                    hierarchicalNamespaceEnabled: params.hierarchical_namespace_enabled,
+                } as any);
                 setEstimate(data);
             } catch {
                 setEstimate({ available: false, reason: 'Network error. Check connection.' });

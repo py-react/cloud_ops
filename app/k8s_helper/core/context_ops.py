@@ -1,4 +1,5 @@
 import os
+import logging
 from kubernetes import config,client
 from kubernetes.client import Configuration
 from pydantic import BaseModel
@@ -7,6 +8,8 @@ from ..models import CreateContextUserData, CreateContextClusterData, CreateCont
 import tempfile
 import base64
 import yaml
+
+logger = logging.getLogger(__name__)
 
 from app.services.kube_config_service import KubeConfigService
 from sqlmodel import Session
@@ -90,9 +93,12 @@ class ContextOperations:
                     kube_file.updated_at = datetime.utcnow()
                     session.add(kube_file)
                     session.commit()
-                    # Reload global config if it's the active one
+                    # Reload global config if it's the active one; failure is non-fatal
                     if kube_file.is_active:
-                        KubeConfigService.load_active_config()
+                        try:
+                            KubeConfigService.load_active_config()
+                        except Exception as e:
+                            logger.error(f"Failed to reload Kubeconfig after save: {e}")
         else:
             # Ensure the directory exists
             os.makedirs(os.path.dirname(self.config_file), exist_ok=True)

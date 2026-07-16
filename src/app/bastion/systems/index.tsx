@@ -30,6 +30,7 @@ import { z } from "zod";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { DefaultService } from "@/gingerJs_api_client";
 
 const PEMUploadField = ({
   value,
@@ -138,8 +139,7 @@ export default function BastionSystemsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/bastion/systems');
-      const data = await res.json();
+      const data: any = await DefaultService.apiBastionSystemsGet();
       if (!data.error) setSystems(data.systems);
     } catch { toast.error('Failed to load systems'); }
     finally { setLoading(false); }
@@ -149,17 +149,14 @@ export default function BastionSystemsPage() {
 
   const handleCreateSystem = async (values: SystemFormValues) => {
     try {
-      const res = await fetch('/api/bastion/systems', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...values, 
+      const data: any = await DefaultService.apiBastionSystemsPost({
+        requestBody: {
+          ...values,
           hostname: values.ip_address,
           connection_type: values.connection_type || 'ssh',
           connection_port: values.connection_port || (values.connection_type === 'rdp' ? 3389 : 22)
-        })
+        }
       });
-      const data = await res.json();
       if (!data.error) {
         toast.success(
           data.provisioning
@@ -179,8 +176,7 @@ export default function BastionSystemsPage() {
   const handleDelete = async () => {
     if (!systemToDelete) return;
     try {
-      const res = await fetch(`/api/bastion/systems/${systemToDelete.id}`, { method: 'DELETE' });
-      const data = await res.json();
+      const data: any = await DefaultService.apiBastionSystemsSystemIdDelete({ systemId: systemToDelete.id });
       if (!data.error) {
         toast.success(data.message);
         setSystems(prev => prev.filter(s => s.id !== systemToDelete.id));

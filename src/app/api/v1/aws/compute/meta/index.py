@@ -6,6 +6,7 @@ from app.aws_client import (
     AWSAuthError,
     EC2InstanceFactory,
     EC2ProvisioningError,
+    aws_error_interceptor,
 )
 
 logger = logging.getLogger(__name__)
@@ -20,26 +21,27 @@ def _parse_cred_id(credential_id: str | None) -> int | None:
         return None
 
 
-async def GET(request: Request):
-    region = request.query_params.get("region", "us-east-1")
-    credential_id = request.query_params.get("credential_id")
-    category = request.query_params.get("category", "instance_types")
-
+@aws_error_interceptor
+async def GET(request: Request, credential_id: str | None = None, region: str = "us-east-1", category: str = "instance_types"):
     cred_id = _parse_cred_id(credential_id)
-    try:
-        access_key, secret_key, _, endpoint_url = get_aws_credentials(cred_id)
-    except AWSAuthError as e:
-        raise HTTPException(status_code=401, detail=str(e))
 
     try:
+        if category == "images":
+            # Images use backend-maintained hardcoded mapping — no credentials needed
+            result = EC2InstanceFactory.list_public_images()
+            return result
+
+        # All other categories require live AWS credentials
+        try:
+            access_key, secret_key, _, endpoint_url = get_aws_credentials(cred_id)
+        except AWSAuthError as e:
+            raise HTTPException(status_code=401, detail=str(e))
+
         if category == "instance_types":
             types = EC2InstanceFactory.list_instance_types(access_key, secret_key, region, endpoint_url=endpoint_url)
             free_count = sum(1 for t in types if t.get("free_tier_eligible"))
             logger.info("Instance types: %d total, %d free tier eligible in %s", len(types), free_count, region)
             return {"instance_types": types}
-        elif category == "images":
-            result = EC2InstanceFactory.list_public_images(access_key, secret_key, region, endpoint_url=endpoint_url)
-            return result
         elif category == "availability_zones":
             zones = EC2InstanceFactory.list_availability_zones(access_key, secret_key, region, endpoint_url=endpoint_url)
             return {"availability_zones": zones}
@@ -48,14 +50,12 @@ async def GET(request: Request):
             return {"security_groups": groups}
         else:
             raise HTTPException(status_code=400, detail=f"Unknown category: {category}")
-    except EC2ProvisioningError as e:
-        raise HTTPException(status_code=e.code, detail=e.message)
+    except EC2ProvisioningError:
+        raise
 
 
-async def POST(request: Request):
-    credential_id = request.query_params.get("credential_id")
-    region = request.query_params.get("region", "us-east-1")
-
+@aws_error_interceptor
+async def POST(request: Request, credential_id: str | None = None, region: str = "us-east-1"):
     cred_id = _parse_cred_id(credential_id)
     try:
         access_key, secret_key, _, endpoint_url = get_aws_credentials(cred_id)
@@ -86,7 +86,7 @@ async def POST(request: Request):
                 endpoint_url=endpoint_url,
             )
             return result
-        except EC2ProvisioningError as e:
-            raise HTTPException(status_code=e.code, detail=e.message)
+        except EC2ProvisioningError:
+            raise
 
     raise HTTPException(status_code=400, detail=f"Unknown action: {action}")

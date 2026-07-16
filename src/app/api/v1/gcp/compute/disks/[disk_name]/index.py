@@ -96,15 +96,11 @@ async def GET(request: Request, disk_name: str):
 
 @gcp_error_interceptor
 @gcp_preflight_guard("compute.googleapis.com")
-async def DELETE(request: Request, disk_name: str):
+async def DELETE(request: Request, disk_name: str, credential_id: str | None = None, project_id: str | None = None, zone: str | None = None):
     """Delete a persistent disk."""
-    project_id = request.query_params.get("project_id")
-    zone = request.query_params.get("zone")
-
     if not project_id or not zone:
         raise HTTPException(status_code=400, detail="Missing project_id or zone")
 
-    credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
 
     try:

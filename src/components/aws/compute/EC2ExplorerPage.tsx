@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from '@/gingerJs_api_client';
 import { useAWS } from '@/components/aws/contextProvider/AWSContext';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import useNavigate from '@/libs/navigate';
@@ -47,13 +47,9 @@ export function EC2ExplorerPage({ backRoute }: EC2ExplorerPageProps) {
     const fetchInstance = useCallback(async () => {
         if (!instance_id || !selectedAwsCredential?.id) return;
         setLoading(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(`/api/v1/aws/compute/instances/${instance_id}?credential_id=${credId}&region=${encodeURIComponent(region)}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsComputeInstancesInstanceIdGet({ credentialId: String(credId), instanceId: instance_id, region });
             if (data.error) {
                 toast.error(data.message || 'Failed to load instance');
                 return;
@@ -71,15 +67,16 @@ export function EC2ExplorerPage({ backRoute }: EC2ExplorerPageProps) {
     const vmAction = async (action: 'start' | 'stop' | 'delete') => {
         if (!instance_id || !selectedAwsCredential?.id) return;
         setActionLoading(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const url = action === 'delete'
-                ? `/api/v1/aws/compute/instances/${instance_id}?credential_id=${credId}&region=${encodeURIComponent(region)}`
-                : `/api/v1/aws/compute/instances/${instance_id}/${action}?credential_id=${credId}&region=${encodeURIComponent(region)}`;
-            const method = action === 'delete' ? 'DELETE' : 'POST';
-            const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
-            const data = await res.json();
+            let data: any;
+            if (action === 'start') {
+                data = await DefaultService.apiV1AwsComputeInstancesInstanceIdStartPost({ credentialId: String(credId), instanceId: instance_id, region });
+            } else if (action === 'stop') {
+                data = await DefaultService.apiV1AwsComputeInstancesInstanceIdStopPost({ credentialId: String(credId), instanceId: instance_id, region });
+            } else {
+                data = await DefaultService.apiV1AwsComputeInstancesInstanceIdDelete({ credentialId: String(credId), instanceId: instance_id, region });
+            }
             toast.success(data.message || `Instance ${action} queued`);
             if (action === 'delete') {
                 navigate(backRoute);

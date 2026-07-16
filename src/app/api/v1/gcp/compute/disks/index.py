@@ -54,13 +54,11 @@ def _get_credential(cred_id: int | None):
 
 @gcp_error_interceptor
 @gcp_preflight_guard("compute.googleapis.com")
-async def GET(request: Request):
+async def GET(request: Request, credential_id: str | None = None, project_id: str | None = None):
     """List all persistent disks in the selected project."""
-    project_id = request.query_params.get("project_id")
     if not project_id:
         return {"disks": []}
 
-    credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
 
     try:
@@ -77,9 +75,8 @@ async def GET(request: Request):
 
 @gcp_error_interceptor
 @gcp_preflight_guard("compute.googleapis.com")
-async def POST(request: Request):
+async def POST(request: Request, credential_id: str | None = None):
     """Create a new persistent disk."""
-    credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
 
     try:

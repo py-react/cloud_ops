@@ -100,13 +100,11 @@ async def POST(request: Request, bucket_name: str):
 
 @gcp_error_interceptor
 @gcp_preflight_guard("storage.googleapis.com")
-async def DELETE(request: Request, bucket_name: str):
+async def DELETE(request: Request, bucket_name: str, credential_id: str | None = None, project_id: str | None = None):
     """Delete a bucket and all its contents."""
-    project_id = request.query_params.get("project_id")
     if not project_id:
         raise HTTPException(status_code=400, detail="Missing project_id")
 
-    credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
 
     try:

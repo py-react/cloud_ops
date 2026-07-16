@@ -2,9 +2,12 @@ import logging
 import importlib.util
 import os
 from fastapi import Request, HTTPException, BackgroundTasks
-from google.cloud import compute_v1
-from app.gcp_client import get_gcp_credentials
-from app.gcp_client.gcp_auth import GCPAuthError
+from app.gcp_client import (
+    load_service_account_json,
+    GCPInstanceFactory,
+    GCPProvisioningError,
+)
+from app.gcp_client.gcp_auth import GCPAuthError, get_active_gcp_credential, get_gcp_credential_by_id
 from app.gcp_client.gcp_error_handler import gcp_error_interceptor
 from app.gcp_client.gcp_preflight_checker import gcp_preflight_guard
 from app.db_client.db import get_session
@@ -27,6 +30,7 @@ _archive_module = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_archive_module)
 archive_system_by_id = _archive_module.archive_system_by_id
 
+
 def _parse_cred_id(credential_id: str | None) -> int | None:
     if not credential_id or credential_id == "undefined":
         return None
@@ -35,6 +39,19 @@ def _parse_cred_id(credential_id: str | None) -> int | None:
     except (ValueError, TypeError):
         return None
 
+
+def _get_sa_data(cred_id: int | None) -> tuple[dict, str]:
+    """Resolve a credential to raw SA JSON dict + project_id for factory calls."""
+    if cred_id:
+        credential = get_gcp_credential_by_id(cred_id)
+    else:
+        credential = get_active_gcp_credential()
+    if not credential:
+        raise GCPAuthError("No GCP credential found")
+    sa_data = load_service_account_json(credential)
+    project_id = sa_data.get("project_id", "")
+    return sa_data, project_id
+
 def async_gcp_delete_worker(
     instance_record_id: int,
     instance_name: str,
@@ -42,49 +59,38 @@ def async_gcp_delete_worker(
     zone: str,
     credential_id: int | None,
     bastion_system_id: int | None,
+    is_local_only: bool = False,
 ):
-    """Background worker that executes the GCP SDK delete call and purges DB record on completion."""
-    creds = None
-    instance_client = None
+    """Background worker that deletes a GCP VM via GCPInstanceFactory and purges the DB record.
+
+    If is_local_only is True (instance was never created on GCP), skip the cloud API call
+    and just purge the DB record.
+    """
+    import traceback
+    gcp_delete_succeeded = False
     try:
-        creds, _ = get_gcp_credentials(credential_id)
-        instance_client = compute_v1.InstancesClient(credentials=creds)
-
-        operation = instance_client.delete(project=project_id, zone=zone, instance=instance_name)
-        operation_name = operation.name
-
-        logger.info(f"Background delete operation {operation_name} submitted for {instance_name} in {zone}")
+        if is_local_only:
+            logger.info(f"Local-only instance {instance_name} — skipping GCP API call, purging DB record")
+            gcp_delete_succeeded = True
+        else:
+            sa_data, _ = _get_sa_data(credential_id)
+            GCPInstanceFactory.delete_instance(sa_data, project_id, zone, instance_name)
+            logger.info(f"GCPInstanceFactory.delete_instance completed for {instance_name}")
+            gcp_delete_succeeded = True
 
         with get_session() as db_session:
             delete_compute_instance(db_session, instance_name)
+        logger.info(f"Local DB record purged for {instance_name}")
 
-        logger.info(f"Local DB record purged for {instance_name} after GCP deletion")
-
-        if bastion_system_id:
+        if bastion_system_id and gcp_delete_succeeded:
             archive_system_by_id(bastion_system_id)
             logger.info(f"Archived linked Bastion system ID {bastion_system_id} for {instance_name}")
-
-        firewall_rule_name = f"allow-rdp-{instance_name}"
-        try:
-            firewalls_client = compute_v1.FirewallsClient(credentials=creds)
-            fw_operation = firewalls_client.delete(project=project_id, firewall=firewall_rule_name)
-            fw_operation.result()
-            logger.info(f"Cleaned up per-instance firewall rule {firewall_rule_name}")
-        except Exception:
-            logger.info(f"Firewall rule {firewall_rule_name} already absent or cleanup skipped")
+        elif bastion_system_id and not gcp_delete_succeeded:
+            logger.warning(f"NOT archiving Bastion system ID {bastion_system_id} — GCP delete failed for {instance_name}")
 
     except Exception as e:
-        logger.error(f"Background GCP delete failed for {instance_name}: {e}")
-        try:
-            with get_session() as db_session:
-                update_instance_status(db_session, instance_name, "FAILED")
-        except Exception:
-            pass
-    finally:
-        if instance_client:
-            del instance_client
-        if creds:
-            del creds
+        logger.error(f"Background GCP delete failed for {instance_name}: {e}\n{traceback.format_exc()}")
+        # Preserve original status (RUNNING) — delete failed but instance still exists in cloud
 
 @gcp_error_interceptor
 @gcp_preflight_guard("compute.googleapis.com")
@@ -122,17 +128,16 @@ async def GET(request: Request, instance_name: str):
     credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
     try:
-        creds, project_id = get_gcp_credentials(cred_id)
+        sa_data, project_id = _get_sa_data(cred_id)
     except GCPAuthError as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-    instance_client = compute_v1.InstancesClient(credentials=creds)
-    instance = instance_client.get(project=project_id, zone=zone, instance=instance_name)
+    try:
+        instance = GCPInstanceFactory.get_instance(sa_data, project_id, zone, instance_name)
+    except GCPProvisioningError as e:
+        raise HTTPException(status_code=e.code, detail=e.message)
 
-    external_ip = None
-    if instance.network_interfaces and instance.network_interfaces[0].access_configs:
-        external_ip = instance.network_interfaces[0].access_configs[0].nat_i_p
-
+    external_ip = instance.get("external_ip")
     has_onboarding_password = bool(db_temp_password and db_temp_password.strip())
     resolved_username = db_ssh_username or "admin"
 
@@ -140,47 +145,30 @@ async def GET(request: Request, instance_name: str):
         "id": db_id,
         "instance_name": instance_name,
         "zone": zone,
-        "machine_type": db_machine_type or instance.machine_type.split("/")[-1],
+        "machine_type": db_machine_type or instance.get("machine_type"),
         "boot_disk_size_gb": db_boot_disk_size_gb,
-        "gcp_resource_id": db_gcp_resource_id or str(instance.id),
-        "name": instance.name,
-        "status": instance.status,
-        "creation_timestamp": instance.creation_timestamp,
-        "description": instance.description,
-        "tags": [item.key for item in instance.metadata.items] if instance.metadata else [],
+        "gcp_resource_id": db_gcp_resource_id or instance.get("gcp_resource_id"),
+        "name": instance.get("name"),
+        "status": instance.get("status"),
+        "creation_timestamp": instance.get("creation_timestamp"),
+        "description": instance.get("description"),
+        "tags": instance.get("tags", []),
         "external_ip": external_ip,
         "ssh_username": resolved_username,
-        "disks": [
-            {
-                "device_name": disk.device_name,
-                "type": disk.type_,
-                "boot": disk.boot,
-                "size_gb": disk.disk_size_gb
-            } for disk in instance.disks
-        ],
-        "network_interfaces": [
-            {
-                "network": ni.network.split("/")[-1],
-                "ip": ni.network_i_p,
-                "external_ip": ni.access_configs[0].nat_i_p if ni.access_configs else None
-            } for ni in instance.network_interfaces
-        ],
+        "disks": instance.get("disks", []),
+        "network_interfaces": instance.get("network_interfaces", []),
         "has_onboarding_password": has_onboarding_password,
         "onboarding_username": resolved_username if has_onboarding_password else None,
         "onboarding_password": db_temp_password if has_onboarding_password else None,
     }
 
     db_temp_password = None
-    try:
-        del db_temp_password
-    except NameError:
-        pass
 
     return result
 
 @gcp_error_interceptor
 @gcp_preflight_guard("compute.googleapis.com")
-async def DELETE(request: Request, instance_name: str, background_tasks: BackgroundTasks):
+async def DELETE(request: Request, instance_name: str, background_tasks: BackgroundTasks, credential_id: str | None = None, zone: str | None = None):
     """Trigger asynchronous deletion of a VM instance using background tasks."""
     user = get_current_user(request)
 
@@ -208,16 +196,17 @@ async def DELETE(request: Request, instance_name: str, background_tasks: Backgro
             db_bastion_system_id = db_record.bastion_system_id
             update_instance_status(db_session, instance_name, "STOPPING")
 
-    zone = db_zone or request.query_params.get("zone")
+    zone = db_zone or zone
     if not zone:
         raise HTTPException(status_code=400, detail="Missing zone — cannot locate instance")
 
-    credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
     try:
-        creds, project_id = get_gcp_credentials(cred_id)
+        sa_data, project_id = _get_sa_data(cred_id)
     except GCPAuthError as e:
         raise HTTPException(status_code=401, detail=str(e))
+
+    is_local_only = db_status in ("PROVISIONING", "FAILED") or not db_gcp_resource_id
 
     if db_id:
         background_tasks.add_task(
@@ -228,6 +217,7 @@ async def DELETE(request: Request, instance_name: str, background_tasks: Backgro
             zone,
             cred_id,
             db_bastion_system_id,
+            is_local_only,
         )
 
     logger.info(f"Delete queued for instance {instance_name} in {zone}")

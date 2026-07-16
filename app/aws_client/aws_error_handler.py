@@ -1,7 +1,9 @@
-from fastapi import Request
+from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from botocore.exceptions import ClientError, BotoCoreError
 import logging
+
+from app.aws_client.aws_ec2_factory import EC2ProvisioningError
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +54,10 @@ class AWSErrorResponse:
         elif isinstance(exc, BotoCoreError):
             error_type = "AWS_SDK_ERROR"
             action_required = "Check network connectivity to LocalStack/AWS endpoint."
+        elif isinstance(exc, EC2ProvisioningError):
+            error_type = "AWS_INVALID_REQUEST"
+            message = exc.message
+            action_required = "Check the request parameters and try again."
 
         return {
             "status": "error",
@@ -65,15 +71,19 @@ class AWSErrorResponse:
     @staticmethod
     def handle_exception(exc: Exception, region: str = None, service_name: str = None):
         content = AWSErrorResponse.error_content(exc, region, service_name)
-        status_code = {
-            "AWS_INSUFFICIENT_PERMISSIONS": 403,
-            "AWS_INVALID_CREDENTIALS": 401,
-            "AWS_CONFLICT": 409,
-            "AWS_NOT_FOUND": 404,
-            "AWS_QUOTA_EXCEEDED": 429,
-            "AWS_INVALID_REQUEST": 400,
-            "AWS_BILLING_REQUIRED": 402,
-        }.get(content["error_type"], 500)
+        
+        if isinstance(exc, EC2ProvisioningError):
+            status_code = exc.code
+        else:
+            status_code = {
+                "AWS_INSUFFICIENT_PERMISSIONS": 403,
+                "AWS_INVALID_CREDENTIALS": 401,
+                "AWS_CONFLICT": 409,
+                "AWS_NOT_FOUND": 404,
+                "AWS_QUOTA_EXCEEDED": 429,
+                "AWS_INVALID_REQUEST": 400,
+                "AWS_BILLING_REQUIRED": 402,
+            }.get(content["error_type"], 500)
 
         logger.error(f"Standardized AWS Error [{content['error_type']}]: {str(exc)}", exc_info=True)
 

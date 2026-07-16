@@ -12,7 +12,7 @@ import {
     Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from '@/gingerJs_api_client';
 import PageLayout from '@/components/PageLayout';
 import { AWSCredentialSelector } from '@/components/aws/AWSCredentialSelector';
 import { useAWS } from '@/components/aws/contextProvider/AWSContext';
@@ -152,15 +152,10 @@ export default function ComputeOrchestrator() {
     const fetchInstances = useCallback(async () => {
         if (!selectedAwsCredential?.id) return;
         setFetchingResources(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const url = `/api/v1/aws/compute/instances?credential_id=${credId}`;
-            const res = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setInstances(data.instances || []);
+            const data = await DefaultService.apiV1AwsComputeInstancesGet({ credentialId: String(credId) });
+            setInstances((data as any).instances || []);
         } catch {
             toast.error('Failed to sync EC2 instances');
         } finally { setFetchingResources(false); }
@@ -182,16 +177,14 @@ export default function ComputeOrchestrator() {
 
     const handleCreate = async (values: CreateEC2Values) => {
         if (!selectedAwsCredential?.id) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         const tagObj: Record<string, string> = {};
         (values.tags || []).filter(t => t.key.trim()).forEach(t => { tagObj[t.key.trim()] = t.value.trim(); });
 
         try {
-            const res = await fetch(`/api/v1/aws/compute/instances?credential_id=${credId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({
+            const data: any = await DefaultService.apiV1AwsComputeInstancesPost({
+                credentialId: String(credId),
+                requestBody: {
                     instance_name: values.instance_name.trim(),
                     region: values.region,
                     image_id: values.image_id,
@@ -201,11 +194,9 @@ export default function ComputeOrchestrator() {
                     security_group_ids: values.security_group_id ? [values.security_group_id] : [],
                     bastion_enabled: values.bastion_enabled,
                     tags: Object.keys(tagObj).length ? tagObj : {},
-                })
+                }
             });
-            const data = await res.json();
-            if (!res.ok) toast.error(data.detail || 'Failed to create instance');
-            else if (data.status === 'error') toast.error(data.message);
+            if (data.status === 'error') toast.error(data.message);
             else {
                 toast.success('Instance provisioning queued');
                 setShowWizard(false);
@@ -222,15 +213,17 @@ export default function ComputeOrchestrator() {
                 ? { ...i, state: action === 'delete' ? 'terminated' : action === 'start' ? 'pending' : 'stopping' }
                 : i
         ));
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const url = action === 'delete'
-                ? `/api/v1/aws/compute/instances/${instance.instance_id}?credential_id=${credId}&region=${encodeURIComponent(instance.region)}`
-                : `/api/v1/aws/compute/instances/${instance.instance_id}/${action}?credential_id=${credId}&region=${encodeURIComponent(instance.region)}`;
-            const method = action === 'delete' ? 'DELETE' : 'POST';
-            const res = await fetch(url, { method, headers: { 'Authorization': `Bearer ${token}` } });
-            const data = await res.json();
+            const params = { credentialId: String(credId), instanceId: instance.instance_id, region: instance.region };
+            let data: any;
+            if (action === 'start') {
+                data = await DefaultService.apiV1AwsComputeInstancesInstanceIdStartPost(params);
+            } else if (action === 'stop') {
+                data = await DefaultService.apiV1AwsComputeInstancesInstanceIdStopPost(params);
+            } else {
+                data = await DefaultService.apiV1AwsComputeInstancesInstanceIdDelete(params);
+            }
             toast.success(data.message || `VM ${action} queued`);
             if (action === 'delete') setSelectedInstance(null);
             await fetchInstances();

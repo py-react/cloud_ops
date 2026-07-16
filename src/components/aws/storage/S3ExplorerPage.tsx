@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from '@/gingerJs_api_client';
 import { useAWS } from '@/components/aws/contextProvider/AWSContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
@@ -278,14 +279,9 @@ export function S3ExplorerPage({ backRoute }: S3ExplorerPageProps) {
     const fetchObjects = useCallback(async () => {
         if (!id || !selectedAwsCredential?.id) return;
         setLoading(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(
-                `/api/v1/aws/storage/buckets/${encodeURIComponent(id)}?prefix=${encodePath(currentPath)}&region=${encodeURIComponent(region)}&credential_id=${credId}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageBucketsBucketNameGet({ bucketName: id, credentialId: String(credId), region, prefix: currentPath });
             if (data.status === 'error') { toast.error(data.message); setItems([]); return; }
             const NO_EXTRAS = { showPlay: false, showStop: false, showPause: false, showClone: false, showUndo: false, showViewLogs: false, showViewConfig: false, showEdit: false, showPush: false, showViewDetails: false };
             const folderRows = (data.folders || []).map((f: any) => ({
@@ -308,14 +304,9 @@ export function S3ExplorerPage({ backRoute }: S3ExplorerPageProps) {
     const fetchConfig = useCallback(async () => {
         if (!id || !selectedAwsCredential?.id) return;
         setConfigLoading(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(
-                `/api/v1/aws/storage/buckets/${encodeURIComponent(id)}/config?credential_id=${credId}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageBucketsBucketNameConfigGet({ bucketName: id, credentialId: String(credId) });
             if (data.status !== 'error') setConfig(data);
         } catch { /* silent */ }
         finally { setConfigLoading(false); }
@@ -324,22 +315,17 @@ export function S3ExplorerPage({ backRoute }: S3ExplorerPageProps) {
     const fetchCostEstimate = useCallback(async () => {
         if (!id || !selectedAwsCredential?.id) return;
         setCostLoading(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
             const storageClass = config?.storage_class || 'STANDARD';
-            const region = config?.region || 'us-east-1';
-            const params = new URLSearchParams({
-                credential_id: String(credId),
-                resource_type: 's3_bucket',
-                region,
-                storage_class: storageClass,
-                size_gb: '10',
+            const localRegion = config?.region || 'us-east-1';
+            const data: any = await DefaultService.apiV1PricingEstimateGet({
+                credentialId: String(credId),
+                resourceType: 's3_bucket',
+                location: localRegion,
+                storageClass,
+                sizeGb: 10,
             });
-            const res = await fetch(`/api/v1/aws/pricing/estimate?${params}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            const data = await res.json();
             if (data.estimated_cost_monthly !== undefined) setCostEstimate(data);
         } catch { /* silent */ }
         finally { setCostLoading(false); }
@@ -383,13 +369,9 @@ export function S3ExplorerPage({ backRoute }: S3ExplorerPageProps) {
 
     const handleDownload = async (item: ExplorerItem) => {
         if (!selectedAwsCredential?.id) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(`/api/v1/aws/storage/buckets/${encodeURIComponent(id || '')}/upload?object=${encodeURIComponent(item.name)}&region=${encodeURIComponent(region)}&credential_id=${credId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageBucketsBucketNameUploadGet({ bucketName: id || '', credentialId: String(credId), region, prefix: item.name });
             if (data.download_url) window.open(data.download_url, '_blank');
             else if (data.url) window.open(data.url, '_blank');
             else toast.error(data.message || 'Download failed');
@@ -442,14 +424,14 @@ export function S3ExplorerPage({ backRoute }: S3ExplorerPageProps) {
     const handleUploadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files?.length || !selectedAwsCredential?.id) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
+        const token = getAuthToken();
         let ok = 0;
         for (const file of Array.from(files)) {
             const fd = new FormData();
             fd.append('file', file);
             try {
-                const res = await fetch(`/api/v1/aws/storage/buckets/${encodeURIComponent(id || '')}/upload?prefix=${encodePath(currentPath)}&region=${encodeURIComponent(region)}&credential_id=${credId}`, {
+                const res = await fetch(`/api/v1/aws/storage/buckets/${encodeURIComponent(id || '')}/upload/?region=${encodeURIComponent(region)}&credential_id=${credId}&prefix=${encodeURIComponent(currentPath)}`, {
                     method: 'POST',
                     headers: { Authorization: `Bearer ${token}` },
                     body: fd,

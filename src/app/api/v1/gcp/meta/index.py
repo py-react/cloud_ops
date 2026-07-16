@@ -1,11 +1,12 @@
 from fastapi import Request
-from app.gcp_client import get_gcp_credentials, GCPAuthError
+from app.gcp_client import load_service_account_json, GCPAuthError
+from app.gcp_client.gcp_auth import get_active_gcp_credential, get_gcp_credential_by_id
 from app.gcp_client.gcp_error_handler import gcp_error_interceptor, GCPErrorResponse
 from app.gcp_client.gcp_storage_factory import (
     GCSDiscovery,
-    ComputeDiscovery,
     FilestoreDiscovery,
 )
+from app.gcp_client.gcp_compute_factory import ComputeDiscovery
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,12 +32,8 @@ def _safe_fetch(project_id: str, service_name: str, fn, *args, **kwargs):
 
 
 @gcp_error_interceptor
-async def GET(request: Request):
+async def GET(request: Request, credential_id: str | None = None, project_id: str | None = None, zone: str | None = None):
     """Dynamically fetch all GCP metadata options via SDK discovery services."""
-    project_id = request.query_params.get("project_id")
-    zone = request.query_params.get("zone")
-    credential_id = request.query_params.get("credential_id")
-
     if not project_id:
         return {
             "regions": [],
@@ -51,53 +48,27 @@ async def GET(request: Request):
         }
 
     cred_id = _parse_cred_id(credential_id)
-    try:
-        credentials, _ = get_gcp_credentials(cred_id)
-    except GCPAuthError as e:
-        logger.error(f"Failed to get GCP credentials: {e}")
-        return {
-            "regions": [],
-            "zones": [],
-            "images": [],
-            "storage_locations": [],
-            "disk_types": [],
-            "storage_classes": [],
-            "filestore_locations": [],
-            "networks": [],
-            "errors": {},
-        }
 
-    from app.db_client.db import get_session
-    from app.db_client.models.github_pat.github_pat import IntegrationCredential
-    from sqlmodel import select
-    from app.gcp_client import load_service_account_json
-
-    sa_data = None
     try:
-        with get_session() as session:
-            if cred_id:
-                statement = select(IntegrationCredential).where(IntegrationCredential.id == cred_id)
-            else:
-                statement = select(IntegrationCredential).where(
-                    IntegrationCredential.provider == "gcp"
-                ).order_by(IntegrationCredential.id)
-            credential = session.exec(statement).first()
-        
-        if credential:
-            sa_data = load_service_account_json(credential)
+        if cred_id:
+            credential = get_gcp_credential_by_id(cred_id)
+        else:
+            credential = get_active_gcp_credential()
+        if not credential:
+            return {
+                "regions": [], "zones": [], "images": [],
+                "storage_locations": [], "disk_types": [],
+                "storage_classes": [], "filestore_locations": [],
+                "networks": [], "errors": {},
+            }
+        sa_data = load_service_account_json(credential)
     except Exception as e:
         logger.error(f"Failed to load SA data for discovery: {e}")
-
-    if not sa_data:
         return {
-            "regions": [],
-            "zones": [],
-            "storage_locations": [],
-            "disk_types": [],
-            "storage_classes": [],
-            "filestore_locations": [],
-            "networks": [],
-            "errors": {},
+            "regions": [], "zones": [], "images": [],
+            "storage_locations": [], "disk_types": [],
+            "storage_classes": [], "filestore_locations": [],
+            "networks": [], "errors": {},
         }
 
     errors = {}

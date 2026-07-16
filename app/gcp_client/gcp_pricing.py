@@ -24,21 +24,8 @@ GCS_CLASS_TO_BILLING = {
 
 DISK_TYPE_TO_BILLING = {
     "pd-standard": "Storage PD Capacity",
-    "pd-balanced": "Balanced Provisioned Space",
-    "pd-ssd": "SSD Provisioned Space",
-}
-
-FALLBACK_GCS_RATES = {
-    "STANDARD": Decimal("0.020"),
-    "NEARLINE": Decimal("0.010"),
-    "COLDLINE": Decimal("0.004"),
-    "ARCHIVE": Decimal("0.0012"),
-}
-
-FALLBACK_DISK_RATES = {
-    "pd-standard": Decimal("0.040"),
-    "pd-balanced": Decimal("0.100"),
-    "pd-ssd": Decimal("0.170"),
+    "pd-balanced": "Balanced PD Capacity",
+    "pd-ssd": "SSD backed PD Capacity",
 }
 
 FILESTORE_TIER_TO_BILLING = {
@@ -48,12 +35,10 @@ FILESTORE_TIER_TO_BILLING = {
     "BASIC_SSD": "Filestore Capacity Premium",
 }
 
-FALLBACK_FILESTORE_RATES = {
-    "STANDARD": Decimal("0.200"),
-    "PREMIUM": Decimal("0.360"),
-    "BASIC_HDD": Decimal("0.200"),
-    "BASIC_SSD": Decimal("0.360"),
-}
+class GCPPricingError(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
 
 _sku_cache: Dict[str, Dict[str, Any]] = {"data": {}, "last_updated": 0}
 _services_cache: List[Any] = []
@@ -218,30 +203,24 @@ def estimate_storage_cost(
     skus = _fetch_skus_for_service(GCS_SERVICE_ID, credential_id)
 
     if not skus:
-        logger.warning(f"Billing API returned empty SKU list for GCS, using fallback rates")
-        return _build_fallback_gcs_response(size_gb, storage_class, region, autoclass_enabled)
+        raise GCPPricingError(f"Billing API returned empty SKU list for GCS")
 
     target_sku = _find_gcs_sku(skus, storage_class, region)
-
     if not target_sku:
-        logger.warning(f"No SKU match for {storage_class} in {region}, using fallback rates")
-        return _build_fallback_gcs_response(size_gb, storage_class, region, autoclass_enabled)
+        raise GCPPricingError(f"No SKU match for {storage_class} in {region}")
 
     base_price_per_gb = _extract_price(target_sku)
 
     if autoclass_enabled and (base_price_per_gb is None or base_price_per_gb <= 0):
-        logger.info(f"Autoclass enabled with zero-rate SKU '{target_sku.description}'. Falling back to Standard Storage rate for {region}.")
         standard_sku = _find_gcs_sku(skus, "STANDARD", region)
         if standard_sku:
             standard_price = _extract_price(standard_sku)
             if standard_price and standard_price > 0:
                 base_price_per_gb = standard_price
                 target_sku = standard_sku
-                logger.info(f"Using Standard Storage fallback rate: {base_price_per_gb}")
 
     if base_price_per_gb is None or base_price_per_gb <= 0:
-        logger.warning(f"Could not extract price from SKU, using fallback rates")
-        return _build_fallback_gcs_response(size_gb, storage_class, region, autoclass_enabled)
+        raise GCPPricingError(f"Could not extract price from SKU for {storage_class} in {region}")
 
     return _calculate_gcs_cost_with_surcharges(
         size_gb, base_price_per_gb, target_sku, storage_class, region,
@@ -309,54 +288,20 @@ def _calculate_gcs_cost_with_surcharges(
     }
 
 
-def _build_fallback_gcs_response(size_gb: float, storage_class: str, region: str, autoclass_enabled: bool = False) -> Dict[str, Any]:
-    storage_class_upper = storage_class.upper()
-    
-    if autoclass_enabled:
-        fallback_rate = FALLBACK_GCS_RATES.get("STANDARD", Decimal("0.020"))
-    else:
-        fallback_rate = FALLBACK_GCS_RATES.get(storage_class_upper, Decimal("0.020"))
-        
-    base_cost = (Decimal(str(size_gb)) * fallback_rate).quantize(Decimal("0.01"))
-
-    return {
-        "available": True,
-        "monthly_estimate": float(base_cost),
-        "currency": "USD",
-        "unit": "GB/month",
-        "sku_description": f"Fallback rate for {storage_class_upper} in {region}",
-        "price_per_unit": float(fallback_rate),
-        "estimated_cost_monthly": float(base_cost),
-        "breakdown": {
-            "base_storage": float(base_cost),
-            "per_gb_price": float(fallback_rate),
-            "surcharges": {},
-            "total_surcharges": 0.0,
-        },
-        "features_applied": {
-            "autoclass": autoclass_enabled,
-        },
-        "is_fallback": True,
-    }
-
-
 def estimate_disk_cost(size_gb: float, zone: str, disk_type: str, credential_id: Optional[int] = None) -> Dict[str, Any]:
     skus = _fetch_skus_for_service(COMPUTE_SERVICE_ID, credential_id)
 
     if not skus:
-        logger.warning(f"Billing API returned empty SKU list for Compute, using fallback rates")
-        return _build_fallback_disk_response(size_gb, disk_type, zone)
+        raise GCPPricingError(f"Billing API returned empty SKU list for Compute")
 
     target_sku = _find_disk_sku(skus, disk_type, zone)
 
     if not target_sku:
-        logger.warning(f"No SKU match for {disk_type} in {zone}, using fallback rates")
-        return _build_fallback_disk_response(size_gb, disk_type, zone)
+        raise GCPPricingError(f"No SKU match for {disk_type} in {zone}")
 
     price_per_gb = _extract_price(target_sku)
     if price_per_gb is None:
-        logger.warning(f"Could not extract price from disk SKU, using fallback rates")
-        return _build_fallback_disk_response(size_gb, disk_type, zone)
+        raise GCPPricingError(f"Could not extract price from disk SKU: {disk_type} in {zone}")
 
     total = (Decimal(str(size_gb)) * price_per_gb).quantize(Decimal("0.01"))
 
@@ -381,49 +326,13 @@ def estimate_disk_cost(size_gb: float, zone: str, disk_type: str, credential_id:
     }
 
 
-def _build_fallback_disk_response(size_gb: float, disk_type: str, zone: str) -> Dict[str, Any]:
-    disk_type_lower = disk_type.lower()
-    fallback_rate = FALLBACK_DISK_RATES.get(disk_type_lower, Decimal("0.100"))
-    total = (Decimal(str(size_gb)) * fallback_rate).quantize(Decimal("0.01"))
-
-    return {
-        "available": True,
-        "monthly_estimate": float(total),
-        "per_gb_price": float(fallback_rate),
-        "currency": "USD",
-        "sku_description": f"Fallback rate for {disk_type} in {zone}",
-        "price_per_unit": float(fallback_rate),
-        "estimated_cost_monthly": float(total),
-        "breakdown": {
-            "base_storage": float(total),
-            "per_gb_price": float(fallback_rate),
-            "surcharges": {},
-            "total_surcharges": 0.0,
-        },
-        "features_applied": {
-            "disk_type": disk_type,
-            "zone": zone,
-        },
-        "is_fallback": True,
-    }
-
-
-FALLBACK_VM_SPECS = {
+VM_MACHINE_TYPES = {
     "e2-micro": (0.25, 1.0, "E2"),
     "e2-small": (0.5, 2.0, "E2"),
     "e2-medium": (1.0, 4.0, "E2"),
     "e2-standard-2": (2.0, 8.0, "E2"),
     "e2-standard-4": (4.0, 16.0, "E2"),
-    "n2-standard-2": (2.0, 8.0, "N2"),
-}
-
-FALLBACK_VM_HOURLY = {
-    "e2-micro": Decimal("0.009736"),
-    "e2-small": Decimal("0.019472"),
-    "e2-medium": Decimal("0.038944"),
-    "e2-standard-2": Decimal("0.091800"),
-    "e2-standard-4": Decimal("0.183600"),
-    "n2-standard-2": Decimal("0.129600"),
+    "e2-standard-8": (8.0, 32.0, "E2"),
 }
 
 def estimate_vm_cost(
@@ -433,52 +342,49 @@ def estimate_vm_cost(
     credential_id: Optional[int] = None,
 ) -> Dict[str, Any]:
     machine_type_lower = machine_type.lower()
-    specs = FALLBACK_VM_SPECS.get(machine_type_lower)
+    specs = VM_MACHINE_TYPES.get(machine_type_lower)
     if not specs:
-        specs = (1.0, 4.0, "E2")
-        machine_type_lower = "e2-medium"
+        raise GCPPricingError(f"Unknown machine type: {machine_type}")
         
     cores, ram_gb, family = specs
     region = "-".join(zone.split("-")[:-1]) if "-" in zone else zone
     
     skus = _fetch_skus_for_service(COMPUTE_SERVICE_ID, credential_id)
+    if not skus:
+        raise GCPPricingError(f"Billing API returned empty SKU list for Compute")
     
     core_price = None
     ram_price = None
+    family_lower = family.lower()
+    region_lower = region.lower().strip()
     
-    if skus:
-        family_lower = family.lower()
-        region_lower = region.lower().strip()
+    for sku in skus:
+        desc = sku.description or ""
+        desc_lower = desc.lower()
         
-        for sku in skus:
-            desc = sku.description or ""
-            desc_lower = desc.lower()
-            
-            if family_lower in desc_lower and "instance" in desc_lower:
-                service_regions = getattr(sku, "service_regions", [])
-                region_matches = [r.lower() for r in service_regions]
-                if region_lower not in region_matches:
-                    continue
-                    
-                if "core" in desc_lower and core_price is None:
-                    core_price = _extract_price(sku)
-                elif "ram" in desc_lower and ram_price is None:
-                    ram_price = _extract_price(sku)
-                    
-                if core_price is not None and ram_price is not None:
-                    break
+        if family_lower in desc_lower and "instance" in desc_lower:
+            service_regions = getattr(sku, "service_regions", [])
+            region_matches = [r.lower() for r in service_regions]
+            if region_lower not in region_matches:
+                continue
+                
+            if "core" in desc_lower and core_price is None:
+                core_price = _extract_price(sku)
+            elif "ram" in desc_lower and ram_price is None:
+                ram_price = _extract_price(sku)
+                
+            if core_price is not None and ram_price is not None:
+                break
 
-    if core_price is not None and ram_price is not None:
-        hourly_rate = (Decimal(str(cores)) * core_price) + (Decimal(str(ram_gb)) * ram_price)
-        sku_desc = f"{family} CPU/RAM SKUs in {region}"
-    else:
-        hourly_rate = FALLBACK_VM_HOURLY.get(machine_type_lower, Decimal("0.038944"))
-        sku_desc = f"Fallback VM rate for {machine_type_lower}"
+    if core_price is None or ram_price is None:
+        raise GCPPricingError(f"Could not find CPU/RAM pricing for {machine_type} in {zone}")
 
+    hourly_rate = (Decimal(str(cores)) * core_price) + (Decimal(str(ram_gb)) * ram_price)
+    sku_desc = f"{family} CPU/RAM SKUs in {region}"
     vm_monthly_cost = (hourly_rate * Decimal("730")).quantize(Decimal("0.01"))
     
     disk_cost_result = estimate_disk_cost(boot_disk_size_gb, zone, "pd-balanced", credential_id)
-    boot_disk_cost = Decimal(str(disk_cost_result.get("monthly_estimate", 1.0)))
+    boot_disk_cost = Decimal(str(disk_cost_result.get("monthly_estimate", 0)))
     
     total_monthly = (vm_monthly_cost + boot_disk_cost).quantize(Decimal("0.01"))
     
@@ -534,19 +440,16 @@ def estimate_filestore_cost(size_gb: float, zone: str, tier: str = "STANDARD", c
     skus = _fetch_skus_for_service(COMPUTE_SERVICE_ID, credential_id)
 
     if not skus:
-        logger.warning(f"Billing API returned empty SKU list for Compute, using fallback rates")
-        return _build_fallback_filestore_response(size_gb, tier, zone)
+        raise GCPPricingError(f"Billing API returned empty SKU list for Compute")
 
     target_sku = _find_filestore_sku(skus, tier, zone)
 
     if not target_sku:
-        logger.warning(f"No SKU match for Filestore {tier} in {zone}, using fallback rates")
-        return _build_fallback_filestore_response(size_gb, tier, zone)
+        raise GCPPricingError(f"No SKU match for Filestore {tier} in {zone}")
 
     price_per_gb = _extract_price(target_sku)
     if price_per_gb is None:
-        logger.warning(f"Could not extract price from Filestore SKU, using fallback rates")
-        return _build_fallback_filestore_response(size_gb, tier, zone)
+        raise GCPPricingError(f"Could not extract price from Filestore SKU: {tier} in {zone}")
 
     total = (Decimal(str(size_gb)) * price_per_gb).quantize(Decimal("0.01"))
 
@@ -571,30 +474,3 @@ def estimate_filestore_cost(size_gb: float, zone: str, tier: str = "STANDARD", c
         },
     }
 
-
-def _build_fallback_filestore_response(size_gb: float, tier: str, zone: str) -> Dict[str, Any]:
-    tier_upper = tier.upper()
-    fallback_rate = FALLBACK_FILESTORE_RATES.get(tier_upper, Decimal("0.200"))
-    total = (Decimal(str(size_gb)) * fallback_rate).quantize(Decimal("0.01"))
-
-    return {
-        "available": True,
-        "monthly_estimate": float(total),
-        "per_gb_price": float(fallback_rate),
-        "currency": "USD",
-        "sku_description": f"Fallback rate for Filestore {tier_upper} in {zone}",
-        "price_per_unit": float(fallback_rate),
-        "estimated_cost_monthly": float(total),
-        "breakdown": {
-            "base_storage": float(total),
-            "per_gb_price": float(fallback_rate),
-            "surcharges": {},
-            "total_surcharges": 0.0,
-        },
-        "features_applied": {
-            "tier": tier,
-            "zone": zone,
-            "resource_type": "filestore",
-        },
-        "is_fallback": True,
-    }

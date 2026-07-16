@@ -2,19 +2,15 @@ import React, { useEffect } from 'react';
 import { Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAWS } from '@/components/aws/contextProvider/AWSContext';
-import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from '@/gingerJs_api_client/services/DefaultService';
 
 export function AWSRegionSelector() {
     const { selectedRegion, setSelectedRegion, availableRegions, setAvailableRegions, selectedAwsCredential } = useAWS();
 
     useEffect(() => {
         if (!selectedAwsCredential?.id) return;
-        const token = getAuthToken();
-        fetch(`/api/v1/aws/meta?credential_id=${selectedAwsCredential.id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(r => r.json())
-            .then(d => { if (d.regions) setAvailableRegions(d.regions); })
+        DefaultService.apiV1AwsMetaGet({ credentialId: String(selectedAwsCredential.id) })
+            .then((d: any) => { if (d.regions) setAvailableRegions(d.regions); })
             .catch(() => {});
     }, [selectedAwsCredential?.id]);
 

@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import useNavigate from "@/libs/navigate";
+import { DefaultService } from "@/gingerJs_api_client";
 
 import {
   Sidebar,
@@ -35,7 +36,7 @@ import {
 import CustomLink from "@/libs/Link";
 import { cn } from "@/libs/utils";
 import { NamespaceContext } from "./kubernetes/contextProvider/NamespaceContext";
-import { getMenuItems } from "@/config/menu-items";
+import { getMenuItems, getV2MenuItems } from "@/config/menu-items";
 import { toast } from "sonner";
 import { getAuthToken } from "@/libs/auth";
 
@@ -61,13 +62,8 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       const token = getAuthToken();
       if (!token) return;
       try {
-        const res = await fetch('/api/v1/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-        }
+        const data = await DefaultService.apiV1AuthMeGet();
+        setUser(data as UserProfile);
       } catch (error) {
         console.error("Failed to fetch user info", error);
       }
@@ -77,11 +73,9 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch('/api/v1/auth/logout', { method: 'POST' });
-      if (res.ok) {
-        toast.success("Logged out successfully");
-        navigate('/login');
-      }
+      await DefaultService.apiV1AuthLogoutPost();
+      toast.success("Logged out successfully");
+      navigate('/login');
     } catch (error) {
       toast.error("Failed to logout");
     }
@@ -124,7 +118,12 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
   const [expandedMenus, setExpandedMenus] = React.useState<{ [key: string]: boolean }>({});
   const [subExpandedMenus, setSubExpandedMenus] = React.useState<{ [key: string]: boolean }>({});
-  const items = React.useMemo(() => getMenuItems(selectedNamespace), [selectedNamespace]);
+  const items = React.useMemo(() => {
+    if (currentPath.startsWith('/new')) {
+      return getV2MenuItems(selectedNamespace);
+    }
+    return getMenuItems(selectedNamespace);
+  }, [currentPath, selectedNamespace]);
 
   React.useEffect(() => {
     const newExpandedMenus: { [key: string]: boolean } = { ...expandedMenus };

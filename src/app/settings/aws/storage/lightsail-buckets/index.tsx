@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Database, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from "@/gingerJs_api_client";
 import PageLayout from '@/components/PageLayout';
 import { AWSCredentialSelector } from '@/components/aws/AWSCredentialSelector';
 import { useAWS } from '@/components/aws/contextProvider/AWSContext';
@@ -70,13 +70,9 @@ export default function LightsailBucketsList() {
     const fetchBuckets = useCallback(async () => {
         if (!selectedAwsCredential?.id) return;
         setLoading(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(`/api/v1/aws/storage/lightsail-buckets?credential_id=${credId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageLightsailBucketsGet({ credentialId: credId });
             if (data.status !== 'error') setBuckets(data.buckets || []);
         } catch { toast.error('Failed to sync Lightsail buckets'); }
         finally { setLoading(false); }
@@ -86,13 +82,9 @@ export default function LightsailBucketsList() {
 
     const handleDelete = async (bucket: LightsailBucket) => {
         if (!selectedAwsCredential?.id) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(`/api/v1/aws/storage/lightsail-buckets/${encodeURIComponent(bucket.name)}?credential_id=${credId}`, {
-                method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageLightsailBucketsBucketNameDelete({ bucketName: bucket.name, credentialId: credId });
             if (data.status === 'error') toast.error(data.message);
             else { toast.success(`Bucket "${bucket.name}" deleted`); fetchBuckets(); }
         } catch { toast.error('Failed to delete bucket'); }

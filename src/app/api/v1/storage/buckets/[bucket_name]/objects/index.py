@@ -45,15 +45,11 @@ def _get_credential(cred_id: int | None):
 
 @gcp_error_interceptor
 @gcp_preflight_guard("storage.googleapis.com")
-async def GET(request: Request, bucket_name: str):
+async def GET(request: Request, bucket_name: str, credential_id: str | None = None, project_id: str | None = None, object_name: str | None = None):
     """Generate a signed download URL for an object (expires in 15 min)."""
-    project_id = request.query_params.get("project_id")
-    object_name = request.query_params.get("object_name")
-
     if not project_id or not object_name:
         raise HTTPException(status_code=400, detail="Missing project_id or object_name")
 
-    credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
 
     try:
@@ -70,15 +66,11 @@ async def GET(request: Request, bucket_name: str):
 
 @gcp_error_interceptor
 @gcp_preflight_guard("storage.googleapis.com")
-async def DELETE(request: Request, bucket_name: str):
+async def DELETE(request: Request, bucket_name: str, credential_id: str | None = None, project_id: str | None = None, object_name: str | None = None):
     """Delete a specific object from a bucket."""
-    project_id = request.query_params.get("project_id")
-    object_name = request.query_params.get("object_name")
-
     if not project_id or not object_name:
         raise HTTPException(status_code=400, detail="Missing project_id or object_name")
 
-    credential_id = request.query_params.get("credential_id")
     cred_id = _parse_cred_id(credential_id)
 
     try:

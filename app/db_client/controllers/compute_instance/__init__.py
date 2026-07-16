@@ -7,6 +7,8 @@ from app.db_client.controllers.compute_instance.compute_instance import (
     purge_temporary_admin_password,
     delete_compute_instance,
     update_instance_status,
+    upsert_compute_instance,
+    is_cache_fresh,
 )
 
 __all__ = [
@@ -18,4 +20,6 @@ __all__ = [
     "purge_temporary_admin_password",
     "delete_compute_instance",
     "update_instance_status",
+    "upsert_compute_instance",
+    "is_cache_fresh",
 ]

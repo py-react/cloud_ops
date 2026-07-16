@@ -136,7 +136,7 @@ const ContainerListPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => refreshAll(true)}
+            onClick={() => refreshAll()}
             disabled={isLoading || isGlobalRefreshing}
             className="h-9 gap-2 bg-white shadow-sm border-border/50"
           >

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Toaster } from "@/components/ui/sonner"
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
@@ -11,13 +11,20 @@ import { NavigationHistoryProvider } from '@/libs/navigationHistory'
 import { NotificationProvider } from '@/components/NotificationProvider'
 import { GCPContextProvider } from '@/components/gcp/contextProvider/GCPContext'
 import { AWSContextProvider } from '@/components/aws/contextProvider/AWSContext'
+import { DefaultService } from "@/gingerJs_api_client";
 
+const redirectToLogin = () => {
+  document.cookie = "k1w1_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  window.location.href = '/login'
+}
+
+const redirectToOnboarding = () => {
+  window.location.href = '/onboarding'
+}
 
 function AppLayout() {
   const location = useLocation()
-  const navigate = useNavigate()
   const [checkingOnboarding, setCheckingOnboarding] = React.useState(true)
-  const isPublicPage = location.pathname === '/login'
 
   useEffect(() => {
     const checkAuthAndOnboarding = async () => {
@@ -29,41 +36,30 @@ function AppLayout() {
 
       const token = getCookie('k1w1_token')
 
-      if (isPublicPage) {
+      if (location.pathname === '/login' || location.pathname === '/onboarding') {
         setCheckingOnboarding(false)
         return
       }
       if (!token) {
-        navigate('/login')
-        setCheckingOnboarding(false)
+        redirectToLogin()
         return
       }
 
       try {
-        const res = await fetch('/api/system/onboarding', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        
-        if (res.status === 401) {
-          navigate('/login')
-          setCheckingOnboarding(false)
-          return
-        }
-
-        const data = await res.json()
-        if (data.onboarding_required && location.pathname !== '/onboarding') {
-          navigate('/onboarding')
+        const data: any = await DefaultService.apiSystemOnboardingGet()
+        if (data.onboarding_required) {
+          redirectToOnboarding()
         }
       } catch (error) {
         console.error('Failed to check onboarding status:', error)
-        navigate('/login')
+        redirectToLogin()
       } finally {
         setCheckingOnboarding(false)
       }
     }
 
     checkAuthAndOnboarding()
-  }, [location.pathname, navigate, isPublicPage])
+  }, [location.pathname])
 
   if (checkingOnboarding) {
     return (

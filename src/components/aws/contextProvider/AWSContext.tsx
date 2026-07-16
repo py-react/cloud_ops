@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { DefaultService } from "@/gingerJs_api_client";
 
 interface AWSCredential {
     id: number;
@@ -32,11 +33,7 @@ export const AWSContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     const refreshAWSCredentials = useCallback(async () => {
         try {
-            const token = document.cookie.split('; ').find(row => row.startsWith('k1w1_token='))?.split('=')[1];
-            const res = await fetch('/api/integration/credentials', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data = await DefaultService.apiIntegrationCredentialsGet() as any;
 
             const awsCreds = (data || [])
                 .filter((c: any) => c.provider === 'aws')

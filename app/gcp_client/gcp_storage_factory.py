@@ -257,6 +257,42 @@ class ComputeDiscovery:
             _safe_cleanup(creds, client)
 
     @classmethod
+    def list_machine_types(cls, sa_data: Dict[str, Any], project_id: str, zone: str) -> List[Dict[str, Any]]:
+        """Fetch available machine types for a specific zone."""
+        # Hardcoded free tier eligible machine types (GCP Free Tier: e2-micro in us regions)
+        FREE_TIER_MACHINE_TYPES = {
+            "e2-micro": ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f",
+                        "us-east1-b", "us-east1-c", "us-east1-d",
+                        "us-west1-a", "us-west1-b", "us-west1-c"]
+        }
+        
+        creds = None
+        client = None
+        try:
+            creds = _build_credentials(sa_data)
+            client = compute_v1.MachineTypesClient(credentials=creds)
+            
+            machine_types = list(client.list(project=project_id, zone=zone))
+            results = []
+            for mt in machine_types:
+                mt_name = mt.name
+                is_free_tier = mt_name in FREE_TIER_MACHINE_TYPES and zone in FREE_TIER_MACHINE_TYPES[mt_name]
+                results.append({
+                    "machine_type": mt_name,
+                    "description": mt.description or mt.name,
+                    "guest_cpus": mt.guest_cpus,
+                    "memory_mb": mt.memory_mb,
+                    "free_tier_eligible": is_free_tier,
+                    "zone": zone,
+                })
+            return results
+        except Exception as e:
+            logger.error(f"Failed to fetch machine types for zone {zone}: {e}")
+            raise
+        finally:
+            _safe_cleanup(creds, client)
+
+    @classmethod
     def list_images(cls, sa_data: Dict[str, Any], project_id: str) -> List[Dict[str, Any]]:
         """Fetch available image families from standard cloud image projects."""
         creds = None

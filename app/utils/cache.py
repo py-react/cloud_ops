@@ -19,16 +19,25 @@ def _get_redis_url() -> str:
         return "redis://localhost:6379/0"
 
 
+_redis_available = True
+
 def _get_client():
-    global _redis_client
+    global _redis_client, _redis_available
+    if not _redis_available:
+        return None
     if _redis_client is not None:
         return _redis_client
-    import redis as redis_mod
-    url = _get_redis_url()
-    _redis_client = redis_mod.from_url(url, decode_responses=True, socket_connect_timeout=2)
-    _redis_client.ping()
-    logger.info(f"Connected to Redis at {url}")
-    return _redis_client
+    try:
+        import redis as redis_mod
+        url = _get_redis_url()
+        _redis_client = redis_mod.from_url(url, decode_responses=True, socket_connect_timeout=2)
+        _redis_client.ping()
+        logger.info(f"Connected to Redis at {url}")
+        return _redis_client
+    except Exception as e:
+        logger.warning(f"Redis not available, falling back to L1 cache: {e}")
+        _redis_available = False
+        return None
 
 
 # ── L1: in-memory, stores decrypted/parsed Python objects ──
@@ -56,24 +65,35 @@ def l1_delete(key: str):
 # ── L2: Redis, stores encrypted/serialized strings ──
 
 def cache_get(key: str) -> Optional[str]:
+    client = _get_client()
+    if client is None:
+        return None
     full_key = f"{CACHE_PREFIX}{key}"
-    return _get_client().get(full_key)
+    return client.get(full_key)
 
 
 def cache_set(key: str, value: str, ttl: int = 300):
+    client = _get_client()
+    if client is None:
+        return
     full_key = f"{CACHE_PREFIX}{key}"
-    _get_client().setex(full_key, ttl, value)
+    client.setex(full_key, ttl, value)
 
 
 def cache_delete(key: str):
     l1_delete(key)
+    client = _get_client()
+    if client is None:
+        return
     full_key = f"{CACHE_PREFIX}{key}"
-    _get_client().delete(full_key)
+    client.delete(full_key)
 
 
 def cache_clear_all():
     _l1.clear()
     client = _get_client()
+    if client is None:
+        return
     cursor = 0
     while True:
         cursor, keys = client.scan(cursor=cursor, match=f"{CACHE_PREFIX}*", count=100)

@@ -1,3 +1,4 @@
+import logging
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
@@ -5,6 +6,9 @@ from app.db_client.db import engine
 from app.services.kube_config_service import KubeConfigService
 from app.db_client.models.kubernetes_configs.kube_config_file import KubeConfigFile
 from typing import Optional
+from kubernetes.config.kube_config import ConfigException
+
+logger = logging.getLogger(__name__)
 
 async def GET(request: Request):
     """List all available Kubeconfigs."""
@@ -46,16 +50,24 @@ async def POST(request: Request):
             config_id = data.get("id")
             if not config_id:
                 return JSONResponse(status_code=400, content={"error": "Missing config ID"})
-            KubeConfigService.set_active(config_id, session)
-            return {"status": "success", "message": "Config activated"}
+            try:
+                KubeConfigService.set_active(config_id, session)
+                return {"status": "success", "message": "Config activated"}
+            except (ValueError, ConfigException) as e:
+                logger.error(f"Failed to activate config {config_id}: {e}")
+                return JSONResponse(status_code=400, content={"error": str(e)})
             
         elif action == "switch_context":
             config_id = data.get("id")
             context_name = data.get("context_name")
             if not config_id or not context_name:
                 return JSONResponse(status_code=400, content={"error": "Missing config ID or context name"})
-            KubeConfigService.switch_context(config_id, context_name, session)
-            return {"status": "success", "message": f"Context switched to {context_name}"}
+            try:
+                KubeConfigService.switch_context(config_id, context_name, session)
+                return {"status": "success", "message": f"Context switched to {context_name}"}
+            except (ValueError, ConfigException) as e:
+                logger.error(f"Failed to switch context for config {config_id}: {e}")
+                return JSONResponse(status_code=400, content={"error": str(e)})
             
         else:
             return JSONResponse(status_code=400, content={"error": "Invalid action"})

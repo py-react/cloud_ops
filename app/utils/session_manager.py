@@ -55,6 +55,7 @@ def validate_session(token: str) -> Optional[User]:
     cached = l1_get(f"session:{token_hash}")
     if cached and time.time() < cached["expires_ts"]:
         with get_db_session() as db:
+            db.expire_on_commit = False
             return db.get(User, cached["user_id"])
     if cached:
         return None
@@ -69,12 +70,14 @@ def validate_session(token: str) -> Optional[User]:
             remaining = data["expires_ts"] - time.time()
             l1_set(f"session:{token_hash}", data, ttl=min(int(remaining), 60))
             with get_db_session() as db:
+                db.expire_on_commit = False
                 return db.get(User, data["user_id"])
         except (json.JSONDecodeError, KeyError):
             cache_delete(f"session:{token_hash}")
             return None
 
     with get_db_session() as db:
+        db.expire_on_commit = False
         stmt = select(UserSession).where(UserSession.token_hash == token_hash)
         db_session = db.exec(stmt).first()
 

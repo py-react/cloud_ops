@@ -1,3 +1,5 @@
+import { DefaultService } from "@/gingerJs_api_client";
+
 export const getAuthToken = () => {
     const name = 'k1w1_token';
     const value = `; ${document.cookie}`;
@@ -8,7 +10,7 @@ export const getAuthToken = () => {
 
 export const logout = async () => {
     try {
-        await fetch('/api/v1/auth/logout', { method: 'POST' });
+        await DefaultService.apiV1AuthLogoutPost();
     } catch {
         document.cookie = "k1w1_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }

@@ -130,7 +130,6 @@ export const UploadConfigStep = ({ form }: { form: UseFormReturn<any> }) => {
                   className="hidden" 
                   ref={fileInputRef}
                   onChange={handleFileChange}
-                  accept=".yaml,.yml,.conf,config"
                 />
               </div>
             ) : (

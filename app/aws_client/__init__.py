@@ -16,7 +16,7 @@ from app.aws_client.aws_error_handler import AWSErrorResponse, aws_error_interce
 from app.aws_client.aws_ec2_factory import EC2InstanceFactory, EC2ProvisioningError
 from app.aws_client.aws_s3_factory import S3BucketFactory, S3ProvisioningError
 from app.aws_client.aws_lightsail_factory import LightsailBucketFactory, LightsailProvisioningError
-from app.aws_client.aws_pricing import estimate_s3_storage_cost, AWSPricingError, get_cache_status as get_pricing_cache_status
+from app.aws_client.aws_pricing import estimate_s3_storage_cost, estimate_ec2_instance_cost, AWSPricingError, get_cache_status as get_pricing_cache_status
 from app.aws_client.aws_meta import get_aws_meta, list_aws_regions
 
 __all__ = [
@@ -41,6 +41,7 @@ __all__ = [
     'LightsailBucketFactory',
     'LightsailProvisioningError',
     'estimate_s3_storage_cost',
+    'estimate_ec2_instance_cost',
     'AWSPricingError',
     'get_pricing_cache_status',
     'get_aws_meta',

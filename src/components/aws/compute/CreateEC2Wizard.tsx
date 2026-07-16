@@ -3,8 +3,8 @@ import * as z from 'zod';
 import { Globe, Cpu, Network, Tags, Server } from 'lucide-react';
 import { FormWizard } from '@/components/wizard/form-wizard';
 import { BasicStep, ConfigurationStep, NetworkStep, TagsStep } from './CreateEC2Steps';
-import { getAuthToken } from '@/libs/auth';
 import { useAWS } from '@/components/aws/contextProvider/AWSContext';
+import { DefaultService } from '@/gingerJs_api_client/services/DefaultService';
 
 interface SelectOption {
     value: string;
@@ -61,29 +61,21 @@ export function CreateEC2Wizard({
     const credId = selectedAwsCredential?.id;
 
     useEffect(() => {
-        if (!credId) return;
-        const token = getAuthToken();
-        fetch(`/api/v1/aws/meta?credential_id=${credId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(r => r.json())
-            .then(d => { if (d.regions) setRegions(d.regions); })
+        if (!credId || !isWizardOpen) return;
+        DefaultService.apiV1AwsMetaGet({ credentialId: String(credId) })
+            .then((d: any) => { if (d.regions) setRegions(d.regions); })
             .catch(() => {});
-    }, [credId]);
+    }, [credId, isWizardOpen]);
 
     const fetchMeta = useCallback(async (region: string) => {
-        if (!credId) return;
+        if (!credId || !isWizardOpen) return;
         setMetaLoading(true);
-        const token = getAuthToken();
         try {
-            const [typesRes, imagesRes, sgsRes, zonesRes] = await Promise.all([
-                fetch(`/api/v1/aws/compute/meta?category=instance_types&region=${region}&credential_id=${credId}`, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`/api/v1/aws/compute/meta?category=images&region=${region}&credential_id=${credId}`, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`/api/v1/aws/compute/meta?category=security_groups&region=${region}&credential_id=${credId}`, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`/api/v1/aws/compute/meta?category=availability_zones&region=${region}&credential_id=${credId}`, { headers: { Authorization: `Bearer ${token}` } }),
-            ]);
             const [typesData, imagesData, sgsData, zonesData] = await Promise.all([
-                typesRes.json(), imagesRes.json(), sgsRes.json(), zonesRes.json(),
+                DefaultService.apiV1AwsComputeMetaGet({ credentialId: String(credId), region, category: 'instance_types' }) as any,
+                DefaultService.apiV1AwsComputeMetaGet({ credentialId: String(credId), region, category: 'images' }) as any,
+                DefaultService.apiV1AwsComputeMetaGet({ credentialId: String(credId), region, category: 'security_groups' }) as any,
+                DefaultService.apiV1AwsComputeMetaGet({ credentialId: String(credId), region, category: 'availability_zones' }) as any,
             ]);
             if (typesData.instance_types) setInstanceTypes(typesData.instance_types.map((t: any) => ({ value: t.instance_type, label: t.instance_type, free_tier_eligible: t.free_tier_eligible })));
             if (imagesData.public || imagesData.custom) {
@@ -99,7 +91,7 @@ export function CreateEC2Wizard({
             if (zonesData.availability_zones) setZones(zonesData.availability_zones.map((z: any) => ({ value: z.zone_name, label: z.zone_name })));
         } catch { /* ignore */ }
         finally { setMetaLoading(false); }
-    }, [credId]);
+    }, [credId, isWizardOpen]);
 
     useEffect(() => { fetchMeta(wizardRegion); }, [fetchMeta, wizardRegion]);
 

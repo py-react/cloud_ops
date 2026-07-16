@@ -44,12 +44,8 @@ def _get_credential(cred_id: int | None):
 
 @gcp_error_interceptor
 @gcp_preflight_guard("storage.googleapis.com")
-async def POST(request: Request):
-    bucket_name = request.query_params.get("bucket")
-    project_id = request.query_params.get("project_id")
-    prefix = request.query_params.get("prefix", "")
-    credential_id = request.query_params.get("credential_id")
-    action = request.query_params.get("action", "upload")
+async def POST(request: Request, credential_id: str | None = None, project_id: str | None = None, bucket: str | None = None, prefix: str = "", action: str = "upload"):
+    bucket_name = bucket
 
     if not bucket_name or not project_id:
         raise HTTPException(status_code=400, detail="Missing bucket or project_id")
@@ -104,11 +100,9 @@ async def POST(request: Request):
 
 @gcp_error_interceptor
 @gcp_preflight_guard("storage.googleapis.com")
-async def GET(request: Request):
-    bucket_name = request.query_params.get("bucket")
-    object_name = request.query_params.get("object")
-    project_id = request.query_params.get("project_id")
-    credential_id = request.query_params.get("credential_id")
+async def GET(request: Request, credential_id: str | None = None, project_id: str | None = None, bucket: str | None = None, object: str | None = None):
+    bucket_name = bucket
+    object_name = object
 
     if not bucket_name or not object_name or not project_id:
         raise HTTPException(status_code=400, detail="Missing bucket, object, or project_id")
@@ -128,12 +122,9 @@ async def GET(request: Request):
 
 @gcp_error_interceptor
 @gcp_preflight_guard("storage.googleapis.com")
-async def DELETE(request: Request):
-    bucket_name = request.query_params.get("bucket")
-    object_name = request.query_params.get("object")
-    project_id = request.query_params.get("project_id")
-    credential_id = request.query_params.get("credential_id")
-    is_folder = request.query_params.get("is_folder", "false").lower() == "true"
+async def DELETE(request: Request, credential_id: str | None = None, project_id: str | None = None, bucket: str | None = None, object: str | None = None, is_folder: bool = False):
+    bucket_name = bucket
+    object_name = object
 
     if not bucket_name or not object_name or not project_id:
         raise HTTPException(status_code=400, detail="Missing bucket, object, or project_id")

@@ -3,8 +3,8 @@ import * as z from 'zod';
 import { Box, Globe, Database, Shield, Tags, HardDrive } from 'lucide-react';
 import { FormWizard } from '@/components/wizard/form-wizard';
 import { BasicStep, StorageStep, SecurityStep, TagsStep } from './CreateS3BucketSteps';
-import { getAuthToken } from '@/libs/auth';
 import { useAWS } from '@/components/aws/contextProvider/AWSContext';
+import { DefaultService } from '@/gingerJs_api_client/services/DefaultService';
 
 interface SelectOption {
     value: string;
@@ -52,20 +52,16 @@ export function CreateS3BucketWizard({
     const [encryptionOptions, setEncryptionOptions] = useState<SelectOption[]>([]);
 
     useEffect(() => {
-        if (!selectedAwsCredential?.id) return;
-        const token = getAuthToken();
+        if (!selectedAwsCredential?.id || !isWizardOpen) return;
         const credId = selectedAwsCredential.id;
-        fetch(`/api/v1/aws/meta?credential_id=${credId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(r => r.json())
-            .then(d => {
+        DefaultService.apiV1AwsMetaGet({ credentialId: String(credId) })
+            .then((d: any) => {
                 if (d.regions) setRegions(d.regions);
                 if (d.s3_storage_classes) setStorageClasses(d.s3_storage_classes);
                 if (d.s3_encryption_options) setEncryptionOptions(d.s3_encryption_options);
             })
             .catch(() => {});
-    }, [selectedAwsCredential?.id]);
+    }, [selectedAwsCredential?.id, isWizardOpen]);
 
     const steps = [
         {

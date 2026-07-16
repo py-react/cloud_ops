@@ -18,12 +18,16 @@ from app.gcp_client.gcp_pricing import (
     estimate_vm_cost,
     get_cache_status,
 )
+from app.gcp_client.gcp_compute_factory import (
+    GCPInstanceFactory,
+    GCPProvisioningError,
+    ComputeDiscovery,
+)
 from app.gcp_client.gcp_storage_factory import (
     GCSBucketFactory,
     PersistentDiskFactory,
     FilestoreInstanceFactory,
     GCSDiscovery,
-    ComputeDiscovery,
     FilestoreDiscovery,
     StorageProvisioningError,
     NameConflictError,
@@ -65,6 +69,8 @@ __all__ = [
     'InvalidNameError',
     'InvalidOptionError',
     'QuotaExceededError',
+    'GCPInstanceFactory',
+    'GCPProvisioningError',
     'validate_bucket_name',
     'validate_disk_name',
     'validate_filestore_name',

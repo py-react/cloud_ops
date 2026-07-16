@@ -364,3 +364,44 @@ export const getMenuItems = (selectedNamespace: string = "default") => ({
         },
     },
 });
+
+export const getV2MenuItems = (selectedNamespace: string = "default") => ({
+    header: {
+        title: "New Dashboard",
+        url: "/new/docker",
+        icon: LayoutDashboard,
+    },
+    items: {
+        services: {
+            title: "Services",
+            url: "/new",
+            childs: [
+                {
+                    title: "Docker Management",
+                    url: "/docker",
+                    icon: Docker,
+                },
+                {
+                    title: "Kubernetes Management",
+                    url: "/kubernetes",
+                    icon: Cpu,
+                },
+                {
+                    title: "Cloud Resource Management",
+                    url: "/cloud",
+                    icon: Cloud,
+                },
+                {
+                    title: "Jump Box",
+                    url: "/bastion",
+                    icon: Server,
+                },
+                {
+                    title: "CI/CD",
+                    url: "/cicd",
+                    icon: Cog,
+                },
+            ],
+        },
+    },
+});

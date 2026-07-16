@@ -371,9 +371,12 @@ class BastionManager:
             if system.private_key:
                 try:
                     plain_key = fernet_decrypt(system.private_key) if fernet_decrypt else system.private_key
-                    key_file = io.StringIO(plain_key)
-                    pkey = paramiko.RSAKey.from_private_key(key_file)
-                    await loop.run_in_executor(None, lambda: ssh.connect(system.ip_address, username=connect_user, pkey=pkey, timeout=10))
+                    pkey = paramiko.RSAKey.from_private_key(io.StringIO(plain_key))
+                    await loop.run_in_executor(
+                        None,
+                        lambda _pk=pkey, _u=connect_user, _h=system.ip_address:
+                            ssh.connect(_h, username=_u, pkey=_pk, timeout=15)
+                    )
                     connected = True
                     logger.info(f"Connected to {system.ip_address} via user-provided private key")
                 except Exception as e:
@@ -383,10 +386,13 @@ class BastionManager:
             # 2. Try service identity key if it was deployed (Bootstrap use case)
             if not connected and system.service_key_deployed:
                 try:
-                    private_key, _, _ = BastionManager.get_or_create_service_key()
-                    key_file = io.StringIO(private_key)
-                    pkey = paramiko.RSAKey.from_private_key(key_file)
-                    await loop.run_in_executor(None, lambda: ssh.connect(system.ip_address, username=connect_user, pkey=pkey, timeout=10))
+                    svc_private_key, _, _ = BastionManager.get_or_create_service_key()
+                    pkey = paramiko.RSAKey.from_private_key(io.StringIO(svc_private_key))
+                    await loop.run_in_executor(
+                        None,
+                        lambda _pk=pkey, _u=connect_user, _h=system.ip_address:
+                            ssh.connect(_h, username=_u, pkey=_pk, timeout=15)
+                    )
                     connected = True
                     logger.info(f"Connected to {system.ip_address} via service key")
                 except Exception as e:
@@ -399,9 +405,13 @@ class BastionManager:
                     plain_password = fernet_decrypt(system.password) if fernet_decrypt else system.password
                 except Exception:
                     plain_password = system.password  # Legacy plaintext
-                
+
                 try:
-                    await loop.run_in_executor(None, lambda: ssh.connect(system.ip_address, username=connect_user, password=plain_password, timeout=10))
+                    await loop.run_in_executor(
+                        None,
+                        lambda _pw=plain_password, _u=connect_user, _h=system.ip_address:
+                            ssh.connect(_h, username=_u, password=_pw, timeout=15)
+                    )
                     connected = True
                     logger.info(f"Connected to {system.ip_address} via password")
                 except Exception as e:

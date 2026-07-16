@@ -85,8 +85,9 @@ class KubeConfigService:
                     return True
                 except Exception as e:
                     logger.error(f"Failed to load Kubeconfig '{active_config.name}': {e}")
-            
-            raise ValueError("No active Kubernetes configuration found. Please upload or activate a Kubeconfig in the Control Center.")
+                    raise ValueError(f"Failed to load Kubeconfig '{active_config.name}': {e}")
+        
+        raise ValueError("No active Kubernetes configuration found. Please upload or activate a Kubeconfig in the Control Center.")
 
     @classmethod
     def list_configs(cls, session: Session) -> List[KubeConfigFile]:
@@ -121,7 +122,11 @@ class KubeConfigService:
 
     @classmethod
     def set_active(cls, config_id: int, session: Session):
-        # Deactivate all
+        target = session.get(KubeConfigFile, config_id)
+        if not target:
+            raise ValueError(f"Kubeconfig with ID {config_id} not found")
+
+        # Deactivate all, activate the target
         configs = session.exec(select(KubeConfigFile)).all()
         for c in configs:
             c.is_active = (c.id == config_id)
@@ -180,8 +185,11 @@ class KubeConfigService:
         
         session.commit()
         
-        # If this is the active config, reload it
+        # If this is the active config, reload it; failure is non-fatal
         if kube_file.is_active:
-            cls.load_active_config()
+            try:
+                cls.load_active_config()
+            except Exception as e:
+                logger.error(f"Failed to reload Kubeconfig after context switch: {e}")
         
         return True

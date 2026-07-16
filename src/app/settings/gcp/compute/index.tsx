@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Tabs } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from "@/gingerJs_api_client";
 import { GCPErrorBanner, GCPError } from '@/components/GCPErrorBanner';
 import PageLayout from '@/components/PageLayout';
 import { GCPCredentialSelector } from '@/components/gcp/GCPCredentialSelector';
@@ -174,13 +174,8 @@ export default function ComputeOrchestrator() {
     const [actionLoading, setActionLoading] = useState(false);
 
     const fetchInstances = useCallback(async (projectId: string, credId: number) => {
-        const token = getAuthToken();
         try {
-            const url = `/api/v1/gcp/compute/instances?project_id=${projectId}&credential_id=${credId}`;
-            const res = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1GcpComputeInstancesGet({ credentialId: credId.toString(), projectId });
             if (data.status === 'error') {
                 setInstanceError(data);
             } else {
@@ -193,13 +188,8 @@ export default function ComputeOrchestrator() {
     }, []);
 
     const fetchDisks = useCallback(async (projectId: string, credId: number) => {
-        const token = getAuthToken();
         try {
-            const url = `/api/v1/gcp/compute/disks?project_id=${projectId}&credential_id=${credId}`;
-            const res = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1GcpComputeDisksGet({ credentialId: credId.toString(), projectId });
             if (data.status === 'error') {
                 setDiskError(data);
             } else {
@@ -242,16 +232,29 @@ export default function ComputeOrchestrator() {
                 : i
         ));
 
-        const token = getAuthToken();
         const credId = selectedGcpCredential.id;
         const projectId = selectedGcpCredential.project_id;
         try {
-            const url = action === 'delete'
-                ? `/api/v1/gcp/compute/instances/${instance.name}?project_id=${projectId}&zone=${instance.zone}&credential_id=${credId}`
-                : `/api/v1/gcp/compute/instances/${instance.name}/${action}?project_id=${projectId}&zone=${instance.zone}&credential_id=${credId}`;
-            const method = action === 'delete' ? 'DELETE' : 'POST';
-            const res = await fetch(url, { method, headers: { 'Authorization': `Bearer ${token}` } });
-            const data = await res.json();
+            let data: any;
+            if (action === 'delete') {
+                data = await DefaultService.apiV1GcpComputeInstancesInstanceNameDelete({
+                    credentialId: credId.toString(),
+                    instanceName: instance.name,
+                    zone: instance.zone,
+                });
+            } else if (action === 'start') {
+                data = await DefaultService.apiV1GcpComputeInstancesInstanceNameStartPost({
+                    credentialId: credId.toString(),
+                    instanceName: instance.name,
+                    projectId,
+                });
+            } else {
+                data = await DefaultService.apiV1GcpComputeInstancesInstanceNameStopPost({
+                    credentialId: credId.toString(),
+                    instanceName: instance.name,
+                    projectId,
+                });
+            }
             if (data.status === 'error') {
                 fetchInstances(projectId, credId);
                 toast.error(data.message);
@@ -271,15 +274,15 @@ export default function ComputeOrchestrator() {
     const handleDeleteDisk = async (disk: Disk) => {
         if (!selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
         setActionLoading(true);
-        const token = getAuthToken();
         const credId = selectedGcpCredential.id;
         const projectId = selectedGcpCredential.project_id;
         try {
-            const res = await fetch(`/api/v1/gcp/compute/disks/${disk.name}?project_id=${projectId}&zone=${disk.zone}&credential_id=${credId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const data: any = await DefaultService.apiV1GcpComputeDisksDiskNameDelete({
+                credentialId: credId.toString(),
+                diskName: disk.name,
+                projectId,
+                zone: disk.zone,
             });
-            const data = await res.json();
             if (data.status === 'error') {
                 toast.error(data.message);
             } else {
@@ -296,7 +299,6 @@ export default function ComputeOrchestrator() {
 
     const handleCreateVM = async (values: CreateVMValues) => {
         if (!selectedGcpCredential?.project_id || !selectedGcpCredential?.id) return;
-        const token = getAuthToken();
         const credId = selectedGcpCredential.id;
         const projectId = selectedGcpCredential.project_id;
 
@@ -315,23 +317,21 @@ export default function ComputeOrchestrator() {
         setInstances(prev => [tempInstance, ...prev]);
 
         try {
-            const res = await fetch(`/api/v1/gcp/compute/instances?credential_id=${credId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
+            const data: any = await DefaultService.apiV1GcpComputeInstancesPost({
+                credentialId: credId.toString(),
+                requestBody: {
                     project_id: projectId,
                     instance_name: values.instance_name,
                     zone: values.zone,
                     machine_type: values.machine_type,
                     boot_disk_size_gb: values.boot_disk_size_gb || 10,
                     boot_disk_type: values.boot_disk_type || 'pd-balanced',
-                    os_image: values.os_image || 'projects/debian-cloud/global/images/family/debian-12',
-                    selected_os_key: values.selected_os_key || 'debian-12',
-                    ssh_username: values.ssh_username || undefined,
-                    ssh_key: values.ssh_key || undefined,
-                })
+                    os_image: values.os_image,
+                    selected_os_key: values.selected_os_key || null,
+                    ssh_username: values.ssh_username || null,
+                    ssh_key: values.ssh_key || null,
+                },
             });
-            const data = await res.json();
             if (data.status === 'error') {
                 setInstances(prev => prev.filter(i => i.name !== tempInstance.name));
                 toast.error(data.message);

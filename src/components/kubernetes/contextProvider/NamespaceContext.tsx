@@ -31,7 +31,7 @@ export const NamespaceContextProvider = ({
   
   const getNamespaceFromUrl = () => {
     const path = window.location.pathname;
-    const match = path.match(/\/(?:orchestration\/kubernetes|settings\/ci_cd\/library)\/([^\/]+)/);
+    const match = path.match(/\/(?:orchestration\/kubernetes|v2\/kubernetes|new\/kubernetes|settings\/ci_cd\/library)\/([^\/]+)/);
     return match ? match[1] : "default";
   };
 
@@ -91,10 +91,10 @@ export const NamespaceContextProvider = ({
         fetchNamespaces,
         setSelectedNamespace: (namespace) => {
           const currentPath = window.location.pathname;
-          const match = currentPath.match(/(\/(?:orchestration\/kubernetes|settings\/ci_cd\/library)\/)[^\/]+/);
+          const match = currentPath.match(/(\/(?:orchestration\/kubernetes|v2\/kubernetes|new\/kubernetes|settings\/ci_cd\/library)\/)[^\/]+/);
           if (match) {
             const newPath = currentPath.replace(
-              /(\/(?:orchestration\/kubernetes|settings\/ci_cd\/library)\/)[^\/]+/,
+              /(\/(?:orchestration\/kubernetes|v2\/kubernetes|new\/kubernetes|settings\/ci_cd\/library)\/)[^\/]+/,
               `$1${namespace}`
             );
             if (newPath !== currentPath) {

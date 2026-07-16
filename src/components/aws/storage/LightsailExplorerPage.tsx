@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { getAuthToken } from '@/libs/auth';
+import { DefaultService } from '@/gingerJs_api_client';
 import { useAWS } from '@/components/aws/contextProvider/AWSContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
@@ -217,14 +218,9 @@ export function LightsailExplorerPage({ backRoute }: LightsailExplorerPageProps)
     const fetchObjects = useCallback(async () => {
         if (!id || !selectedAwsCredential?.id || !bucketUrl) return;
         setLoading(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(
-                `/api/v1/aws/storage/lightsail-buckets/${encodeURIComponent(id)}/objects?prefix=${encodePath(currentPath)}&bucket_url=${encodeURIComponent(bucketUrl)}&region=${encodeURIComponent(regionParam)}&credential_id=${credId}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageLightsailBucketsBucketNameObjectsGet({ bucketName: id, credentialId: String(credId), region: regionParam, prefix: currentPath, bucketUrl });
             if (data.status === 'error') { toast.error(data.message); setItems([]); return; }
             const NO_EXTRAS = { showPlay: false, showStop: false, showPause: false, showClone: false, showUndo: false, showViewLogs: false, showViewConfig: false, showEdit: false, showPush: false, showViewDetails: false };
             const folderRows = (data.folders || []).map((f: any) => ({
@@ -247,14 +243,9 @@ export function LightsailExplorerPage({ backRoute }: LightsailExplorerPageProps)
     const fetchBucketDetail = useCallback(async () => {
         if (!id || !selectedAwsCredential?.id) return;
         setDetailLoading(true);
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(
-                `/api/v1/aws/storage/lightsail-buckets/${encodeURIComponent(id)}?credential_id=${credId}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageLightsailBucketsBucketNameGet({ bucketName: id, credentialId: String(credId) });
             if (data.status !== 'error') setBucketDetail(data);
         } catch { /* silent */ }
         finally { setDetailLoading(false); }
@@ -281,13 +272,13 @@ export function LightsailExplorerPage({ backRoute }: LightsailExplorerPageProps)
 
     const handleCreateFolder = async () => {
         if (!folderName.trim() || !id || !selectedAwsCredential?.id || !bucketUrl) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
+        const token = getAuthToken();
         try {
             const fd = new FormData();
             const blob = new Blob([], { type: 'application/x-directory' });
             fd.append('file', blob, folderName.trim() + '/');
-            const res = await fetch(`/api/v1/aws/storage/lightsail-buckets/${encodeURIComponent(id)}/upload?prefix=${encodePath(currentPath)}&bucket_url=${encodeURIComponent(bucketUrl)}&region=${encodeURIComponent(regionParam)}&credential_id=${credId}`, {
+            const res = await fetch(`/api/v1/aws/storage/lightsail-buckets/${encodeURIComponent(id)}/upload/?region=${encodeURIComponent(regionParam)}&credential_id=${credId}&bucket_url=${encodeURIComponent(bucketUrl)}`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: fd,
@@ -300,13 +291,9 @@ export function LightsailExplorerPage({ backRoute }: LightsailExplorerPageProps)
 
     const handleDownload = async (item: ExplorerItem) => {
         if (!selectedAwsCredential?.id || !bucketUrl) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
         try {
-            const res = await fetch(`/api/v1/aws/storage/lightsail-buckets/${encodeURIComponent(id || '')}/upload?object=${encodeURIComponent(item.name)}&bucket_url=${encodeURIComponent(bucketUrl)}&region=${encodeURIComponent(regionParam)}&credential_id=${credId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiV1AwsStorageLightsailBucketsBucketNameUploadGet({ bucketName: id || '', credentialId: String(credId), region: regionParam, prefix: item.name, bucketUrl });
             if (data.url) window.open(data.url, '_blank');
             else toast.error(data.message || 'Download failed');
         } catch { toast.error('Failed to generate download link'); }
@@ -361,14 +348,14 @@ export function LightsailExplorerPage({ backRoute }: LightsailExplorerPageProps)
     const handleUploadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files?.length || !selectedAwsCredential?.id || !bucketUrl) return;
-        const token = getAuthToken();
         const credId = selectedAwsCredential.id;
+        const token = getAuthToken();
         let ok = 0;
         for (const file of Array.from(files)) {
             const fd = new FormData();
             fd.append('file', file);
             try {
-                const res = await fetch(`/api/v1/aws/storage/lightsail-buckets/${encodeURIComponent(id || '')}/upload?prefix=${encodePath(currentPath)}&bucket_url=${encodeURIComponent(bucketUrl)}&region=${encodeURIComponent(regionParam)}&credential_id=${credId}`, {
+                const res = await fetch(`/api/v1/aws/storage/lightsail-buckets/${encodeURIComponent(id || '')}/upload/?region=${encodeURIComponent(regionParam)}&credential_id=${credId}&prefix=${encodeURIComponent(currentPath)}&bucket_url=${encodeURIComponent(bucketUrl)}`, {
                     method: 'POST',
                     headers: { Authorization: `Bearer ${token}` },
                     body: fd,

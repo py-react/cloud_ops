@@ -11,20 +11,16 @@ class OnboardingCompleteRequest(BaseModel):
 
 async def GET(request: Request):
     """Check if onboarding is required for the current user's tenant."""
-    try:
-        user = get_current_user(request)
-        with get_session() as session:
-            tenant = session.get(Tenant, user.tenant_id)
-            if not tenant:
-                return {"onboarding_required": True}
-            
-            return {
-                "onboarding_required": not tenant.onboarding_completed,
-                "tenant": tenant.model_dump()
-            }
-    except Exception:
-        # If no user session, onboarding is effectively required (or they need to login)
-        return {"onboarding_required": True}
+    user = get_current_user(request)
+    with get_session() as session:
+        tenant = session.get(Tenant, user.tenant_id)
+        if not tenant:
+            return {"onboarding_required": True}
+        
+        return {
+            "onboarding_required": not tenant.onboarding_completed,
+            "tenant": tenant.model_dump()
+        }
 
 async def POST(request: Request, body: OnboardingCompleteRequest, background_tasks: BackgroundTasks):
     """Mark onboarding as completed for the current user's tenant."""

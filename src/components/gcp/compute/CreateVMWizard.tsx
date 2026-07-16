@@ -3,9 +3,9 @@ import * as z from 'zod';
 import { Server, Cpu, Calculator } from 'lucide-react';
 import { FormWizard } from '@/components/wizard/form-wizard';
 import { VMIdentityStep, VMConfigStep, VMCostingStep } from './CreateVMSteps';
-import { getAuthToken } from '@/libs/auth';
 import { toast } from 'sonner';
 import { useGCP } from '@/components/gcp/contextProvider/GCPContext';
+import { DefaultService } from '@/gingerJs_api_client/services/DefaultService';
 
 const schema = z.object({
     project_id: z.string().min(1, "Project ID is required"),
@@ -54,14 +54,10 @@ export function CreateVMWizard({ projectId, onSubmit, isWizardOpen, setIsWizardO
     const fetchImages = async (pid: string) => {
         if (!selectedGcpCredential?.id) return;
         setLoadingImages(true);
-        const token = getAuthToken();
         const credId = selectedGcpCredential.id;
         try {
-            const res = await fetch(`/api/v1/gcp/compute/images?project_id=${pid}&credential_id=${credId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (data.status === 'success' && data.images) {
+            const data: any = await DefaultService.apiV1GcpComputeImagesGet({ credentialId: String(credId), projectId: pid });
+            if (data.images) {
                 const imageArray = Object.entries(data.images).map(([osKey, imgData]: [string, any]) => ({
                     osKey,
                     id: osKey,
@@ -92,12 +88,8 @@ export function CreateVMWizard({ projectId, onSubmit, isWizardOpen, setIsWizardO
 
     const fetchBastionKeys = async () => {
         setLoadingKeys(true);
-        const token = getAuthToken();
         try {
-            const res = await fetch('/api/bastion/keys', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data: any = await DefaultService.apiBastionKeysGet();
             if (!data.error && data.keys) {
                 setBastionKeys(data.keys);
             }
@@ -111,16 +103,10 @@ export function CreateVMWizard({ projectId, onSubmit, isWizardOpen, setIsWizardO
     const fetchMetadata = async (pid: string) => {
         if (!selectedGcpCredential?.id) return;
         setLoadingMetadata(true);
-        const token = getAuthToken();
         const credId = selectedGcpCredential.id;
         try {
-            const res = await fetch(`/api/v1/gcp/meta?project_id=${pid}&credential_id=${credId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (data.status !== 'error') {
-                setMetadata(data);
-            }
+            const data: any = await DefaultService.apiV1GcpMetaGet({ credentialId: String(credId), projectId: pid });
+            setMetadata(data);
         } catch {
             toast.error('GCP Metadata sync failed');
         } finally {

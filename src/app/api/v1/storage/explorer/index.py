@@ -48,12 +48,9 @@ def _get_credential(cred_id: int | None):
 
 
 @gcp_error_interceptor
-async def GET(request: Request):
-    resource_type = request.query_params.get("type")
-    resource_id = request.query_params.get("id")
-    path = request.query_params.get("path", "")
-    project_id = request.query_params.get("project_id")
-    credential_id = request.query_params.get("credential_id")
+async def GET(request: Request, credential_id: str | None = None, project_id: str | None = None, type: str | None = None, id: str | None = None, path: str = ""):
+    resource_type = type
+    resource_id = id
 
     if not resource_type:
         raise HTTPException(status_code=400, detail="Missing 'type' parameter (OBJECT_STORAGE, BLOCK_STORAGE, FILE_STORAGE)")
@@ -101,11 +98,9 @@ async def GET(request: Request):
 
 
 @gcp_error_interceptor
-async def POST(request: Request):
-    resource_type = request.query_params.get("type")
-    resource_id = request.query_params.get("id")
-    project_id = request.query_params.get("project_id")
-    credential_id = request.query_params.get("credential_id")
+async def POST(request: Request, credential_id: str | None = None, project_id: str | None = None, type: str | None = None, id: str | None = None):
+    resource_type = type
+    resource_id = id
 
     if not resource_type or not resource_id:
         raise HTTPException(status_code=400, detail="Missing 'type' or 'id' parameter")

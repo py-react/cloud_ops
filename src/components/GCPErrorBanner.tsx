@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertCircle, ShieldAlert, CreditCard, RefreshCw, LogOut, ExternalLink } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { DefaultService } from "@/gingerJs_api_client";
 
 export interface GCPError {
     status: string;
@@ -38,7 +39,7 @@ export const GCPErrorBanner: React.FC<GCPErrorBannerProps> = ({ error, onRetry }
 
     const handleSignOut = async () => {
         try {
-            await fetch('/api/v1/auth/logout', { method: 'POST' });
+            await DefaultService.apiV1AuthLogoutPost();
         } catch {
             // fallback: clear cookie directly
             document.cookie = "k1w1_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";

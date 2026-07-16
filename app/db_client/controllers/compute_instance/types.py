@@ -14,6 +14,11 @@ class ComputeInstanceCreateType(BaseModel):
     status: str = "PROVISIONING"
     temporary_admin_password: Optional[str] = None
     bastion_system_id: Optional[int] = None
+    error_message: Optional[str] = None
+    internal_ip: Optional[str] = None
+    external_ip: Optional[str] = None
+    state: Optional[str] = None
+    cloud_created_at: Optional[str] = None
 
 
 class ComputeInstanceUpdateType(BaseModel):
@@ -26,3 +31,8 @@ class ComputeInstanceUpdateType(BaseModel):
     status: Optional[str] = None
     temporary_admin_password: Optional[str] = None
     bastion_system_id: Optional[int] = None
+    error_message: Optional[str] = None
+    internal_ip: Optional[str] = None
+    external_ip: Optional[str] = None
+    state: Optional[str] = None
+    cloud_created_at: Optional[str] = None
